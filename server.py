@@ -2237,16 +2237,16 @@ def get_system_context() -> str:
         path_hint = "使用 Unix 路径格式（/home/name/file），区分大小写"
         command_hint = f"当前为 Linux ({release})，使用 {shell}。支持标准 GNU 命令和工具链"
     
-    return f"""【环境信息】操作系统：{system} {release} | Shell：{shell}
+    return f"""[Host environment] OS: {system} {release} | Shell: {shell}
 
-⚠️ 重要提示：
+Important:
 1. {path_hint}
 2. {command_hint}
-3. 执行 shell_tool_local 时，命令必须符合当前系统的语法规范
-4. 路径分隔符：Windows 使用反斜杠(\\)，Unix 使用正斜杠(/)
-5. 如果需要使用网络端口，请尽可能选择不常用的端口，避免冲突，例如：10000 以上的端口
-6. 请尽量使用相对路径，避免使用绝对路径，以免在跨平台时出现问题
-7. 请勿操作工作区以外的文件，以免造成不必要的风险和损失
+3. Commands passed to shell_tool_local must follow the host operating system syntax.
+4. Windows paths use backslashes (\\); Unix paths use forward slashes (/).
+5. Prefer nonstandard temporary ports above 10000 to reduce conflicts.
+6. Prefer relative paths for portability.
+7. Do not operate on files outside the workspace without explicit authorization.
 """
 
 
@@ -2354,7 +2354,7 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
 
     # 平台信息（固定）
     if request.is_app_bot and request.platform:
-        platform_message = f"\n\n用户正在使用 {request.platform} 软件与你交流\n\n"
+        platform_message = f"\n\nThe user is communicating through {request.platform}.\n\n"
         content_append(request.messages, 'system', platform_message)
 
     # 权限模式提示（固定）
@@ -2365,7 +2365,7 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
             content_append(request.messages, 'system', permission_message)
         elif permissionMode == "goal":
             if not request.is_sub_agent:
-                permission_message += "你当前处于目标完成模式。你拥有最高权限，可以使用所有工具。你可以通过 create_subtask 工具将子任务分派给子智能体并行处理。当你确认用户的主任务已经全部达成时，必须调用 finish_main_task 工具并提供最终执行结果的详细总结来标记任务完成。在调用 finish_main_task 之前不要停止。\n\n"
+                permission_message += "You are in goal completion mode. Delegate bounded independent work using create_subtask when useful, subject to tool permissions. When the main task is complete, call finish_main_task with a detailed final summary. Do not stop without marking it complete.\n\n"
                 content_append(request.messages, 'system', permission_message)
                 if request.is_app_bot and request.platform:
                     task_platform_message = f"\n\nWhen using create_subtask, set the platforms parameter to [{request.platform}] so the user receives the result.\n\n"
@@ -2378,7 +2378,7 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
                 content_append(request.messages, 'system', permission_message)
         elif permissionMode == "cowork":
             if not request.is_sub_agent:
-                permission_message += "你当前处于协作模式，create_subtask工具可以帮你完成几乎任何任务（比如查资料、写代码、生成报告等），当你遇到难题时，可以尝试把它分解成一个个小任务，交给create_subtask工具去完成！当用户再次询问进度时，你可以用query_task_progress工具查询任务进度和获取详细结果\n\n"
+                permission_message += "You are in collaborative mode. You may delegate bounded work such as research, coding or reports to create_subtask. Break down difficult tasks as appropriate; use query_task_progress to check assigned work and retrieve detailed results.\n\n"
                 content_append(request.messages, 'system', permission_message)
                 if request.is_app_bot and request.platform:
                     task_platform_message = f"\n\nWhen using create_subtask, set the platforms parameter to [{request.platform}] so the user receives the result.\n\n"
@@ -2395,89 +2395,30 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
 
     # Docker 环境固定信息（完全静态）
     if cwd and Path(cwd).exists() and cli_settings.get("enabled", False) and engine == "ds":
-        system_context = """【环境信息】操作系统：Linux | Shell：bash
+        system_context = """[Runtime environment] Operating system: Linux | Shell: bash
 
-⚠️ 重要提示：
-1. 当前为 Docker 环境，请使用 Linux 命令和工具链
-2. 执行 docker_sandbox 时，命令必须符合 Linux 的语法规范
-3. 路径分隔符：Unix 使用正斜杠(/)
-4. 请尽量使用相对路径，避免使用绝对路径，以免在跨平台时出现问题
-
-### ✅ **已安装的主要开发工具**
-
-#### **编程语言和运行时**
-1. **Python**
-   - Python
-   - pip
-   - uv
-
-2. **Node.js**
-   - Node.js
-   - npm
-   - npx
-
-3. **Go**
-   - Go
-
-4. **Perl**
-   - Perl
-
-#### **版本控制和协作工具**
-1. **Git**
-   - git
-   - GitHub CLI (gh)
-
-#### **包管理和构建工具**
-1. **Python 包管理**
-   - pip / pip3
-   - uv
-
-2. **Node.js 包管理**
-   - npm / npx
-
-3. **系统包管理**
-   - apt-get / dpkg
-
-#### **文本处理和命令行工具**
-1. **文本处理**
-   - jq
-   - awk / sed / grep
-   - cat / less / more / head / tail
-
-2. **文件操作**
-   - tar / unzip
-   - rsync
-   - 所有基本 Unix 命令（ls, cp, mv, rm, mkdir, chmod 等）
-
-3. **系统工具**
-   - bash shell
-   - make
-   - which / whereis
-
-#### **网络工具**
-1. **HTTP 客户端**
-   - curl
-
-2. **安全工具**
-   - openssl
-   - gpg
-
-#### **系统监控**
-1. **进程和资源监控**
-   - top / ps
-   - free / df / du
-   
+This is a Docker environment. Use standard Linux commands and paths.
+- docker_sandbox commands must use Linux shell syntax.
+- Unix paths use forward slashes (/). Prefer relative paths.
+- Available languages and runtimes: Python, pip, uv, Node.js, npm, npx, Go, Perl.
+- Version control: git and GitHub CLI (gh).
+- Package management: pip/pip3, uv, npm/npx, apt-get/dpkg.
+- Text tools: jq, awk, sed, grep, cat, less, more, head, tail.
+- File tools: tar, unzip, rsync, ls, cp, mv, rm, mkdir, chmod.
+- Shell and system tools: bash, make, which, whereis.
+- Networking and security: curl, openssl, gpg.
+- Monitoring: top, ps, free, df, du.
 """
         content_append(request.messages, 'system', system_context)
 
     # 自主行为说明（固定）
     if request.messages[-1]['role'] == 'system' and settings['tools']['autoBehavior']['enabled'] and not request.is_app_bot and not request.is_sub_agent:
-        language_message = f"\n\n当你看到被插入到对话之间的系统消息，这是自主行为系统向你发送的消息，例如用户主动或者要求你设置了一些定时任务或者延时任务，当你看到自主行为系统向你发送的消息时，说明这些任务到了需要被执行的节点，例如：用户要你三点或五分钟后提醒开会的事情，然后当你看到一个被插入的“提醒用户开会”的系统消息，你需要立刻提醒用户开会，以此类推\n\n"
+        language_message = f"\n\nA system message inserted between turns may be a scheduled-behavior trigger. Treat it as a task that is now due, such as reminding the user about a meeting when the scheduled reminder arrives.\n\n"
         content_append(request.messages, 'system', language_message)
 
     # 桌面截图提示（固定）
     if settings['vision']['desktopVision'] and not request.is_app_bot and not request.is_sub_agent:
-        desktop_message = "\n\n用户与你对话时，如果发了图片给你，有可能是给你发当前的桌面截图。\n\n"
+        desktop_message = "\n\nAn image sent by the user may be a screenshot of their desktop.\n\n"
         content_append(request.messages, 'system', desktop_message)
 
     # 推理提示（固定，保留原逻辑 prepend 到用户消息，因其为固定前缀不会破坏缓存）
@@ -2880,21 +2821,19 @@ Example:
         tag_example += ">"
         affection_message = f"""
 
-# 角色羁绊与数值系统
+# Character relationship attributes
 {status_block}
-【更新规则】
+[Update rules]
 {custom_prompt}
 
-【动态识别发言者】
-请准确识别当前最新消息的**实际发言者**：
-- 如果消息是类似“某某发送弹幕：”、“某某说：”的格式，发言者就是该名字（例如“小包”）。
-- 如果没有带有这种特定的名字前缀，则默认当前的发言者是“{default_user}”。
+[Determine the current speaker]
+Identify the actual speaker of the latest user message. If a message begins with a named speaker prefix (for example "Alex says:" or "Alex posted in chat:"), use that name. Otherwise assume the speaker is "{default_user}".
 
-你 **必须** 在每次回复的**绝对最末尾**（所有正文、代码、表情都输出完毕之后），输出一个隐藏的数据标签来记录**该发言者**的最新数值（如果是第一次见面的新用户，请直接给一个合理的初始值）。
-格式 **必须** 严格遵守以下示例（将“发言者的真实名字”替换为你识别出的真实名字，且必须包含所有维度）：
+At the absolute end of every reply, after any prose, code, facial expressions and other tags, output one hidden data tag reflecting the updated values for that speaker.
+For a new speaker, select reasonable initial attribute values. Output every configured dimension using exactly this format:
 {tag_example}
 
-注意：系统会自动隐藏<>包裹的文本，请直接输出标签，绝对不要在标签前后加任何解释、加粗或Markdown代码块包裹！
+The application automatically hides data tags enclosed in angle brackets. Output the tag directly, without explanations or a Markdown code fence.
 """
         content_append(request.messages, 'system', affection_message)
 

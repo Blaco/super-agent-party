@@ -171,3 +171,8 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 
 - Parent: 8080027404a4d579070acbd55afabfac3b552d71. Three large runtime injected instructions in server.py are now fully English: the optional A2UI component schema/examples, voice-specific TTS instructions and default TTS silence-tag rules. A2UI component names, input key requirements, button action strings and parser syntax retained; existing dynamic character voice labels are preserved unchanged. Sample spoken text now English.
 - tests/test_english_model_prompt_blocks.py checks the blocks contain no Chinese text. CI audits and Python compile continue. Existing user-authored voices/cards and conversation history untouched. Other prompt blocks still contain Chinese text, especially VRM/THA and relationship/sandbox; next work remains.
+
+## 2026-11-26 — Translate runtime environment, relationship and scheduler instructions
+
+- Parent: 2fec3cea216f8c04b5d6ab5afc71f772fb160e33. server.py OS-specific shell environment prompt, Docker environment instruction, mandatory relationship speaker identification/tag format, goal/cowork permission mode, desktop screenshot context and scheduled reminder interpretation are translated to English. Existing task IDs, tool names, per-character values and actor names remain dynamically substituted; no user-data migration.
+- Source contracts: tests/test_english_runtime_prompt_sections.py and CI test the runtime/relationship blocks for Chinese characters; Python compile remains active. Remaining THA and VRM motion prompts, Chinese provider options and source diagnostics require translation.
