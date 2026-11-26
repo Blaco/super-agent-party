@@ -1,290 +1,117 @@
-name: Build and Release
+name: Windows x64 development package
 
 on:
-  push:
-    tags: [ "v*.*.*" ]
   workflow_dispatch:
-    inputs:
-      platform:
-        description: '选择构建平台'
-        required: true
-        type: choice
-        default: 'all'
-        options:
-          - all
-          - windows-x64
-          - linux-x64
-          - linux-arm64
-          - macos
-      version:
-        description: '版本号（例如：0.5.0，不要带 v 前缀）'
-        required: false
-        type: string
-        default: ''
-      create_release:
-        description: '是否创建 GitHub Release'
-        required: true
-        type: boolean
-        default: false
+  push:
+    branches:
+      - agent-creation
+    paths:
+      - .github/workflows/build.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-development-package
+  cancel-in-progress: false
 
 jobs:
-
-  # ────────── Windows x64 ──────────
-  build-windows:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.platform == 'all' || inputs.platform == 'windows-x64'))
-    runs-on: windows-latest
-    permissions:
-      contents: write
+  package-windows:
+    name: Package Windows x64 (no release)
+    runs-on: windows-2025
+    timeout-minutes: 120
     steps:
-      - name: Checkout code
+      - name: Checkout branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Set version and create tag (manual trigger)
-        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+
+      - name: Resolve Python dependencies
+        shell: pwsh
         run: |
-          npm version ${{ inputs.version }} --no-git-tag-version
-          if ("${{ inputs.create_release }}" -eq "true") {
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag -a "v${{ inputs.version }}" -m "Release v${{ inputs.version }}"
-            git push origin "v${{ inputs.version }}"
+          uv sync --python 3.12
+          uv run python --version
+
+      - name: Install Electron dependencies
+        shell: pwsh
+        run: npm ci --no-audit --no-fund
+
+      - name: Run JavaScript smoke checks
+        shell: pwsh
+        run: npm test
+
+      - name: Package Python server
+        shell: pwsh
+        run: |
+          uv run pyinstaller --noconfirm --clean server.spec
+          if (-not (Test-Path 'dist/server/server.exe')) {
+            throw 'PyInstaller did not create dist/server/server.exe'
           }
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv venv
-          uv sync
-
-      - name: Install Node.js dependencies
-        run: npm install
-
-      - name: Build Python backend
-        run: |
-          uv add pyinstaller
-          uv run pyinstaller server.spec
-
-      - name: Build and Publish Electron app (Windows)
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.create_release }}" == "true" ]]; then
-              PUBLISH_FLAG="--publish always"
-            else
-              PUBLISH_FLAG=""
-            fi
-          else
-            PUBLISH_FLAG="--publish always"
-          fi
-          npx electron-builder build --win $PUBLISH_FLAG
+      - name: Package Electron directory
+        shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npx electron-builder --win --x64 --dir --publish never
+          if (-not (Test-Path 'release/win-unpacked')) {
+            throw 'electron-builder did not produce win-unpacked'
+          }
 
-  # ────────── Linux x64 ──────────
-  build-linux-x64:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.platform == 'all' || inputs.platform == 'linux-x64'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Create manifest, ZIP and checksum
+        id: archive
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sha = (git rev-parse HEAD).Trim()
+          $short = $sha.Substring(0, 12)
+          $root = 'release/win-unpacked'
+          $manifest = @(
+            'Agent Creation — Windows x64 development snapshot'
+            "Source repository: https://github.com/${{ github.repository }}"
+            "Source commit: $sha"
+            "Build UTC: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+            "OS: $([System.Environment]::OSVersion.VersionString)"
+            "Python: $(uv run python --version)"
+            "Node: $(node --version)"
+            "Electron: $(node -p 'require(""./node_modules/electron/package.json"").version')"
+            'Package type: extracted Electron directory with bundled PyInstaller backend'
+            'Automated build check only; no GUI launch or audio/agent integration test performed.'
+            'No signing, installer, publishing, auto-updates or release tags.'
+          )
+          $manifest | Set-Content -Path "$root/BUILD-MANIFEST.txt" -Encoding UTF8
+          $name = "Agent-Creation-Windows-x64-dev-$short.zip"
+          Compress-Archive -Path "$root/*" -DestinationPath "release/$name" -CompressionLevel Optimal
+          $hash = (Get-FileHash "release/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $name" | Set-Content -Path "release/$name.sha256" -Encoding ASCII
+          "name=$name" >> $env:GITHUB_OUTPUT
+          "sha256=$hash" >> $env:GITHUB_OUTPUT
+          "## Windows x64 development package" >> $env:GITHUB_STEP_SUMMARY
+          "Commit: $sha" >> $env:GITHUB_STEP_SUMMARY
+          "SHA-256: $hash" >> $env:GITHUB_STEP_SUMMARY
+          "ZIP: $name" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload development package
+        uses: actions/upload-artifact@v4
         with:
-          fetch-depth: 0
-
-      - name: Set version and create tag (manual trigger)
-        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
-        run: |
-          npm version ${{ inputs.version }} --no-git-tag-version
-          if [[ "${{ inputs.create_release }}" == "true" ]]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag -a "v${{ inputs.version }}" -m "Release v${{ inputs.version }}"
-            git push origin "v${{ inputs.version }}"
-          fi
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv venv
-          uv sync
-
-      - name: Install Node.js dependencies
-        run: npm install
-
-      - name: Build Python backend
-        run: |
-          uv add pyinstaller
-          uv run pyinstaller server.spec
-
-      - name: Build and Publish Electron app (Linux x64)
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.create_release }}" == "true" ]]; then
-              PUBLISH_FLAG="--publish always"
-            else
-              PUBLISH_FLAG=""
-            fi
-          else
-            PUBLISH_FLAG="--publish always"
-          fi
-          npx electron-builder build --linux --x64 $PUBLISH_FLAG
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-
-  # ────────── Linux arm64 ──────────
-  build-linux-arm64:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.platform == 'all' || inputs.platform == 'linux-arm64'))
-    runs-on: ubuntu-24.04-arm
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set version and create tag (manual trigger)
-        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
-        run: |
-          npm version ${{ inputs.version }} --no-git-tag-version
-          if [[ "${{ inputs.create_release }}" == "true" ]]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag -a "v${{ inputs.version }}" -m "Release v${{ inputs.version }}"
-            git push origin "v${{ inputs.version }}"
-          fi
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv venv
-          uv sync
-
-      - name: Install Node.js dependencies
-        run: npm install
-
-      - name: Build Python backend
-        run: |
-          uv add pyinstaller
-          uv run pyinstaller server.spec
-
-      - name: Build and Publish Electron app (Linux arm64)
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.create_release }}" == "true" ]]; then
-              PUBLISH_FLAG="--publish always"
-            else
-              PUBLISH_FLAG=""
-            fi
-          else
-            PUBLISH_FLAG="--publish always"
-          fi
-          npx electron-builder build --linux --arm64 $PUBLISH_FLAG
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-
-  # ────────── macOS Apple Silicon (arm64) ──────────
-  build-macos:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.platform == 'all' || inputs.platform == 'macos'))
-    runs-on: macos-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set version and create tag (manual trigger)
-        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
-        run: |
-          npm version ${{ inputs.version }} --no-git-tag-version
-          if [[ "${{ inputs.create_release }}" == "true" ]]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag -a "v${{ inputs.version }}" -m "Release v${{ inputs.version }}"
-            git push origin "v${{ inputs.version }}"
-          fi
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv venv
-          uv sync
-
-      - name: Install Node.js dependencies
-        run: npm install
-
-      - name: Build Python backend
-        run: |
-          uv add pyinstaller
-          uv run pyinstaller server.spec
-
-      - name: Build and Publish Electron app (macOS arm64)
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.create_release }}" == "true" ]]; then
-              PUBLISH_FLAG="--publish always"
-            else
-              PUBLISH_FLAG=""
-            fi
-          else
-            PUBLISH_FLAG="--publish always"
-          fi
-          npx electron-builder build --mac --arm64 $PUBLISH_FLAG
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          name: windows-x64-dev-${{ github.sha }}
+          path: |
+            release/${{ steps.archive.outputs.name }}
+            release/${{ steps.archive.outputs.name }}.sha256
+          if-no-files-found: error
+          retention-days: 14

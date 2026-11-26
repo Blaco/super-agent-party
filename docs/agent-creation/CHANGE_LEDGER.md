@@ -132,3 +132,10 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - Dependencies: pyproject.toml removes five region-specific social SDKs and ModelScope; server.spec drops botpy hidden imports. MOSS status strings translated. Corrected Hugging Face snapshot call compatibility.
 - Files: py/sherpa_model_manager.py, py/ebd_model_manager.py, py/moss_model_manager.py, static/index.html, static/js/vue_methods.js, pyproject.toml, server.spec, tests/test_model_source_policy.py, .github/workflows/companion-audit.yml and this ledger.
 - Known limitation: uv.lock is still the inherited resolution and must be refreshed on Windows using uv sync before a reproducible build; no model-download integration test yet. The default Sherpa model identifier retains language-support codes as its existing on-disk folder; user models are not migrated. Revert this commit for rollback.
+
+## 2026-11-26 — Contained Windows x64 development build workflow
+
+- Parent: 73b3f99b66db86457c12829088d49f5eeacd0a2c; replaces the inherited publishing-capable multi-platform workflow with an English Windows x64 development packaging path at .github/workflows/build.yml.
+- Safety: only a manual dispatch or a push changing the workflow file on agent-creation triggers the package. No tag creation, release publishing, GH_TOKEN publish access or signing. Actions permission is read-only; uses windows-2025, Python 3.12, Node 22, uv sync, npm ci, PyInstaller, electron-builder directory and ZIP with SHA-256 and an embedded manifest. Uploaded Actions artifact is a development snapshot, not a tested public release.
+- Preservation: original multi-platform workflow remains available through Git history; source and Electron target configuration untouched, no user data or build artifacts committed.
+- Testing: follow the triggered Windows run to determine if the archive was created; app launch, character/chat, TTS and installer testing require interactive Windows validation. Do not claim a successful binary build until Actions has completed.
