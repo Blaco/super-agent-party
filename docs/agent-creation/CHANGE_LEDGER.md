@@ -94,3 +94,10 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - **Compatibility:** Persisted UI language is normalized to English, while voice recognition/translation language and user content retain their own controls. Existing China-mirror setting is ignored, generic proxy behavior stays intact. Removed locale can be restored from parent SHA if needed.
 - **Preserved:** TabbyAPI, OpenRouter, WhisperBox boundary, ASR/TTS, character, memory, avatars, OpenClaw/ACPX, Western bot and streaming internals, AGPL notices and upstream commit history.
 - **Self-review/limitations:** No wholesale deletion of platform bot adapters, vendor IDs or all Chinese source comments/model instructions. This is not a complete China-free product. GitHub Actions, Windows runtime and packaged build still require verification. Roll back via commit revert.
+
+## 2026-11-26 — Update JS smoke test after locale removal
+
+- **Parent:** `691ea14f652b78f3a90e73f63e58243adc70273c`. The first CI execution failed at `npm test` because `scripts/smoke-check.js` still required the intentionally removed `static/js/locales/zh-CN.js`.
+- **Files:** `scripts/smoke-check.js` now checks `static/js/locales.js` alongside the English translation file; `docs/agent-creation/CHANGE_LEDGER.md` records the correction.
+- **Behavior:** No runtime changes; test inventory is aligned with the English-only UI locale. The prior CI failure is preserved in GitHub Actions history.
+- **Verification:** Re-run npm, UI, and Python checks on the resulting commit; Windows build remains untested. Roll back with a revert if needed.

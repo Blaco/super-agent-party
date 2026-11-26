@@ -50,7 +50,7 @@ function checkJavaScript(file) {
   'static/js/vue_data.js',
   'static/js/vue_methods.js',
   'static/js/locales/en-US.js',
-  'static/js/locales/zh-CN.js',
+  'static/js/locales.js',
 ].forEach(checkJavaScript);
 
 if (failures.length > 0) {
