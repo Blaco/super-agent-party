@@ -1857,11 +1857,11 @@ Key3`,
         'CurrentFieldOfView': 'Current Field of View Range',
         'Reselect': 'Reselect',
         'fastProvider': 'Fast response model Provider',
-        // 核心导航页标题与输入
-        'dashboard': 'Dashboard', // 仪表盘
+        // Core navigation titles and inputs
+        'dashboard': 'Dashboard', // Dashboard
         'whatToChatToday': 'Hello, what can I help with today?',
         
-        // 导航卡片 (Cards)
+        // Navigation cards
         'startChatting': 'Chat',
         'summonCompanion': 'Summon Companion',
         'summon3DCompanion': 'Summon 3D Companion',
@@ -1870,7 +1870,7 @@ Key3`,
         'omniAgent': 'Create Agent',
         'omniAgentEnabled': 'Agent Enabled',
         
-        // 万能智能体配置弹窗 (Dialog)
+        // General-purpose agent configuration dialog
         'omniAgentConfig': 'Create Agent Configuration',
         'confirmAndStart': 'Confirm & Start',
         'unfavorite': 'Unfavorite',

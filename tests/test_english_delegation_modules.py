@@ -179,6 +179,19 @@ class EnglishDelegationModules(unittest.TestCase):
         for tag in ("MOVE", "DOUBLE_CLICK", "DRAG", "SCROLL", "HOLD", "LOGICAL_CLICK"):
             self.assertIn("[LAST_ACTION: " + tag, source)
 
+    def test_vrm_interface_english_fallbacks(self):
+        source = (ROOT / "static/js/vrm.js").read_text(encoding="utf-8")
+        html = (ROOT / "static/vrm.html").read_text(encoding="utf-8")
+        locale = (ROOT / "static/js/locales/en-US.js").read_text(encoding="utf-8")
+        self.assertIn("Enter a message to chat...", source)
+        for label in ("Enable voice input", "Disable voice input", "Enable text input",
+                      "Disable text input", "Auto-hide on hover", "Collapse panel", "More options"):
+            self.assertIn(label, source)
+        self.assertNotIn("js/locales/zh-CN.js", html)
+        self.assertIn('<html lang="en-US">', html)
+        self.assertIsNone(HAN.search(html))
+        self.assertIsNone(HAN.search(locale))
+
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")
         self.assertIn(

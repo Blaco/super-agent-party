@@ -146,7 +146,7 @@ function initMotionMap(config) {
                     }
                 }
             } catch (e) {
-                console.warn(`[MotionMap] 解析路径失败: ${motion.name}`, e);
+                console.warn(`[MotionMap] Failed to resolve path: ${motion.name}`, e);
             }
         }
     });
@@ -354,7 +354,7 @@ async function loadGaussScene() {
     } else {
         const hit = [...defaultArr, ...userArr].find(s => s.id === sceneId);
         if (!hit) {
-            console.warn(`[SceneLoader] 找不到 id=${sceneId} 的场景，回退到 transparent`);
+            console.warn(`[SceneLoader] Scene id=${sceneId} not found; falling back to transparent`);
             sceneURL = 'transparent';
         } else {
             // 把相对 path 拼成绝对地址
@@ -410,7 +410,7 @@ async function loadGaussScene() {
     /* ---------- 5. 挂到场景 ---------- */
     scene.add(group);
     currentSceneGroup = group;
-    console.log(`[SceneLoader] 场景 ${sceneId} 加载完成`);
+    console.log(`[SceneLoader] Scene ${sceneId} loaded`);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1017,7 +1017,7 @@ async function getAnimationFiles() {
           urlObj.host     = window.location.host;
           return urlObj.toString();
         } catch (e) {
-          console.error(`[AnimationFiles] 无法构造有效URL: ${item.path}`, e);
+          console.error(`[AnimationFiles] Cannot construct a valid URL: ${item.path}`, e);
           return null;
         }
       })
@@ -1032,14 +1032,14 @@ async function getAnimationFiles() {
         "squat.vrma", "model_pose.vrma", "spin.vrma"
       ].map(file => base + file);
       
-      console.warn('没有选中任何有效动作，使用默认目录下的兜底动画');
+      console.warn('No valid motions selected; using fallback animations from the default directory');
       return fallback;
     }
 
     return urls;
 
   } catch (err) {
-    console.error('获取动画列表失败：', err);
+    console.error('Failed to retrieve animation list:', err);
     return [`${window.location.protocol}//${window.location.host}/vrm/animations/greeting.vrma`];
   }
 }
@@ -1381,7 +1381,7 @@ function stopChunkAnimation(chunkId) {
     const chunkState = chunkAnimations.get(chunkId);
     if (!chunkState) return;
 
-    console.log(`正在停止 Chunk ${chunkId} 的动画和音频`);
+    console.log(`Stopping animation and audio for chunk ${chunkId}`);
 
     if (chunkState.animationId) {
         cancelAnimationFrame(chunkState.animationId);
@@ -1399,7 +1399,7 @@ function stopChunkAnimation(chunkId) {
 
     // 如果所有语音块都已结束，则重置表情
     if (chunkAnimations.size === 0 && currentVrm && currentVrm.expressionManager) {
-        console.log('所有语音块播放完毕，重置表情。');
+        console.log('All speech chunks finished; resetting expression.');
         currentVrm.expressionManager.resetValues();
         currentVrm.expressionManager.setValue('neutral', 1.0);
     }
@@ -1409,7 +1409,7 @@ function stopChunkAnimation(chunkId) {
  * 停止所有正在播放的语音动画
  */
 function stopAllChunkAnimations() {
-    console.log('正在停止所有的口型同步动画。');
+    console.log('Stopping all lip-sync animations.');
     for (const chunkId of chunkAnimations.keys()) {
         stopChunkAnimation(chunkId);
     }
@@ -1574,7 +1574,7 @@ function startChunkAnimation(chunkId, chunkState) {
         }
     }
 
-    console.log(`Chunk ${chunkId}: 启动共振峰口型同步`);
+    console.log(`Chunk ${chunkId}: Starting formant-based lip sync`);
     chunkState.animationId = requestAnimationFrame(animateChunk);
 }
 
@@ -1601,7 +1601,7 @@ async function startLipSyncForChunk(data) {
             if (foundMotionId) {
                 const motionUrl = motionUrlMap.get(foundMotionId);
                 if (motionUrl) {
-                    console.log(`[LipSync] 触发动作: ${foundMotionId}`);
+                    console.log(`[LipSync] Triggering motion: ${foundMotionId}`);
                     idleAnimationManager.playOneShotAnimation(motionUrl);
                 }
             }
@@ -1734,7 +1734,7 @@ async function startLipSyncForChunk(data) {
         };
 
         audio.onerror = (err) => {
-            console.error(`Chunk ${chunkId} 播放错误:`, err);
+            console.error(`Chunk ${chunkId} Playback error:`, err);
             stopChunkAnimation(chunkId);
             resolve(); // 出错也必须 resolve，否则队列会卡死
         };
@@ -1744,7 +1744,7 @@ async function startLipSyncForChunk(data) {
             await audio.play();
             chunkState.animationId = requestAnimationFrame(animateChunk);
         } catch (error) {
-            console.error("Audio.play 失败:", error);
+            console.error("Audio.play failed:", error);
             stopChunkAnimation(chunkId);
             resolve();
         }
@@ -2355,7 +2355,7 @@ window.addEventListener('keydown', (e) => {
             debugControls.update(); // 必须调用，否则 target 不生效
             
             isPreviewing360 = true;
-            console.log("进入 360 预览模式：已同步至 1.5m 平视高度");
+            console.log("Entering 360 preview mode at 1.5 m eye level");
         } else {
             // 退出预览模式
             if (debugSphere) {
@@ -2367,7 +2367,7 @@ window.addEventListener('keydown', (e) => {
                 debugControls.dispose();
             }
             isPreviewing360 = false;
-            console.log("退出预览，恢复 2:1 平面图输出");
+            console.log("Leaving preview; restoring 2:1 flat output");
         }
     }
 });
@@ -2704,7 +2704,7 @@ function setupTextInteraction() {
     const textInputField = document.createElement('input');
     textInputField.id = 'text-input-field';
     textInputField.type = 'text';
-    textInputField.placeholder = '输入文字与模型对话...';
+    textInputField.placeholder = 'Enter a message to chat...';
     textInputField.style.cssText = `
         flex: 1;
         background: transparent;
@@ -2764,7 +2764,7 @@ function setupTextInteraction() {
             }, 300);
             textInputField.value = ''; 
         } else {
-            console.warn("WS 未连接，尝试重连...");
+            console.warn("WebSocket disconnected; attempting to reconnect...");
             initPttMainWs();
         }
     }
@@ -2779,7 +2779,7 @@ const btn_height = 28;
 
 function addcontrolPanel() {
     if (isRenderMode) {
-        console.log('全景渲染模式：已跳过控制面板生成');
+        console.log('Panoramic render mode: skipping control panel creation');
         return;
     }
 
@@ -3045,7 +3045,7 @@ function addcontrolPanel() {
                 user-select: none; pointer-events: auto; backdrop-filter: blur(10px);
             `;
             const hideDesc = await t('AutoHideDescription');
-            hideButton.title = hideDesc || '鼠标悬停自动隐藏';
+            hideButton.title = hideDesc || 'Auto-hide on hover';
             updateHideButtonState();
         }
 
@@ -3053,11 +3053,11 @@ function addcontrolPanel() {
             if (isAutoHideActive) {
                 hideButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
                 hideButton.style.color = '#ffc107';
-                hideButton.title = await t('AutoHideEnabled') || '自动隐藏已启用，点击关闭';
+                hideButton.title = await t('AutoHideEnabled') || 'Auto-hide enabled; click to disable';
             } else {
                 hideButton.innerHTML = '<i class="fas fa-eye"></i>';
                 hideButton.style.color = '#6c757d';
-                hideButton.title = await t('AutoHideDescription') || '鼠标悬停自动隐藏，点击启用';
+                hideButton.title = await t('AutoHideDescription') || 'Auto-hide on hover; click to enable';
             }
         }
 
@@ -3260,7 +3260,7 @@ function addcontrolPanel() {
                 subPanel.style.pointerEvents = 'auto';
                 moreButton.innerHTML = '<i class="fas fa-caret-right"></i>';
                 moreButton.style.color = '#007bff';
-                moreButton.title = await t('collapse') || '收起面板';
+                moreButton.title = await t('collapse') || 'Collapse panel';
             } else {
                 subPanel.style.opacity = '0';
                 subPanel.style.visibility = 'hidden';
@@ -3268,7 +3268,7 @@ function addcontrolPanel() {
                 subPanel.style.pointerEvents = 'none';
                 moreButton.innerHTML = '<i class="fas fa-ellipsis-v"></i>';
                 moreButton.style.color = '#333';
-                moreButton.title = await t('MoreOptions') || '更多功能';
+                moreButton.title = await t('MoreOptions') || 'More options';
             }
             showTooltip(moreButton, moreButton.title);
         }
@@ -3282,7 +3282,7 @@ function addcontrolPanel() {
             moreButton.style.background = 'rgba(255,255,255,1)';
             moreButton.style.transform = 'scale(1.1)';
             moreButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-            if (!moreButton.title) moreButton.title = await t('MoreOptions') || '更多功能';
+            if (!moreButton.title) moreButton.title = await t('MoreOptions') || 'More options';
             showTooltip(moreButton, moreButton.title);
         });
         moreButton.addEventListener('mouseleave', () => {
@@ -3465,27 +3465,27 @@ function addcontrolPanel() {
                     optionalFeatures: ['local-floor', 'hit-test', 'dom-overlay'],
                     domOverlay: { root: document.body } 
                 });
-                console.log("进入 XR：全功能模式");
+                console.log("Entering XR: full-feature mode");
 
             } catch (err1) {
-                console.warn('全功能 XR 启动失败，尝试降级启动...', err1);
+                console.warn('Full-feature XR startup failed; trying fallback...', err1);
                 try {
                     // 尝试 2：剥离 dom-overlay (很多安卓浏览器死在 body 作为 root 上)
                     session = await navigator.xr.requestSession(mode, {
                         optionalFeatures: ['local-floor', 'hit-test']
                     });
-                    console.log("进入 XR：无 UI 穿透模式");
+                    console.log("Entering XR: mode without UI passthrough");
 
                 } catch (err2) {
-                    console.warn('降级模式 1 失败，尝试基础模式...', err2);
+                    console.warn('XR fallback mode 1 failed; trying basic mode...', err2);
                     try {
                         // 尝试 3：最基础的 XR 模式 (只要手机支持 ARCore/VR 就能开)
                         session = await navigator.xr.requestSession(mode);
-                        console.log("进入 XR：最基础模式");
+                        console.log("Entering XR: basic mode");
 
                     } catch (err3) {
                         // 彻底不支持
-                        alert('您的浏览器不支持任何 XR 配置，请尝试使用最新版 Chrome 浏览器。\n报错: ' + err3.message);
+                        alert('Your browser does not support these XR configurations. Try the latest version of Chrome.\nError: ' + err3.message);
                         return;
                     }
                 }
@@ -3511,7 +3511,7 @@ function addcontrolPanel() {
 
             // 处理 XR 手柄或屏幕点击输入
             session.addEventListener('select', (event) => {
-                console.log('XR 屏幕/手柄点击');
+                console.log('XR screen/controller click');
             });
         });
 
@@ -3659,7 +3659,7 @@ function addcontrolPanel() {
 
         // 2. 初始 Hover 提示 (使用你代码里的翻译函数 t)
         (async () => {
-            const initialTitle = await t('EnableVoiceInput') || '开启语音输入';
+            const initialTitle = await t('EnableVoiceInput') || 'Enable voice input';
             voiceControlBtn.title = initialTitle;
             addHoverEffect(voiceControlBtn, initialTitle); // 调用你现有的提示增强函数
         })();
@@ -3671,8 +3671,8 @@ function addcontrolPanel() {
             
             // 获取新的标题文本
             const activeTitle = pttVisible 
-                ? (await t('DisableVoiceInput') || '关闭语音输入') 
-                : (await t('EnableVoiceInput') || '开启语音输入');
+                ? (await t('DisableVoiceInput') || 'Disable voice input') 
+                : (await t('EnableVoiceInput') || 'Enable voice input');
 
            if (pttVisible) {
                 fBtn.classList.add('visible');
@@ -3715,7 +3715,7 @@ function addcontrolPanel() {
 
         let textInputVisible = false;
         (async () => {
-            const initialTitle = await t('EnableTextInput') || '开启文字输入';
+            const initialTitle = await t('EnableTextInput') || 'Enable text input';
             textControlBtn.title = initialTitle;
             addHoverEffect(textControlBtn, initialTitle);
         })();
@@ -3725,8 +3725,8 @@ function addcontrolPanel() {
             const container = document.getElementById('text-input-container');
             
             const activeTitle = textInputVisible 
-                ? (await t('DisableTextInput') || '关闭文字输入') 
-                : (await t('EnableTextInput') || '开启文字输入');
+                ? (await t('DisableTextInput') || 'Disable text input') 
+                : (await t('EnableTextInput') || 'Enable text input');
 
             if (textInputVisible) {
                 // 显示输入框，图标变蓝，背景维持白色
@@ -3843,9 +3843,9 @@ function addcontrolPanel() {
                 case 3: moveModeBtn.title = await t('ModeScale') || 'Scale Mode'; break;
             }
             const vText = pttVisible ? await t('DisableVoiceInput') : await t('EnableVoiceInput');
-            addHoverEffect(voiceControlBtn, vText || (pttVisible ? '关闭语音输入' : '开启语音输入'));
+            addHoverEffect(voiceControlBtn, vText || (pttVisible ? 'Disable voice input' : 'Enable voice input'));
             const tText = textInputVisible ? await t('DisableTextInput') : await t('EnableTextInput');
-            addHoverEffect(textControlBtn, tText || (textInputVisible ? '关闭文字输入' : '开启文字输入'));
+            addHoverEffect(textControlBtn, tText || (textInputVisible ? 'Disable text input' : 'Enable text input'));
         }
         setInterval(updateButtonTooltips, 1000);
 
@@ -3970,7 +3970,7 @@ function addcontrolPanel() {
         }
         // ==============================================================
 
-        console.log('控制面板已加载，更多功能折叠完毕。');
+        console.log('Control panel loaded; additional options collapsed.');
 
     }, 1000);
 }
@@ -4032,7 +4032,7 @@ function initTTSWebSocket() {
                 handleVrmCoreLogic(message);
                 handleTTSMessage(message); 
             } catch (e) {
-                console.error("解析 JSON 失败: ", e);
+                console.error("Failed to parse JSON: ", e);
             }
         }
     };
@@ -4268,7 +4268,7 @@ function handleTTSMessage(message) {
                         if (foundMotionId) {
                             const motionUrl = motionUrlMap.get(foundMotionId);
                             if (motionUrl) {
-                                console.log(`[OmniTextOnly] 触发动作: ${foundMotionId}`);
+                                console.log(`[OmniTextOnly] Triggering motion: ${foundMotionId}`);
                                 idleAnimationManager.playOneShotAnimation(motionUrl);
                             }
                         }

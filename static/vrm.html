@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-US">
 	<head>
 		<meta charset="utf-8" />
-		<title>three-vrm example</title>
+		<title>Agent Creation — 3D Companion</title>
 		<link rel="stylesheet" href="fontawesome/css/all.min.css">
 		<link rel="stylesheet" href="css/vrm.css">
-		<script src="js/locales/zh-CN.js"></script>
 		<script src="js/locales/en-US.js"></script>
 		<script src="js/locales.js"></script>
 		<link rel="stylesheet" href="libs/element-plus.css">
@@ -30,26 +29,26 @@
 			}
 			canvas {
 				display: block;
-				/* 简单的 CSS 锐化滤镜，性能开销极小 */
+				/* Simple CSS sharpening filter with minimal performance overhead */
 				filter: contrast(1.05) brightness(1.02) drop-shadow(0 0 0 rgba(0,0,0,0)); 
-				/* 或者使用 image-rendering 属性 */
+				/* Alternatively, use image-rendering */
 				image-rendering: -webkit-optimize-contrast;
 			}
-			/* 当处于 XR 模式时，强制调整 UI 样式 */
+			/* Adjust UI styles in XR mode */
 			:xr-overlay #control-panel {
-				/* 增加缩放，因为在 VR 里 UI 往往显得很小 */
+				/* Increase scale because UI often appears small in VR */
 				transform: scale(1.5) !important;
 				transform-origin: top right;
 			}
 
 			#control-panel, #subtitle-container {
-				/* 确保 UI 可以被点击 */
+				/* Ensure the UI remains clickable */
 				pointer-events: auto !important;
-				/* 防止选中文字 */
+				/* Prevent text selection */
 				user-select: none;
 			}
 
-			/* 隐藏在 XR 中没用的拖拽手柄 */
+			/* Hide drag handle in XR mode */
 			:xr-overlay #drag-handle {
 				display: none !important;
 			}
