@@ -708,29 +708,6 @@ let vue_data = {
       azureRegion: '',
       azureVoice: '',
 
-      // Volcengine
-      volcAppId: '',
-      volcAccessKey: '',
-      volcResourceId: 'seed-tts-2.0', // 默认公共资源ID
-      volcVoice: 'zh_female_vv_uranus_bigtts', // 默认大模型音色
-      volcRate: 1.0,
-
-      // Baidu
-      baiduApiKey: '',
-      baiduSecretKey: '',
-      baiduVoice: '',
-
-      // Minimax
-      minimaxApiKey: '',
-      minimaxGroupId: '',
-      minimaxVoice: '',
-
-      // Xunfei
-      xunfeiAppId: '',
-      xunfeiApiKey: '',
-      xunfeiApiSecret: '',
-      xunfeiVoice: '',
-
       // Fish Audio
       fishApiKey: '',
       fishVoice: '',
@@ -805,29 +782,6 @@ let vue_data = {
       azureSpeechKey: '',
       azureRegion: '',
       azureVoice: '',
-
-      // Volcengine
-      volcAppId: '',
-      volcAccessKey: '',
-      volcResourceId: 'seed-tts-2.0', // 默认公共资源ID
-      volcVoice: 'zh_female_vv_uranus_bigtts', // 默认大模型音色
-      volcRate: 1.0,
-
-      // Baidu
-      baiduApiKey: '',
-      baiduSecretKey: '',
-      baiduVoice: '',
-
-      // Minimax
-      minimaxApiKey: '',
-      minimaxGroupId: '',
-      minimaxVoice: '',
-
-      // Xunfei
-      xunfeiAppId: '',
-      xunfeiApiKey: '',
-      xunfeiApiSecret: '',
-      xunfeiVoice: '',
 
       // Fish Audio
       fishApiKey: '',

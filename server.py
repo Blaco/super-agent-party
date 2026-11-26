@@ -8910,58 +8910,12 @@ async def text_to_speech(request: Request):
             return StreamingResponse(generate_audio(), media_type="audio/ogg", headers={"Content-Disposition": f"inline; filename=tts_{index}.opus"})
 
         # ==========================================
-        # 4. 火山引擎 (使用全局连接池)
-        # ==========================================
-        elif tts_engine == 'volcengine':
-            volc_app_id = tts_settings.get('volcAppId', '')
-            volc_access_key = tts_settings.get('volcAccessKey', '')
-            volc_resource_id = tts_settings.get('volcResourceId', 'volc_tts_release') 
-            volc_voice = tts_settings.get('volcVoice', 'zh_female_cancan_mars_bigtts')
-            volc_rate = float(tts_settings.get('volcRate', 1.0))
-            if mobile_optimized: volc_rate = min(volc_rate * 0.95, 1.2)
-            
-            url = "https://openspeech.bytedance.com/api/v3/tts/unidirectional"
-            headers = {"X-Api-App-Id": volc_app_id, "X-Api-Access-Key": volc_access_key, "X-Api-Resource-Id": volc_resource_id, "Content-Type": "application/json"}
-            payload = {
-                "user": {"uid": "123456"},
-                "req_params": {
-                    "text": text, "speaker": volc_voice, "speed_ratio": volc_rate, 
-                    "audio_params": {"format": "mp3", "sample_rate": 24000},
-                    "additions": "{\"disable_markdown_filter\":true}" 
-                }
-            }
-
-            async def generate_audio():
-                try:
-                    async with global_http_client.stream("POST", url, headers=headers, json=payload) as response:
-                        response.raise_for_status()
-                        collected_audio = bytearray()
-                        async for line in response.aiter_lines():
-                            if not line: continue
-                            data = json.loads(line)
-                            if data.get("code", 0) != 0 and data.get("code", 0) != 20000000: continue
-                            if "data" in data and data["data"]:
-                                chunk_audio = base64.b64decode(data["data"])
-                                if target_format == "opus": collected_audio.extend(chunk_audio)
-                                else: yield chunk_audio
-                        
-                        if target_format == "opus" and collected_audio:
-                            res = await asyncio.to_thread(convert_to_opus_simple, bytes(collected_audio))
-                            final = res[0] if isinstance(res, tuple) else res
-                            for i in range(0, len(final), 4096): yield final[i:i + 4096]
-                except Exception as e:
-                    raise HTTPException(status_code=502, detail=f"火山引擎错误: {str(e)}")
-
-            media_type = "audio/ogg" if target_format == "opus" else "audio/mpeg"
-            return StreamingResponse(generate_audio(), media_type=media_type)
-
-        # ==========================================
         # 5. OpenAI TTS (使用实例缓存)
         # ==========================================
         elif tts_engine == 'openai':
             api_key = tts_settings.get('api_key', '')
             base_url = tts_settings.get('base_url', 'https://api.openai.com/v1')
-            if not api_key: raise HTTPException(status_code=400, detail="API密钥未配置")
+            if not api_key: raise HTTPException(status_code=400, detail="TTS API key is not configured")
             
             # 获取或创建缓存的客户端
             cache_key = (api_key, base_url)
@@ -9061,14 +9015,11 @@ async def text_to_speech(request: Request):
         # ==========================================
         # 7. Tetos SDK (Azure, 百度, 谷歌, Fish, etc. - 使用实例缓存)
         # ==========================================
-        elif tts_engine in ['azure', 'baidu', 'minimax', 'xunfei', 'fish', 'google']:
+        elif tts_engine in ['azure', 'fish', 'google']:
             selected_voice = tts_settings.get(f'{tts_engine}Voice', '') or None
             
             # 根据引擎生成缓存Key
             if tts_engine == 'azure': cache_key = (tts_engine, tts_settings.get('azureSpeechKey'), tts_settings.get('azureRegion'), selected_voice)
-            elif tts_engine == 'baidu': cache_key = (tts_engine, tts_settings.get('baiduApiKey'), tts_settings.get('baiduSecretKey'), selected_voice)
-            elif tts_engine == 'minimax': cache_key = (tts_engine, tts_settings.get('minimaxApiKey'), tts_settings.get('minimaxGroupId'), selected_voice)
-            elif tts_engine == 'xunfei': cache_key = (tts_engine, tts_settings.get('xunfeiAppId'), tts_settings.get('xunfeiApiKey'), tts_settings.get('xunfeiApiSecret'), selected_voice)
             elif tts_engine == 'fish': cache_key = (tts_engine, tts_settings.get('fishApiKey'), selected_voice)
             elif tts_engine == 'google': cache_key = (tts_engine, hash(tts_settings.get('googleServiceAccount', '')), selected_voice)
             else: cache_key = None
@@ -9082,15 +9033,6 @@ async def text_to_speech(request: Request):
                     if tts_engine == 'azure':
                         from tetos.azure import AzureSpeaker
                         speaker = AzureSpeaker(speech_key=cache_key[1], speech_region=cache_key[2], voice=selected_voice)
-                    elif tts_engine == 'baidu':
-                        from tetos.baidu import BaiduSpeaker
-                        speaker = BaiduSpeaker(api_key=cache_key[1], secret_key=cache_key[2], voice=selected_voice)
-                    elif tts_engine == 'minimax':
-                        from tetos.minimax import MinimaxSpeaker
-                        speaker = MinimaxSpeaker(api_key=cache_key[1], group_id=cache_key[2], voice=selected_voice)
-                    elif tts_engine == 'xunfei':
-                        from tetos.xunfei import XunfeiSpeaker
-                        speaker = XunfeiSpeaker(app_id=cache_key[1], api_key=cache_key[2], api_secret=cache_key[3], voice=selected_voice)
                     elif tts_engine == 'fish':
                         from tetos.fish import FishSpeaker
                         speaker = FishSpeaker(api_key=cache_key[1], voice=selected_voice)
@@ -9280,7 +9222,7 @@ async def text_to_speech(request: Request):
                 }
             )
 
-        raise HTTPException(status_code=400, detail="不支持的TTS引擎")
+        raise HTTPException(status_code=400, detail="Unsupported TTS engine")
     
     except Exception as e:
         import traceback
@@ -9316,40 +9258,6 @@ async def list_tetos_voices(request: Request):
                     speech_region=config.get('speech_region') or config.get('region')
                 )
                 # 获取列表
-                voices = speaker.list_voices()
-
-            # ---------------------------
-            # Baidu TTS
-            # ---------------------------
-            elif provider == 'baidu':
-                from tetos.baidu import BaiduSpeaker
-                speaker = BaiduSpeaker(
-                    api_key=config.get('api_key'),
-                    secret_key=config.get('secret_key')
-                )
-                voices = speaker.list_voices()
-
-            # ---------------------------
-            # Minimax TTS
-            # ---------------------------
-            elif provider == 'minimax':
-                from tetos.minimax import MinimaxSpeaker
-                speaker = MinimaxSpeaker(
-                    api_key=config.get('api_key'),
-                    group_id=config.get('group_id')
-                )
-                voices = speaker.list_voices()
-
-            # ---------------------------
-            # 讯飞 (Xunfei)
-            # ---------------------------
-            elif provider == 'xunfei':
-                from tetos.xunfei import XunfeiSpeaker
-                speaker = XunfeiSpeaker(
-                    app_id=config.get('app_id'),
-                    api_key=config.get('api_key'),
-                    api_secret=config.get('api_secret')
-                )
                 voices = speaker.list_voices()
 
             elif provider == 'fish':
