@@ -152,3 +152,10 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - Main UI: Translate direct file/browser, account, avatar-model and debug connection labels; update native language names to English labels; remove explicit simplified/traditional Chinese translation language options. This does not change user-authored text or model IDs.
 - Renderer: Translate several generic UI component placeholders, rating labels, audio affordance, action events and feedback. Tests protect core visible strings.
 - Files: static/index.html, static/js/renderer.js, tests/test_legal_and_visible_english.py, CI, this ledger. Large volumes of source comments, diagnostics and system prompts still need translation.
+
+## 2026-11-26 — Translate core tool, task, memory and visual context instructions
+
+- Parent: c6424daaa23bc7ed189bb0c63a76eb579f916f65. Critical model-visible messages in server.py are translated to English: vision descriptions, image metadata, execution/planning guardrails, subtask routing, LaTeX/language/sticker constraints, KB/web-search prefixes, saved-memory and skill-activation reminders, Dify prompt framing, async tool follow-up/error instructions, deep-research continuation and safety-filter output. Protocol field names and tool names unchanged.
+- py/sub_agent.py translates mandatory finish_task directives, autonomous task report, consensus instructions. py/diary_chat_integration.py translates conversation diary-summary instructions and role names; py/autoBehavior.py translates scheduling prefix.
+- tests/test_english_agent_instructions.py and .github/workflows/companion-audit.yml register static contracts and compile edited Python modules. User-authored card, user prompts, stored chat history and existing diary files remain unchanged.
+- Not yet translated: A2UI reference guide, complex TTS/THA system prompts, other backend messages/comments, large UI JS error strings, China-specific vendor catalogs. Do not claim full English-only product until reviewed and tested.

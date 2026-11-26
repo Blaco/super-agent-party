@@ -1220,7 +1220,7 @@ async def get_image_content(image_url: str) -> str:
             with open(os.path.join(UPLOAD_FILES_DIR, f"{image_hash}.txt"), "r", encoding='utf-8') as f:
                 content += f"\n\n图片(URL:{image_url} 哈希值：{image_hash})信息如下：\n\n"+str(f.read())+"\n\n"
         else:
-            images_content = [{"type": "text", "text": "请仔细描述图片中的内容，包含图片中可能存在的文字、数字、颜色、形状、大小、位置、人物、物体、场景等信息。"},{"type": "image_url", "image_url": {"url": url}}]
+            images_content = [{"type": "text", "text": "Describe the image accurately, including any visible text, numbers, colors, shapes, sizes, positions, people, objects and setting."},{"type": "image_url", "image_url": {"url": url}}]
             client = AsyncOpenAI(api_key=settings['vision']['api_key'],base_url=settings['vision']['base_url'])
             
             extra = {}
@@ -1242,7 +1242,7 @@ async def get_image_content(image_url: str) -> str:
             with open(os.path.join(UPLOAD_FILES_DIR, f"{image_hash}.txt"), "r", encoding='utf-8') as f:
                 content += f"\n\nn图片(URL:{image_url} 哈希值：{image_hash})信息如下：\n\n"+str(f.read())+"\n\n"
         else:
-            images_content = [{"type": "text", "text": "请仔细描述图片中的内容，包含图片中可能存在的文字、数字、颜色、形状、大小、位置、人物、物体、场景等信息。"},{"type": "image_url", "image_url": {"url": url}}]
+            images_content = [{"type": "text", "text": "Describe the image accurately, including any visible text, numbers, colors, shapes, sizes, positions, people, objects and setting."},{"type": "image_url", "image_url": {"url": url}}]
             client = AsyncOpenAI(api_key=settings['api_key'],base_url=settings['base_url'])
             
             extra = {}
@@ -2125,16 +2125,16 @@ async def images_add_in_messages(request_messages: List[Dict], images: List[Dict
                     for item in image['images']:
                         media_key = item['type']  # 'image_url' 或 'video_url'
                         file_hash = item[media_key]['hash']
-                        media_name = "视频" if media_key == "video_url" else "图片"
+                        media_name = "video" if media_key == "video_url" else "image"
                         
                         # 统一缓存处理，如果是视频就是视频文本解析记录
                         cache_file = os.path.join(UPLOAD_FILES_DIR, f"{file_hash}.txt")
                         if os.path.exists(cache_file):
                             with open(cache_file, "r", encoding='utf-8') as f:
-                                messages[index]['content'] += f"\n\nsystem: 用户发送的{media_name}(哈希值：{file_hash})信息如下：\n\n{f.read()}\n\n"
+                                messages[index]['content'] += f"\n\nsystem: The user provided a {media_name} (file hash: {file_hash}); its content is described below:\n\n{f.read()}\n\n"
                         else:
                             # 根据输入类型调整提示词
-                            prompt_text = "请仔细描述这段视频中的内容，包含视频中发生的事件、场景变化、人物动作以及关键细节等信息。" if media_key == "video_url" else "请仔细描述图片中的内容，包含图片中可能存在的文字、数字、颜色、形状、大小、位置、人物、物体、场景等信息。"
+                            prompt_text = "Describe the video accurately, including events, changes in scenes, people's actions and key details." if media_key == "video_url" else "Describe the image accurately, including any visible text, numbers, colors, shapes, sizes, positions, people, objects and setting."
                             
                             media_content =[
                                 {"type": "text", "text": prompt_text},
@@ -2155,7 +2155,7 @@ async def images_add_in_messages(request_messages: List[Dict], images: List[Dict
                                 **extra
                             )
                             result_text = str(response.choices[0].message.content)
-                            messages[index]['content'] += f"\n\nsystem: 用户发送的{media_name}(哈希值：{file_hash})信息如下：\n\n{result_text}\n\n"
+                            messages[index]['content'] += f"\n\nsystem: The user provided a {media_name} (file hash: {file_hash}); its content is described below:\n\n{result_text}\n\n"
                             
                             with open(cache_file, "w", encoding='utf-8') as f:
                                 f.write(result_text)
@@ -2167,12 +2167,12 @@ async def images_add_in_messages(request_messages: List[Dict], images: List[Dict
                     for item in image['images']:
                         media_key = item['type']  # 'image_url' 或 'video_url'
                         file_hash = item[media_key]['hash']
-                        media_name = "视频" if media_key == "video_url" else "图片"
+                        media_name = "video" if media_key == "video_url" else "image"
                         
                         cache_file = os.path.join(UPLOAD_FILES_DIR, f"{file_hash}.txt")
                         if os.path.exists(cache_file):
                             with open(cache_file, "r", encoding='utf-8') as f:
-                                messages[index]['content'] += f"\n\nsystem: 用户发送的{media_name}(哈希值：{file_hash})信息如下：\n\n{f.read()}\n\n"
+                                messages[index]['content'] += f"\n\nsystem: The user provided a {media_name} (file hash: {file_hash}); its content is described below:\n\n{f.read()}\n\n"
                         else:
                             if isinstance(messages[index]['content'], str):
                                 messages[index]['content'] =[{"type": "text", "text": messages[index]['content']}]
@@ -2361,36 +2361,36 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
     if cwd and Path(cwd).exists() and cli_settings.get("enabled", False):
         permission_message = ""
         if permissionMode != "plan" and permissionMode != "cowork" and permissionMode != "goal":
-            permission_message = "你当前处于执行模式，你可以自由地使用所有工具，但请注意不要滥用权限！如果有更安全的工具，请不要直接使用bash命令！"
+            permission_message = "You are in execution mode. Use only the tools you need and respect their permission boundaries. Prefer dedicated safer tools over shell commands."
             content_append(request.messages, 'system', permission_message)
         elif permissionMode == "goal":
             if not request.is_sub_agent:
                 permission_message += "你当前处于目标完成模式。你拥有最高权限，可以使用所有工具。你可以通过 create_subtask 工具将子任务分派给子智能体并行处理。当你确认用户的主任务已经全部达成时，必须调用 finish_main_task 工具并提供最终执行结果的详细总结来标记任务完成。在调用 finish_main_task 之前不要停止。\n\n"
                 content_append(request.messages, 'system', permission_message)
                 if request.is_app_bot and request.platform:
-                    task_platform_message = f"\n\n使用create_subtask工具时请将platforms参数设置为[{request.platform}]，从而将子任务的结果及时发给用户。\n\n"
+                    task_platform_message = f"\n\nWhen using create_subtask, set the platforms parameter to [{request.platform}] so the user receives the result.\n\n"
                     content_append(request.messages, 'system', task_platform_message)
                 else:
-                    task_platform_message = f"\n\n使用create_subtask工具时请将platforms参数设置为['chat']，从而将子任务的结果及时发给用户本地客户端。\n\n"
+                    task_platform_message = f"\n\nWhen using create_subtask, set the platforms parameter to ['chat'] so the local client receives the result.\n\n"
                     content_append(request.messages, 'system', task_platform_message)
             else:
-                permission_message = "你当前处于执行模式，你可以自由地使用所有工具，但请注意不要滥用权限！如果有更安全的工具，请不要直接使用bash命令！"
+                permission_message = "You are in execution mode. Use only the tools you need and respect their permission boundaries. Prefer dedicated safer tools over shell commands."
                 content_append(request.messages, 'system', permission_message)
         elif permissionMode == "cowork":
             if not request.is_sub_agent:
                 permission_message += "你当前处于协作模式，create_subtask工具可以帮你完成几乎任何任务（比如查资料、写代码、生成报告等），当你遇到难题时，可以尝试把它分解成一个个小任务，交给create_subtask工具去完成！当用户再次询问进度时，你可以用query_task_progress工具查询任务进度和获取详细结果\n\n"
                 content_append(request.messages, 'system', permission_message)
                 if request.is_app_bot and request.platform:
-                    task_platform_message = f"\n\n使用create_subtask工具时请将platforms参数设置为[{request.platform}]，从而将子任务的结果及时发给用户。\n\n"
+                    task_platform_message = f"\n\nWhen using create_subtask, set the platforms parameter to [{request.platform}] so the user receives the result.\n\n"
                     content_append(request.messages, 'system', task_platform_message)
                 else:
-                    task_platform_message = f"\n\n使用create_subtask工具时请将platforms参数设置为['chat']，从而将子任务的结果及时发给用户本地客户端。\n\n"
+                    task_platform_message = f"\n\nWhen using create_subtask, set the platforms parameter to ['chat'] so the local client receives the result.\n\n"
                     content_append(request.messages, 'system', task_platform_message)
             else:
-                permission_message = "你当前处于执行模式，你可以自由地使用所有工具，但请注意不要滥用权限！如果有更安全的工具，请不要直接使用bash命令！"
+                permission_message = "You are in execution mode. Use only the tools you need and respect their permission boundaries. Prefer dedicated safer tools over shell commands."
                 content_append(request.messages, 'system', permission_message)
         else:
-            permission_message = "你当前处于计划模式，请尽可能只使用只读工具了解当前项目，使用自然语言描述你的需求和计划，并等待用户确认后再执行！"
+            permission_message = "You are in planning mode. Inspect the project using read-only tools, describe a plan in plain English, and wait for the user's approval before modifying anything."
             content_append(request.messages, 'system', permission_message)
 
     # Docker 环境固定信息（完全静态）
@@ -2483,16 +2483,16 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
     # 推理提示（固定，保留原逻辑 prepend 到用户消息，因其为固定前缀不会破坏缓存）
     if settings['tools']['inference']['enabled']:
         inference_message = "回答用户前请先思考推理，再回答问题，你的思考推理的过程必须放在<think>与</think>之间。\n\n"
-        content_prepend(request.messages, 'user', f"{inference_message}\n\n用户：")
+        content_prepend(request.messages, 'user', f"{inference_message}\n\nUser:")
 
     # 公式格式（固定）
     if settings['tools']['formula']['enabled']:
-        latex_message = "\n\n当你想使用latex公式时，你必须是用 ['$', '$'] 作为行内公式定界符，以及 ['$$', '$$'] 作为行间公式定界符。\n\n"
+        latex_message = "\n\nWhen writing LaTeX, use ['$', '$']  as inline delimiters and ['$$', '$$']  as display delimiters.\n\n"
         content_append(request.messages, 'system', latex_message)
 
     # 语言要求（固定）
     if settings['tools']['language']['enabled']:
-        language_message = f"请使用{settings['tools']['language']['language']}语言说话！，不要使用其他语言，语气风格为{settings['tools']['language']['tone']}\n\n"
+        language_message = f"Respond in {settings['tools']['language']['language']} only, using a {settings['tools']['language']['tone']} tone.\n\n"
         content_append(request.messages, 'system', language_message)
 
     # 贴纸包（固定）
@@ -2500,7 +2500,7 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
         have_stickerPack = False
         for stickerPack in settings["stickerPacks"]:
             if stickerPack["enabled"]:
-                sticker_message = f"\n\n图片库名称：{stickerPack['name']}，包含的图片：{json.dumps(stickerPack['stickers'])}\n\n"
+                sticker_message = f"\n\nSticker collection: {stickerPack['name']}; available images: {json.dumps(stickerPack['stickers'])}\n\n"
                 content_append(request.messages, 'system', sticker_message)
                 have_stickerPack = True
         if have_stickerPack:
@@ -3017,7 +3017,7 @@ Assistant: 表格如下：
         from py.affection_system import load_affection_data 
         affection_data = await load_affection_data()
         dimensions = love_settings.get("dimensions", ["love", "Familiarity"])
-        custom_prompt = love_settings.get("prompt", "根据当前对话的内容、情感色彩以及你的角色设定，合理地评估或微调这些数值（每次增减幅度建议在-5到+5之间）。")
+        custom_prompt = love_settings.get("prompt", "Evaluate these attributes based on the conversation, tone and character persona; normally adjust each by no more than five points.")
         user_prompt_text = ""
         if request.messages and request.messages[-1]['role'] == 'user':
             user_prompt_text = str(request.messages[-1].get('content', ''))
@@ -3029,12 +3029,12 @@ Assistant: 表格如下：
             relevant_users.add(default_user)
         status_block = ""
         if relevant_users:
-            status_block = "目前的已知羁绊数据参考：\n"
+            status_block = "Known relationship values:\n"
             for ru in relevant_users:
                 user_stats = affection_data.get(ru, {})
                 stats_str = ", ".join([f"{dim}: {user_stats.get(dim, 0)}" for dim in dimensions])
                 status_block += f"- {ru}: {stats_str}\n"
-        tag_example = "<user=发言者的真实名字"
+        tag_example = "<user=actual_speaker_name"
         for dim in dimensions:
             tag_example += f" {dim}=1"
         tag_example += ">"
@@ -3086,7 +3086,7 @@ Assistant: 表格如下：
                             await mf.write(append_text)
                         # 注入到用户消息末尾
                         if request.messages[-1]['role'] == 'user':
-                            request.messages[-1]['content'] += f"\n\n[系统提示：用户刚刚使用'#'指令保存了以下记忆：“{mem_content_to_save}”，请简短确认你已记住。]"
+                            request.messages[-1]['content'] += f"\n\n[System note: the user saved this memory with the '#' command: {mem_content_to_save}. Briefly confirm it was recorded.]"
                     except Exception as e:
                         print(f"保存 MEMORY.md 失败: {e}")
             elif user_text_trimmed.startswith('/'):
@@ -3107,7 +3107,7 @@ Assistant: 表格如下：
                                     skill_content = await f.read()
                                 # 注入到用户消息末尾
                                 if request.messages[-1]['role'] == 'user':
-                                    request.messages[-1]['content'] += f"\n\n[系统提示：用户激活了技能“{skill_name}”，技能说明：\n{skill_content}\n请严格按技能说明处理用户请求。]"
+                                    request.messages[-1]['content'] += f"\n\n[System note: the user activated skill '{skill_name}'. Skill instructions:\n{skill_content}\nFollow these instructions when handling the request.]"
                             except Exception as e:
                                 print(f"读取技能文档失败: {e}")
 
@@ -3143,7 +3143,7 @@ Assistant: 表格如下：
             content_append(request.messages, 'system',
                 "\n\n【本地应用控制已启用】当前没有已连接的应用。先在 GUI 中扫描并连接应用。")
 
-    print(f"系统提示：{request.messages[0]['content']}")
+    print(f"System instructions:{request.messages[0]['content']}")
     return request
 
 def get_drs_stage(DRS_STAGE):
@@ -3174,7 +3174,7 @@ def get_drs_stage_system_message(DRS_STAGE,user_prompt,full_content):
         search_prompt = f"""
 # 当前状态：
 
-## 初始任务：
+## Original task:
 {user_prompt}
 
 ## 当前结果：
@@ -3203,7 +3203,7 @@ def get_drs_stage_system_message(DRS_STAGE,user_prompt,full_content):
         search_prompt = f"""
 # 当前状态：
 
-## 初始任务：
+## Original task:
 {user_prompt}
 
 ## 当前结果：
@@ -3234,7 +3234,7 @@ def get_drs_stage_system_message(DRS_STAGE,user_prompt,full_content):
         search_prompt = f"""
 # 当前状态：
 
-## 初始任务：
+## Original task:
 {user_prompt}
 
 ## 当前结果：
@@ -4063,13 +4063,13 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 if len(request.messages) >= 3:
                     if request.messages[2]['role'] == 'user':
                         if request.messages[1]['role'] == 'assistant':
-                            request.messages[2]['content'] = "你上一次的发言：\n" +request.messages[0]['content'] + "\n你上一次的发言结束\n\n用户：" + request.messages[2]['content']
+                            request.messages[2]['content'] = "Your previous response:\n" +request.messages[0]['content'] + "\nEnd of previous response\n\nUser:" + request.messages[2]['content']
                         if request.messages[0]['role'] == 'system':
-                            request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n" + request.messages[2]['content']
+                            request.messages[2]['content'] = "System instructions:\n" +request.messages[0]['content'] + "\nEnd of system instructions\n\n" + request.messages[2]['content']
                 elif len(request.messages) >= 2:
                     if request.messages[1]['role'] == 'user':
                         if request.messages[0]['role'] == 'system':
-                            request.messages[1]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n用户：" + request.messages[1]['content']
+                            request.messages[1]['content'] = "System instructions:\n" +request.messages[0]['content'] + "\nEnd of system instructions\n\nUser:" + request.messages[1]['content']
             except Exception as e:
                 print("Dify error:",e)
         model = settings['model']
@@ -4165,7 +4165,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                     "role": "tool",
                                     "tool_call_id": "agentParty",
                                     "name": response["name"],
-                                    "content": f"之前调用的异步工具（{tid}）的结果：\n\n{response['result']}\n\n====结果结束====\n\n你必须根据工具结果回复未回复的问题或需求。请不要重复调用该工具！"
+                                    "content": f"Result of earlier asynchronous tool call ({tid}):\n\n{response['result']}\n\n====End of result====\n\nUse the tool result to address the unfinished request. Do not repeat this tool call unnecessarily."
                                 }
                             )
                         if response["status"] == "error":
@@ -4180,7 +4180,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             yield f"data: {json.dumps(tool_chunk)}\n\n"
                             request.messages.append({
                                 "role": "system",
-                                "content": f"之前调用的异步工具（{tid}）发生错误：\n\n{response['result']}\n\n====错误结束====\n\n"
+                                "content": f"Earlier asynchronous tool call ({tid}) failed:\n\n{response['result']}\n\n====End of error====\n\n"
                             }) 
                     for response in responses_to_wait:
                         # 在request.messages倒数第一个元素之前的位置插入一个新元素
@@ -4242,7 +4242,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         if all_kb_content:
                             all_kb_content = json.dumps(all_kb_content, ensure_ascii=False, indent=4)
                             kb_message = f"\n\nRelevant knowledge base content: {all_kb_content}"
-                            content_append(request.messages, 'user',  f"\n\n知识库内容：{all_kb_content}\n\n")
+                            content_append(request.messages, 'user',  f"\n\nKnowledge-base content:{all_kb_content}\n\n")
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
@@ -4293,7 +4293,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         elif settings['webSearch']['engine'] == 'youcom':
                             results = await youcom_search(user_prompt)
                         if results:
-                            content_append(request.messages, 'user',  f"\n\n联网搜索结果：{results}\n\n")
+                            content_append(request.messages, 'user',  f"\n\nWeb search results:{results}\n\n")
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
@@ -4496,7 +4496,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         if drs_msg:
                             content_append(reasoner_messages, 'user',  f"\n\n{drs_msg}\n\n")
                     if tools:
-                        content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
+                        content_append(reasoner_messages, 'system',  f"Available tools:{json.dumps(tools)}")
                     for modelProvider in settings['modelProviders']: 
                         if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                             vendor = modelProvider['vendor']
@@ -4768,9 +4768,9 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     is_safe, matched = await check_content_safety(full_content, min_cjk_chars=3)
                     if not is_safe:
                         print(f"[content_safety] output blocked words: {matched}")
-                        correction = {"choices": [{"delta": {"content": "[该回复已被内容安全策略自动替换]", "_safety_filtered": True}}]}
+                        correction = {"choices": [{"delta": {"content": "[This response was replaced by the content safety filter.]", "_safety_filtered": True}}]}
                         yield f"data: {json.dumps(correction)}\n\n"
-                        full_content = "[该回复已被内容安全策略自动替换]"
+                        full_content = "[This response was replaced by the content safety filter.]"
                 if not tool_calls:
                     # 将响应添加到消息列表
                     request.messages.append({
@@ -4839,7 +4839,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         yield f"data: {json.dumps(search_chunk)}\n\n"
                         search_not_done = True
                         search_task = response_content["unfinished_task"]
-                        task_prompt = f"请继续完成初始任务中未完成的任务：\n\n{search_task}\n\n初始任务：{user_prompt}\n\n最后，请给出完整的初始任务的最终结果。"
+                        task_prompt = f"Continue unfinished parts of the original task:\n\n{search_task}\n\nOriginal task:{user_prompt}\n\nFinally, provide the complete answer to the original task."
                         request.messages.append(
                             {
                                 "role": "assistant",
@@ -4903,7 +4903,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         yield f"data: {json.dumps(search_chunk)}\n\n"
                         search_not_done = True
                         search_task = response_content["unfinished_task"]
-                        task_prompt = f"请继续查询如下信息：\n\n{search_task}\n\n初始任务：{user_prompt}\n\n"
+                        task_prompt = f"Continue researching the following information:\n\n{search_task}\n\nOriginal task:{user_prompt}\n\n"
                         request.messages.append(
                             {
                                 "role": "assistant",
@@ -5188,7 +5188,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     # 如果启用推理模型
                     if settings['reasoner']['enabled'] or enable_thinking:
                         if tools:
-                            content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
+                            content_append(reasoner_messages, 'system',  f"Available tools:{json.dumps(tools)}")
                         for modelProvider in settings['modelProviders']: 
                             if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                                 vendor = modelProvider['vendor']
@@ -5649,9 +5649,9 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         is_safe, matched = await check_content_safety(full_content, min_cjk_chars=3)
                         if not is_safe:
                             print(f"[content_safety] output blocked words: {matched}")
-                            correction = {"choices": [{"delta": {"content": "[该回复已被内容安全策略自动替换]", "_safety_filtered": True}}]}
+                            correction = {"choices": [{"delta": {"content": "[This response was replaced by the content safety filter.]", "_safety_filtered": True}}]}
                             yield f"data: {json.dumps(correction)}\n\n"
-                            full_content = "[该回复已被内容安全策略自动替换]"
+                            full_content = "[This response was replaced by the content safety filter.]"
                     if not tool_calls:
                         # 将响应添加到消息列表
                         request.messages.append({
@@ -5721,7 +5721,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             yield f"data: {json.dumps(search_chunk)}\n\n"
                             search_not_done = True
                             search_task = response_content["unfinished_task"]
-                            task_prompt = f"请继续完成初始任务中未完成的任务：\n\n{search_task}\n\n初始任务：{user_prompt}\n\n最后，请给出完整的初始任务的最终结果。"
+                            task_prompt = f"Continue unfinished parts of the original task:\n\n{search_task}\n\nOriginal task:{user_prompt}\n\nFinally, provide the complete answer to the original task."
                             request.messages.append(
                                 {
                                     "role": "assistant",
@@ -5787,7 +5787,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             yield f"data: {json.dumps(search_chunk)}\n\n"
                             search_not_done = True
                             search_task = response_content["unfinished_task"]
-                            task_prompt = f"请继续查询如下信息：\n\n{search_task}\n\n初始任务：{user_prompt}\n\n"
+                            task_prompt = f"Continue researching the following information:\n\n{search_task}\n\nOriginal task:{user_prompt}\n\n"
                             request.messages.append(
                                 {
                                     "role": "assistant",
@@ -6373,7 +6373,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         all_kb_content = await rerank_knowledge_base(user_prompt,all_kb_content)
                 if all_kb_content:
                     kb_message = f"\n\nRelevant knowledge base content: {all_kb_content}"
-                    content_append(request.messages, 'user',  f"{kb_message}\n\n用户：{user_prompt}")
+                    content_append(request.messages, 'user',  f"{kb_message}\n\nUser:{user_prompt}")
         if settings["KBSettings"]["when"] == "after_thinking" or settings["KBSettings"]["when"] == "both":
             if kb_list:
                 kb_list_message = f"\n\nAvailable knowledge bases: {json.dumps(kb_list, ensure_ascii=False)}"
@@ -6399,13 +6399,13 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 if len(request.messages) >= 3:
                     if request.messages[2]['role'] == 'user':
                         if request.messages[1]['role'] == 'assistant':
-                            request.messages[2]['content'] = "你上一次的发言：\n" +request.messages[0]['content'] + "\n你上一次的发言结束\n\n用户：" + request.messages[2]['content']
+                            request.messages[2]['content'] = "Your previous response:\n" +request.messages[0]['content'] + "\nEnd of previous response\n\nUser:" + request.messages[2]['content']
                         if request.messages[0]['role'] == 'system':
-                            request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n" + request.messages[2]['content']
+                            request.messages[2]['content'] = "System instructions:\n" +request.messages[0]['content'] + "\nEnd of system instructions\n\n" + request.messages[2]['content']
                 elif len(request.messages) >= 2:
                     if request.messages[1]['role'] == 'user':
                         if request.messages[0]['role'] == 'system':
-                            request.messages[1]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n用户：" + request.messages[1]['content']
+                            request.messages[1]['content'] = "System instructions:\n" +request.messages[0]['content'] + "\nEnd of system instructions\n\nUser:" + request.messages[1]['content']
             except Exception as e:
                 print("Dify error:",e)
         if settings['webSearch']['enabled'] or enable_web_search:
@@ -6481,7 +6481,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     content_append(reasoner_messages, 'user',  f"\n\n{drs_msg}\n\n")
                 content_append(reasoner_messages, 'user',  f"\n\nReference steps: {user_prompt}\n\n")
             if tools:
-                content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
+                content_append(reasoner_messages, 'system',  f"Available tools:{json.dumps(tools)}")
             for modelProvider in settings['modelProviders']: 
                 if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                     vendor = modelProvider['vendor']
@@ -6603,7 +6603,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             elif response_content["status"] == "not_done":
                 search_not_done = True
                 search_task = response_content["unfinished_task"]
-                task_prompt = f"请继续完成初始任务中未完成的任务：\n\n{search_task}\n\n初始任务：{user_prompt}\n\n最后，请给出完整的初始任务的最终结果。"
+                task_prompt = f"Continue unfinished parts of the original task:\n\n{search_task}\n\nOriginal task:{user_prompt}\n\nFinally, provide the complete answer to the original task."
                 request.messages.append(
                     {
                         "role": "assistant",
@@ -6641,7 +6641,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 DRS_STAGE = 2
                 search_not_done = True
                 search_task = response_content["unfinished_task"]
-                task_prompt = f"请继续查询如下信息：\n\n{search_task}\n\n初始任务：{user_prompt}\n\n"
+                task_prompt = f"Continue researching the following information:\n\n{search_task}\n\nOriginal task:{user_prompt}\n\n"
                 request.messages.append(
                     {
                         "role": "assistant",
@@ -6747,7 +6747,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             )
             if settings['reasoner']['enabled'] or enable_thinking:
                 if tools:
-                    content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
+                    content_append(reasoner_messages, 'system',  f"Available tools:{json.dumps(tools)}")
                 for modelProvider in settings['modelProviders']: 
                     if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                         vendor = modelProvider['vendor']
@@ -6832,7 +6832,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 elif response_content["status"] == "not_done":
                     search_not_done = True
                     search_task = response_content["unfinished_task"]
-                    task_prompt = f"请继续完成初始任务中未完成的任务：\n\n{search_task}\n\n初始任务：{user_prompt}\n\n最后，请给出完整的初始任务的最终结果。"
+                    task_prompt = f"Continue unfinished parts of the original task:\n\n{search_task}\n\nOriginal task:{user_prompt}\n\nFinally, provide the complete answer to the original task."
                     request.messages.append(
                         {
                             "role": "assistant",
@@ -6870,7 +6870,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     DRS_STAGE = 2
                     search_not_done = True
                     search_task = response_content["unfinished_task"]
-                    task_prompt = f"请继续查询如下信息：\n\n{search_task}\n\n初始任务：{user_prompt}\n\n"
+                    task_prompt = f"Continue researching the following information:\n\n{search_task}\n\nOriginal task:{user_prompt}\n\n"
                     request.messages.append(
                         {
                             "role": "assistant",
@@ -12163,14 +12163,14 @@ async def websocket_endpoint(websocket: WebSocket):
                                     is_safe, matched = await check_content_safety(content, min_cjk_chars=3)
                                     if not is_safe:
                                         print(f"[content_safety] ws save_conversations blocked words: {matched}")
-                                        msg["content"] = "[该回复已被内容安全策略自动替换]"
+                                        msg["content"] = "[This response was replaced by the content safety filter.]"
                                         msg["_safety_filtered"] = True
                                 elif isinstance(content, list):
                                     text = " ".join(item.get("text", "") for item in content if isinstance(item, dict) and item.get("type") == "text")
                                     is_safe, matched = await check_content_safety(text, min_cjk_chars=3)
                                     if not is_safe:
                                         print(f"[content_safety] ws save_conversations blocked words: {matched}")
-                                        msg["content"] = "[该回复已被内容安全策略自动替换]"
+                                        msg["content"] = "[This response was replaced by the content safety filter.]"
                                         msg["_safety_filtered"] = True
                 await save_covs(cov_data)
                 await ws_manager.send_json({

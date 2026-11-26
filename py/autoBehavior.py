@@ -26,7 +26,7 @@ async def auto_behavior(behaviorType="delay", time="00:00:00", prompt="", days=[
         },
         "action": {
             "type": "prompt",
-            "prompt": "时间到了，"+prompt, 
+            "prompt": "Time to act: "+prompt, 
             "random":{
                 "events":[""],
                 "type":"random",

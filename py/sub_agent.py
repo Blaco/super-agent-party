@@ -54,7 +54,7 @@ class SubAgentExecutor:
         
         system_prompt = self._build_system_prompt(task, consensus_content)
         conversation_history.append({"role": "system", "content": system_prompt})
-        conversation_history.append({"role": "user", "content": f"请执行任务：\n\n{task.description}\n\n完成后必须调用 finish_task 工具并提供最终产出结果来结束任务。"})
+        conversation_history.append({"role": "user", "content": f"Execute this task:\n\n{task.description}\n\nWhen finished, call finish_task with the final output to mark the task complete."})
         
         try:
             async with httpx.AsyncClient(timeout=600.0) as http_client:
@@ -92,7 +92,7 @@ class SubAgentExecutor:
                         context={"history": assistant_only_history, "current_iteration": iteration}
                     )
 
-                    conversation_history.append({"role": "user", "content": "请审视你的任务是否已经完成？如果已完成，请调用 finish_task 工具并提供最终产出结果来标记任务完成；如果尚未完成，请继续执行。"})
+                    conversation_history.append({"role": "user", "content": "Assess whether the task is complete. If finished, call finish_task with the final result; otherwise continue working."})
                 
                 return {"success": False, "error": "Max iterations reached"}
 
@@ -184,7 +184,7 @@ class SubAgentExecutor:
                 print(f"[TaskExecutor] 正在广播任务完成信号到网页端并触发自动对话: {task.title}")
                 
                 # 跟发给其他平台一样的 prompt 内容
-                chat_prompt = f"【自主任务汇报】\n任务名称：{task.title}\n任务ID：{task_id}\n\n执行结果：\n{result}\n\n请你作为助手，对上述任务结果进行简要总结并回复给用户。"
+                chat_prompt = f"[Autonomous task report]\nTask name:{task.title}\nTask ID:{task_id}\n\nResult:\n{result}\n\nAs the assistant, briefly summarize this result for the user."
                 
                 await ws_manager.broadcast({
                     "type": "task_notification",
@@ -219,7 +219,7 @@ class SubAgentExecutor:
             )
             action_obj = BehaviorAction(
                 type="prompt",
-                prompt=f"【自主任务汇报】\n任务名称：{task.title}\n任务ID：{task.task_id}\n\n执行结果：\n{result}\n\n请你作为助手，对上述任务结果进行简要总结并回复给用户。",
+                prompt=f"[Autonomous task report]\nTask name:{task.title}\nTask ID:{task.task_id}\n\nResult:\n{result}\n\nAs the assistant, briefly summarize this result for the user.",
             )
             fake_behavior = BehaviorItem(
                 enabled=True,
@@ -381,9 +381,9 @@ class SubAgentExecutor:
         return full_content
 
     def _build_system_prompt(self, task, consensus_content):
-        p = f"你是一个专业的任务执行助手。\n【任务】ID: {task.task_id} | 标题: {task.title}"
-        p += f"\n\n当你确认任务已经完成时，必须调用 finish_task 工具来结束任务。调用时需提供 task_id（当前任务ID: {task.task_id}）和 result（你的最终执行产出结果）。在调用 finish_task 之前不要停止。"
-        if consensus_content: p += f"\n\n【共识规范】\n{consensus_content}"
+        p = f"You are a task execution assistant.\n[Task] ID: {task.task_id} | Title: {task.title}"
+        p += f"\n\nWhen the task is complete, call finish_task with task_id={task.task_id} and the final result. Do not stop before calling finish_task."
+        if consensus_content: p += f"\n\n[Shared instructions]\n{consensus_content}"
         return p
 
 
