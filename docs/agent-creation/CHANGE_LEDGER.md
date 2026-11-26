@@ -195,3 +195,9 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Correct THA Python f-string expression
 
 - Parent: ea40da1959921566241bcf96df1f1e9335ffbc94. The AST regression test surfaced a real syntax error in server.py: a quotation-mark escape was emitted literally inside the THA f-string expression for motion tags. Replaced with the Python-valid `f"[Motion tags] {', '.join(motion_tags)}\\n\\n"` expression. CI source/test/compile must pass before packaging current HEAD; the prior preview Windows package uses older source and is not a build of this fix.
+
+## 2026-11-26 — Restrict new model provider presets to general and Western endpoints
+
+- Parent: 01ac395955a28b9f7188e8dd045765969520c73a. The UI vendorValues and API-key documentation catalog now lists generic OpenAI/OpenAI Responses/Anthropic-compatible setups, Ollama, vLLM, LM Studio, llama.cpp, SGLang, other self-hosted endpoints and selected Western cloud APIs (OpenAI, Anthropic, Gemini, Grok, Mistral, OpenRouter, Together, Fireworks, NVIDIA, Jina, Perplexity, GitHub).
+- Removed active catalog and vendorSuggestedParams entries for China-specific API companies, mirrors, registration links and proprietary provider parameters. static/js/vue_methods.js no longer automatically inserts their preset API endpoints. A user may still type an arbitrary custom endpoint intentionally; previously stored provider settings remain in their profile rather than being silently rewritten. DeepSeek/Kimi model access via OpenRouter remains possible.
+- Files: static/js/vue_data.js, static/js/vendor_params.js, static/js/vue_methods.js, tests/test_no_region_vendor_presets.py, CI and this ledger. Other inherited China-specific TTS code and obsolete locale keys still need removal.

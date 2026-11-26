@@ -1147,15 +1147,6 @@ formatFileUrl(originalUrl) {
           if (targetConfig === this.ccSettings) {
              const vendor_list = {
               "Anthropic": "https://api.anthropic.com/",
-              "Deepseek": "https://api.deepseek.com/anthropic/",
-              "siliconflow": "https://api.siliconflow.cn/",
-              "ZhipuAI":"https://open.bigmodel.cn/api/anthropic/",
-              "moonshot":"https://api.moonshot.cn/anthropic/",
-              "aliyun": "https://dashscope.aliyuncs.com/apps/anthropic/",
-              "modelscope":"https://api-inference.modelscope.cn/",
-              "302.AI":"https://api.302.ai/cc/",
-              "MiMo":"https://api.xiaomimimo.com/anthropic/",
-              "longcat":"https://api.longcat.chat/anthropic/",
               "newapi": provider.url.replace(/\/v1\/?$/, ''),
               "Ollama":provider.url.replace(/\/v1\/?$/, '')
             };
@@ -5545,14 +5536,6 @@ formatMessage(content, index) {
     handleVendorChange(value) {
       const defaultUrls = {
         'OpenAI': 'https://api.openai.com/v1',
-        'Deepseek': 'https://api.deepseek.com/v1',
-        'aliyun': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-        'ZhipuAI': 'https://open.bigmodel.cn/api/paas/v4',
-        'Volcano': 'https://ark.cn-beijing.volces.com/api/v3',
-        'moonshot': 'https://api.moonshot.cn/v1',
-        'minimax': 'https://api.minimaxi.com/v1',
-        'MiMo': 'https://api.xiaomimimo.com/v1',
-        'longcat':'https://api.longcat.chat/openai/v1',
         'Ollama': this.isdocker ? 'http://host.docker.internal:11434/v1' : 'http://127.0.0.1:11434/v1',
         'Vllm': this.isdocker ? 'http://host.docker.internal:8000/v1' :'http://127.0.0.1:8000/v1',
         'LMstudio': this.isdocker ? 'http://host.docker.internal:1234/v1' :'http://127.0.0.1:1234/v1',
@@ -5567,31 +5550,13 @@ formatMessage(content, index) {
         'Anthropic': 'https://api.anthropic.com/v1',
         'Grok': 'https://api.groq.com/openai/v1',
         'mistral': 'https://api.mistral.ai/v1',
-        'lingyi': 'https://api.lingyiwanwu.com/v1',
-        'baichuan': 'https://api.baichuan-ai.com/v1',
-        'qianfan': 'https://qianfan.baidubce.com/v2',
-        'hunyuan': 'https://api.hunyuan.cloud.tencent.com/v1',
-        'siliconflow': 'https://api.siliconflow.cn/v1',
-        '302.AI': 'https://api.302ai.cn/v1',
-        'stepfun': 'https://api.stepfun.com/v1',
-        'o3': 'https://api.o3.fan/v1',
-        'aihubmix': 'https://aihubmix.com/v1',
-        'ocoolai': 'https://api.ocoolai.com/v1',
         'Github': 'https://models.github.ai/inference',
-        'dmxapi': 'https://www.dmxapi.cn/v1',
         'openrouter': 'https://openrouter.ai/api/v1',
         'together': 'https://api.together.xyz/v1',
         'fireworks': 'https://api.fireworks.ai/inference/v1',
-        '360': 'https://api.360.cn/v1',
         'Nvidia': 'https://integrate.api.nvidia.com/v1',
-        'hyperbolic': 'https://api.hyperbolic.xyz/v1',
         'jina': 'https://api.jina.ai/v1',
-        'gitee': 'https://ai.gitee.com/v1',
-        'ppinfra': 'https://api.ppinfra.com/v3/openai/v1',
         'perplexity': 'https://api.perplexity.ai',
-        'infini': 'https://cloud.infini-ai.com/maas/v1',
-        'modelscope': 'https://api-inference.modelscope.cn/v1',
-        'tencent': 'https://api.lkeap.cloud.tencent.com/v1',
       }
       
       if (value !== 'custom' && value !== 'customAnthropic' && value !== 'OpenAIResponses') {
@@ -5663,13 +5628,6 @@ formatMessage(content, index) {
       const provider = this.modelProviders.find(p => p.id === providerId);
       let vendor_list = {
         "Anthropic": "https://api.anthropic.com/",
-        "Deepseek": "https://api.deepseek.com/anthropic/",
-        "siliconflow": "https://api.siliconflow.cn/",
-        "ZhipuAI":"https://open.bigmodel.cn/api/anthropic/",
-        "moonshot":"https://api.moonshot.cn/anthropic/",
-        "aliyun": "https://dashscope.aliyuncs.com/apps/anthropic/",
-        "modelscope":"https://api-inference.modelscope.cn/",
-        "302.AI":"https://api.302.ai/cc/"
       };
 
       let cc_url = vendor_list[provider.vendor] || provider.url;

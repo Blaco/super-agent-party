@@ -1,27 +1,4 @@
 window.vendorSuggestedParams = {
-  'Deepseek': [{ name: 'thinking', type: 'json', default: '{"type":"disabled"}', desc: 'vendorParamDesc_deepseek_thinking' }],
-  'ZhipuAI': [{ name: 'thinking', type: 'json', default: '{"type":"disabled"}', desc: 'vendorParamDesc_zhipuai_thinking' }],
-  'Volcano': [{ name: 'thinking', type: 'json', default: '{"type":"disabled"}', desc: 'vendorParamDesc_volcano_thinking' }],
-  'lingyi': [{ name: 'thinking', type: 'json', default: '{"type":"disabled"}', desc: 'vendorParamDesc_lingyi_thinking' }],
-
-  'aliyun': [
-    { name: 'enable_thinking', type: 'boolean', default: true, desc: 'vendorParamDesc_aliyun_enable_thinking' },
-    { name: 'thinking_budget', type: 'integer', default: 4096, desc: 'vendorParamDesc_aliyun_thinking_budget' }
-  ],
-  'siliconflow': [
-    { name: 'enable_thinking', type: 'boolean', default: true, desc: 'vendorParamDesc_siliconflow_enable_thinking' },
-    { name: 'thinking_budget', type: 'integer', default: 4096, desc: 'vendorParamDesc_siliconflow_thinking_budget' }
-  ],
-  'moonshot': [
-    { name: 'enable_thinking', type: 'boolean', default: true, desc: 'vendorParamDesc_moonshot_enable_thinking' },
-    { name: 'thinking_budget', type: 'integer', default: 4096, desc: 'vendorParamDesc_moonshot_thinking_budget' }
-  ],
-  'qianfan': [{ name: 'enable_thinking', type: 'boolean', default: true, desc: 'vendorParamDesc_qianfan_enable_thinking' }],
-  'hunyuan': [{ name: 'enable_thinking', type: 'boolean', default: true, desc: 'vendorParamDesc_hunyuan_enable_thinking' }],
-  'baichuan': [{ name: 'enable_thinking', type: 'boolean', default: true, desc: 'vendorParamDesc_baichuan_enable_thinking' }],
-  'stepfun': [{ name: 'enable_thinking', type: 'boolean', default: true, desc: 'vendorParamDesc_stepfun_enable_thinking' }],
-  'minimax': [{ name: 'enable_thinking', type: 'boolean', default: true, desc: 'vendorParamDesc_minimax_enable_thinking' }],
-
   'Ollama': [
     { name: 'repeat_penalty', type: 'float', default: 1.1, desc: 'vendorParamDesc_ollama_repeat_penalty' },
     { name: 'top_k', type: 'integer', default: 40, desc: 'vendorParamDesc_ollama_top_k' },
