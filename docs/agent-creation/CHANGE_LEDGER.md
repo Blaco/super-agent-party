@@ -181,3 +181,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 
 - Parent: e0234d7edfc5f5371dd648dd3c505dab35aae04e. First-party server.py injected expression/motion directions now English. All tag names and THA intensity semantics, weighted face-feature composition, narrator/voice compatibility and parser same-line constraints preserved. Workspace/global skill-summary labels and enabled-voice debug log also translated. Optional avatar functionality remains in scope and is not removed.
 - Files: server.py, tests/test_english_avatar_instructions.py, CI and ledger. No changes to character cards or installed model assets; no actual avatar rendering/inference integration test yet.
+
+## 2026-11-26 — Correct avatar prompt test boundary
+
+- Parent: 5fd5d7888e037432083209f822612a9831bd8321. CI failure 45902813090 came from a test-only regex that assumed Expression_messages ended with a standalone closing parenthesis. It accidentally consumed the next Chinese comment, despite the actual English prompt being complete. tests/test_english_avatar_instructions.py now uses Python AST assignment source ranges, and also parses the entire edited server.py to catch syntax errors. Runtime source is unchanged. Re-run CI on this commit.
