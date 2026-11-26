@@ -32,6 +32,8 @@ jobs:
         run: node scripts/companion-ui-smoke.js
       - name: Companion prompt compatibility tests
         run: python -m unittest discover -s tests -p 'test_companion_defaults.py' -v
+      - name: Regional messaging frontend isolation tests
+        run: python -m unittest discover -s tests -p 'test_region_bot_frontend_contract.py' -v
       - name: Livestream platform isolation tests
         run: python -m unittest discover -s tests -p 'test_live_platform_isolation.py' -v
       - name: Regional messaging exclusion tests

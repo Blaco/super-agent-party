@@ -13942,28 +13942,10 @@ function updateElement(el, rawMarkdown, formatFn) {
                 
                 <!-- 右侧内容 -->
                 <div class="suite-content">
-
-                  <!-- 合并后的 IM 机器人聚合页面 -->
+                  <!-- Optional messaging platforms -->
                   <div v-show="subMenu === 'im_bot'">
                     <el-tabs v-model="activeImBotTab" class="im-bot-tabs">
-
-                      <!-- QQ 机器人子标签 -->
-                      
-
-                      <!-- 微信 机器人子标签 -->
-                      
-
-                      <!-- 飞书机器人子标签 -->
-                      
-
-
-                      <!-- 企业微信机器人子标签 -->
-                      
-
-                      <!-- 钉钉机器人子标签 -->
-                      
-
-                      <!-- Telegram 机器人子标签 -->
+<!-- Telegram 机器人子标签 -->
                       <el-tab-pane :label="t('telegramBot')" name="telegram">
                         <el-form class="settings-form" :model="telegramBotConfig" label-position="top">
                           <div class="tool-item">

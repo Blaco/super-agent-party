@@ -878,14 +878,9 @@ const app = Vue.createApp({
     }
     
     if (isElectron) {
-      window.stopQQBotHandler = this.requestStopQQBotIfRunning;
-      window.stopFeishuBotHandler = this.requestFeishuBotStopIfRunning;
-      window.stopWechatBotHandler = this.requestWechatBotStopIfRunning;
-      window.stopDingtalkBotHandler = this.requestDingtalkBotStopIfRunning;
       window.stopDiscordBotHandler = this.requestDiscordBotStopIfRunning;
       window.stopTelegramBotHandler = this.requestTelegramBotStopIfRunning;
       window.stopSlackBotHandler = this.requestSlackBotStopIfRunning;
-      window.stopWeComBotHandler = this.requestWeComBotStopIfRunning;
       window.electronAPI.onWindowState((_, state) => {
         this.isMaximized = state === 'maximized'
       });
@@ -903,7 +898,7 @@ const app = Vue.createApp({
     this.behaviorTimeTimer = setInterval(() => {
       if (!this.behaviorSettings.enabled) return
       const now = new Date()
-      const hm = now.toLocaleTimeString('zh-CN', { hour12: false }) 
+      const hm = now.toLocaleTimeString('en-GB', { hour12: false }) 
       const d  = now.getDay() 
       this.behaviorSettings.behaviorList.forEach(b => {
         // 关键改动：使用 isTargetPlatform 检查是否属于当前网页端(chat)任务
@@ -1060,14 +1055,9 @@ const app = Vue.createApp({
       window.electronAPI.unregisterGlobalShortcut();
     }
     if (isElectron) {
-      delete window.stopQQBotHandler;
-      delete window.stopFeishuBotHandler;
-      delete window.stopWechatBotHandler;
-      delete window.stopDingtalkBotHandler;
       delete window.stopDiscordBotHandler;
       delete window.stopTelegramBotHandler;
       delete window.stopSlackBotHandler;
-      delete window.stopWeComBotHandler;
     }
     if (this.ttsWebSocket) {
       this.ttsWebSocket.close();
@@ -1757,7 +1747,7 @@ docker-compose -f ${composeFile} up -d`;
       }
     },
     filteredSeparators() {
-      const current = this.qqBotConfig.separators;
+      const current = this.ttsSettings.separators || [];
       const defaults = this.defaultSeparators;
       const custom = current
         .filter(s => !defaults.some(d => d.value === s))
@@ -1774,64 +1764,6 @@ docker-compose -f ${composeFile} up -d`;
     },
 
     // 计算属性，判断配置是否有效
-    isQQBotConfigValid() {
-        return this.qqBotConfig.appid && this.qqBotConfig.secret;
-    },
-    isfeishuBotConfigValid() {
-      return this.feishuBotConfig.appid && this.feishuBotConfig.secret;
-    },
-    filteredFeishuSeparators() {
-      const current = this.feishuBotConfig.separators;
-      const defaults = this.defaultSeparators;
-      const custom = current
-        .filter(s => !defaults.some(d => d.value === s))
-        .map(s => ({
-          label: `(${this.formatSeparator(s)})`,
-          value: s
-        }));
-      return [...this.defaultSeparators, ...custom];
-    },
-    isWechatBotConfigValid() {
-      // 微信 SDK 原生扫码，无需类似 APP ID/Secret 的强制输入限制
-      return true; 
-    },
-    filteredWechatSeparators() {
-      const current = this.wechatBotConfig.separators || [];
-      const defaults = this.defaultSeparators ||[];
-      const custom = current
-        .filter(s => !defaults.some(d => d.value === s))
-        .map(s => ({
-          label: `(${this.formatSeparator(s)})`,
-          value: s
-        }));
-      return [...defaults, ...custom];
-    },
-
-      isWeComBotConfigValid() {
-        return this.weComBotConfig.bot_id && this.weComBotConfig.secret;
-      },
-      filteredWeComSeparators() {
-        // 逻辑与飞书完全相同
-        return [...this.defaultSeparators, ...custom];
-      },
-
-  // 校验配置是否填写完整
-  isdingtalkBotConfigValid() {
-    return this.dingtalkBotConfig.appKey && this.dingtalkBotConfig.appSecret;
-  },
-  
-  // 处理分隔符列表展示
-  filteredDingtalkSeparators() {
-    const current = this.dingtalkBotConfig.separators || [];
-    const defaults = this.defaultSeparators || []; // 假设你有默认分隔符定义
-    const custom = current
-      .filter(s => !defaults.some(d => d.value === s))
-      .map(s => ({
-        label: `(${this.formatSeparator(s)})`,
-        value: s
-      }));
-    return [...defaults, ...custom];
-  },
     isTelegramBotConfigValid() {
       return this.telegramBotConfig.bot_token;
     },
@@ -1875,9 +1807,6 @@ docker-compose -f ${composeFile} up -d`;
         }));
       return [...this.defaultSeparators, ...custom];
     },
-    // isWXBotConfigValid() {
-    //     return this.WXBotConfig.nickNameList && this.WXBotConfig.nickNameList.length > 0;
-    // },
     isLiveConfigValid() {
       const youtubeValid = !this.liveConfig.youtube_enabled ||
         (this.liveConfig.youtube_video_id && this.liveConfig.youtube_api_key);

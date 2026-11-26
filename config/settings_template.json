@@ -286,16 +286,6 @@
       "dbpath": ""
     },
     "custom_http":[],
-    "qqBotConfig": {
-      "QQAgent":"super-model",
-      "memoryLimit":30,
-      "appid": "",
-      "secret": "",
-      "separators": ["。", "\n", "？", "！"],
-      "reasoningVisible": false,
-      "quickRestart": true,
-      "is_sandbox": false
-    },
     "allBriefly":false,
     "isForceScrollToBottom":false,
     "behaviorSettings": {
@@ -481,60 +471,7 @@
       "twitch_access_token": "",
       "danmakuVoice":"default"
     },
-    "WXBotConfig": {
-      "WXAgent":"super-model",
-      "memoryLimit": 30,
-      "separators": ["。", "\n", "？", "！"],
-      "reasoningVisible": false,
-      "quickRestart": true,
-      "nickNameList": [],
-      "wakeWord": "companion"
-    },
-    "feishuBotConfig": {
-      "FeishuAgent":"super-model",
-      "memoryLimit": 30,
-      "appid": "",
-      "secret": "",
-      "separators": ["。", "\n", "？", "！"],
-      "reasoningVisible": false,
-      "quickRestart": true,
-      "enableTTS":false,
-      "wakeWord": "",
-      "behaviorTargetChatIds": []
-    },
-    "wechatBotConfig": {
-      "WeChatAgent": "super-model",
-      "memoryLimit": 30,
-      "separators":["。", "\n", "？", "！"],
-      "reasoningVisible": false,
-      "quickRestart": true,
-      "enableTTS": false,
-      "wakeWord": "",
-      "behaviorTargetChatIds":[]
-    },
-    "weComBotConfig": {
-      "WeComAgent": "super-model",
-      "memoryLimit": 30,
-      "bot_id": "",
-      "secret": "",
-      "reasoningVisible": false,
-      "quickRestart": true,
-      "enableTTS": false,
-      "wakeWord": "",
-      "behaviorTargetChatIds": []
-    },
-    "dingtalkBotConfig": {
-      "DingtalkAgent": "super-model",
-      "memoryLimit": 30,
-      "appKey":"", 
-      "appSecret": "", 
-      "separators": ["。", "\n", "？", "！"],
-      "reasoningVisible": false,
-      "quickRestart": true,
-      "enableTTS": false,
-      "wakeWord": "",
-      "behaviorTargetChatIds": []
-    },
+
     "telegramBotConfig": {
       "TelegramAgent": "super-model",
       "memoryLimit": 20,

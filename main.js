@@ -2749,51 +2749,6 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
     });
 
     // 监听关闭事件
-    ipcMain.handle('request-stop-qqbot', async (event) => {
-      const win = BrowserWindow.getAllWindows()[0]; // 获取主窗口
-      if (win && !win.isDestroyed()) {
-        // 通过webContents执行渲染进程方法
-        await win.webContents.executeJavaScript(`
-          window.stopQQBotHandler && window.stopQQBotHandler()
-        `);
-      }
-    });
-    ipcMain.handle('request-stop-feishubot', async (event) => {
-      const win = BrowserWindow.getAllWindows()[0]; // 获取主窗口
-      if (win && !win.isDestroyed()) {
-        // 通过webContents执行渲染进程方法
-        await win.webContents.executeJavaScript(`
-          window.stopFeishuBotHandler && window.stopFeishuBotHandler()
-        `);
-      }
-    });
-    ipcMain.handle('request-stop-wechatbot', async (event) => {
-      const win = BrowserWindow.getAllWindows()[0]; // 获取主窗口
-      if (win && !win.isDestroyed()) {
-        // 通过webContents执行渲染进程方法
-        await win.webContents.executeJavaScript(`
-          window.stopWechatBotHandler && window.stopWechatBotHandler()
-        `);
-      }
-    });
-    ipcMain.handle('request-stop-wecombot', async (event) => {
-      const win = BrowserWindow.getAllWindows()[0]; // 获取主窗口
-      if (win && !win.isDestroyed()) {
-        // 通过webContents执行渲染进程方法
-        await win.webContents.executeJavaScript(`
-          window.stopWeComBotHandler && window.stopWeComBotHandler()
-        `);
-      }
-    });
-    ipcMain.handle('request-stop-dingtalk', async (event) => {
-      const win = BrowserWindow.getAllWindows()[0];
-      if (win && !win.isDestroyed()) {
-        // 执行渲染进程(Vue)中挂载的清理方法
-        await win.webContents.executeJavaScript(`
-          window.stopDingtalkBotHandler && window.stopDingtalkBotHandler()
-        `);
-      }
-    });
     ipcMain.handle('request-stop-telegrambot', async (event) => {
       const win = BrowserWindow.getAllWindows()[0]; // 获取主窗口
       if (win && !win.isDestroyed()) {
@@ -3029,14 +2984,9 @@ app.on('before-quit', async (event) => {
     // 1. 停止前端的机器人 (保留你原有的逻辑)
     if (mainWindow && !mainWindow.isDestroyed()) {
       await mainWindow.webContents.executeJavaScript(`
-        if (window.stopQQBotHandler) window.stopQQBotHandler();
-        if (window.stopFeishuBotHandler) window.stopFeishuBotHandler();
-        if (window.stopWechatBotHandler) window.stopWechatBotHandler();
-        if (window.stopDingtalkBotHandler) window.stopDingtalkBotHandler();
         if (window.stopDiscordBotHandler) window.stopDiscordBotHandler();
         if (window.stopTelegramBotHandler) window.stopTelegramBotHandler();
         if (window.stopSlackBotHandler) window.stopSlackBotHandler();
-        if (window.stopWeComBotHandler) window.stopWeComBotHandler();
       `);
       // 给前端一点时间清理
       await new Promise(resolve => setTimeout(resolve, 500));

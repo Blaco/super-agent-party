@@ -1467,34 +1467,25 @@ let vue_data = {
       { id: 'personality', syntax: '/personality', aliases: ['/角色'], scope: 'both', descKey: 'cmd_personality_desc' },
       { id: 'skills', syntax: '/skills', aliases: ['/技能'], scope: 'both', descKey: 'cmd_skills_desc' },
       { id: 'id', syntax: '/id', aliases: [], scope: 'im', descKey: 'cmd_id_desc' },
-      { id: 'sub', syntax: '/sub', aliases: ['/订阅'], scope: 'im', descKey: 'cmd_sub_desc' },
-      { id: 'unsub', syntax: '/unsub', aliases: ['/取消订阅'], scope: 'im', descKey: 'cmd_unsub_desc' },
-      { id: 'mode_plan', syntax: '/plan', aliases: ['/计划'], scope: 'both', requiresCli: true, descKey: 'cmd_plan_desc' },
-      { id: 'mode_read', syntax: '/read', aliases: ['/只读'], scope: 'both', requiresCli: true, descKey: 'cmd_read_desc' },
-      { id: 'mode_edit', syntax: '/edit', aliases: ['/编辑'], scope: 'both', requiresCli: true, descKey: 'cmd_edit_desc' },
+      { id: 'sub', syntax: '/sub', aliases: [], scope: 'im', descKey: 'cmd_sub_desc' },
+      { id: 'unsub', syntax: '/unsub', aliases: [], scope: 'im', descKey: 'cmd_unsub_desc' },
+      { id: 'mode_plan', syntax: '/plan', aliases: [], scope: 'both', requiresCli: true, descKey: 'cmd_plan_desc' },
+      { id: 'mode_read', syntax: '/read', aliases: [], scope: 'both', requiresCli: true, descKey: 'cmd_read_desc' },
+      { id: 'mode_edit', syntax: '/edit', aliases: [], scope: 'both', requiresCli: true, descKey: 'cmd_edit_desc' },
       { id: 'mode_yolo', syntax: '/yolo', aliases: [], scope: 'both', requiresCli: true, descKey: 'cmd_yolo_desc' },
-      { id: 'mode_cowork', syntax: '/cowork', aliases: ['/协作'], scope: 'both', requiresCli: true, descKey: 'cmd_cowork_desc' },
-      { id: 'mode_goal', syntax: '/goal', aliases: ['/目标'], scope: 'both', requiresCli: true, descKey: 'cmd_goal_desc' },
+      { id: 'mode_cowork', syntax: '/cowork', aliases: [], scope: 'both', requiresCli: true, descKey: 'cmd_cowork_desc' },
+      { id: 'mode_goal', syntax: '/goal', aliases: [], scope: 'both', requiresCli: true, descKey: 'cmd_goal_desc' },
       { id: 'skill', syntax: '/<skill-name>', aliases: [], scope: 'both', requiresCli: true, descKey: 'cmd_skill_desc' },
       { id: 'memory', syntax: '#<text>', aliases: [], scope: 'both', requiresCli: true, descKey: 'cmd_memory_desc' },
       { id: 'file', syntax: '@<path>', aliases: [], scope: 'web', requiresCli: true, descKey: 'cmd_file_desc' },
     ],
     defaultSeparators: [
-      // 转义字符
+      // Escaped characters
       { label: '\\n', value: '\n' },
       { label: '\\n\\n', value: '\n\n' },
       { label: '\\t', value: '\t' },
       { label: ' ', value: ' ' },
-      // 中文标点符号
-      { label: '。', value: '。' },
-      { label: '...', value: '...' },
-      { label: '？', value: '？' },
-      { label: '！', value: '！' },
-      { label: '，', value: '，' },
-      { label: '；', value: ';' },
-      { label: '：', value: '：' },
-      { label: '～', value: '～' },
-      // 英文标点符号
+      // English punctuation
       { label: '~', value: '~' },
       { label: '.', value: '.' },
       { label: '…', value: '…' },
@@ -1551,87 +1542,7 @@ let vue_data = {
       platform:"chat",
     },
     allBriefly:false,
-    qqBotConfig: {
-      QQAgent:'super-model',
-      memoryLimit: 30,
-      appid: '',
-      secret: '',
-      separators: ["。", "\n", "？", "！"],
-      reasoningVisible: false,
-      quickRestart: true,
-      is_sandbox: false,
-    },
-    feishuBotConfig: {
-      FeishuAgent:'super-model',
-      memoryLimit: 30,
-      appid: '',
-      secret: '',
-      separators: ["。", "\n", "？", "！"],
-      reasoningVisible: false,
-      quickRestart: true,
-      enableTTS: false,
-      wakeWord: '',
-      behaviorTargetChatIds: [], 
-    },
-    isFeishuBotRunning: false,
-    isFeishuStarting: false,
-    isFeishuStopping: false,
-    isFeishuReloading: false,
-
-    wechatBotConfig: {
-      WeChatAgent: 'super-model',
-      memoryLimit: 30,
-      separators:["。", "\n", "？", "！"],
-      reasoningVisible: false,
-      quickRestart: true,
-      enableTTS: false,
-      wakeWord: '',
-      behaviorTargetChatIds:[], 
-    },
-    isWechatBotRunning: false,
-    isWechatStarting: false,
-    isWechatStopping: false,
-    isWechatReloading: false,
-
-    showWechatQR: false,
-    wechatQRCodeBase64: null,
-    wechatStatusTimer: null, // 用来轮询状态的定时器
-
-    weComBotConfig: {
-      WeComAgent: 'super-model',
-      memoryLimit: 30,
-      bot_id: '',
-      secret: '',
-      reasoningVisible: false,
-      quickRestart: true,
-      enableTTS: false,
-      wakeWord: '',
-      behaviorTargetChatIds: [],
-    },
-    isWeComBotRunning: false,
-    isWeComStarting: false,
-    isWeComStopping: false,
-    isWeComReloading: false,
-
-    // 钉钉机器人状态控制
-    isDingtalkStarting: false,
-    isDingtalkStopping: false,
-    isDingtalkReloading: false,
-    isDingtalkBotRunning: false,
-    
-    // 钉钉配置对象 (一比一复刻飞书结构)
-    dingtalkBotConfig: {
-      DingtalkAgent: 'super-model',
-      memoryLimit: 30,
-      appKey: '',     // 钉钉专用
-      appSecret: '',  // 钉钉专用
-      separators: ["。", "\n", "？", "！"],
-      reasoningVisible: false,
-      quickRestart: true,
-      enableTTS: false,
-      wakeWord: '',
-      behaviorTargetChatIds: [], 
-    },
+    // Retained messaging platforms use independent settings below.
 
     telegramBotConfig: {
       TelegramAgent: 'super-model',
@@ -1742,15 +1653,6 @@ let vue_data = {
       danmakuVoice:"default",
       enableDanmakuTTS: false,
     },
-    WXBotConfig: {
-      WXAgent:'super-model',
-      memoryLimit: 30,
-      separators: ["。", "\n", "？", "！"],
-      reasoningVisible: false,
-      quickRestart: true,
-      nickNameList: [],
-      wakeWord: '小派',
-    },
 
     isSlackBotRunning: false,
     isSlackStarting: false,
@@ -1780,10 +1682,6 @@ let vue_data = {
     isLiveStarting: false,
     isLiveStopping: false,
     isLiveReloading: false,
-    isWXStarting: false,
-    isWXStopping: false,
-    isWXReloading: false,
-    isWXBotRunning: false,
     stickerPacks: [],
     showStickerDialog: false,
     newStickerPack: {
@@ -1794,7 +1692,6 @@ let vue_data = {
     dialogVisible: false,
     imageUrl: '',
     uploadedStickers: [], // 格式: { uid: string, url: string, tags: string[] }
-    isQQBotRunning: false, // QQ机器人状态
     isStarting: false,      // 启动中状态
     isStopping: false,      // 停止中状态
     isReloading: false,     // 重载中状态
