@@ -11125,40 +11125,13 @@ async def create_sticker_pack(
         raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
 
 # ==========================================
-# 机器人管理器延迟加载容器 (Lazy Container)
+# Optional bot managers (lazy initialization)
 # ==========================================
 class BotContainer:
-    """管理所有机器人的单例，只有在第一次调用 get 方法时才会 import 对应的重型 SDK"""
-    _qq = None
-    _feishu = None
-    _dingtalk = None
+    """Keep managers for supported optional messaging services."""
     _discord = None
     _slack = None
     _telegram = None
-    _wecom = None
-    _wechat = None
-
-
-    @classmethod
-    def get_qq(cls):
-        if cls._qq is None:
-            from py.qq_bot_manager import QQBotManager
-            cls._qq = QQBotManager()
-        return cls._qq
-
-    @classmethod
-    def get_feishu(cls):
-        if cls._feishu is None:
-            from py.feishu_bot_manager import FeishuBotManager
-            cls._feishu = FeishuBotManager()
-        return cls._feishu
-
-    @classmethod
-    def get_dingtalk(cls):
-        if cls._dingtalk is None:
-            from py.dingtalk_bot_manager import DingtalkBotManager
-            cls._dingtalk = DingtalkBotManager()
-        return cls._dingtalk
 
     @classmethod
     def get_discord(cls):
@@ -11180,200 +11153,6 @@ class BotContainer:
             from py.telegram_bot_manager import TelegramBotManager
             cls._telegram = TelegramBotManager()
         return cls._telegram
-
-    @classmethod
-    def get_wecom(cls):
-        if cls._wecom is None:
-            from py.wecom_bot_manager import WeComBotManager
-            cls._wecom = WeComBotManager()
-        return cls._wecom
-
-    @classmethod
-    def get_wechat(cls):
-        if cls._wechat is None:
-            from py.wechat_bot_manager import WeChatBotManager
-            cls._wechat = WeChatBotManager()
-        return cls._wechat
-
-# ==========================================
-# 1. QQ 机器人全量路由
-# ==========================================
-
-@app.post("/start_qq_bot")
-async def start_qq_bot(config_data: dict):
-    try:
-        from py.qq_bot_manager import QQBotConfig
-        config = QQBotConfig(**config_data)
-        BotContainer.get_qq().start_bot(config)
-        return {"success": True, "message": "QQ机器人已成功启动", "environment": "thread-based"}
-    except Exception as e:
-        logger.error(f"启动QQ机器人失败: {e}")
-        return JSONResponse(status_code=400, content={"success": False, "message": f"启动失败: {str(e)}", "error_type": "startup_error"})
-
-@app.post("/stop_qq_bot")
-async def stop_qq_bot():
-    try:
-        if BotContainer._qq:
-            BotContainer.get_qq().stop_bot()
-        return {"success": True, "message": "QQ机器人已停止"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
-@app.get("/qq_bot_status")
-async def qq_bot_status():
-    if BotContainer._qq is None:
-        return {"is_running": False, "status": "stopped"}
-    status = BotContainer.get_qq().get_status()
-    if status.get("startup_error") and not status.get("is_running"):
-        status["error_message"] = f"启动失败: {status['startup_error']}"
-    return status
-
-@app.post("/reload_qq_bot")
-async def reload_qq_bot(config_data: dict):
-    try:
-        from py.qq_bot_manager import QQBotConfig
-        config = QQBotConfig(**config_data)
-        manager = BotContainer.get_qq()
-        manager.stop_bot()
-        await asyncio.sleep(1)
-        manager.start_bot(config)
-        return {"success": True, "message": "QQ机器人已重新加载", "config_changed": True}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
-# ==========================================
-# WeChat 机器人全量路由
-# ==========================================
-@app.post("/start_wechat_bot")
-async def start_wechat_bot(config_data: dict):
-    try:
-        from py.wechat_bot_manager import WeChatBotConfig
-        config = WeChatBotConfig(**config_data)
-        BotContainer.get_wechat().start_bot(config)
-        return {"success": True, "message": "微信机器人已启动，请查看终端输出扫码登录", "environment": "thread-based"}
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"success": False, "message": f"启动失败: {str(e)}", "error_type": "startup_error"})
-
-@app.post("/stop_wechat_bot")
-async def stop_wechat_bot():
-    try:
-        if BotContainer._wechat:
-            BotContainer.get_wechat().stop_bot()
-        return {"success": True, "message": "微信机器人已停止"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
-@app.get("/wechat_bot_status")
-async def wechat_bot_status():
-    if BotContainer._wechat is None:
-        return {"is_running": False}
-    status = BotContainer.get_wechat().get_status()
-    if status.get("startup_error") and not status.get("is_running"):
-        status["error_message"] = f"启动失败: {status['startup_error']}"
-    return status
-
-@app.post("/reload_wechat_bot")
-async def reload_wechat_bot(config_data: dict):
-    try:
-        from py.wechat_bot_manager import WeChatBotConfig
-        config = WeChatBotConfig(**config_data)
-        manager = BotContainer.get_wechat()
-        manager.stop_bot()
-        await asyncio.sleep(1)
-        manager.start_bot(config)
-        return {"success": True, "message": "微信机器人已重新加载"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
-
-# ==========================================
-# 2. 飞书 机器人全量路由
-# ==========================================
-
-@app.post("/start_feishu_bot")
-async def start_feishu_bot(config_data: dict):
-    try:
-        from py.feishu_bot_manager import FeishuBotConfig
-        config = FeishuBotConfig(**config_data)
-        BotContainer.get_feishu().start_bot(config)
-        return {"success": True, "message": "飞书机器人已成功启动", "environment": "thread-based"}
-    except Exception as e:
-        logger.error(f"启动飞书机器人失败: {e}")
-        return JSONResponse(status_code=400, content={"success": False, "message": f"启动失败: {str(e)}", "error_type": "startup_error"})
-
-@app.post("/stop_feishu_bot")
-async def stop_feishu_bot():
-    try:
-        if BotContainer._feishu:
-            BotContainer.get_feishu().stop_bot()
-        return {"success": True, "message": "飞书机器人已停止"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
-@app.get("/feishu_bot_status")
-async def feishu_bot_status():
-    if BotContainer._feishu is None:
-        return {"is_running": False}
-    status = BotContainer.get_feishu().get_status()
-    if status.get("startup_error") and not status.get("is_running"):
-        status["error_message"] = f"启动失败: {status['startup_error']}"
-    return status
-
-@app.post("/reload_feishu_bot")
-async def reload_feishu_bot(config_data: dict):
-    try:
-        from py.feishu_bot_manager import FeishuBotConfig
-        config = FeishuBotConfig(**config_data)
-        manager = BotContainer.get_feishu()
-        manager.stop_bot()
-        await asyncio.sleep(1)
-        manager.start_bot(config)
-        return {"success": True, "message": "飞书机器人已重新加载", "config_changed": True}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
-# ==========================================
-# 3. 钉钉 机器人全量路由
-# ==========================================
-
-@app.post("/start_dingtalk_bot")
-async def start_dingtalk_bot(config_data: dict):
-    try:
-        from py.dingtalk_bot_manager import DingtalkBotConfig
-        config = DingtalkBotConfig(**config_data)
-        BotContainer.get_dingtalk().start_bot(config)
-        return {"success": True, "message": "钉钉机器人已成功启动"}
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"success": False, "message": str(e)})
-
-@app.post("/stop_dingtalk_bot")
-async def stop_dingtalk_bot():
-    try:
-        if BotContainer._dingtalk:
-            BotContainer.get_dingtalk().stop_bot()
-        return {"success": True, "message": "钉钉机器人已停止"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
-@app.get("/dingtalk_bot_status")
-async def dingtalk_bot_status():
-    if BotContainer._dingtalk is None:
-        return {"is_running": False}
-    return BotContainer.get_dingtalk().get_status()
-
-@app.post("/reload_dingtalk_bot")
-async def reload_dingtalk_bot(config_data: dict):
-    try:
-        from py.dingtalk_bot_manager import DingtalkBotConfig
-        config = DingtalkBotConfig(**config_data)
-        manager = BotContainer.get_dingtalk()
-        manager.stop_bot()
-        import time as sync_time # 这里的 time 是为了配合你原代码中的 time.sleep
-        sync_time.sleep(1)
-        manager.start_bot(config)
-        return {"success": True, "message": "钉钉机器人配置已重载"}
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"success": False, "message": str(e)})
 
 # ==========================================
 # 4. Discord 机器人全量路由
@@ -11498,53 +11277,6 @@ async def reload_telegram_bot(config_data: dict):
         return {"success": True, "message": "Telegram 机器人已重新加载", "config_changed": True}
     except Exception as e:
         return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
-
-# ==========================================
-# 3. 企业微信 机器人全量路由
-# ==========================================
-
-@app.post("/start_wecom_bot")
-async def start_wecom_bot(config_data: dict):
-    try:
-        from py.wecom_bot_manager import WeComBotConfig
-        config = WeComBotConfig(**config_data)
-        BotContainer.get_wecom().start_bot(config)
-        return {"success": True, "message": "企业微信机器人已成功启动", "environment": "thread-based"}
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"success": False, "message": f"启动失败: {str(e)}", "error_type": "startup_error"})
-
-@app.post("/stop_wecom_bot")
-async def stop_wecom_bot():
-    try:
-        if hasattr(BotContainer, '_wecom') and BotContainer._wecom:
-            BotContainer.get_wecom().stop_bot()
-        return {"success": True, "message": "企业微信机器人已停止"}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
-@app.get("/wecom_bot_status")
-async def wecom_bot_status():
-    if not hasattr(BotContainer, '_wecom') or BotContainer._wecom is None:
-        return {"is_running": False}
-    status = BotContainer.get_wecom().get_status()
-    if status.get("startup_error") and not status.get("is_running"):
-        status["error_message"] = f"启动失败: {status['startup_error']}"
-    return status
-
-@app.post("/reload_wecom_bot")
-async def reload_wecom_bot(config_data: dict):
-    try:
-        from py.wecom_bot_manager import WeComBotConfig
-        config = WeComBotConfig(**config_data)
-        manager = BotContainer.get_wecom()
-        manager.stop_bot()
-        await asyncio.sleep(1)
-        manager.start_bot(config)
-        return {"success": True, "message": "企业微信机器人已重新加载", "config_changed": True}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
-
 
 
 @app.post("/add_workflow")
@@ -12303,131 +12035,27 @@ async def post_heatmap_increment():
 
 
 async def sync_all_bots_behavior(settings_dict: dict):
-    """
-    统一同步所有平台机器人的行为引擎配置。
-    注意：此处必须统一使用 BotContainer 获取实例，确保与路由中操作的是同一个对象。
-    """
-    # 提取全局行为设置
+    """Sync running optional bot instances with the current behavior configuration."""
     behavior_data = settings_dict.get("behaviorSettings", {})
-    
-    # 1. --- 同步飞书 (Feishu) ---
-    try:
-        # 检查 BotContainer 内部存储的静态变量是否已初始化
-        if BotContainer._feishu is not None:
-            mgr = BotContainer.get_feishu()
-            # 只有在机器人正在运行时才同步配置
-            if mgr.is_running:
-                from py.feishu_bot_manager import FeishuBotConfig
-                config_data = settings_dict.get("feishuBotConfig", {})
+    platforms = (
+        ("discord", "discordBotConfig", "py.discord_bot_manager", "DiscordBotConfig"),
+        ("telegram", "telegramBotConfig", "py.telegram_bot_manager", "TelegramBotConfig"),
+        ("slack", "slackBotConfig", "py.slack_bot_manager", "SlackBotConfig"),
+    )
+    for name, settings_key, module_name, config_class_name in platforms:
+        try:
+            if getattr(BotContainer, "_" + name) is None:
+                continue
+            manager = getattr(BotContainer, "get_" + name)()
+            if manager.is_running:
+                module = importlib.import_module(module_name)
+                config_class = getattr(module, config_class_name)
+                config_data = dict(settings_dict.get(settings_key, {}))
                 config_data["behaviorSettings"] = behavior_data
-                # 构建新的配置模型并更新
-                new_config = FeishuBotConfig(**config_data)
-                mgr.update_behavior_config(new_config)
-                print("WebSocket Sync: 飞书机器人行为配置已同步")
-    except Exception as e:
-        print(f"WebSocket Sync Error (Feishu): {e}")
-
-    # --- 同步微信 (WeChat) ---
-    try:
-        if BotContainer._wechat is not None:
-            mgr = BotContainer.get_wechat()
-            if mgr.is_running:
-                from py.wechat_bot_manager import WeChatBotConfig
-                config_data = settings_dict.get("wechatBotConfig", {})
-                config_data["behaviorSettings"] = behavior_data
-                new_config = WeChatBotConfig(**config_data)
-                mgr.update_behavior_config(new_config)
-                print("WebSocket Sync: 微信机器人行为配置已同步")
-    except Exception as e:
-        print(f"WebSocket Sync Error (WeChat): {e}")
-
-    # 2. --- 同步钉钉 (DingTalk) ---
-    try:
-        if BotContainer._dingtalk is not None:
-            mgr = BotContainer.get_dingtalk()
-            if mgr.is_running:
-                from py.dingtalk_bot_manager import DingtalkBotConfig
-                config_data = settings_dict.get("dingtalkBotConfig", {})
-                config_data["behaviorSettings"] = behavior_data
-                new_config = DingtalkBotConfig(**config_data)
-                mgr.update_behavior_config(new_config)
-                print("WebSocket Sync: 钉钉机器人行为配置已同步")
-    except Exception as e:
-        print(f"WebSocket Sync Error (DingTalk): {e}")
-
-    # 3. --- 同步 Discord ---
-    try:
-        if BotContainer._discord is not None:
-            mgr = BotContainer.get_discord()
-            if mgr.is_running:
-                from py.discord_bot_manager import DiscordBotConfig
-                config_data = settings_dict.get("discordBotConfig", {})
-                config_data["behaviorSettings"] = behavior_data
-                new_config = DiscordBotConfig(**config_data)
-                mgr.update_behavior_config(new_config)
-                print("WebSocket Sync: Discord 机器人行为配置已同步")
-    except Exception as e:
-        print(f"WebSocket Sync Error (Discord): {e}")
-
-    # 4. --- 同步 Telegram ---
-    try:
-        if BotContainer._telegram is not None:
-            mgr = BotContainer.get_telegram()
-            if mgr.is_running:
-                from py.telegram_bot_manager import TelegramBotConfig
-                config_data = settings_dict.get("telegramBotConfig", {})
-                config_data["behaviorSettings"] = behavior_data
-                new_config = TelegramBotConfig(**config_data)
-                mgr.update_behavior_config(new_config)
-                print("WebSocket Sync: Telegram 机器人行为配置已同步")
-    except Exception as e:
-        print(f"WebSocket Sync Error (Telegram): {e}")
-
-    # 5. --- 同步 Slack ---
-    try:
-        if BotContainer._slack is not None:
-            mgr = BotContainer.get_slack()
-            if mgr.is_running:
-                from py.slack_bot_manager import SlackBotConfig
-                config_data = settings_dict.get("slackBotConfig", {})
-                config_data["behaviorSettings"] = behavior_data
-                new_config = SlackBotConfig(**config_data)
-                mgr.update_behavior_config(new_config)
-                print("WebSocket Sync: Slack 机器人行为配置已同步")
-    except Exception as e:
-        print(f"WebSocket Sync Error (Slack): {e}")
-
-    # 6. --- 同步 QQ ---
-    try:
-        if BotContainer._qq is not None:
-            mgr = BotContainer.get_qq()
-            if mgr.is_running:
-                from py.qq_bot_manager import QQBotConfig
-                config_data = settings_dict.get("qqBotConfig", {})
-                config_data["behaviorSettings"] = behavior_data
-                new_config = QQBotConfig(**config_data)
-                mgr.update_behavior_config(new_config)
-                print("WebSocket Sync: QQ 机器人行为配置已同步")
-    except Exception as e:
-        print(f"WebSocket Sync Error (QQ): {e}")
-
-    # 7. --- 同步企业微信 (WeCom) ---
-    try:
-        # 核心检查：BotContainer._wecom 是 /start_wecom_bot 路由存放实例的地方
-        if BotContainer._wecom is not None:
-            mgr = BotContainer.get_wecom()
-            if mgr.is_running:
-                from py.wecom_bot_manager import WeComBotConfig
-                config_data = settings_dict.get("weComBotConfig", {})
-                config_data["behaviorSettings"] = behavior_data
-                # 校验并同步更新
-                new_config = WeComBotConfig(**config_data)
-                mgr.update_behavior_config(new_config)
-                print("WebSocket Sync: 企微机器人行为配置已同步 (BotContainer 实例同步成功)")
-            else:
-                print("WebSocket Sync: 企微机器人已初始化但尚未启动 (is_running 为 False)")
-    except Exception as e:
-        print(f"WebSocket Sync Error (WeCom): {e}")
+                manager.update_behavior_config(config_class(**config_data))
+                logger.info("WebSocket Sync: %s bot behavior settings updated", name)
+        except Exception as exc:
+            logger.error("WebSocket Sync Error (%s): %s", name, exc)
 
 settings_lock = asyncio.Lock()
 @app.websocket("/ws")

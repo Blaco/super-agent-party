@@ -29,3 +29,7 @@ Statuses: **KEEP** = retain and expose; **HIDE** = keep code but remove from nor
 | Updater, packaging, telemetry/network behaviors | KEEP / AUDIT | Delivery | main.js, build.yml, package.json | Prevent upstream publish or unexpected remote communication |
 
 Audit each individual UI setting and backend route before declaring its final disposition. Update this matrix as precise component-level inventories become available; retain upstream source in Git rather than duplicating code in documentation.
+
+## Regional messaging adapter removal — 2026-11-26
+
+The five legacy China-specific bot managers (QQ, WeChat, WeCom, Feishu, DingTalk) and corresponding backend start/stop/status/reload routes are removed from the source branch. Their user-facing bot tabs and routing choices are also removed. Discord, Telegram and Slack remain in the optional deployment panel. Unused frontend methods, saved-setting compatibility keys, and locked SDK dependencies still need a follow-up cleanup; no claim of complete removal from all source paths.

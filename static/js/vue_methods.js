@@ -2323,8 +2323,6 @@ formatMessage(content, index) {
           this.loadTHAModels();
           this.loadSoulxImages();
           this.checkMobile();
-          this.checkQQBotStatus(); 
-          this.checkFeishuBotStatus();
           this.checkTelegramBotStatus();
           this.checkDiscordBotStatus();
           this.checkLiveStatus();

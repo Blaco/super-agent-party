@@ -32,6 +32,8 @@ jobs:
         run: node scripts/companion-ui-smoke.js
       - name: Companion prompt compatibility tests
         run: python -m unittest discover -s tests -p 'test_companion_defaults.py' -v
+      - name: Regional messaging exclusion tests
+        run: python -m unittest discover -s tests -p 'test_legacy_bot_removal.py' -v
       - name: English-only runtime contract
         run: python -m unittest discover -s tests -p 'test_english_runtime_contract.py' -v
       - name: Check Python syntax in edited modules

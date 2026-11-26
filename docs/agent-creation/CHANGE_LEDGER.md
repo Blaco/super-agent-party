@@ -101,3 +101,12 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - **Files:** `scripts/smoke-check.js` now checks `static/js/locales.js` alongside the English translation file; `docs/agent-creation/CHANGE_LEDGER.md` records the correction.
 - **Behavior:** No runtime changes; test inventory is aligned with the English-only UI locale. The prior CI failure is preserved in GitHub Actions history.
 - **Verification:** Re-run npm, UI, and Python checks on the resulting commit; Windows build remains untested. Roll back with a revert if needed.
+
+## 2026-11-26 — Retire five region-only messaging backends
+
+- **Parent:** `e0adee077d2fa499aaaf1640301feadb9739d438`; implementation on `agent-creation`.
+- **Behavior:** Remove dedicated QQ, Feishu, DingTalk, personal WeChat and WeCom manager modules and their HTTP routes; slim `BotContainer` to Discord/Slack/Telegram. Behavior-configuration synchronization now iterates only supported optional managers and copies config before insertion. Existing account/chat/memory data remains intact.
+- **Frontend:** Remove the five inactive region-platform configuration tabs and selectable bot targets; leave standard Western social bots in the already optional Bot Deployment view. Startup no longer polls deleted region-bot routes. Default optional messaging tab becomes Telegram.
+- **Files:** `server.py`, `static/index.html`, `static/js/vue_methods.js`, `static/js/vue_data.js`, `py/qq_bot_manager.py`, `py/feishu_bot_manager.py`, `py/dingtalk_bot_manager.py`, `py/wechat_bot_manager.py`, `py/wecom_bot_manager.py`, `tests/test_legacy_bot_removal.py`, `.github/workflows/companion-audit.yml`, `docs/agent-creation/FEATURE_MATRIX.md` and this ledger.
+- **Limits:** Additional frontend state/method definitions and dependency lock entries remain as inactive legacy references. Remove them only after another dependency scan. Bilibili streaming is independent and not covered here. No live runtime validation of Western bots yet.
+- **Verification:** Static route assertions and Python syntax check added to CI; verify run after push. Roll back using the preceding commit and restore deleted files via Git.

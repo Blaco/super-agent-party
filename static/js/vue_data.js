@@ -1702,7 +1702,7 @@ let vue_data = {
       { id: 'read_bot', title: 'readBot', icon: "fa-solid fa-book-open-reader"}, 
       { id: 'translate_bot', title: 'translateBot', icon: "fa-solid fa-language"}, 
     ],
-    activeImBotTab: 'qq',
+    activeImBotTab: 'telegram',
     sourceText: '',
     translatedText: '',
     isTranslating: false,
