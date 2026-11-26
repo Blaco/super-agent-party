@@ -227,6 +227,22 @@ class EnglishDelegationModules(unittest.TestCase):
             self.assertIn(message, source)
         self.assertEqual(source.count("Your input was blocked by the content safety policy."), 2)
 
+    def test_cli_task_instructions_english(self):
+        source = (ROOT / "py/cli_tool.py").read_text(encoding="utf-8")
+        ast.parse(source)
+        for line in source.splitlines():
+            if line.lstrip().startswith("#") or "#" in line.split('"', 1)[0]:
+                continue
+            if re.search(r'"description":|yield f?"|return f?"|msg = f?"', line):
+                if '"""' not in line and " # " not in line:
+                    self.assertIsNone(HAN.search(line), line)
+        self.assertEqual(source.count('["create", "list", "complete", "toggle", "update", "delete"]'), 2)
+        self.assertIn("/workspace/.agents/ai_todos.json", source)
+        self.assertIn("Task #{id} is already complete", source)
+        server = (ROOT / "server.py").read_text(encoding="utf-8")
+        self.assertIn("When you finish a task, update the project task list", server)
+        self.assertIn("Current project tasks", server)
+
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")
         self.assertIn(

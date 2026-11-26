@@ -294,3 +294,9 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 
 - Parent `b1cb5e7d4e56a11b00d0ce93d7d0e86254afa53b`. Translate 162 exact server.py lines containing startup/shutdown, retry, model/skill/memory, screenshot, ASR/TTS, MCP, file and avatar upload/deletion, knowledge-base, Western messaging and WebSocket messages. Retain f-string expressions, error codes, API response fields, checks, endpoints, model IDs and runtime branches. No permission or content-safety policy change. Checked the original message text against main.js and vue_methods.js for direct matches; no matching callers found. No external code copied or new dependency.
 - Extend tests/test_english_delegation_modules.py to parse server.py and check representative English runtime/API messages. Other backend text and comments remain. Remote source audit and Windows verification pending. Revert this commit for rollback. No build requested.
+
+
+## 2026-11-26 — English CLI task and execution feedback
+
+- Parent `211e1e70d62c8724a4fc5ab410ba5e9d327a319e`. Translate 81 lines in py/cli_tool.py covering exit-code diagnostics, Docker/local/WSL command failures, task results and both task schemas; preserve action names, ID creation, persisted task paths/statuses, timeout handling, sandbox behavior and permission checks. Translate the project task reminder in server.py; use the shared todo_write tool concept for Docker and local modes. Existing SAP at pinned upstream 3aac964122415fe289a1b8af1000474b397c916b is the implementation reference. No external code or dependencies introduced. CLI developer comments remain for a later pass.
+- Checked server and frontend callers for exact old task/exit messages; callers consume generic text. Add syntax and regression assertions for translated CLI runtime output, task enums and task file paths. CI pending; Windows CLI, Docker and WSL execution not tested. No build requested. Revert commit for rollback.

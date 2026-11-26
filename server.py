@@ -2734,7 +2734,7 @@ Example:
                 status_icons = {"pending": "⏳", "in_progress": "🔄", "done": "✅", "cancelled": "❌"}
                 priority_order = {"high": 0, "medium": 1, "low": 2}
                 todos_sorted = sorted(todos, key=lambda x: (priority_order.get(x.get('priority', 'medium'), 1), x.get('created_at', '')))
-                todo_lines = ["\n\n当你完成一个事项后，请记得使用todo_write_tool更新项目待办事项，所有事项结束后，可以删除本事项文件\n\n📋 **当前项目待办事项**（.agents/ai_todos.json）：\n"]
+                todo_lines = ["\n\nWhen you finish a task, update the project task list using the todo_write tool. After all tasks are finished, the task file may be removed.\n\n**Current project tasks** (.agents/ai_todos.json):\n"]
                 pending_count = 0
                 for todo in todos_sorted:
                     status = todo.get('status', 'pending')

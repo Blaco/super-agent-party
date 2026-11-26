@@ -232,28 +232,28 @@ def get_detailed_exit_info(code: int, command: str) -> str:
     
     # 基础映射
     explanations = {
-        1: "提示: 退出码 1 表示命令执行失败，请仔细阅读上方输出中的错误信息（如 Error、Fatal、error 关键字）以确定具体原因。",
-        2: "Shell 内置命令使用不当。",
-        126: "命令不可执行 (权限不足或不是可执行文件)。",
-        127: "找不到命令 (Linux/Unix)。",
-        130: "由 Control-C 终止。",
-        137: "进程被强制杀死 (可能触发了 OOM 内存溢出)。",
+        1: "Exit code 1 indicates command failure. Inspect the preceding error output for the specific cause.",
+        2: "Incorrect use of a shell builtin.",
+        126: "Command is not executable (insufficient permissions or invalid executable).",
+        127: "Command not found (Linux/Unix).",
+        130: "Terminated by Control-C.",
+        137: "Process forcibly terminated (possibly due to an out-of-memory condition).",
         # Windows 特有
-        9009: f"Windows: 找不到命令 '{cmd_name}'。请检查程序是否已安装，或是否已加入 PATH 环境变量。",
-        5: "Windows: 拒绝访问 (权限不足)。",
+        9009: f"Windows: command '{cmd_name}' not found. Check whether the program is installed and on PATH.",
+        5: "Windows: access denied (insufficient permissions).",
     }
     
-    info = f"\n[诊断信息] 进程退出码: {code}\n"
-    info += f"[解释] {explanations.get(code, '未知错误类型')}\n"
+    info = f"\n[Diagnostics] Process exit code: {code}\n"
+    info += f"[Explanation] {explanations.get(code, 'Unknown error type')}\n"
     
     if code in [127, 9009]:
-        info += f"💡 建议:\n"
+        info += f"Suggestions:\n"
         if system == "Windows":
-            info += f"  1. 运行 'where {cmd_name}' 检查程序位置。\n"
-            info += f"  2. 如果是刚安装的软件，可能需要重启 Agent 或使用绝对路径。\n"
+            info += f"  1. Run 'where {cmd_name}' to locate the program.\n"
+            info += f"  2. If the program was just installed, restart the agent or use an absolute path.\n"
         else:
-            info += f"  1. 运行 'which {cmd_name}' 检查程序位置。\n"
-            info += f"  2. 检查环境变量: 'echo $PATH'\n"
+            info += f"  1. Run 'which {cmd_name}' to locate the program.\n"
+            info += f"  2. Check the environment variable: 'echo $PATH'\n"
             
     return info
 
@@ -956,10 +956,10 @@ async def docker_sandbox(command: str, background: bool = False, timeout: int = 
 
         except asyncio.TimeoutError:
             process.kill()
-            yield f"\n\n[TIMEOUT ERROR] Docker 命令执行超过 {effective_timeout} 秒已强制终止。注意！命令并未完全执行完毕。"
-            yield "\n💡 提示：对于启动应用或大文件下载，请使用 'background': true。"
+            yield f"\n\n[TIMEOUT ERROR] Docker command exceeded {effective_timeout} seconds and was terminated. The command did not finish."
+            yield "\nFor long-running application launches or large downloads, consider 'background': true."
     except Exception as e:
-        yield f"[ERROR] Docker 进程启动失败: {str(e)}"
+        yield f"[ERROR] Failed to start Docker process: {str(e)}"
 
 async def glob_files_tool(pattern: str, exclude: str = "**/node_modules/**,**/.git/**,**/__pycache__/**") -> str:
     """[Docker] Glob 递归查找"""
@@ -1025,7 +1025,7 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
         if action == "create":
             """创建新任务 - 自动生成3位数字有序ID"""
             if not content: 
-                return "[Error] 创建任务必须提供 content 参数"
+                return "[Error] Creating a task requires content"
             
             new_id = _generate_ordered_id(todos)
             new_todo = {
@@ -1037,14 +1037,14 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
                 "completed_at": None
             }
             todos.append(new_todo)
-            msg = f"[Success] 已创建任务 #{new_id}: {content[:30]}"
+            msg = f"[Success] Created task #{new_id}: {content[:30]}"
             
         elif action == "list":
             """列出所有任务 - 按ID数字排序"""
             if not todos: 
-                return "当前暂无任务"
+                return "No tasks yet"
             
-            lines = ["📋 **任务列表** (ID越大创建越晚):"]
+            lines = ["**Task list** (higher IDs were created later):"]
             sorted_todos = sorted(todos, key=lambda x: int(x['id']) if x['id'].isdigit() else 0)
             
             for t in sorted_todos:
@@ -1057,45 +1057,45 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
         elif action == "complete":
             """【高频】标记任务为已完成 - 幂等操作"""
             if not id: 
-                return "[Error] 完成任务必须提供 id (如: 001)"
+                return "[Error] Completing a task requires an ID (e.g. 1)"
             
             target = next((t for t in todos if t['id'] == id), None)
             if not target: 
-                return f"[Error] 未找到任务 #{id}"
+                return f"[Error] Task #{id} not found"
             
             if target.get('status') == 'done':
-                msg = f"[Info] 任务 #{id} 已经是完成状态"
+                msg = f"[Info] Task #{id} is already complete"
             else:
                 target['status'] = 'done'
                 target['completed_at'] = datetime.now().isoformat()
-                msg = f"[Success] 已完成任务 #{id}"
+                msg = f"[Success] Completed task #{id}"
 
         elif action == "toggle":
             """切换完成状态"""
             if not id: 
-                return "[Error] 切换状态必须提供 id"
+                return "[Error] Toggling task status requires an ID"
             
             target = next((t for t in todos if t['id'] == id), None)
             if not target: 
-                return f"[Error] 未找到任务 #{id}"
+                return f"[Error] Task #{id} not found"
             
             if target.get('status') != 'done':
                 target['status'] = 'done'
                 target['completed_at'] = datetime.now().isoformat()
-                msg = f"[Success] 已完成任务 #{id}"
+                msg = f"[Success] Completed task #{id}"
             else:
                 target['status'] = 'pending'
                 target['completed_at'] = None
-                msg = f"[Success] 已重新打开任务 #{id}"
+                msg = f"[Success] Reopened task #{id}"
 
         elif action == "update":
             """编辑任务详情"""
             if not id: 
-                return "[Error] 更新任务必须提供 id"
+                return "[Error] Updating a task requires an ID"
             
             target = next((t for t in todos if t['id'] == id), None)
             if not target: 
-                return f"[Error] 未找到任务 #{id}"
+                return f"[Error] Task #{id} not found"
             
             if content: 
                 target['content'] = content
@@ -1110,22 +1110,22 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
                 target['status'] = status
             
             target['updated_at'] = datetime.now().isoformat()
-            msg = f"[Success] 已更新任务 #{id}"
+            msg = f"[Success] Updated task #{id}"
 
         elif action == "delete":
             """删除任务"""
             if not id: 
-                return "[Error] 删除任务必须提供 id"
+                return "[Error] Deleting a task requires an ID"
             
             target = next((t for t in todos if t['id'] == id), None)
             if not target: 
-                return f"[Error] 未找到任务 #{id}"
+                return f"[Error] Task #{id} not found"
             
             todos.remove(target)
-            msg = f"[Success] 已删除任务 #{id}"
+            msg = f"[Success] Deleted task #{id}"
 
         else:
-            return f"[Error] 未知操作: {action}"
+            return f"[Error] Unknown action: {action}"
 
         # 写回 Docker 容器
         with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding='utf-8', newline='\n') as tmp:
@@ -1144,7 +1144,7 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
         return msg
         
     except Exception as e:
-        return f"[Error] 任务操作失败: {str(e)}"
+        return f"[Error] Task operation failed: {str(e)}"
     
 # 恢复原有的 Docker 基础文件工具
 async def list_files_tool(path: str = ".", show_all: bool = True) -> str:
@@ -1596,16 +1596,16 @@ async def shell_tool_local(command: str, background: bool = False, timeout: int 
                 yield f"[stderr] {result.stderr}"
             
             if result.code != 0:
-                yield f"\n--- 运行结束 (Exit Code: {result.code}) ---"
+                yield f"\n--- Execution finished (Exit Code: {result.code}) ---"
                 yield get_detailed_exit_info(result.code, command)
             
             return # 任务结束
 
         except subprocess.TimeoutExpired:
-            yield f"\n\n[TIMEOUT ERROR] 命令执行超过 {effective_timeout} 秒已强制终止。"
+            yield f"\n\n[TIMEOUT ERROR] Command exceeded {effective_timeout} seconds and was terminated."
             return
         except Exception as e:
-            yield f"[Sandbox Error] ZeroBox SDK 运行异常: {str(e)}\n尝试回退到标准 Shell...\n"
+            yield f"[Sandbox Error] ZeroBox SDK execution failed: {str(e)}\nAttempting fallback to standard shell...\n"
             # 报错后不返回，继续尝试下方的标准执行逻辑
 
     # ==================== Windows 或 回退到标准 Shell 的情况 ====================
@@ -1661,7 +1661,7 @@ async def shell_tool_local(command: str, background: bool = False, timeout: int 
 
             await process.wait()
             if process.returncode != 0:
-                yield f"\n--- 运行结束 (Exit Code: {process.returncode}) ---"
+                yield f"\n--- Execution finished (Exit Code: {process.returncode}) ---"
                 yield get_detailed_exit_info(process.returncode, command)
                 
         except asyncio.TimeoutError:
@@ -1673,11 +1673,11 @@ async def shell_tool_local(command: str, background: bool = False, timeout: int 
                     os.killpg(os.getpgid(process.pid), signal.SIGKILL)
                 except:
                     process.kill()
-            yield f"\n\n[TIMEOUT ERROR] 命令执行超过 {effective_timeout} 秒已强制终止。"
-            yield "\n💡 提示：对于长期运行的任务，请使用 'background': true。"
+            yield f"\n\n[TIMEOUT ERROR] Command exceeded {effective_timeout} seconds and was terminated."
+            yield "\nFor long-running tasks, consider 'background': true."
             
     except Exception as e:
-        yield f"[系统错误] 无法启动进程: {str(e)}"
+        yield f"[System error] Failed to start process: {str(e)}"
 
 async def shell_tool_wsl(command: str, background: bool = False, timeout: int = 600) -> AsyncIterator[str]:
     """
@@ -1766,16 +1766,16 @@ async def shell_tool_wsl(command: str, background: bool = False, timeout: int = 
             
             await process.wait()
             if process.returncode != 0:
-                yield f"\n--- 运行结束 (Exit Code: {process.returncode}) ---"
+                yield f"\n--- Execution finished (Exit Code: {process.returncode}) ---"
                 yield get_detailed_exit_info(process.returncode, command)
                 
         except asyncio.TimeoutError:
             subprocess.run(f"taskkill /F /T /PID {process.pid}", shell=True, capture_output=True)
-            yield f"\n\n[TIMEOUT ERROR] WSL 命令执行超过 {effective_timeout} 秒已强制终止。"
-            yield "\n提示：对于长期运行的任务，请使用 'background': true。"
+            yield f"\n\n[TIMEOUT ERROR] WSL command exceeded {effective_timeout} seconds and was terminated."
+            yield "\nFor long-running tasks, consider 'background': true."
             
     except Exception as e:
-        yield f"[WSL 系统错误] 无法启动进程: {str(e)}"
+        yield f"[WSL system error] Failed to start process: {str(e)}"
 
 # 恢复原有的 Local 文件工具
 async def list_files_tool_local(path: str = ".", show_all: bool = True) -> str:
@@ -2174,7 +2174,7 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
         if action == "create":
             """创建新任务 - 自动生成3位数字有序ID"""
             if not content: 
-                return "[Error] 创建任务必须提供 content 参数"
+                return "[Error] Creating a task requires content"
             
             new_id = _generate_ordered_id(todos)
             new_todo = {
@@ -2186,14 +2186,14 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
                 "completed_at": None
             }
             todos.append(new_todo)
-            msg = f"[Success] 已创建任务 #{new_id}: {content[:30]}"
+            msg = f"[Success] Created task #{new_id}: {content[:30]}"
             
         elif action == "list":
             """列出所有任务 - 按ID数字大小排序"""
             if not todos: 
-                return "当前项目暂无任务"
+                return "No project tasks yet"
             
-            lines = ["📋 **项目任务列表** (ID越大创建越晚):"]
+            lines = ["**Project task list** (higher IDs were created later):"]
             # 按ID数字排序，确保展示有序性
             sorted_todos = sorted(todos, key=lambda x: int(x['id']) if x['id'].isdigit() else 0)
             
@@ -2207,45 +2207,45 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
         elif action == "complete":
             """【高频】标记任务为已完成 - 幂等操作"""
             if not id: 
-                return "[Error] 完成任务必须提供 id (如: 001)"
+                return "[Error] Completing a task requires an ID (e.g. 1)"
             
             target = next((t for t in todos if t['id'] == id), None)
             if not target: 
-                return f"[Error] 未找到任务 #{id}"
+                return f"[Error] Task #{id} not found"
             
             if target.get('status') == 'done':
-                msg = f"[Info] 任务 #{id} 已经是完成状态"
+                msg = f"[Info] Task #{id} is already complete"
             else:
                 target['status'] = 'done'
                 target['completed_at'] = datetime.now().isoformat()
-                msg = f"[Success] 已完成任务 #{id}"
+                msg = f"[Success] Completed task #{id}"
 
         elif action == "toggle":
             """切换完成状态 - pending↔done"""
             if not id: 
-                return "[Error] 切换状态必须提供 id"
+                return "[Error] Toggling task status requires an ID"
             
             target = next((t for t in todos if t['id'] == id), None)
             if not target: 
-                return f"[Error] 未找到任务 #{id}"
+                return f"[Error] Task #{id} not found"
             
             if target.get('status') != 'done':
                 target['status'] = 'done'
                 target['completed_at'] = datetime.now().isoformat()
-                msg = f"[Success] 已完成任务 #{id}"
+                msg = f"[Success] Completed task #{id}"
             else:
                 target['status'] = 'pending'
                 target['completed_at'] = None
-                msg = f"[Success] 已重新打开任务 #{id}"
+                msg = f"[Success] Reopened task #{id}"
 
         elif action == "update":
             """编辑任务详情"""
             if not id: 
-                return "[Error] 更新任务必须提供 id"
+                return "[Error] Updating a task requires an ID"
             
             target = next((t for t in todos if t['id'] == id), None)
             if not target: 
-                return f"[Error] 未找到任务 #{id}"
+                return f"[Error] Task #{id} not found"
             
             if content: 
                 target['content'] = content
@@ -2260,22 +2260,22 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
                 target['status'] = status
             
             target['updated_at'] = datetime.now().isoformat()
-            msg = f"[Success] 已更新任务 #{id}"
+            msg = f"[Success] Updated task #{id}"
 
         elif action == "delete":
             """删除任务"""
             if not id: 
-                return "[Error] 删除任务必须提供 id"
+                return "[Error] Deleting a task requires an ID"
             
             target = next((t for t in todos if t['id'] == id), None)
             if not target: 
-                return f"[Error] 未找到任务 #{id}"
+                return f"[Error] Task #{id} not found"
             
             todos.remove(target)
-            msg = f"[Success] 已删除任务 #{id}"
+            msg = f"[Success] Deleted task #{id}"
 
         else:
-            return f"[Error] 未知操作: {action}"
+            return f"[Error] Unknown action: {action}"
 
         # 保存到本地文件
         async with aiofiles.open(todo_file, 'w', encoding='utf-8') as f:
@@ -2284,7 +2284,7 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
         return msg
 
     except Exception as e:
-        return f"[Error] 操作失败: {str(e)}"
+        return f"[Error] Operation failed: {str(e)}"
     
 # ==================== [新增] Skill 专用读取工具 ====================
 
@@ -2575,32 +2575,32 @@ TOOLS_REGISTRY = {
         "type": "function",
         "function": {
             "name": "todo_write_tool",
-            "description": "[Docker] 待办任务管理工具。用于在 Docker 沙箱环境中管理任务列表，支持创建、查看、完成、编辑、删除等操作。所有任务持久化存储在容器的 /workspace/.agents/ai_todos.json 文件中。",
+            "description": "[Docker] Manage tasks in the Docker sandbox: create, list, complete, update, or delete tasks. Tasks are stored in /workspace/.agents/ai_todos.json.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "action": {
                         "type": "string",
                         "enum": ["create", "list", "complete", "toggle", "update", "delete"],
-                        "description": "操作类型：create(创建), list(查看所有), complete(标记完成-幂等安全), toggle(切换状态-会反向), update(编辑详情), delete(删除)"
+                        "description": "Action: create, list, complete (idempotent), toggle (reverse status), update (edit details), delete."
                     },
                     "id": {
                         "type": "string",
-                        "description": "任务唯一标识。create时可选（自动生成），其他操作（complete/toggle/update/delete）时必需"
+                        "description": "Unique task ID. Optional for create (generated automatically); required for complete, toggle, update, or delete."
                     },
                     "content": {
                         "type": "string",
-                        "description": "任务内容描述。create时必需，update时可选"
+                        "description": "Task description. Required for create; optional for update."
                     },
                     "priority": {
                         "type": "string",
                         "enum": ["high", "medium", "low"],
-                        "description": "优先级：high(高), medium(中/默认), low(低)。create/update时可选"
+                        "description": "Priority: high, medium (default), or low. Optional for create or update."
                     },
                     "status": {
                         "type": "string",
                         "enum": ["pending", "done"],
-                        "description": "【仅用于update】强制设置任务状态：pending(未完成), done(已完成)。注意：标记完成建议使用complete动作而非status参数"
+                        "description": "For update only: set status to pending or done. Prefer the complete action when marking a task complete."
                     }
                 },
                 "required": ["action"]
@@ -2869,32 +2869,32 @@ LOCAL_TOOLS_REGISTRY = {
         "type": "function",
         "function": {
             "name": "todo_write_tool_local",
-            "description": "本地待办任务管理工具。用于管理项目中的任务列表，包括创建、查看、完成、编辑、删除等操作。所有任务持久化存储在项目根目录的 .agents/ai_todos.json 文件中。",
+            "description": "Manage local project tasks: create, list, complete, update, or delete tasks. Tasks are stored in .agents/ai_todos.json in the project root.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "action": {
                         "type": "string",
                         "enum": ["create", "list", "complete", "toggle", "update", "delete"],
-                        "description": "操作类型：create(创建), list(查看所有), complete(标记完成-幂等), toggle(切换状态-会反向), update(编辑详情), delete(删除)"
+                        "description": "Action: create, list, complete (idempotent), toggle (reverse status), update (edit details), delete."
                     },
                     "id": {
                         "type": "string",
-                        "description": "任务唯一标识。create时可选（自动生成），其他操作（complete/toggle/update/delete）时必需"
+                        "description": "Unique task ID. Optional for create (generated automatically); required for complete, toggle, update, or delete."
                     },
                     "content": {
                         "type": "string",
-                        "description": "任务内容描述。create时必需，update时可选"
+                        "description": "Task description. Required for create; optional for update."
                     },
                     "priority": {
                         "type": "string",
                         "enum": ["high", "medium", "low"],
-                        "description": "优先级：high(高), medium(中/默认), low(低)。create/update时可选"
+                        "description": "Priority: high, medium (default), or low. Optional for create or update."
                     },
                     "status": {
                         "type": "string",
                         "enum": ["pending", "done"],
-                        "description": "【仅用于update】强制设置任务状态：pending(未完成), done(已完成)。注意：标记完成建议使用complete动作而非status参数"
+                        "description": "For update only: set status to pending or done. Prefer the complete action when marking a task complete."
                     }
                 },
                 "required": ["action"]
