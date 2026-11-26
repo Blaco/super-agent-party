@@ -224,31 +224,14 @@ let mainWindow
 let loadingWindow
 let tray = null
 let updateAvailable = false
+// Keep inherited updater dormant until a fork-owned feed is verified.
+const ENABLE_AUTO_UPDATES = false
 let backendProcess = null
 const HOST = '127.0.0.1'
 let PORT = 3456 // 改为 let，允许修改
 const DEFAULT_PORT = 3456 // 保存默认端口
 const isDev = process.env.NODE_ENV === 'development'
 const locales = {
-  'zh-CN': {
-    show: '显示窗口',
-    exit: '退出',
-    cut: '剪切',
-    copy: '复制',
-    paste: '粘贴',
-    copyImage: '复制图片',
-    copyImageLink: '复制图片链接',
-    saveImageAs: '图片另存为...',
-    supportedFiles: '支持的文件',
-    allFiles: '所有文件',
-    supportedimages: '支持的图片',
-    // 新增项
-    openNewTab: '在新标签页打开',
-    copyLink: '复制链接地址',
-    copyLinkText: '复制链接文本',
-    selectAll: '全选',
-    inspect: '检查元素'
-  },
   'en-US': {
     show: 'Show Window',
     exit: 'Exit',
@@ -261,7 +244,7 @@ const locales = {
     supportedFiles: 'Supported Files',
     allFiles: 'All Files',
     supportedimages: 'Supported Images',
-    // 新增项
+    // Context-menu entries
     openNewTab: 'Open in new tab',
     copyLink: 'Copy link address',
     copyLinkText: 'Copy link text',
@@ -285,7 +268,7 @@ const ALLOWED_EXTENSIONS = [
   ];
 const ALLOWED_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'];
 const ALLOWED_VIDEO_EXTENSIONS =['mp4', 'webm', 'ogg', 'mov', 'avi'];
-let currentLanguage = 'zh-CN';
+let currentLanguage = 'en-US';
 
 // 构建菜单项
 let menu;
@@ -850,7 +833,7 @@ function createSkeletonWindow() {
   mainWindow.loadFile(path.join(__dirname, 'static/skeleton.html'))
   
   // 设置自动更新
-  setupAutoUpdater()
+  if (ENABLE_AUTO_UPDATES) setupAutoUpdater()
   
   // 窗口状态同步
   mainWindow.on('maximize', () => {
@@ -2327,8 +2310,8 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
     });
     // 检查更新IPC
     ipcMain.handle('check-for-updates', async () => {
-      if (isDev) {
-        console.log('Auto updates are disabled in development mode.')
+      if (isDev || !ENABLE_AUTO_UPDATES) {
+        console.log('Auto updates are disabled for this fork.')
         return { updateAvailable: false }
       }
       try {
@@ -2352,25 +2335,21 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
 
     // 下载更新IPC
     ipcMain.handle('download-update', () => {
-      if (updateAvailable) {
+      if (ENABLE_AUTO_UPDATES && updateAvailable) {
         return autoUpdater.downloadUpdate()
       }
     })
 
     // 安装更新IPC
     ipcMain.handle('quit-and-install', () => {
-      setTimeout(() => autoUpdater.quitAndInstall(), 500);
+      if (ENABLE_AUTO_UPDATES && updateAvailable) setTimeout(() => autoUpdater.quitAndInstall(), 500);
     });
             
     // 加载主页面
     await mainWindow.loadURL(`http://${HOST}:${PORT}`)
-    ipcMain.on('set-language', (_, lang) => {
-      if (lang === 'auto') {
-        // 获取系统设置，默认是'en-US'，如果系统语言是中文，则设置为'zh-CN'
-        const systemLang = app.getLocale().split('-')[0];
-        lang = systemLang === 'zh' ? 'zh-CN' : 'en-US';
-      }
-      currentLanguage = lang;
+    ipcMain.on('set-language', () => {
+      // Ignore legacy UI language preferences; English is the only shipped locale.
+      currentLanguage = 'en-US';
       updateTrayMenu();
       updatecontextMenu();
       if (dynamicIslandWindow && !dynamicIslandWindow.isDestroyed()) {

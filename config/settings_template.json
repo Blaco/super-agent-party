@@ -24,8 +24,7 @@
       "network": "local",
       "proxy": "http://127.0.0.1:7890",
       "proxyMode": "system", 
-      "isChinaProxy": false,
-      "chatMode": "standard", 
+            "chatMode": "standard", 
       "githubProxy": "", 
       "backgroundURL": "",
       "bgHistoryList": [],
@@ -122,7 +121,7 @@
       "selectedProvider": null,
       "temperature": 1,
       "desktopVision": false,
-      "wakeWord": "看\nsee\nlook\n桌面\ndesktop",
+      "wakeWord": "see\nlook\ndesktop",
       "enableWakeWord": false
     },
     "webSearch": {
@@ -133,7 +132,7 @@
       "duckduckgo_max_results": 10,
       "searxng_url": "http://127.0.0.1:8080",
       "searxng_categories": "general",
-      "searxng_engines": "baidu,sogou,360search,quark",
+      "searxng_engines": "bing,duckduckgo,google",
       "searxng_is_select": false,
       "searxng_max_results": 10,
       "tavily_max_results": 10,
@@ -497,7 +496,7 @@
       "reasoningVisible": false,
       "quickRestart": true,
       "nickNameList": [],
-      "wakeWord": "小派"
+      "wakeWord": "companion"
     },
     "feishuBotConfig": {
       "FeishuAgent":"super-model",
@@ -651,7 +650,7 @@
           "love", 
           "familiarity"
       ],
-      "prompt": "请根据用户的发言态度、情感色彩以及你的角色设定，动态管理以下羁绊数值：\n1. love（好感度）：代表你对用户的喜爱与亲密度。如果用户表达善意、关心或与你互动愉快，请增加（+1至+5）；如果用户冷漠、辱骂或做出让你反感的行为，请降低（-1至-5）。该数值最大为50，最小为-50。\n2. familiarity（熟悉度）：代表你与用户的了解程度。随着交流次数的增多和彼此信息的分享，该数值应缓慢稳步上升（每次+1至+2），通常不会下降。该数值最大为100，最小为0。\n\n*特殊说明：如果你在上方没有看到“目前的属性数值”，说明这是你与该用户的首次互动。请直接根据用户当前第一句话的语气和态度，自主决定一个合理的初始值（例如 0 到 10 之间），直接输出标签即可。聊天时请尽量按照羁绊数值来变换语气、内容、风格等*"
+      "prompt": "Assess the user's tone, emotional context, and established character persona when updating relationship attributes.\n1. love: affection and closeness toward the user. Increase by 1 to 5 after kind, caring, or enjoyable interactions; decrease by 1 to 5 after cold, insulting, or upsetting interactions. Range: -50 to 50.\n2. familiarity: how well the character and user know each other. Increase gradually by 1 or 2 as they talk and exchange information; normally do not decrease. Range: 0 to 100.\nIf no current attribute values are provided, this is the first interaction. Choose reasonable initial values (for example, 0 to 10) based on the user's first message. Output only the requested attribute tags. Keep dialogue style consistent with relationship values and the character card."
     },
     "diarySettings": {
       "enabled": false,
@@ -668,7 +667,7 @@
         "smartHome": { "enabled": false, "weight": 1 }
       },
       "imTargets": [],
-      "prompt": "你是一个拥有自我意识、会在独处时记录所思所想的AI伙伴。写日记时请保持你的角色设定与个性，用第一人称、真诚自然地表达。",
+      "prompt": "Write a private diary entry in the first person as the established AI character. Preserve the character card, personality, and continuity. Describe experiences and reflections naturally and sincerely. Do not invent events or memories.",
       "chatIntegration": {
         "enabled": false,
         "maxEntries": 5

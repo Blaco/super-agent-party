@@ -2279,7 +2279,7 @@ formatMessage(content, index) {
             });
           }
           this.loadConversation(this.conversationId);
-          this.currentLanguage = data.data.currentLanguage || this.currentLanguage;
+          this.currentLanguage = 'en-US'; // Ignore legacy non-English UI settings.
           this.mcpServers = data.data.mcpServers || this.mcpServers;
           this.a2aServers = data.data.a2aServers || this.a2aServers;
           this.memories = data.data.memories || this.memories;
@@ -6221,15 +6221,12 @@ formatMessage(content, index) {
     },
     // Character and model settings remain available when optional panels are hidden.
     t(key) {
-      return this.translations[this.currentLanguage]?.[key] || this.translations['en-US']?.[key] || key;
+      return this.translations['en-US']?.[key] || key;
     },
-    async handleSystemLanguageChange(val) {
-      this.systemSettings.language = val;
-      if (val === 'auto') {
-        // Automatic UI language defaults to English for this companion fork.
-        val = 'en-US';
-      }
-      this.currentLanguage = val; // 更新当前语言
+    async handleSystemLanguageChange() {
+      // UI locale is fixed; ASR and translation languages are separate settings.
+      this.systemSettings.language = 'en-US';
+      this.currentLanguage = 'en-US';
       await this.autoSaveSettings();
       this.$forceUpdate();
     },
@@ -20836,11 +20833,11 @@ async generateRandomTopic() {
         messages: [
           {
             role: 'system',
-            content: '你是一个有趣的话题发起人。请根据当前热门技术、科幻、哲学或日常生活，生成一个简短、有趣、能引起讨论的对话开头或问题。只需要返回话题文字本身，不要有任何多余的修饰。'
+            content: 'Suggest one short, engaging opening question or topic drawn from technology, science fiction, philosophy, or everyday life. Return only the topic or question, without framing text.'
           },
           {
             role: 'user',
-            content: `给我一个有趣的话题，请使用${this.currentLanguage}语言。`
+            content: 'Suggest an interesting conversation topic in English.'
           }
         ],
         temperature: 1,

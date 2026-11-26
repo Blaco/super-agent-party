@@ -895,7 +895,6 @@ async def lifespan(app: FastAPI):
         sys_set = settings.get("systemSettings", {})
         mode = sys_set.get("proxyMode")
         manual_url = sys_set.get("proxy", "").strip()
-        isChinaProxy = sys_set.get("isChinaProxy", False)
 
         if mode == "manual" and manual_url:
             # 手动模式：如果是 socks，由于没安装库，直接跳过并警告
@@ -907,14 +906,6 @@ async def lifespan(app: FastAPI):
         elif mode == "system":
             # 系统模式：信任环境（此时环境里已经没有 socks 了，很安全）
             trust_env = True
-        if isChinaProxy:
-            # 2. 注入 Node.js / NPM 镜像源 (重点)
-            # 设置这个环境变量后，所有的 npm install (包括你的 node_runner) 都会默认使用这个源
-            os.environ["npm_config_registry"] = "https://registry.npmmirror.com/"
-            
-            # 3. 注入 UV / Pip 镜像源 (重点)
-            # 这样后续如果调用 uv 或 pip，也会自动使用国内镜像
-            os.environ["UV_INDEX_URL"] = "https://mirrors.aliyun.com/pypi/simple/"
 
     # 初始化全局带连接池的 HTTP 客户端
     timeout_config = httpx.Timeout(60.0, connect=10.0)
@@ -1178,8 +1169,7 @@ async def inject_asset_versions(request: Request, call_next):
 async def t(text: str) -> str:
     global locales
     settings = await load_settings()
-    target_language = settings["currentLanguage"]
-    return locales[target_language].get(text, text)
+    return locales.get("en-US", {}).get(text, text)
 
 
 # 全局存储异步工具状态
@@ -11631,8 +11621,7 @@ async def delete_workflow(filename: str):
 @app.get("/cur_language")
 async def cur_language():
     settings = await load_settings()
-    target_language = settings["currentLanguage"]
-    return {"language": target_language}
+    return {"language": "en-US"}
 
 @app.get("/vrm_config")
 async def vrm_config():
@@ -12148,19 +12137,11 @@ async def update_proxy():
         sys_set = settings.get("systemSettings", {})
         mode = sys_set.get("proxyMode")
         manual_url = sys_set.get("proxy", "").strip()
-        is_china_proxy = sys_set.get("isChinaProxy", False)
 
         # 所有的代理相关环境变量键
         proxy_keys = ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'all_proxy']
 
-        # --- 1. 处理 Node.js / UV 镜像源 (与 lifespan 一致) ---
-        if is_china_proxy:
-            os.environ["npm_config_registry"] = "https://registry.npmmirror.com/"
-            os.environ["UV_INDEX_URL"] = "https://mirrors.aliyun.com/pypi/simple/"
-        else:
-            # 如果关闭了中国加速，移除这些变量（恢复默认）
-            os.environ.pop("npm_config_registry", None)
-            os.environ.pop("UV_INDEX_URL", None)
+        # Package registries remain controlled by the operating environment.
 
         # --- 2. 处理网络代理环境变量 ---
         if mode == "manual" and manual_url:

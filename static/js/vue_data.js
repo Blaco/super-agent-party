@@ -166,7 +166,7 @@ let vue_data = {
       selectedProvider: null,
       temperature: 1,  // 默认温度值
       desktopVision: false,
-      wakeWord: '看\nsee\nlook\n桌面\ndesktop',
+      wakeWord: 'see\nlook\ndesktop',
       enableWakeWord: false,
     },
     paramTypes:[
@@ -358,7 +358,7 @@ let vue_data = {
       when: 'after_thinking',
       duckduckgo_max_results: 10, // 默认值
       searxng_url: `http://127.0.0.1:8080`,
-      searxng_engines: "baidu,sogou,360search,quark",
+      searxng_engines: "bing,duckduckgo,google",
       searxng_is_select:false,
       searxng_max_results: 10, // 默认值
       tavily_max_results: 10, // 默认值
@@ -524,7 +524,6 @@ let vue_data = {
       network: "local",
       proxy: 'http://127.0.0.1:7890',
       proxyMode: 'system', 
-      isChinaProxy: false,
       chatMode: 'standard', 
       githubProxy: '', 
       backgroundURL: '',
@@ -633,10 +632,9 @@ let vue_data = {
       hotwords: "companion 80\nend conversation 80",
     },
     supportedLanguages: [
-      { code: 'zh-CN', name: '中文' },
       { code: 'en-US', name: 'English' },
-      { code: 'ja-JP', name: '日本語' },
-      { code: 'ko-KR', name: '한국어' },
+      { code: 'ja-JP', name: 'Japanese' },
+      { code: 'ko-KR', name: 'Korean' },
       { code: 'es-ES', name: 'Español' },
       { code: 'fr-FR', name: 'Français' },
       { code: 'de-DE', name: 'Deutsch' },
@@ -2028,7 +2026,6 @@ let vue_data = {
     },
     systemlanguageOptions:[
       { value: 'auto', label: 'auto' }, 
-      { value: 'zh-CN', label: '中文' }, 
       { value: 'en-US', label: 'English' },
     ],
     toneValues: [

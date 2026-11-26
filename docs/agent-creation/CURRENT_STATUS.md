@@ -43,3 +43,7 @@
 - When the user says **build**, build and package Windows x64 from source at a specific SHA, verify it and provide an actual ZIP; do not treat GitHub source files as a build.
 
 The current state is source-implemented and CI-reviewed, **not** Windows-tested or packaged.
+
+## English-only runtime boundary follow-up (2026-11-26)
+
+A source change narrows UI and backend message localization to English, translates shipped relationship/diary and topic generation prompts, removes Chinese registry mirror behavior and disables inherited auto-updating while a fork-owned feed is not verified. Other Chinese text and China-specific integrations remain and must be audited. Check the latest branch CI: the prior audit totals above are historical.

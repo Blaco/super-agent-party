@@ -138,7 +138,6 @@ function updateElement(el, rawMarkdown, formatFn) {
   <script src="libs/markdown-it-container.min.js"></script>
   <script src="libs/morphdom-umd.min.js"></script>
   <script src="libs/highlight.min.js"></script>
-  <script src="js/locales/zh-CN.js"></script>
   <script src="js/locales/en-US.js"></script>
   <script src="js/locales.js"></script>
   <script src="libs/uuid.min.js" defer></script>
@@ -12975,12 +12974,8 @@ function updateElement(el, rawMarkdown, formatFn) {
                     </div>
                     <div class="tool-content">
 
-                      <el-form-item :label="t('isChinaProxy')" class="form-item-align" label-position="left">
-                        <el-switch v-model="systemSettings.isChinaProxy"  @change="autoSaveSettings"></el-switch>
-                      </el-form-item>
-
                       <!-- 新增：GitHub 仓库下载代理地址设置 -->
-                      <el-form-item :label="t('githubProxyLabel') || 'GitHub 仓库代理'" class="form-item-align">
+                      <el-form-item :label="t('githubProxyLabel') || 'GitHub repository proxy'" class="form-item-align">
                         <el-input
                           v-model="systemSettings.githubProxy"
                           :placeholder="t('githubProxyPlaceholder')"
@@ -13898,24 +13893,6 @@ function updateElement(el, rawMarkdown, formatFn) {
                   heshengtao/super-agent-party
                 </a>
               </div>
-              
-              <div class="link-item">
-                <span>Gitee：</span>
-                <a href="https://gitee.com/heshengtao/super-agent-party" 
-                  target="_blank" 
-                  class="social-link">
-                  heshengtao/super-agent-party
-                </a>
-              </div>
-
-              <div class="link-item">
-                <span>Bilibili：</span>
-                <a href="https://space.bilibili.com/26978344" 
-                  target="_blank" 
-                  class="social-link">
-                  @派酱llm-party
-                </a>
-              </div>
 
               <div class="link-item">
                 <span>Youtube：</span>
@@ -13932,26 +13909,6 @@ function updateElement(el, rawMarkdown, formatFn) {
                   target="_blank" 
                   class="social-link">
                   @llm-party
-                </a>
-              </div>
-
-              <div class="link-item">
-                <span>QQ交流群：</span>
-                <span class="qq-group">931057213</span>
-                <span style="color:#ff6666;font-size:11px;margin-left:4px;">(一群已满)</span>
-              </div>
-
-              <div class="link-item">
-                <span>QQ交流群2：</span>
-                <span class="qq-group">902882342</span>
-              </div>
-
-              <div class="link-item">
-                <span>中文使用指南：</span>
-                <a href="https://gcnij7egmcww.feishu.cn/wiki/DPRKwdetCiYBhPkPpXWcugujnRc" 
-                  target="_blank" 
-                  class="social-link">
-                  点击访问
                 </a>
               </div>
 
@@ -18074,7 +18031,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                         <el-tag type="info" size="small">v{{ extension.version }}</el-tag>   
                         <!-- 新增：可更新标签 -->                   
                         <el-tag v-if="extension.hasUpdate" type="warning" size="small" style="margin-left: 6px;">
-                          {{ t('updateAvailable') || '可更新' }}
+                          {{ t('updateAvailable') || 'Update available' }}
                         </el-tag>
                       </div>
                       <p class="kb-description">{{ extension.author }}</p>
@@ -18163,7 +18120,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                             {{ plugin.name }}
                             <!-- 新增：可更新标签 -->
                             <el-tag v-if="plugin.hasUpdate" type="warning" size="small" style="margin-left: 8px;">
-                              {{ t('updateAvailable') || '可更新' }}
+                              {{ t('updateAvailable') || 'Update available' }}
                             </el-tag>
                           </h4>
                           <p class="plugin-description">{{ plugin.description }}</p>

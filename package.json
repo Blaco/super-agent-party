@@ -1,7 +1,7 @@
 {
   "name": "super-agent-party",
   "version": "v0.4.3",
-  "description": "超级智能体派对v0.4.3 | 轻松链接一切!",
+  "description": "Agent Creation: local-first AI character companion",
   "main": "main.js",
   "asar": true,
   "scripts": {
@@ -33,7 +33,7 @@
     "copyright": "Copyright © 2025 Heshengtao",
     "publish": {
       "provider": "github",
-      "owner": "heshengtao",
+      "owner": "Blaco",
       "repo": "super-agent-party",
       "releaseType": "draft"
     },
@@ -134,7 +134,7 @@
       "target": [
         "nsis"
       ],
-      "publisherName": "Heshengtao",
+      "publisherName": "Blaco",
       "rfc3161TimeStampServer": "http://timestamp.digicert.com"
     },
     "nsis": {
