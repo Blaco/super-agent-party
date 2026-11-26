@@ -159,3 +159,8 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - py/sub_agent.py translates mandatory finish_task directives, autonomous task report, consensus instructions. py/diary_chat_integration.py translates conversation diary-summary instructions and role names; py/autoBehavior.py translates scheduling prefix.
 - tests/test_english_agent_instructions.py and .github/workflows/companion-audit.yml register static contracts and compile edited Python modules. User-authored card, user prompts, stored chat history and existing diary files remain unchanged.
 - Not yet translated: A2UI reference guide, complex TTS/THA system prompts, other backend messages/comments, large UI JS error strings, China-specific vendor catalogs. Do not claim full English-only product until reviewed and tested.
+
+## 2026-11-26 — Windows CI Electron CDN retry after first failed package attempt
+
+- Parent: bfa30752ce8536863a289aaf4a577405c3e9d8bc. Windows development build run 45901818901 failed at `npm ci`: Electron install.js download received HTTP 504 Gateway Timeout. Python `uv sync` succeeded, the packaging stages did not start and no ZIP was produced. Do not mark that build complete.
+- .github/workflows/build.yml adds up to three guarded npm ci attempts with progressive backoff and npm fetch retries; explicit final failure if all fail. The build still has no tag/release/signing access and uploads only a development ZIP if successful. Normalized electron-version manifest expression. Windows runner will retest this source commit when the workflow changes.

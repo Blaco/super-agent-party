@@ -49,7 +49,29 @@ jobs:
 
       - name: Install Electron dependencies
         shell: pwsh
-        run: npm ci --no-audit --no-fund
+        env:
+          ELECTRON_CUSTOM_DIR: ''
+          npm_config_fetch_retries: '5'
+          npm_config_fetch_retry_mintimeout: '20000'
+          npm_config_fetch_retry_maxtimeout: '120000'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $success = $false
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            Write-Host "Electron install attempt $attempt of 3"
+            npm ci --no-audit --no-fund
+            if ($LASTEXITCODE -eq 0) {
+              $success = $true
+              break
+            }
+            Write-Warning "Electron download/install failed (exit $LASTEXITCODE)."
+            if ($attempt -lt 3) {
+              Start-Sleep -Seconds (15 * $attempt)
+            }
+          }
+          if (-not $success) {
+            throw 'Electron npm dependency installation failed after three attempts.'
+          }
 
       - name: Run JavaScript smoke checks
         shell: pwsh
@@ -89,7 +111,7 @@ jobs:
             "OS: $([System.Environment]::OSVersion.VersionString)"
             "Python: $(uv run python --version)"
             "Node: $(node --version)"
-            "Electron: $(node -p 'require(""./node_modules/electron/package.json"").version')"
+            "Electron: $(node -p 'require(\x22./node_modules/electron/package.json\x22).version')"
             'Package type: extracted Electron directory with bundled PyInstaller backend'
             'Automated build check only; no GUI launch or audio/agent integration test performed.'
             'No signing, installer, publishing, auto-updates or release tags.'
