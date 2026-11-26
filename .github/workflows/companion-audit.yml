@@ -32,6 +32,8 @@ jobs:
         run: node scripts/companion-ui-smoke.js
       - name: Companion prompt compatibility tests
         run: python -m unittest discover -s tests -p 'test_companion_defaults.py' -v
+      - name: English HTML fallback tests
+        run: python -m unittest discover -s tests -p 'test_english_html_fallbacks.py' -v
       - name: Model download source policy tests
         run: python -m unittest discover -s tests -p 'test_model_source_policy.py' -v
       - name: Regional messaging frontend isolation tests

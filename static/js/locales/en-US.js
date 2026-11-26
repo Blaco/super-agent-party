@@ -1,4 +1,8 @@
 window.lang_enUS = {
+        'upload': 'Upload',
+        'backToDefaultView': 'Back to default view',
+        'slack_bot_config': 'Slack bot configuration',
+        'gotoSlackBot': 'Open Slack app console',
         'showOptionalFeatures': 'Additional features',
         'hideOptionalFeatures': 'Hide additional features',
         'chat': 'Chat',

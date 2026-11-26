@@ -139,3 +139,9 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - Safety: only a manual dispatch or a push changing the workflow file on agent-creation triggers the package. No tag creation, release publishing, GH_TOKEN publish access or signing. Actions permission is read-only; uses windows-2025, Python 3.12, Node 22, uv sync, npm ci, PyInstaller, electron-builder directory and ZIP with SHA-256 and an embedded manifest. Uploaded Actions artifact is a development snapshot, not a tested public release.
 - Preservation: original multi-platform workflow remains available through Git history; source and Electron target configuration untouched, no user data or build artifacts committed.
 - Testing: follow the triggered Windows run to determine if the archive was created; app launch, character/chat, TTS and installer testing require interactive Windows validation. Do not claim a successful binary build until Actions has completed.
+
+## 2026-11-26 — Eliminate 166 hardcoded Chinese translation fallbacks
+
+- Parent: 0a7f4c45c7980ce660699cc155be1175add5387c. Main static/index.html now uses English translation keys without the redundant Chinese fallback string, preserving existing t() localization behavior. Four missing English keys (upload, backToDefaultView, slack_bot_config, gotoSlackBot) have explicit English translations added to static/js/locales/en-US.js.
+- Tests: tests/test_english_html_fallbacks.py and CI ensure this class of Chinese UI fallback does not return. No user data or markup structure removed. Existing English locale remains the only active UI bundle.
+- Still pending: hardcoded Chinese UI text outside t() fallbacks, errors, comments and model-facing instructions. Do not claim a fully translated product based on this commit alone.
