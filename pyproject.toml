@@ -1,7 +1,7 @@
 [project]
 name = "super-agent-party"
 version = "v0.4.3"
-description = "超级智能体派对v0.4.3 | 轻松链接一切!"
+description = "Agent Creation: local-first AI character companion"
 license = "AGPL-3.0"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -37,7 +37,6 @@ dependencies = [
     "uvicorn[standard]>=0.34.2",
     "mem0ai==1.0.0",
     "e2b-code-interpreter>=1.5.0",
-    "qq-botpy>=1.2.1",
     "duckduckgo-search>=8.0.3",
     "langchain-google-community>=2.0.7",
     "langchain-exa>=0.3.0",
@@ -57,7 +56,6 @@ dependencies = [
     "nvidia-ml-py>=13.580.82",
     "pip-licenses>=5.5.0",
     "google-api-python-client>=2.179.0",
-    "lark-oapi>=1.4.24",
     "pydub>=0.25.1",
     "imageio-ffmpeg>=0.6.0",
     "discord-py>=2.6.4",
@@ -73,16 +71,12 @@ dependencies = [
     "tetos>=0.4.2",
     "langchain-classic>=1.0.1",
     "slack-sdk>=3.39.0",
-    "dingtalk-stream>=0.24.3",
     "pyautogui>=0.9.54",
     "elevenlabs>=2.41.0",
     "litellm>=1.83.7",
-    "wecom-aibot-python-sdk>=1.0.2",
-    "wechatbot-sdk>=0.2.0",
     "qrcode>=8.2",
     "sentencepiece>=0.2.1",
     "huggingface-hub>=1.7.1",
-    "modelscope>=1.35.4",
     "pillow>=12.2.0",
     "simplejpeg>=1.7.6",
     "pyasn1>=0.6.3",

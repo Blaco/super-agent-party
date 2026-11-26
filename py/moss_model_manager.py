@@ -13,11 +13,6 @@ HF_REPOS =[
     "OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX",
     "OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX"
 ]
-MS_REPOS =[
-    "openmoss/MOSS-TTS-Nano-100M-ONNX",
-    "openmoss/MOSS-Audio-Tokenizer-Nano-ONNX"
-]
-
 # 两个仓库总计大小约为 784 MB
 TARGET_TOTAL_BYTES = 784 * 1024 * 1024  
 
@@ -59,20 +54,13 @@ def _download_sync(source: str):
         base_dir = get_moss_base_dir()
         base_dir.mkdir(parents=True, exist_ok=True)
         
-        if source == "modelscope":
-            from modelscope.hub.snapshot_download import snapshot_download
-            for repo_id in MS_REPOS:
-                repo_name = repo_id.split("/")[-1]
-                target_dir = str(base_dir / repo_name)
-                snapshot_download(repo_id, local_dir=target_dir)
-                
-        elif source == "huggingface":
+        if source == "huggingface":
             from huggingface_hub import snapshot_download
             for repo_id in HF_REPOS:
                 repo_name = repo_id.split("/")[-1]
                 target_dir = str(base_dir / repo_name)
                 # 关键：设置 local_dir_use_symlinks=False 才能让进度扫描精确生效
-                snapshot_download(repo_id=repo_id, local_dir=target_dir, local_dir_use_symlinks=False)
+                snapshot_download(repo_id=repo_id, local_dir=target_dir)
                 
         download_status["done"] = True
     except Exception as e:
@@ -101,12 +89,12 @@ def status():
 
 @router.post("/download/{source}")
 async def download(source: str, background_tasks: BackgroundTasks):
-    if source not in ["modelscope", "huggingface"]:
+    if source != "huggingface":
         raise HTTPException(status_code=400)
     if download_status["is_downloading"]:
-        return {"status": "正在下载中，请勿重复提交"}
+        return {"status": "Download already in progress."}
     if is_model_ready():
-        return {"status": "模型已存在，无需下载"}
+        return {"status": "Model already installed."}
 
     download_status["is_downloading"] = True
     download_status["source"] = source

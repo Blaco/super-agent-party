@@ -20,15 +20,6 @@ MODEL_NAME = "sherpa-onnx-sense-voice-zh-en-ja-ko-yue"
 REQUIRED_FILES = ["model.int8.onnx", "tokens.txt"] 
 
 MODELS = {
-    "modelscope": {
-        "url": "https://modelscope.cn/models/pengzhendong/sherpa-onnx-sense-voice-zh-en-ja-ko-yue/resolve/master/model.int8.onnx",
-        "tokens_url": "https://modelscope.cn/models/pengzhendong/sherpa-onnx-sense-voice-zh-en-ja-ko-yue/resolve/master/tokens.txt",
-        # 必须定义 files_to_download 列表供下载接口使用
-        "files_to_download": [
-            {"filename": "model.int8.onnx", "url_key": "url", "progress_key": "model"},
-            {"filename": "tokens.txt", "url_key": "tokens_url", "progress_key": "tokens"},
-        ]
-    },
     "huggingface": {
         "url": "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09/resolve/main/model.int8.onnx?download=true",
         "tokens_url": "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09/resolve/main/tokens.txt?download=true",

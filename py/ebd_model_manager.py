@@ -23,14 +23,6 @@ MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 REQUIRED_FILES = ["model_O4.onnx", "tokenizer.json"] 
 
 MODELS = {
-    "modelscope": {
-        "model_url": "https://modelscope.cn/models/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/master/onnx/model_O4.onnx",
-        "tokenizer_url": "https://modelscope.cn/models/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/master/tokenizer.json",
-        "files_to_download": [
-            {"filename": "model_O4.onnx", "url_key": "model_url"},
-            {"filename": "tokenizer.json", "url_key": "tokenizer_url"},
-        ]
-    },
     "huggingface": {
         "model_url": "https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/onnx/model_O4.onnx?download=true",
         "tokenizer_url": "https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/tokenizer.json?download=true",

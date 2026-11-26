@@ -32,6 +32,8 @@ jobs:
         run: node scripts/companion-ui-smoke.js
       - name: Companion prompt compatibility tests
         run: python -m unittest discover -s tests -p 'test_companion_defaults.py' -v
+      - name: Model download source policy tests
+        run: python -m unittest discover -s tests -p 'test_model_source_policy.py' -v
       - name: Regional messaging frontend isolation tests
         run: python -m unittest discover -s tests -p 'test_region_bot_frontend_contract.py' -v
       - name: Livestream platform isolation tests
@@ -41,7 +43,7 @@ jobs:
       - name: English-only runtime contract
         run: python -m unittest discover -s tests -p 'test_english_runtime_contract.py' -v
       - name: Check Python syntax in edited modules
-        run: python -m py_compile py/companion_defaults.py py/live_router.py server.py
+        run: python -m py_compile py/companion_defaults.py py/live_router.py py/sherpa_model_manager.py py/ebd_model_manager.py py/moss_model_manager.py server.py
       - name: Audit source text (inventory only; no automatic edits)
         run: python scripts/audit_english_surface.py --root . --json english-surface-report.json --limit 25
       - name: Upload text inventory for review

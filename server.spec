@@ -20,7 +20,6 @@ my_hidden_imports = [
     'pydantic.deprecated.decorator',
     'tiktoken_ext',
     'tiktoken_ext.openai_public',
-    'botpy',
     'imageio_ffmpeg', 
     *collect_submodules('mem0'),
 ]

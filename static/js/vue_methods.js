@@ -9433,26 +9433,8 @@ handleCreateSlackSeparator(val) {
 
     // 自动判断下载源的工具函数
     async getAutoSource() {
-      try {
-        // 1. 检查时区
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const isMainlandChinaTimezone = [
-          'Asia/Shanghai', 
-          'Asia/Chongqing', 
-          'Asia/Harbin', 
-          'Asia/Urumqi'
-        ].includes(timezone);
-
-        // 2. 检查语言
-        const isChineseLanguage = navigator.language.startsWith('zh');
-
-        if (isMainlandChinaTimezone || isChineseLanguage) {
-          return 'modelscope';
-        }
-      } catch (e) {
-        console.error('Failed to detect locale', e);
-      }
-      return 'huggingface'; // 默认源
+      // Model downloads use Hugging Face by default.
+      return 'huggingface';
     },
 
     async changeTTSstatus() {
@@ -16019,7 +16001,7 @@ clearSegments() {
     this.sherpaModelName  = model ?? ''   // 后端没返回时留空
   },
 
-  async sherpaDownload(source = 'modelscope') {
+  async sherpaDownload(source = 'huggingface') {
       if (this.sherpaEventSource) this.sherpaEventSource.close()
       this.sherpaDownloading = true
       this.sherpaPercent = 0
@@ -16129,7 +16111,7 @@ clearSegments() {
   },
 
 // 触发下载时把进度清零
-  async mossDownload(source = 'modelscope') {
+  async mossDownload(source = 'huggingface') {
     this.mossDownloading = true
     this.mossDownloadSource = source
     this.mossPercent = 0 // 初始化为 0
@@ -16140,7 +16122,7 @@ clearSegments() {
       this.startMossPolling()
     } catch (e) {
       this.mossDownloading = false
-      showNotification(this.t('modelDownloadFailed') || '下载失败', 'error')
+      showNotification(this.t('modelDownloadFailed') || 'Download failed', 'error')
     }
   },
 
@@ -16210,9 +16192,9 @@ clearSegments() {
 
     /**
      * 下载 MiniLM 模型
-     * @param {string} source - 下载源: 'modelscope' 或 'huggingface'
+     * @param {string} source - Download source, Hugging Face
      */
-    async minilmDownload(source = 'modelscope') {
+    async minilmDownload(source = 'huggingface') {
         if (this.minilmEventSource) this.minilmEventSource.close();
         
         this.minilmDownloading = true;
