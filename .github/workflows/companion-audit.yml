@@ -32,6 +32,8 @@ jobs:
         run: node scripts/companion-ui-smoke.js
       - name: Companion prompt compatibility tests
         run: python -m unittest discover -s tests -p 'test_companion_defaults.py' -v
+      - name: English widget and speech prompt tests
+        run: python -m unittest discover -s tests -p 'test_english_model_prompt_blocks.py' -v
       - name: Model instruction English tests
         run: python -m unittest discover -s tests -p 'test_english_agent_instructions.py' -v
       - name: English visible UI and license tests

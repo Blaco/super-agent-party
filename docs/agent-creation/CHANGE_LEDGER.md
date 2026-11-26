@@ -166,3 +166,8 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - .github/workflows/build.yml adds up to three guarded npm ci attempts with progressive backoff and npm fetch retries; explicit final failure if all fail. The build still has no tag/release/signing access and uploads only a development ZIP if successful. Normalized electron-version manifest expression. Windows runner will retest this source commit when the workflow changes.
 
 - Manifest refinement: Electron version is now read from package.json by PowerShell ConvertFrom-Json, eliminating nested command quoting in build.yml.
+
+## 2026-11-26 — Rewrite generated A2UI and speech prompts into English
+
+- Parent: 8080027404a4d579070acbd55afabfac3b552d71. Three large runtime injected instructions in server.py are now fully English: the optional A2UI component schema/examples, voice-specific TTS instructions and default TTS silence-tag rules. A2UI component names, input key requirements, button action strings and parser syntax retained; existing dynamic character voice labels are preserved unchanged. Sample spoken text now English.
+- tests/test_english_model_prompt_blocks.py checks the blocks contain no Chinese text. CI audits and Python compile continue. Existing user-authored voices/cards and conversation history untouched. Other prompt blocks still contain Chinese text, especially VRM/THA and relationship/sandbox; next work remains.
