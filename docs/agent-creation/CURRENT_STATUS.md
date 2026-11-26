@@ -35,3 +35,9 @@
 Translate the remaining **active UI labels/model-facing diagnostic strings**, then developer comments and documentation while preserving code behavior. Review residual region-platform references and package provenance. Validate Windows clean/existing profile data paths and local TabbyAPI. Add cloud consent gate and optional WhisperBox adapter. Regenerate Python lockfile on a trusted Windows checkout. Only distribute a user-facing release after those checks; current ZIP artifacts are development snapshots.
 
 Legal source attribution and unmodified user-authored multilingual content are deliberately preserved and are not targets for localization.
+
+
+## Follow-up source checkpoint — November 26, 2026
+
+- Source CI for `ca82b097bc8df8a871f551bdd5b6f0416d24d274` passed: https://github.com/Blaco/super-agent-party/actions/runs/45911282256. The task, diary, relationship, behavior, scheduler and MCP modules were localized after the earlier status snapshot above.
+- This follow-up localizes additional provider, knowledge and media tools and residual group-memory, image/speech and deep-search prompts in server.py. See the append-only change ledger. The remaining inventory and Windows runtime validation must still be completed. No fresh package is asserted.

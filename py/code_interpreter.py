@@ -12,7 +12,7 @@ async def e2b_code(code: str, language: str = "Python") -> str:
             execution = sandbox.run_code(code,language=language)
             return execution.logs
 
-    # 使用线程池执行同步代码，防止阻塞事件循环
+    # Run synchronous code in a thread pool to avoid blocking the event loop
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(executor, run_in_sandbox)
     return str(result)
@@ -34,7 +34,7 @@ async def local_run_code(code: str, language: str = "python") -> str:
 
     async with ClientSession() as session:
         async with session.post(url, json=data, headers=headers) as response:
-            # 获取响应文本
+            # Retrieve the response text
             result = await response.text()
             return result
 
@@ -42,17 +42,17 @@ e2b_code_tool = {
     "type": "function",
     "function": {
         "name": "e2b_code",
-        "description": "执行代码，工具只会返回stdout和stderr。请将你要查看的答案输出到stdout。",
+        "description": "Execute code. The tool returns only stdout and stderr. Print the result you want to inspect to stdout.",
         "parameters": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "string",
-                    "description": "需要执行的代码，例如：print('Hello, World!')，不要包含markdown的代码块标记！只有输入可运行的代码字符串。",
+                    "description": "Executable source code, for example: print('Hello, World!'). Do not include Markdown code fences. Supply only a runnable code string.",
                 },
                 "language": {
                     "type": "string",
-                    "description": "代码语言。",
+                    "description": "Programming language.",
                     "enum": ["python", "js", "ts", "r", "java", "bash"],
                     "default": "python"
                 }
@@ -66,17 +66,17 @@ local_run_code_tool = {
   "type": "function",
   "function": {
     "name": "local_run_code",
-    "description": "执行代码，工具只会返回stdout和stderr。请将你要查看的答案输出到stdout。",
+    "description": "Execute code. The tool returns only stdout and stderr. Print the result you want to inspect to stdout.",
     "parameters": {
       "type": "object",
       "properties": {
         "code": {
           "type": "string",
-          "description": "需要执行的代码，例如：print('Hello, World!')，不要包含markdown的代码块标记！只有输入可运行的代码字符串。工具只会返回stdout和stderr。请将你要查看的答案放在print()中，不要放在其他地方。"
+          "description": "Executable source code, for example: print('Hello, World!'). Do not include Markdown code fences. Supply only a runnable code string. The tool returns only stdout and stderr; put the result you want to inspect in print()."
         },
         "language": {
           "type": "string",
-          "description": "代码语言。",
+          "description": "Programming language.",
           "enum": [
             "python", "cpp", "nodejs", "go", "go_test", "java", "php", "csharp",
             "bash", "typescript", "sql", "rust", "cuda", "lua", "R", "perl",

@@ -4,7 +4,7 @@ import functools
 
 class AsyncClaudeAsOpenAI:
     """
-    完全模拟 AsyncOpenAI 客户端，底层用 litellm.acompletion（懒加载）
+    Emulate the AsyncOpenAI client using lazily loaded litellm.acompletion.
     """
     
     def __init__(
@@ -24,15 +24,15 @@ class AsyncClaudeAsOpenAI:
         self.timeout = timeout
         self.max_retries = max_retries
         self._extra_kwargs = kwargs
-        self._litellm_module = None  # 缓存 litellm 模块
+        self._litellm_module = None  # Cache the litellm module
 
     @property
     def _litellm(self):
-        """懒加载 litellm，第一次调用时才 import"""
+        """Load litellm on the first call."""
         if self._litellm_module is None:
             import litellm
             self._litellm_module = litellm
-            # 可选：配置 litellm（如关闭日志）
+            # Optional litellm configuration (such as disabling logging)
             # litellm.set_verbose = False
             # litellm.suppress_debug_info = True
         return self._litellm_module
@@ -46,7 +46,7 @@ class AsyncClaudeAsOpenAI:
             self._parent = parent
 
         async def list(self):
-            # 构造兼容 OpenAI 返回形式的对象
+            # Construct an object compatible with the OpenAI response format
             class ModelItem:
                 def __init__(self, model_id: str):
                     self.id = model_id
@@ -55,7 +55,7 @@ class AsyncClaudeAsOpenAI:
                 def __init__(self, data: list):
                     self.data = data
 
-            # 处理请求 URL，Anthropic 的获取模型接口通常是 /v1/models
+            # Build the request URL; Anthropic usually lists models at /v1/models
             base_url = self._parent.base_url or "https://api.anthropic.com"
             if base_url.endswith("/v1") or base_url.endswith("/v1/"):
                 url = f"{base_url.rstrip('/')}/models"
@@ -68,7 +68,7 @@ class AsyncClaudeAsOpenAI:
             }
 
             try:
-                # 优先复用全局 http_client 以走系统代理配置
+                # Prefer the shared http_client to respect system proxy configuration
                 client = self._parent.http_client
                 need_close = False
                 if not client:
@@ -80,17 +80,17 @@ class AsyncClaudeAsOpenAI:
                 if need_close:
                     await client.aclose()
 
-                # 如果 API 成功响应
+                # If the API responds successfully
                 if response.status_code == 200:
                     data = response.json()
-                    # 解析官方格式: {"type": "list", "data":[{"id": "claude-3-opus-...", ...}]}
+                    # Parse the official format: {"type": "list", "data":[{"id": "claude-3-opus-...", ...}]}
                     models = [ModelItem(m["id"]) for m in data.get("data",[])]
                     if models:
                         return ModelList(models)
             except Exception as e:
-                print(f"动态获取 Anthropic 模型列表失败 (可能代理/代理商不支持): {e}")
+                print(f"Failed to fetch the Anthropic model list (the proxy or provider may not support it): {e}")
 
-            # [静态兜底方案]：如果请求报错或代理商 API 未实现 /models 端点，返回常见的 Claude 模型
+            # Static fallback: return common Claude models if the request fails or the provider lacks /models
             fallback_models =[]
             return ModelList([ModelItem(m) for m in fallback_models])
 
@@ -104,7 +104,7 @@ class AsyncClaudeAsOpenAI:
             tool_type = tool.get("type")
             
             if tool_type == "custom":
-                continue  # Claude 不支持
+                continue  # Not supported by Claude
             elif tool_type == "function":
                 func = tool.get("function", {})
                 claude_tools.append({
@@ -164,7 +164,7 @@ class AsyncClaudeAsOpenAI:
                 if not model.startswith("anthropic/"):
                     model = f"anthropic/{model}"
 
-                # ===== 懒加载 litellm =====
+                # ===== Lazy-load litellm =====
                 litellm = self._parent._litellm
                 
                 completion_kwargs = {
@@ -174,7 +174,7 @@ class AsyncClaudeAsOpenAI:
                     "stream": stream,
                 }
                 
-                # Tools 转换
+                # Convert tools
                 if tools:
                     converted_tools = self._parent._convert_tools(tools)
                     if converted_tools:
@@ -183,7 +183,7 @@ class AsyncClaudeAsOpenAI:
                 if tool_choice:
                     completion_kwargs["tool_choice"] = self._parent._convert_tool_choice(tool_choice)
                 
-                # 其他参数
+                # Other parameters
                 if self._parent.base_url:
                     completion_kwargs["api_base"] = self._parent.base_url
                 if temperature is not None:
@@ -199,7 +199,7 @@ class AsyncClaudeAsOpenAI:
                 if self._parent.http_client is not None:
                     completion_kwargs["client"] = self._parent.http_client
 
-                # 过滤 OpenAI 特有参数
+                # Filter OpenAI-specific parameters
                 safe_kwargs = {k: v for k, v in kwargs.items() 
                               if k not in ['logprobs', 'top_logprobs', 'response_format', 'n']}
                 

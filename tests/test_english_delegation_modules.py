@@ -10,6 +10,8 @@ MODULES = (
     "diary_api", "scheduler", "task_center", "llm_tool", "task_tools",
     "sub_agent", "diary_system", "diary_chat_integration", "diary_engine",
     "autoBehavior", "behavior_engine", "mode_change", "mcp_clients",
+    "ClaudeAsOpenAI", "GeminiAsOpenAI", "ResponsesAsOpenAI", "know_base",
+    "comfyui_tool", "code_interpreter", "custom_http", "ws_manager",
 )
 HAN = re.compile(r"[\u3400-\u9fff\U00020000-\U0002A6DF]")
 
@@ -65,6 +67,25 @@ class EnglishDelegationModules(unittest.TestCase):
                 self.assertIn("query_diary", tools)
                 return
         self.fail("DIARY_ALLOWED_TOOLS not found")
+
+    def test_core_memory_and_media_instructions(self):
+        source = (ROOT / "server.py").read_text(encoding="utf-8")
+        ast.parse(source)
+        expected = {
+            "Current conversation group:": 1,
+            "You extract structured memories.": 1,
+            "Image information (URL:": 4,
+            "<silence>![image name](image_url)</silence>": 2,
+            "First text input: prompt for image or video generation.": 2,
+            "Second text input: prompt for image or video generation.": 2,
+            "First image input: an image URL": 2,
+            "Second image input: an image URL": 2,
+            "Break the user's question or current task into steps": 2,
+            "If the user has not asked a question or assigned a task": 2,
+        }
+        for fragment, count in expected.items():
+            with self.subTest(fragment=fragment):
+                self.assertEqual(source.count(fragment), count)
 
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")

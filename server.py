@@ -1218,7 +1218,7 @@ async def get_image_content(image_url: str) -> str:
         # 如果uploaded_files/{item['image_url']['hash']}.txt存在，则读取文件内容，否则调用vision api
         if os.path.exists(os.path.join(UPLOAD_FILES_DIR, f"{image_hash}.txt")):
             with open(os.path.join(UPLOAD_FILES_DIR, f"{image_hash}.txt"), "r", encoding='utf-8') as f:
-                content += f"\n\n图片(URL:{image_url} 哈希值：{image_hash})信息如下：\n\n"+str(f.read())+"\n\n"
+                content += f"\n\nImage information (URL: {image_url}, hash: {image_hash}):\n\n"+str(f.read())+"\n\n"
         else:
             images_content = [{"type": "text", "text": "Describe the image accurately, including any visible text, numbers, colors, shapes, sizes, positions, people, objects and setting."},{"type": "image_url", "image_url": {"url": url}}]
             client = AsyncOpenAI(api_key=settings['vision']['api_key'],base_url=settings['vision']['base_url'])
@@ -1233,14 +1233,14 @@ async def get_image_content(image_url: str) -> str:
                 messages = [{"role": "user", "content": images_content}],
                 **extra
             )
-            content = f"\n\nn图片(URL:{image_url} 哈希值：{image_hash})信息如下：\n\n"+str(response.choices[0].message.content)+"\n\n"
+            content = f"\n\nImage information (URL: {image_url}, hash: {image_hash}):\n\n"+str(response.choices[0].message.content)+"\n\n"
             with open(os.path.join(UPLOAD_FILES_DIR, f"{image_hash}.txt"), "w", encoding='utf-8') as f:
                 f.write(str(response.choices[0].message.content))
     else:           
         # 如果uploaded_files/{item['image_url']['hash']}.txt存在，则读取文件内容，否则调用vision api
         if os.path.exists(os.path.join(UPLOAD_FILES_DIR, f"{image_hash}.txt")):
             with open(os.path.join(UPLOAD_FILES_DIR, f"{image_hash}.txt"), "r", encoding='utf-8') as f:
-                content += f"\n\nn图片(URL:{image_url} 哈希值：{image_hash})信息如下：\n\n"+str(f.read())+"\n\n"
+                content += f"\n\nImage information (URL: {image_url}, hash: {image_hash}):\n\n"+str(f.read())+"\n\n"
         else:
             images_content = [{"type": "text", "text": "Describe the image accurately, including any visible text, numbers, colors, shapes, sizes, positions, people, objects and setting."},{"type": "image_url", "image_url": {"url": url}}]
             client = AsyncOpenAI(api_key=settings['api_key'],base_url=settings['base_url'])
@@ -1255,7 +1255,7 @@ async def get_image_content(image_url: str) -> str:
                 messages = [{"role": "user", "content": images_content}],
                 **extra
             )
-            content = f"\n\nn图片(URL:{image_url} 哈希值：{image_hash})信息如下：\n\n"+str(response.choices[0].message.content)+"\n\n"
+            content = f"\n\nImage information (URL: {image_url}, hash: {image_hash}):\n\n"+str(response.choices[0].message.content)+"\n\n"
             with open(os.path.join(UPLOAD_FILES_DIR, f"{image_hash}.txt"), "w", encoding='utf-8') as f:
                 f.write(str(response.choices[0].message.content))
     return content
@@ -1817,9 +1817,9 @@ def _build_group_memory_prompt(group: dict, memories: list[dict]) -> str:
     if not memories:
         return ""
     header = [
-        f"当前对话分组: {group.get('name') or group.get('id')}",
-        "以下是仅限当前分组可用的长期记忆，请只在相关时使用，不要臆测或扩展未确认的信息。",
-        "如果记忆中包含具体值，请优先直接复述具体值，不要用“见记忆条目”或占位说明代替：",
+        f"Current conversation group: {group.get('name') or group.get('id')}",
+        "The following long-term memories are available only to this conversation group. Use them only when relevant; do not speculate or expand unconfirmed information.",
+        "If a memory contains specific values, state those values directly instead of referring to the memory entry or using placeholders:",
     ]
     lines = []
     for idx, memory in enumerate(memories, 1):
@@ -1827,8 +1827,8 @@ def _build_group_memory_prompt(group: dict, memories: list[dict]) -> str:
         content = str(memory.get('content') or '').strip()
         memory_type = memory.get('memory_type', 'fact')
         if summary and content and summary != content:
-            lines.append(f"{idx}. [{memory_type}] 摘要: {summary}")
-            lines.append(f"   具体内容: {content}")
+            lines.append(f"{idx}. [{memory_type}] Summary: {summary}")
+            lines.append(f"   Details: {content}")
         else:
             lines.append(f"{idx}. [{memory_type}] {content or summary}")
     return "\n".join(header + lines)
@@ -1874,14 +1874,14 @@ async def _extract_group_memories(client, settings: dict, payload: dict) -> list
         return []
 
     extraction_prompt = (
-        "你是一个结构化记忆提取器。只提取后续同组对话可复用的长期信息，"
-        "不要总结整段聊天，不要保留闲聊、猜测、情绪宣泄、不确定信息和重复信息。"
-        "只允许 memory_type 为 fact、decision、preference、todo、constraint、glossary。"
-        "返回 JSON 数组，每项字段必须包含 memory_type、content、summary、importance。"
-        "importance 取 0 到 1。若没有可提取记忆，返回 []。"
+        "You extract structured memories. Extract only long-term information reusable in future conversations within the same group. "
+        "Do not summarize the entire chat or retain small talk, speculation, emotional venting, uncertain information or duplicates. "
+        "The only allowed memory_type values are fact, decision, preference, todo, constraint and glossary. "
+        "Return a JSON array; every item must contain memory_type, content, summary and importance. "
+        "importance ranges from 0 to 1. If there are no memories to extract, return []."
     )
 
-    example_input = f"用户消息:\n{user_message}\n\n助手回复:\n{assistant_message}"
+    example_input = f"User message:\n{user_message}\n\nAssistant reply:\n{assistant_message}"
 
     def fallback_memories() -> list[dict]:
         combined = f"{user_message}\n{assistant_message}"
@@ -2226,15 +2226,15 @@ def get_system_context() -> str:
     if system == "Windows":
         shell = "PowerShell"
         path_hint = "使用 Windows 路径格式（C:\\Users\\name\\file），命令使用 dir、copy、del 等"
-        command_hint = f"当前使用 {shell}，优先使用 PowerShell cmdlet（如 Get-ChildItem、Get-Content、Remove-Item），也兼容部分 CMD 命令。避免使用 Unix 命令（ls/cat/rm）"
+        command_hint = f"The current shell is {shell}. Prefer PowerShell cmdlets (Get-ChildItem, Get-Content, Remove-Item); some CMD commands are also supported. Avoid Unix commands (ls/cat/rm)."
     elif system == "Darwin":
         shell = os.path.basename(os.environ.get('SHELL', '/bin/zsh'))
         path_hint = "使用 Unix 路径格式（/Users/name/file），区分大小写"
-        command_hint = f"当前为 macOS ({release})，使用 {shell}。支持标准 Unix 命令（ls/cat/rm），但注意部分命令是 BSD 版本而非 GNU 版本"
+        command_hint = f"Running macOS ({release}) with {shell}. Standard Unix commands (ls/cat/rm) are supported, but some are BSD rather than GNU versions."
     else:  # Linux
         shell = os.path.basename(os.environ.get('SHELL', '/bin/bash'))
         path_hint = "使用 Unix 路径格式（/home/name/file），区分大小写"
-        command_hint = f"当前为 Linux ({release})，使用 {shell}。支持标准 GNU 命令和工具链"
+        command_hint = f"Running Linux ({release}) with {shell}. Standard GNU commands and tools are supported."
     
     return f"""[Host environment] OS: {system} {release} | Shell: {shell}
 
@@ -2444,11 +2444,11 @@ This is a Docker environment. Use standard Linux commands and paths.
                 content_append(request.messages, 'system', sticker_message)
                 have_stickerPack = True
         if have_stickerPack:
-            content_append(request.messages, 'system', "\n\n当你需要使用图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n<silence>![图片名](图片URL)</silence>\n\n，图片markdown必须另起并且独占一行！<silence>和</silence>是控制TTS的静音标签，表示这个图片部分不会进入语音合成\n\n你必须在回复中正确使用 <silence> 标签来包裹图片的 Markdown 语法\n\n<silence>和</silence>与图片的 Markdown 语法之间不能有空格和回车，会导致解析失败！\n\n")
+            content_append(request.messages, 'system', "\n\nWhen using an image, put its URL in a Markdown image tag, for example:\n\n<silence>![image name](image_url)</silence>\n\nPut the image Markdown on its own line. The <silence> and </silence> tags exclude the image from text-to-speech synthesis.\n\nWrap image Markdown in <silence> tags in your reply.\n\nDo not insert spaces or line breaks between the silence tags and the Markdown; doing so prevents parsing.\n\n")
 
     # text2img 规则（固定）
     if settings['text2imgSettings']['enabled']:
-        text2img_messages = "\n\n当你使用画图工具后，必须将图片的URL放在markdown的图片标签中，例如：\n\n<silence>![图片名](图片URL)</silence>\n\n，图片markdown必须另起并且独占一行！请主动发给用户，工具返回的结果，用户看不到！<silence>和</silence>是控制TTS的静音标签，表示这个图片部分不会进入语音合成\n\n你必须在回复中正确使用 <silence> 标签来包裹图片的 Markdown 语法\n\n注意！！！<silence>和</silence>与图片的 Markdown 语法之间不能有空格和回车，会导致解析失败！\n\n"
+        text2img_messages = "\n\nAfter using an image generation tool, put the image URL in a Markdown image tag, for example:\n\n<silence>![image name](image_url)</silence>\n\nPut the image Markdown on its own line and include it in your reply; the user cannot see the tool result directly. The <silence> and </silence> tags exclude images from text-to-speech synthesis.\n\nWrap image Markdown in <silence> tags.\n\nDo not insert spaces or line breaks between the tags and the Markdown; doing so prevents parsing.\n\n"
         content_append(request.messages, 'system', text2img_messages)
 
     # VRM 表情（固定）
@@ -2658,7 +2658,7 @@ Example:
         try:
             agents_md = await read_agents_md(cwd)
             if agents_md:
-                content_append(request.messages, 'system', " **重要事项**（.agents/AGENTS.md）：\n\n"+agents_md+"\n\n")
+                content_append(request.messages, 'system', " **Important instructions** (.agents/AGENTS.md):\n\n"+agents_md+"\n\n")
         except Exception as e:
             print(f"[Agent Loader] 跳过AGENTS.md加载: {e}")
             pass
@@ -3535,7 +3535,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         "type": "function",
                         "function": {
                             "name": tool_name,
-                            "description": tool.get('description', f'来自扩展 {ext_id} 的工具'),
+                            "description": tool.get('description', f'Tool from extension {ext_id}'),
                             "parameters": tool.get('parameters', {
                                 "type": "object",
                                 "properties": {},
@@ -3644,25 +3644,25 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     comfyui_required = []
                     if workflow["text_input"] is not None:
                         comfyui_properties["text_input"] = {
-                            "description": "第一个文字输入，需要输入的提示词，用于生成图片或者视频，如果无特别提示，默认为英文",
+                            "description": "First text input: prompt for image or video generation. Use English unless otherwise specified.",
                             "type": "string"
                         }
                         comfyui_required.append("text_input")
                     if workflow["text_input_2"] is not None:
                         comfyui_properties["text_input_2"] = {
-                            "description": "第二个文字输入，需要输入的提示词，用于生成图片或者视频，如果无特别提示，默认为英文",
+                            "description": "Second text input: prompt for image or video generation. Use English unless otherwise specified.",
                             "type": "string"
                         }
                         comfyui_required.append("text_input_2")
                     if workflow["image_input"] is not None:
                         comfyui_properties["image_input"] = {
-                            "description": "第一个图片输入，需要输入的图片，必须是图片URL，可以是外部链接，也可以是服务器内部的URL，例如：https://www.example.com/xxx.png  或者  http://127.0.0.1:3456/xxx.jpg",
+                            "description": "First image input: an image URL, either external or on the local server, for example https://www.example.com/xxx.png or http://127.0.0.1:3456/xxx.jpg.",
                             "type": "string"
                         }
                         comfyui_required.append("image_input")
                     if workflow["image_input_2"] is not None:
                         comfyui_properties["image_input_2"] = {
-                            "description": "第二个图片输入，需要输入的图片，必须是图片URL，可以是外部链接，也可以是服务器内部的URL，例如：https://www.example.com/xxx.png  或者  http://127.0.0.1:3456/xxx.jpg",
+                            "description": "Second image input: an image URL, either external or on the local server, for example https://www.example.com/xxx.png or http://127.0.0.1:3456/xxx.jpg.",
                             "type": "string"
                         }
                         comfyui_required.append("image_input_2")
@@ -3675,7 +3675,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         "type": "function",
                         "function": {
                             "name": f"comfyui_{workflow['unique_filename']}",
-                            "description": f"{workflow['description']}+\n如果要输入图片提示词或者修改提示词，尽可能使用英语。\n返回的图片结果，请将图片的URL放入![image]()这样的markdown语法中，用户才能看到图片。如果是视频，请将视频的URL放入<video controls> <source src=''></video>的中src中，用户才能看到视频。如果有多个结果，则请用换行符分隔开这几个图片或者视频，用户才能看到多个结果。",
+                            "description": f"{workflow['description']}+\nWhen supplying or editing an image prompt, use English where possible.\nFor image results, insert each image URL into Markdown image syntax, such as ![image](image_url), so the user can see it. For video results, put the video URL in the source src attribute of <video controls> <source src=''></video>. Separate multiple images or videos with line breaks.",
                             "parameters": comfyui_parameters,
                         },
                     }
@@ -3705,7 +3705,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 if settings["memorySettings"]["userName"]:
                     cur_memory["description"] = cur_memory["description"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
-                print("添加角色设定：\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
+                print("Adding character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
                 content_append(request.messages, 'system', "Character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
 
             if cur_memory["personality"]:
@@ -3780,7 +3780,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
             if settings["memorySettings"]["userName"]:
                 lore_content = lore_content.replace("{{user}}", settings["memorySettings"]["userName"])
             lore_content = lore_content.replace("{{char}}", cur_memory["name"])
-            print("添加世界观设定（动态，注入到用户消息）：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
+            print("Adding world lore (dynamic, injected into the user message):\n\n" + lore_content + "\n\nEnd of world lore.\n\n")
             dynamic_user_context += f"\n\n[World information]\n{lore_content}"
 
         # 记忆检索（动态，基于当前用户输入）
@@ -4215,7 +4215,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 request.messages = sanitize_tool_calls(request.messages)
                 if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
                     deepsearch_messages = copy.deepcopy(request.messages)
-                    content_append(deepsearch_messages, 'user',  "\n\n将用户提出的问题或给出的当前任务拆分成多个步骤，每一个步骤用一句简短的话概括即可，无需回答或执行这些内容，直接返回总结即可，但不能省略问题或任务的细节。如果用户输入的只是闲聊或者不包含任务和问题，直接把用户输入重复输出一遍即可。如果是非常简单的问题，也可以只给出一个步骤即可。一般情况下都是需要拆分成多个步骤的。")
+                    content_append(deepsearch_messages, 'user',  "\n\nBreak the user's question or current task into steps, describing each in a short sentence. Return only the outline, without answering or executing the steps, and retain all relevant details. If the input is casual conversation or contains no question or task, repeat the input unchanged. For a very simple question, one step is sufficient; otherwise, use multiple steps.")
                     
                     # 1. 开启 stream=True 进行流式请求
                     response = await client.chat.completions.create(
@@ -4257,7 +4257,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             }
                             yield f"data: {json.dumps(progress_chunk)}\n\n"
                     
-                    content_append(request.messages, 'user',  f"\n\n如果用户没有提出问题或者任务，直接闲聊即可，如果用户提出了问题或者任务，任务描述不清晰或者你需要进一步了解用户的真实需求，你可以暂时不完成任务，而是分析需要让用户进一步明确哪些需求。")
+                    content_append(request.messages, 'user',  f"\n\nIf the user has not asked a question or assigned a task, converse normally. If the task is unclear or you need to understand the user's requirements better, you may defer execution and identify what needs clarification.")
                 # 如果启用推理模型
                 if settings['reasoner']['enabled'] or enable_thinking:
                     reasoner_messages = copy.deepcopy(request.messages)
@@ -4952,7 +4952,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             reasoner_messages.append(
                                 {
                                     "role": "user",
-                                    "content": f"{response_content.name}工具结果：{combined_results}",
+                                    "content": f"{response_content.name} tool result: {combined_results}",
                                     "reasoning_content": "",
                                 }
                             )
@@ -5071,7 +5071,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                 yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                         # 在推理结束后添加完整推理内容到消息
-                        content_append(request.messages, 'user', f"\n\n可参考的推理过程：{full_reasoning}") # 可参考的推理过程
+                        content_append(request.messages, 'user', f"\n\nReasoning for reference: {full_reasoning}") # 可参考的推理过程
 
                     all_combined_results = ""
                     if tool_calls:
@@ -5631,7 +5631,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     print(f"[DiaryBuffer] 记录助手回复失败: {e}")
                 if m0 and not request.is_sub_agent:
                     print("记忆更新任务开始提交")
-                    messages = f"用户说：{user_prompt}\n\n---\n\n你说：{full_content}"
+                    messages = f"User said: {user_prompt}\n\n---\n\nYou said: {full_content}"
                     infer = cur_memory.get('infer', False) or False
                     
                     def run_task():
@@ -5979,25 +5979,25 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 comfyui_required = []
                 if workflow["text_input"] is not None:
                     comfyui_properties["text_input"] = {
-                        "description": "第一个文字输入，需要输入的提示词，用于生成图片或者视频，如果无特别提示，默认为英文",
+                        "description": "First text input: prompt for image or video generation. Use English unless otherwise specified.",
                         "type": "string"
                     }
                     comfyui_required.append("text_input")
                 if workflow["text_input_2"] is not None:
                     comfyui_properties["text_input_2"] = {
-                        "description": "第二个文字输入，需要输入的提示词，用于生成图片或者视频，如果无特别提示，默认为英文",
+                        "description": "Second text input: prompt for image or video generation. Use English unless otherwise specified.",
                         "type": "string"
                     }
                     comfyui_required.append("text_input_2")
                 if workflow["image_input"] is not None:
                     comfyui_properties["image_input"] = {
-                        "description": "第一个图片输入，需要输入的图片，必须是图片URL，可以是外部链接，也可以是服务器内部的URL，例如：https://www.example.com/xxx.png  或者  http://127.0.0.1:3456/xxx.jpg",
+                        "description": "First image input: an image URL, either external or on the local server, for example https://www.example.com/xxx.png or http://127.0.0.1:3456/xxx.jpg.",
                         "type": "string"
                     }
                     comfyui_required.append("image_input")
                 if workflow["image_input_2"] is not None:
                     comfyui_properties["image_input_2"] = {
-                        "description": "第二个图片输入，需要输入的图片，必须是图片URL，可以是外部链接，也可以是服务器内部的URL，例如：https://www.example.com/xxx.png  或者  http://127.0.0.1:3456/xxx.jpg",
+                        "description": "Second image input: an image URL, either external or on the local server, for example https://www.example.com/xxx.png or http://127.0.0.1:3456/xxx.jpg.",
                         "type": "string"
                     }
                     comfyui_required.append("image_input_2")
@@ -6010,7 +6010,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     "type": "function",
                     "function": {
                         "name": f"comfyui_{workflow['unique_filename']}",
-                        "description": f"{workflow['description']}+\n如果要输入图片提示词或者修改提示词，尽可能使用英语。\n返回的图片结果，请将图片的URL放入![image]()这样的markdown语法中，用户才能看到图片。如果是视频，请将视频的URL放入<video controls> <source src=''></video>的中src中，用户才能看到视频。如果有多个结果，则请用换行符分隔开这几个图片或者视频，用户才能看到多个结果。",
+                        "description": f"{workflow['description']}+\nWhen supplying or editing an image prompt, use English where possible.\nFor image results, insert each image URL into Markdown image syntax, such as ![image](image_url), so the user can see it. For video results, put the video URL in the source src attribute of <video controls> <source src=''></video>. Separate multiple images or videos with line breaks.",
                         "parameters": comfyui_parameters,
                     },
                 }
@@ -6050,7 +6050,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 if settings["memorySettings"]["userName"]:
                     cur_memory["description"] = cur_memory["description"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
-                print("添加角色设定：\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
+                print("Adding character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
                 content_append(request.messages, 'system', "Character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
 
             if cur_memory["personality"]:
@@ -6103,7 +6103,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             if settings["memorySettings"]["userName"]:
                 lore_content = lore_content.replace("{{user}}", settings["memorySettings"]["userName"])
             lore_content = lore_content.replace("{{char}}", cur_memory["name"])
-            print("添加世界观设定（动态，注入到用户消息）：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
+            print("Adding world lore (dynamic, injected into the user message):\n\n" + lore_content + "\n\nEnd of world lore.\n\n")
             dynamic_user_context += f"\n\n[World information]\n{lore_content}"
 
         # 记忆检索（动态，基于当前用户输入）
@@ -6231,7 +6231,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             tools.append(kb_tool)
         if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
             deepsearch_messages = copy.deepcopy(request.messages)
-            content_append(deepsearch_messages, 'user',  "\n\n将用户提出的问题或给出的当前任务拆分成多个步骤，每一个步骤用一句简短的话概括即可，无需回答或执行这些内容，直接返回总结即可，但不能省略问题或任务的细节。如果用户输入的只是闲聊或者不包含任务和问题，直接把用户输入重复输出一遍即可。如果是非常简单的问题，也可以只给出一个步骤即可。一般情况下都是需要拆分成多个步骤的。")
+            content_append(deepsearch_messages, 'user',  "\n\nBreak the user's question or current task into steps, describing each in a short sentence. Return only the outline, without answering or executing the steps, and retain all relevant details. If the input is casual conversation or contains no question or task, repeat the input unchanged. For a very simple question, one step is sufficient; otherwise, use multiple steps.")
             response = await client.chat.completions.create(
                 model=model,
                 messages=deepsearch_messages,
@@ -6239,7 +6239,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 extra_body = extra_params, # 其他参数
             )
             user_prompt = response.choices[0].message.content
-            content_append(request.messages, 'user',  f"\n\n如果用户没有提出问题或者任务，直接闲聊即可，如果用户提出了问题或者任务，任务描述不清晰或者你需要进一步了解用户的真实需求，你可以暂时不完成任务，而是分析需要让用户进一步明确哪些需求。")
+            content_append(request.messages, 'user',  f"\n\nIf the user has not asked a question or assigned a task, converse normally. If the task is unclear or you need to understand the user's requirements better, you may defer execution and identify what needs clarification.")
         if settings['reasoner']['enabled'] or enable_thinking:
             reasoner_messages = copy.deepcopy(request.messages)
             if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
@@ -6498,7 +6498,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     }
                 )
             if settings['webSearch']['when'] == 'after_thinking' or settings['webSearch']['when'] == 'both':
-                content_append(request.messages, 'user',  f"\n对于联网搜索的结果，如果联网搜索的信息不足以回答问题时，你可以进一步使用联网搜索查询还未给出的必要信息。如果已经足够回答问题，请直接回答问题。")
+                content_append(request.messages, 'user',  f"\nIf the web search results do not provide enough information to answer the question, search for the missing necessary information. If they are sufficient, answer the question directly.")
             reasoner_messages.append(
                 {
                     "role": "assistant",
@@ -6509,7 +6509,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             reasoner_messages.append(
                 {
                     "role": "user",
-                    "content": f"{response_content.name}工具结果："+str(results),
+                    "content": f"{response_content.name} tool result: "+str(results),
                 }
             )
             if settings['reasoner']['enabled'] or enable_thinking:
@@ -6683,7 +6683,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 # 移除原内容中的标签部分
                 response_dict["choices"][0]['message']['content'] = re.sub(fr'{open_tag}(.*?)\{close_tag}', '', content, flags=re.DOTALL).strip()
         if m0:
-            messages=f"用户说：{user_prompt}\n\n---\n\n你说：{response_dict["choices"][0]['message']['content']}"
+            messages=f"User said: {user_prompt}\n\n---\n\nYou said: {response_dict["choices"][0]['message']['content']}"
             executor = ThreadPoolExecutor()
             infer = cur_memory.get('infer') or False
             async def add():

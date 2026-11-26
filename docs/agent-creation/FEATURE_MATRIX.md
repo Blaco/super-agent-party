@@ -33,3 +33,8 @@ Audit each individual UI setting and backend route before declaring its final di
 ## Regional messaging adapter removal — 2026-11-26
 
 The five legacy China-specific bot managers (QQ, WeChat, WeCom, Feishu, DingTalk) and corresponding backend start/stop/status/reload routes are removed from the source branch. Their user-facing bot tabs and routing choices are also removed. Discord, Telegram and Slack remain in the optional deployment panel. Unused frontend methods, saved-setting compatibility keys, and locked SDK dependencies still need a follow-up cleanup; no claim of complete removal from all source paths.
+
+
+## English runtime conversion — 2026-11-26
+
+The provider adapters for Anthropic, Gemini and OpenAI Responses, knowledge retrieval, ComfyUI, custom HTTP, WebSocket and code interpreter remain KEEP; only human/model-facing text and documentation are changed. Both main chat paths retain ComfyUI schemas and their workflow parameters. Group-memory schema and existing profile data are unchanged. Full English conversion is still in progress.
