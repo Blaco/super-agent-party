@@ -2486,7 +2486,7 @@ This is a Docker environment. Use standard Linux commands and paths.
         tha_prompt_base = (
             "\\n\\nControl avatar facial expressions and movements with these tags:\\n"
             "[Emotion tags] <happy> <angry> <sad> <neutral> <surprised> <relaxed>\\n"
-            f"[Motion tags] {\x27, \x27.join(motion_tags)}\\n\\n"
+            f"[Motion tags] {', '.join(motion_tags)}\\n\\n"
             "Place a tag at the start of the spoken sentence, after any voice tag. Example:\\n"
             "<angry>I am upset. <surprised>Oh! <happy>That is great! <nod>Understood.\\n\\n"
         )

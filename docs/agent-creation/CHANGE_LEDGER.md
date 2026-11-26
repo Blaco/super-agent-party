@@ -191,3 +191,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - Parent: fefb3761a8d6fc2fdad0e907fd468efb5cc948f0. Replace inherited README.md and README_AGENT.md with fork-specific English documentation: actual Windows local-first target, TabbyAPI/WhisperBox/OpenClaw system boundaries, optional bot/livestream scope, privacy invariants, source setup, Windows build/test limitations, AGPL and attribution.
 - Delete nine foreign-language upstream README variants (README_AR, README_DE, README_ES, README_FR, README_JA, README_KO, README_PT, README_RU, README_ZH) from the active branch; content remains recoverable from Git history and is not shipped as fork guidance. No license notices or user-created data were removed.
 - This is documentation cleanup only. Do not infer successful Windows application validation from README; build status remains GitHub Actions dependent.
+
+## 2026-11-26 — Correct THA Python f-string expression
+
+- Parent: ea40da1959921566241bcf96df1f1e9335ffbc94. The AST regression test surfaced a real syntax error in server.py: a quotation-mark escape was emitted literally inside the THA f-string expression for motion tags. Replaced with the Python-valid `f"[Motion tags] {', '.join(motion_tags)}\\n\\n"` expression. CI source/test/compile must pass before packaging current HEAD; the prior preview Windows package uses older source and is not a build of this fix.
