@@ -76,3 +76,12 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - **Verification:** source replacement counts validated and staged tree created. GitHub Actions to be checked after push. Visual responsiveness, keyboard navigation and user-profile persistence not yet Windows-tested.
 - **Self-audit:** no China-specific integrations removed; hiding deployment pages does not disable any network integrations already enabled in a user's settings. No privacy protection added to model switching; separate future task. Settings for all planned features remain directly visible or accessible via one toggle.
 - **Rollback:** revert this commit, or compare against `f692ccf20f40cb763596cc668a0b287225f85839`; no user data migration needed.
+
+## 2026-11-26 — Verified CI for first functional iterations
+
+- **Source commits:** `f692ccf20f40cb763596cc668a0b287225f85839` (English defaults/core character prompts) and `e3f7c49758c68d494095a55494c267583194f30c` (reversible navigation).
+- **CI for first patch:** [run 45898426838](https://github.com/Blaco/super-agent-party/actions/runs/45898426838) completed successfully; SAP npm smoke checks, four Python prompt compatibility tests, Python compilation and source-language audit passed.
+- **CI for second patch:** [run 45898627871](https://github.com/Blaco/super-agent-party/actions/runs/45898627871) completed successfully; SAP npm smoke checks, companion navigation structural smoke test, same four Python tests, Python compilation and inventory passed.
+- **Latest scanner result:** 199 source-text files examined, 16,755 Han-matching lines, 379 region-platform matching lines; categories: interface 8,017, backend 5,502, locales 2,041, documentation 932, other 495, model-facing candidates 69. Counts are broad inventory, not confirmed translation defects; file counts differ as new source/docs are added.
+- **Validation boundaries:** Node/JS syntax and structural checks do not establish a functioning GUI, integration tests with TabbyAPI, imported character-card behavior, speech quality or packaging readiness. No Windows runtime test or downloadable app build has been done.
+- **Documentation:** added `CURRENT_STATUS.md` and linked it plus `UI_NAVIGATION.md` in the documentation index; no runtime source changes in this verification commit.

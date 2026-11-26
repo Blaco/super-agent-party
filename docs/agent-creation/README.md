@@ -13,6 +13,8 @@ Start here, in order:
 7. [CHANGE_LEDGER.md](CHANGE_LEDGER.md) — append-only, fine-grained changes and evidence.
 8. [RELEASE_AND_TEST.md](RELEASE_AND_TEST.md) — smoke tests, build command semantics, archives.
 9. [DECISIONS.md](DECISIONS.md) — architecture decisions and rationale.
+10. [UI_NAVIGATION.md](UI_NAVIGATION.md) — where companion settings appear and how to restore optional SAP panels.
+11. [CURRENT_STATUS.md](CURRENT_STATUS.md) — last verified commit, test results and remaining work.
 
 The repository root [AGENTS.md](../../AGENTS.md) directs code agents to this folder. Documentation states intended behavior unless explicitly marked implemented/tested. Do not mistake a plan or a source inspection for a working feature.
 
