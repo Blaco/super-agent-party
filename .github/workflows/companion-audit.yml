@@ -32,6 +32,8 @@ jobs:
         run: node scripts/companion-ui-smoke.js
       - name: Companion prompt compatibility tests
         run: python -m unittest discover -s tests -p 'test_companion_defaults.py' -v
+      - name: English visible UI and license tests
+        run: python -m unittest discover -s tests -p 'test_legal_and_visible_english.py' -v
       - name: English HTML fallback tests
         run: python -m unittest discover -s tests -p 'test_english_html_fallbacks.py' -v
       - name: Model download source policy tests

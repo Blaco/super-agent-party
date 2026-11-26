@@ -41,7 +41,7 @@ const A2UIRendererComponent = {
             >
               <el-input 
                 v-model="formData[item.props.key || ('input_'+index)]" 
-                :placeholder="item.props.placeholder || '请输入...'"
+                :placeholder="item.props.placeholder || 'Enter a value...'"
                 size="large"
               >
                 <template #append v-if="item.props.action === 'search'">
@@ -60,7 +60,7 @@ const A2UIRendererComponent = {
             >
               <el-select 
                 v-model="formData[item.props.key]" 
-                :placeholder="item.props.placeholder || '请选择'" 
+                :placeholder="item.props.placeholder || 'Select an option'" 
                 style="width: 100%"
                 size="large"
               >
@@ -109,7 +109,7 @@ const A2UIRendererComponent = {
                 v-for="(listItem, lIdx) in item.props.items" 
                 :key="lIdx" 
                 class="a2ui-list-item"
-                @click="handleManualAction('点击条目', listItem.title)"
+                @click="handleManualAction('Select item', listItem.title)"
               >
                 <div class="a2ui-list-title">{{ listItem.title }}</div>
                 <div class="a2ui-list-desc">{{ listItem.description }}</div>
@@ -235,8 +235,8 @@ const A2UIRendererComponent = {
             >
               <el-switch 
                 v-model="formData[item.props.key]" 
-                :active-text="item.props.activeText || '开'"
-                :inactive-text="item.props.inactiveText || '关'"
+                :active-text="item.props.activeText || 'On'"
+                :inactive-text="item.props.inactiveText || 'Off'"
               />
             </el-form-item>
 
@@ -284,7 +284,7 @@ const A2UIRendererComponent = {
               <el-date-picker
                 v-model="formData[item.props.key]"
                 :type="item.props.subtype || 'date'" 
-                :placeholder="item.props.placeholder || '选择日期'"
+                :placeholder="item.props.placeholder || 'Choose a date'"
                 value-format="YYYY-MM-DD HH:mm:ss"
                 style="width: 100%;"
               />
@@ -300,7 +300,7 @@ const A2UIRendererComponent = {
                 v-model="formData[item.props.key]" 
                 allow-half 
                 show-text
-                :texts="['极差', '失望', '一般', '满意', '惊喜']"
+                :texts="['Very poor', 'Poor', 'Neutral', 'Good', 'Excellent']"
               />
             </el-form-item>
 
@@ -364,7 +364,7 @@ const A2UIRendererComponent = {
               v-if="item.type === 'TTSBlock'" 
               class="a2ui-tts-block"
               @click="handleTTS(item.props.content, item.props.voice)"
-              title="点击播放语音"
+              title="Play audio"
             >
               <div class="tts-icon">
                 <i class="fa-solid fa-volume-high"></i>
@@ -387,7 +387,7 @@ const A2UIRendererComponent = {
                 {{ item.props.title }}
               </div>
               <audio controls style="width: 100%; height: 40px;" :src="item.props.src">
-                您的浏览器不支持音频元素。
+                Your browser does not support audio playback.
               </audio>
               <div v-if="item.props.description" style="font-size: 12px; color: #909399; margin-top: 4px;">
                 {{ item.props.description }}
@@ -508,7 +508,7 @@ const A2UIRendererComponent = {
       
       // 界面反馈
       if (typeof showNotification === 'function') {
-          showNotification('已重置所有选项', 'success');
+          showNotification('All options reset', 'success');
       }
     },
     handleTTS(text, voice) {
@@ -539,7 +539,7 @@ const A2UIRendererComponent = {
         // 如果你有全局提示组件，也可以用：
         // showNotification('代码已复制', 'success');
       } catch (err) {
-        console.error('复制失败:', err);
+        console.error('Copy failed:', err);
       }
     },
 
@@ -579,7 +579,7 @@ handleAction(item, extraValue) {
       let payload = item.props.label;
       
       if (item.props.action === 'search' && extraValue) {
-          payload = `搜索：${extraValue}`;
+          payload = `Search: ${extraValue}`;
       }
       else if (item.props.action === 'submit') {
         const formDataKeys = Object.keys(this.formData);
@@ -617,15 +617,15 @@ handleAction(item, extraValue) {
                 // 原代码：payload = `表单提交：\n${details.join('\n')}`;
                 // 修改为：将按钮名称 (item.props.label) 明确拼接到消息头部
                 // ============================================================
-                payload = `提交操作：${item.props.label}\n表单数据：\n${details.join('\n')}`;
+                payload = `Submit action: ${item.props.label}\nForm data:\n${details.join('\n')}`;
             } else {
                 // 如果表单全是空的，保留按钮名称
-                payload = `${item.props.label} (空表单提交)`;
+                payload = `${item.props.label} (empty form submission)`;
             }
         }
       } 
       else if (item.props.data) {
-          payload = `选择操作：${item.props.label} (ID:${item.props.data})`;
+          payload = `Select action: ${item.props.label} (ID:${item.props.data})`;
       }
       
       // 发送最终 payload 给父级
@@ -633,7 +633,7 @@ handleAction(item, extraValue) {
     },
 
     handleManualAction(actionName, title) {
-        this.$emit('action', `选择了：${title} - ${actionName}`);
+        this.$emit('action', `Selected: ${title} - ${actionName}`);
     },
     relayAction(payload) {
         // ★ 拦截特殊信号：_A2UI_RESET_ALL_

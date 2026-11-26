@@ -145,3 +145,10 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - Parent: 0a7f4c45c7980ce660699cc155be1175add5387c. Main static/index.html now uses English translation keys without the redundant Chinese fallback string, preserving existing t() localization behavior. Four missing English keys (upload, backToDefaultView, slack_bot_config, gotoSlackBot) have explicit English translations added to static/js/locales/en-US.js.
 - Tests: tests/test_english_html_fallbacks.py and CI ensure this class of Chinese UI fallback does not return. No user data or markup structure removed. Existing English locale remains the only active UI bundle.
 - Still pending: hardcoded Chinese UI text outside t() fallbacks, errors, comments and model-facing instructions. Do not claim a fully translated product based on this commit alone.
+
+## 2026-11-26 — English visible markup and fork-specific About page
+
+- Parent: 5ff5211853270e7eef79bcd041ee279e8f211df6. The old China-/regional-social About and donation/contact panel is replaced with English AGPLv3 information, source link to Blaco fork, original-project contributor attribution and third-party license notices. Preserve legal credits and original license files; no upstream donor or commercial licensing links remain in the displayed panel.
+- Main UI: Translate direct file/browser, account, avatar-model and debug connection labels; update native language names to English labels; remove explicit simplified/traditional Chinese translation language options. This does not change user-authored text or model IDs.
+- Renderer: Translate several generic UI component placeholders, rating labels, audio affordance, action events and feedback. Tests protect core visible strings.
+- Files: static/index.html, static/js/renderer.js, tests/test_legal_and_visible_english.py, CI, this ledger. Large volumes of source comments, diagnostics and system prompts still need translation.
