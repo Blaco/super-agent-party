@@ -14,6 +14,7 @@ MODULES = (
     "comfyui_tool", "code_interpreter", "custom_http", "ws_manager",
     "utility_tools", "cdp_tool", "overlay_router", "node_runner", "docker_api",
     "tha_engine", "moss_tts",
+    "computer_use_tool",
 )
 HAN = re.compile(r"[\u3400-\u9fff\U00020000-\U0002A6DF]")
 
@@ -156,6 +157,27 @@ class EnglishDelegationModules(unittest.TestCase):
         self.assertIn("activeTooltipButton = null;", tha)
         self.assertIn("translations['en-US']?.[key]", vrm)
         self.assertNotIn("return 'zh-CN';", vrm)
+
+    def test_desktop_coordinate_protocol(self):
+        source = (ROOT / "py/computer_use_tool.py").read_text(encoding="utf-8")
+        module = ast.parse(source)
+        schemas = {}
+        for node in module.body:
+            if isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict):
+                try:
+                    schema = ast.literal_eval(node.value)
+                except (ValueError, TypeError):
+                    continue
+                if isinstance(schema.get("function"), dict):
+                    function = schema["function"]
+                    schemas[function["name"]] = function
+        for name in ("mouse_move", "mouse_click", "mouse_double_click", "mouse_drag"):
+            self.assertIn(name, schemas)
+        for axis in ("x", "y"):
+            coordinate = schemas["mouse_move"]["parameters"]["properties"][axis]
+            self.assertEqual((coordinate["minimum"], coordinate["maximum"]), (0, 1000))
+        for tag in ("MOVE", "DOUBLE_CLICK", "DRAG", "SCROLL", "HOLD", "LOGICAL_CLICK"):
+            self.assertIn("[LAST_ACTION: " + tag, source)
 
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")
