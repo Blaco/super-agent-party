@@ -226,3 +226,9 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 
 - Parent `0b48abde2f3dcf0e42d9b13f85c256ffbc466002`. Translated 105 occurrences across startup/health diagnostics, account storage/selection/creation/deletion dialogs, browser process control, download and screenshot/file-copy errors in `main.js`. Preserved existing account IDs/paths, argument names, HTTP ports and session semantics. Embedded account chooser now says Agent Creation rather than upstream brand, without changing Electron's disk identity.
 - `tests/test_electron_english_dialogs.py` validates core user-visible English labels; source CI checks JS syntax. Remaining code comments and other UI modules still contain Chinese.
+
+
+## 2026-11-26 — Localize embedding, ASR and diary query modules
+
+- Parent `0d9379e29a0d961cb7e23e0b947f9ed97848f942`. Translated all remaining Han text in `py/ebd_api.py`, `py/sherpa_asr.py` and `py/diary_query_tool.py`, including comments, docstrings, tool descriptions and error messages. Preserved API fields, diary entry types, model identifiers, inference behavior and user-authored diary data. The existing multilingual SenseVoice model identifier remains for compatibility; provider/model replacement is a separate architecture decision.
+- Checked exact replacement counts and absence of Han characters in the three modules before commit. Runtime and CI validation pending.

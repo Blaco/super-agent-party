@@ -6,36 +6,36 @@ diary_query_tool = {
     "function": {
         "name": "query_diary",
         "description": (
-            "查询日记记录，让AI回忆特定时间发生的事情。"
-            "可按时间范围、关键词、类型过滤，返回匹配的日记条目。"
+            "Query diary entries to recall events from a specific time. "
+            "Filter by time range, keyword, or entry type to return matching entries."
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "搜索关键词或描述，用于匹配日记标题和内容。留空则只按时间过滤。"
+                    "description": "Search keywords or a description against diary titles and content. Leave empty to filter without keywords."
                 },
                 "book_id": {
                     "type": "string",
-                    "description": "要查询的日记本ID（角色ID）。留空则查询当前角色的日记本。"
+                    "description": "Diary book ID (character ID). Leave empty to query the current character's diary."
                 },
                 "start_time": {
                     "type": "string",
-                    "description": "起始时间，ISO格式如 2024-01-01T00:00:00。不填则不限制起始时间。"
+                    "description": "Start time in ISO format, e.g. 2024-01-01T00:00:00. Omit for no lower time limit."
                 },
                 "end_time": {
                     "type": "string",
-                    "description": "结束时间，ISO格式如 2024-12-31T23:59:59。不填则不限制结束时间。"
+                    "description": "End time in ISO format, e.g. 2024-12-31T23:59:59. Omit for no upper time limit."
                 },
                 "max_results": {
                     "type": "integer",
-                    "description": "最多返回几条结果，默认5。",
+                    "description": "Maximum number of results, default 5.",
                     "default": 5
                 },
                 "entry_type": {
                     "type": "string",
-                    "description": "日记类型过滤：think（思考）、webSearch（联网搜索）、knowledge（知识库）、imMessage（主动消息）、browserControl（浏览器控制）、smartHome（智能家居）、chatSummary（聊天总结）。留空则不过滤类型。"
+                    "description": "Entry type filter: think (reflection), webSearch (web search), knowledge (knowledge base), imMessage (proactive message), browserControl (browser control), smartHome (smart home), chatSummary (chat summary). Leave empty for all types."
                 }
             }
         }
@@ -46,7 +46,7 @@ diary_books_tool = {
     "type": "function",
     "function": {
         "name": "list_diary_books",
-        "description": "列出所有可用的日记本（每个角色一本 + 默认兜底本）。",
+        "description": "List available diary books (one per character plus the default fallback book).",
         "parameters": {
             "type": "object",
             "properties": {}
@@ -65,7 +65,7 @@ async def handle_query_diary(query: str = "", book_id: str = DEFAULT_BOOK_ID,
             max_results=max_results, entry_type=entry_type or "",
         )
         if not results:
-            return "没有找到匹配的日记记录。"
+            return "No matching diary entries found."
         out = []
         for e in results:
             t = e.get("title", "") or e.get("content", "")[:24]
@@ -78,7 +78,7 @@ async def handle_query_diary(query: str = "", book_id: str = DEFAULT_BOOK_ID,
             })
         return json.dumps(out, ensure_ascii=False, indent=2)
     except Exception as ex:
-        return f"查询日记时出错: {str(ex)}"
+        return f"Error querying diary: {str(ex)}"
 
 
 async def handle_list_diary_books():
@@ -86,4 +86,4 @@ async def handle_list_diary_books():
         books = await list_diary_books()
         return json.dumps(books, ensure_ascii=False, indent=2)
     except Exception as ex:
-        return f"列出日记本时出错: {str(ex)}"
+        return f"Error listing diary books: {str(ex)}"

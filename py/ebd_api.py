@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api", tags=["extra"])
 
 class EmbeddingDimsRequest(BaseModel):
     api_key: str
-    base_url: Optional[HttpUrl] = None   # 留空时走官方 https://api.openai.com/v1
+    base_url: Optional[HttpUrl] = None   # Use the official endpoint when omitted: https://api.openai.com/v1
     model: str
 
 class EmbeddingDimsResponse(BaseModel):
@@ -18,8 +18,8 @@ class EmbeddingDimsResponse(BaseModel):
 @router.post("/embedding_dims", response_model=EmbeddingDimsResponse)
 async def get_embedding_dims(req: EmbeddingDimsRequest):
     """
-    用任意句子调一次嵌入接口，把返回向量的长度作为维度返回。
-    兼容 OpenAI 官方以及任何「接口格式一致」的代理。
+    Call the embedding endpoint with a sample sentence and return the vector length.
+    Supports the official OpenAI API and compatible proxies.
     """
     url = sanitize_url(
         input_url=req.base_url, 
@@ -34,17 +34,17 @@ async def get_embedding_dims(req: EmbeddingDimsRequest):
         try:
             r = await client.post(url, json=payload, headers=headers)
         except Exception as e:
-            raise HTTPException(502, detail=f"请求嵌入接口失败: {e}")
+            raise HTTPException(502, detail=f"Embedding request failed: {e}")
 
     if r.status_code != 200:
         raise HTTPException(
             status_code=r.status_code,
-            detail=f"上游返回错误: {r.text}"
+            detail=f"Upstream error: {r.text}"
         )
 
     try:
         vec = r.json()["data"][0]["embedding"]
     except (KeyError, IndexError):
-        raise HTTPException(502, detail="上游返回格式异常，无法解析 embedding")
+        raise HTTPException(502, detail="Invalid upstream response: could not parse embedding")
 
     return EmbeddingDimsResponse(dims=len(vec))
