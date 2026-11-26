@@ -176,3 +176,8 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 
 - Parent: 2fec3cea216f8c04b5d6ab5afc71f772fb160e33. server.py OS-specific shell environment prompt, Docker environment instruction, mandatory relationship speaker identification/tag format, goal/cowork permission mode, desktop screenshot context and scheduled reminder interpretation are translated to English. Existing task IDs, tool names, per-character values and actor names remain dynamically substituted; no user-data migration.
 - Source contracts: tests/test_english_runtime_prompt_sections.py and CI test the runtime/relationship blocks for Chinese characters; Python compile remains active. Remaining THA and VRM motion prompts, Chinese provider options and source diagnostics require translation.
+
+## 2026-11-26 — Translate VRM and THA avatar motion instructions
+
+- Parent: e0234d7edfc5f5371dd648dd3c505dab35aae04e. First-party server.py injected expression/motion directions now English. All tag names and THA intensity semantics, weighted face-feature composition, narrator/voice compatibility and parser same-line constraints preserved. Workspace/global skill-summary labels and enabled-voice debug log also translated. Optional avatar functionality remains in scope and is not removed.
+- Files: server.py, tests/test_english_avatar_instructions.py, CI and ledger. No changes to character cards or installed model assets; no actual avatar rendering/inference integration test yet.

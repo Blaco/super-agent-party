@@ -2269,11 +2269,11 @@ async def get_project_skills_summary(cwd: str, visibility_scope: str = "workspac
     if visibility_scope == "workspace":
         # 工作区技能：从项目目录的 .agents/skills 查找
         skills_root = Path(cwd) / ".agents" / "skills"
-        scope_name = "工作区"
+        scope_name = "Workspace"
     elif visibility_scope == "global":
         # 全局技能：从常量 SKILLS_DIR 查找
         skills_root = Path(SKILLS_DIR)
-        scope_name = "全局"
+        scope_name = "Global"
     else:
         # 未知范围，返回空
         return ""
@@ -2307,22 +2307,22 @@ async def get_project_skills_summary(cwd: str, visibility_scope: str = "workspac
             if yaml_meta:
                 skill_info += f":\n```yaml\n{yaml_meta}\n```"
             else:
-                skill_info += " (可用)"
+                skill_info += " (available)"
             found_skills_blocks.append(skill_info)
 
     if not found_skills_blocks:
         return ""
 
     # 根据可见范围返回不同的摘要信息
-    summary = f"\n\n🛠️ **{scope_name}技能 ({scope_name} Skills)**：\n"
+    summary = f"\n\n🛠️ **{scope_name} skills**：\n"
     
     if visibility_scope == "workspace":
-        summary += "检测到本项目特有的 Agent 技能定义。这些技能仅在本工作区内可见：\n\n"
+        summary += "The following project-specific agent skills are available in this workspace:\n\n"
     elif visibility_scope == "global":
-        summary += "检测到全局 Agent 技能定义。这些技能在所有项目中都可用：\n\n"
+        summary += "These global agent skills are available across projects:\n\n"
     
     summary += "\n".join(found_skills_blocks)
-    summary += "\n\n*提示：你可以通过读取skill的工具获取该技能文件夹的文件树和完整说明文档。*"
+    summary += "\n\n*Tip: use the skill-reading tool to inspect a skill directory and read its full instructions.*"
     
     return summary
 
@@ -2454,7 +2454,10 @@ This is a Docker environment. Use standard Linux commands and paths.
 
     # VRM 表情（固定）
     if settings['VRMConfig']['enabledExpressions'] and not request.is_app_bot and not request.is_sub_agent:
-        Expression_messages = "\n\n你可以使用以下表情：<happy> <angry> <sad> <neutral> <surprised> <relaxed>\n\n你可以在句子开头插入表情符号以驱动人物的当前表情，注意！你需要将表情符号放到句子的开头（如果有音色标签，就放到音色标签之后即可），才能在说这句话的时候同步做表情，例如：<angry>我真的生气了。<surprised>哇！<happy>我好开心。\n\n一定要把表情符号跟要做表情的句子放在同一行，如果表情符号和要做表情的句子中间有换行符，表情也将不会生效，例如：\n\n<happy>\n我好开心。\n\n此时，表情符号将不会生效。"
+        Expression_messages = ("\n\nUse the following facial expression tags: <happy> <angry> <sad> <neutral> <surprised> <relaxed>. "
+            "Place a tag at the beginning of the sentence it affects, immediately after any voice tag. "
+            "For example: <angry>I am upset. <surprised>Oh! <happy>That makes me happy. "
+            "The tag and the sentence must be on the same line. Newlines between a tag and its sentence prevent it from taking effect.")
         content_append(request.messages, 'system', Expression_messages)
 
     # VRM 动作（固定）
@@ -2463,12 +2466,10 @@ This is a Docker environment. Use standard Linux commands and paths.
         motion_tags = [f"<{m.get('name','')}>" for m in motions]
         print(motion_tags)
         Motion_messages = (
-            "\n\n你可以使用以下动作："
-            + ", ".join(motion_tags) +
-            "\n\n你可以在句子开头插入动作符号以驱动人物的当前动作，注意！你需要将动作符号放到句子的开头（如果有音色标签，就放到音色标签之后即可），"
-            "才能在说这句话的时候同步做动作，例如：<scratchHead>我真的生气了。<playFingers>哇！<akimbo>我好开心。\n\n"
-            "一定要把动作符号跟要做动作的句子放在同一行，如果动作符号和要做动作的句子中间有换行符，"
-            "动作也将不会生效，例如：\n\n<playFingers>\n我好开心。\n\n此时，动作符号将不会生效。"
+            "\n\nAvailable motion tags: " + ", ".join(motion_tags) +
+            "\n\nPlace a motion tag at the start of the sentence it affects, immediately after any voice tag. "
+            "For example: <scratchHead>I am confused. <playFingers>Oh! <akimbo>I am ready. "
+            "Keep the motion tag and sentence on the same line; do not separate them with a newline."
         )
         content_append(request.messages, 'system', Motion_messages)
 
@@ -2483,45 +2484,41 @@ This is a Docker environment. Use standard Linux commands and paths.
         fine_control_enabled = bool(settings.get('THAConfig', {}).get('enabledFineControl'))
 
         tha_prompt_base = (
-            "\n\n你可以通过以下标签控制你的虚拟形象表情和动作：\n\n"
-            "【表情标签】<happy> <angry> <sad> <neutral> <surprised> <relaxed>\n"
-            f"【动作标签】{', '.join(motion_tags)}\n\n"
-            "使用方法：将标签放在句子开头（如果有音色标签，就放到音色标签之后即可），例如：\n"
-            "<angry>我真的生气了。<surprised>哇！<happy>我好开心。<nod>好的，没问题！\n\n"
+            "\\n\\nControl avatar facial expressions and movements with these tags:\\n"
+            "[Emotion tags] <happy> <angry> <sad> <neutral> <surprised> <relaxed>\\n"
+            f"[Motion tags] {\x27, \x27.join(motion_tags)}\\n\\n"
+            "Place a tag at the start of the spoken sentence, after any voice tag. Example:\\n"
+            "<angry>I am upset. <surprised>Oh! <happy>That is great! <nod>Understood.\\n\\n"
         )
         tha_prompt_weights = (
-            "【表情强度与混合】表情标签支持强度控制和多表情混合，格式为 <表情:强度>，强度范围 0~1：\n"
-            "- <happy:0.3> 微微一笑（不必总是满强度，细腻的表情更自然）\n"
-            "- <happy:0.5><surprised:0.4> 惊喜交加（多个表情按权重混合）\n"
-            "- <sad:0.3><angry:0.2> 委屈中带一点不满\n"
-            "根据语境自行判断表情强度：轻描淡写用 0.2~0.4，明显情绪用 0.5~0.7，强烈情绪用 0.8~1.0。\n"
-            "不带强度的标签（如 <happy>）等价于强度 1.0。\n\n"
+            "[Emotion intensity and blending] Use <emotion:intensity> with an intensity from 0 to 1.\\n"
+            "- <happy:0.3> subtle smile.\\n"
+            "- <happy:0.5><surprised:0.4> cheerful surprise.\\n"
+            "- <sad:0.3><angry:0.2> sadness with mild frustration.\\n"
+            "Use 0.2–0.4 for subtle feelings, 0.5–0.7 for clear feelings, and 0.8–1.0 for strong feelings.\\n"
+            "An unweighted tag such as <happy> has intensity 1.0.\\n\\n"
         )
         tha_prompt_fine_control = (
-            "【细粒度控制】当预设表情无法表达复杂情绪时，你可以直接控制五官部位（同样支持 :强度 与混合）：\n"
-            "- 眉毛：<eyebrow_troubled>八字眉(悲伤) <eyebrow_angry>怒眉 <eyebrow_raised>挑眉 "
-            "<eyebrow_happy>开心眉 <eyebrow_lowered>压低眉 <eyebrow_serious>严肃眉\n"
-            "- 眼睛：<eye_happy>笑眼(眼角弯弯，喜悦/揶揄时使用，建议0.3~0.6) <eye_surprised>睁大 "
-            "<eye_relaxed>放松闭眼 <eye_unimpressed>半睁眼(倦怠/冷淡，非笑意) "
-            "<eye_wink>双眼闭合 <wink_left>眨左眼 <wink_right>眨右眼 <eye_lower_eyelid>眯眼 <iris_small>瞳孔缩小\n"
-            "- 嘴巴：<mouth_smile>嘴角上扬 <mouth_frown>嘴角下垂 <mouth_open>张嘴(笑着张嘴需搭配mouth_smile) "
-            "<mouth_grin>咧嘴露齿 <mouth_eee>咧嘴eee <mouth_ooo>嘟嘴 <mouth_smirk>得意笑\n"
-            "细粒度控制可以组合出预设没有的复杂表情，例如：\n"
-            "- 强颜欢笑（悲伤但嘴角带笑）：<eyebrow_troubled:0.6><eye_relaxed:0.2><mouth_smile:0.4>\n"
-            "- 眯眼笑着调侃：<eye_happy:0.5><mouth_open:0.45><mouth_smile:0.7><eyebrow_raised:0.4>\n"
-            "- 得意地挑眉：<eyebrow_raised:0.7><mouth_smirk:0.6><eye_lower_eyelid:0.3>\n"
-            "- 无语扶额感：<eye_unimpressed:0.8><eyebrow_lowered:0.4><mouth_frown:0.2>\n"
-            "多数控制在 0.3~0.6 区间已具有充分表现力，接近 1.0 的取值仅用于极端情绪。\n"
-            "冲突的控制（如同时张嘴和嘟嘴）会被自动调和，可放心组合。\n\n"
+            "[Fine-grained expression controls] Combine weighted facial features if a preset emotion is insufficient.\\n"
+            "Brows: <eyebrow_troubled> <eyebrow_angry> <eyebrow_raised> <eyebrow_happy> <eyebrow_lowered> <eyebrow_serious>\\n"
+            "Eyes: <eye_happy> (smiling eyes) <eye_surprised> <eye_relaxed> <eye_unimpressed> <eye_wink> <wink_left> <wink_right> <eye_lower_eyelid> <iris_small>\\n"
+            "Mouth: <mouth_smile> <mouth_frown> <mouth_open> <mouth_grin> <mouth_eee> <mouth_ooo> <mouth_smirk>\\n"
+            "For a smile with an open mouth, combine mouth_open with mouth_smile.\\n"
+            "Subtle expression examples:\\n"
+            "- Awkward smile: <eyebrow_troubled:0.6><eye_relaxed:0.2><mouth_smile:0.4>\\n"
+            "- Playful smile: <eye_happy:0.5><mouth_open:0.45><mouth_smile:0.7><eyebrow_raised:0.4>\\n"
+            "- Smug look: <eyebrow_raised:0.7><mouth_smirk:0.6><eye_lower_eyelid:0.3>\\n"
+            "- Unimpressed look: <eye_unimpressed:0.8><eyebrow_lowered:0.4><mouth_frown:0.2>\\n"
+            "Intensity 0.3–0.6 is usually enough; use values near 1.0 for extreme expressions.\\n"
+            "Conflicting features are blended by the avatar controller.\\n\\n"
         )
         tha_prompt_rules = (
-            "规则：\n"
-            "1. 表情标签会影响后续所有句子，直到切换为新的表情\n"
-            "2. 动作标签是一次性的，只影响当前这句话\n"
-            "3. 表情和动作可以同时使用，例如：<happy:0.6><nod>太棒了！\n"
-            "4. 标签必须与句子在同一行，中间有换行符则不会生效\n\n"
+            "Rules:\\n"
+            "1. Emotion tags persist until a different emotion tag appears.\\n"
+            "2. Motion tags apply to the current sentence only.\\n"
+            "3. Motion and emotion can be combined, such as <happy:0.6><nod>Excellent!\\n"
+            "4. Keep tags on the same line as their target sentence.\\n\\n"
         )
-
         # 提示词分段装配：(启用条件, 片段)，新增语法段时在此追加
         tha_prompt_sections = [
             (True, tha_prompt_base),
@@ -2562,7 +2559,7 @@ This is a Docker environment. Use standard Linux commands and paths.
                     Narrator_label = "旁白"
 
                 finalttsList = json.dumps(finalttsList, ensure_ascii=False, indent=4)
-                print("可用音色：",finalttsList)
+                print("Available voices:",finalttsList)
                 
                 newtts_messages = f"""
 The response will be converted to speech using TTS.
