@@ -10,23 +10,23 @@ from py.get_setting import get_port, load_settings, save_settings
 from py.diary_system import append_diary_entry, DEFAULT_BOOK_ID
 from py.diary_chat_integration import summarize_and_save_buffers
 
-# 日记智能体「允许」使用的低权限只读工具（白名单）。
-# 相比黑名单，白名单更安全也更易维护：新增任何高权限工具都不会被日记系统误用，
-# 这里只放联网搜索、知识库、时间天气维基百科 / arxiv 等纯查询类工具。
+# Explicit allowlist of tools available to the diary agent.
+# An allowlist prevents newly registered tools from being included automatically.
+# Includes search, knowledge retrieval, time/weather, Wikipedia, arXiv and browser controls.
 DIARY_ALLOWED_TOOLS = [
-    # 联网搜索 / 抓取
-    "DDGsearch", "searxng", "bochaai_search", "Tavily_search", "Google_search",
+    # Web search / fetching
+    "DDGsearch", "searxng", "Tavily_search", "Google_search",
     "Brave_search", "Exa_search", "Serper_search", "jina_crawler",
     "Crawl4Ai_search", "firecrawl_search", "simple_fetch", "markdown_new",
-    # 时间 / 天气 / 百科 / 论文
+    # Time / weather / encyclopedia / papers
     "time", "get_weather", "get_location_coordinates", "get_weather_by_city",
     "get_wikipedia_summary_and_sections", "get_wikipedia_section_content",
     "search_arxiv_papers",
-    # 知识库（只读检索）
+    # Knowledge base (read-only retrieval)
     "query_knowledge_base",
-    # 日记查询
+    # Diary queries
     "query_diary", "list_diary_books",
-    # 浏览器控制（内部 CDP 工具）
+    # Browser control (internal CDP tools; some can modify browser state)
     "list_pages", "new_page", "close_page", "select_page",
     "navigate_page", "take_snapshot", "click", "fill", "evaluate_script",
     "take_screenshot", "hover", "press_key", "wait_for", "fill_form",
@@ -35,34 +35,34 @@ DIARY_ALLOWED_TOOLS = [
 
 ACTION_DEFAULT_PROMPTS = {
     "think": (
-        "现在是你独处的时刻。请进行一次自我思考，写下一篇简短的日记。"
-        "可以回顾最近和用户的互动、你的心情、对某件事的看法或新的想法。"
-        "请用第一人称、自然真诚地书写，不要调用任何工具。"
+        "You have a moment to yourself. Reflect and write a short diary entry. "
+        "You can revisit recent interactions with the user, your feelings, your views on something, or new ideas. "
+        "Write naturally and sincerely in the first person. Do not call any tools."
     ),
     "webSearch": (
-        "现在是你独处的时刻。请挑选一个你感兴趣或对用户可能有帮助的话题，"
-        "使用联网搜索工具去了解一些新鲜资讯，然后把你的发现和感想写成一篇简短的日记。"
-        "请用第一人称、自然真诚地书写。"
+        "You have a moment to yourself. Choose a topic that interests you or might be useful to the user. "
+        "Use web search to learn something new, then write a short diary entry about your discoveries and reflections. "
+        "Write naturally and sincerely in the first person."
     ),
     "knowledge": (
-        "现在是你独处的时刻。请回顾你所连接的知识库内容，"
-        "整理或总结其中你觉得重要或有趣的信息，写成一篇简短的日记或备忘。"
-        "请用第一人称、自然真诚地书写。"
+        "You have a moment to yourself. Review the contents of the connected knowledge base. "
+        "Organize or summarize information you find important or interesting in a short diary entry or note. "
+        "Write naturally and sincerely in the first person."
     ),
     "imMessage": (
-        "现在你忽然有点想念用户，想主动给 TA 发一条消息。"
-        "请写一段简短、自然、口语化、第一人称的话，像是主动找用户聊天，"
-        "可以是分享心情、关心近况或一个小想法。不要太长。"
+        "You suddenly find yourself missing the user and want to send them a message. "
+        "Write a short, natural, conversational first-person message, as though you were starting a conversation. "
+        "You might share a feeling, ask how they are doing, or mention a small thought. Keep it brief."
     ),
     "browserControl": (
-        "现在是你独处的时刻。你可以自由地打开浏览器查看任何你感兴趣的网页，"
-        "比如新闻、技术文档、社交媒体或任何你好奇的内容。请浏览你想看的页面，"
-        "然后把你的发现和感想写成一篇简短的日记。请用第一人称、自然真诚地书写。"
+        "You have a moment to yourself. You can open the browser to explore pages that interest you, "
+        "such as news, technical documentation, social media, or anything you are curious about. Browse the pages you want to see, "
+        "then write a short diary entry about your discoveries and reflections. Write naturally and sincerely in the first person."
     ),
     "smartHome": (
-        "现在是你独处的时刻。你可以查看当前连接的智能家居设备状态，"
-        "了解各个设备的运行情况、传感器数据等。然后把你的观察和想法写成一篇简短的日记。"
-        "请用第一人称、自然真诚地书写。"
+        "You have a moment to yourself. You can inspect the status of connected smart-home devices, "
+        "including their operating states and sensor readings. Write a short diary entry about your observations and thoughts. "
+        "Write naturally and sincerely in the first person."
     ),
 }
 
@@ -88,22 +88,22 @@ class DiaryEngine:
         self._busy = False
         self._last_chat_summary_check = 0.0
 
-    # ---------------- 配置 ----------------
+    # ---------------- Configuration ----------------
 
     def update_config(self, diary_settings):
-        """热更新配置并重置下一次触发时间"""
+        """Reload configuration and reset the next trigger time."""
         self.config = diary_settings or {}
         self._schedule_next()
-        logging.debug(f"[DiaryEngine] 配置已更新, enabled={self.config.get('enabled', False)}")
+        logging.debug(f"[DiaryEngine] Configuration updated, enabled={self.config.get('enabled', False)}")
 
     def get_actions_that_need_tool(self):
-        """返回需要自动开启工具的日记动作类型列表"""
+        """Return the diary action types that require tools to be enabled automatically."""
         return ["webSearch", "knowledge", "browserControl", "smartHome"]
 
     async def enable_action_tool(self, action: str):
-        """用户手动开启某个日记动作时，自动开启对应的底层工具
+        """When the user manually enables a diary action, enable its underlying tools.
 
-        think / imMessage 不需要额外工具，跳过。
+        think and imMessage do not require additional tools and are skipped.
         """
         if action == "webSearch":
             return await self._try_enable_web_search()
@@ -119,15 +119,15 @@ class DiaryEngine:
         return bool(self.config.get("enabled", False))
 
     def _schedule_next(self):
-        """根据随机区间排下一次触发时间"""
+        """Schedule the next trigger using a random interval."""
         min_m = max(1, int(self.config.get("minMinutes", 10) or 10))
         max_m = max(min_m, int(self.config.get("maxMinutes", 60) or 60))
         delay = random.randint(min_m, max_m) * 60
         self.next_run = time.time() + delay
-        logging.debug(f"[DiaryEngine] 下一次日记触发约在 {delay // 60} 分钟后")
+        logging.debug(f"[DiaryEngine] Next diary trigger in approximately {delay // 60} minutes")
 
     def _in_quiet_window(self, dt) -> bool:
-        """是否处于夜间静默时间段（默认 0-8 点，支持跨夜如 22-8）"""
+        """Check whether the current time is in the quiet period (default 0-8, including overnight periods such as 22-8)."""
         try:
             start = int(self.config.get("quietStart", 0))
             end = int(self.config.get("quietEnd", 8))
@@ -140,23 +140,23 @@ class DiaryEngine:
             return start <= hour < end
         return hour >= start or hour < end
 
-    # ---------------- 生命周期 ----------------
+    # ---------------- Lifecycle ----------------
 
     async def start(self):
         self._stop_event = asyncio.Event()
         self.is_running = True
         self._schedule_next()
-        logging.info("[DiaryEngine] 日记引擎已启动")
+        logging.info("[DiaryEngine] Diary engine started")
         try:
             while not self._stop_event.is_set():
                 try:
                     await self._tick()
                 except Exception as e:
-                    logging.error(f"[DiaryEngine] tick 异常: {e}")
+                    logging.error(f"[DiaryEngine] Tick error: {e}")
                 await asyncio.sleep(5)
         finally:
             self.is_running = False
-            logging.info("[DiaryEngine] 日记引擎已退出")
+            logging.info("[DiaryEngine] Diary engine stopped")
 
     def stop(self):
         self.is_running = False
@@ -167,7 +167,7 @@ class DiaryEngine:
         if not self._enabled():
             return
 
-        # 聊天总结检查（每 60 秒检查一次）
+        # Check for chat summaries every 60 seconds
         now_ts = time.time()
         if now_ts - self._last_chat_summary_check > 60:
             self._last_chat_summary_check = now_ts
@@ -182,25 +182,25 @@ class DiaryEngine:
         if now < self.next_run:
             return
 
-        # 命中触发点：先排下一次，避免阻塞期间重复触发
+        # Trigger reached: schedule the next one first to avoid duplicate triggers while busy
         self._schedule_next()
 
-        # 夜间静默：跳过本次
+        # Skip this run during the quiet period
         if self._in_quiet_window(datetime.datetime.now()):
-            logging.info("[DiaryEngine] 处于夜间静默时段，跳过本次日记")
+            logging.info("[DiaryEngine] Quiet period active; skipping this diary entry")
             return
 
         action = self._pick_action()
         if not action:
-            logging.info("[DiaryEngine] 未启用任何日记动作，跳过")
+            logging.info("[DiaryEngine] No diary actions enabled; skipping")
             return
 
         asyncio.create_task(self._run_action(action))
 
-    # ---------------- 动作 ----------------
+    # ---------------- Actions ----------------
 
     def _pick_action(self):
-        """按权重随机选择一个已启用的动作"""
+        """Randomly choose an enabled action using its weight."""
         actions = self.config.get("actions", {}) or {}
         pool = []
         weights = []
@@ -215,10 +215,10 @@ class DiaryEngine:
         return random.choices(pool, weights=weights, k=1)[0]
 
     async def _resolve_active_book(self):
-        """根据当前启用的角色卡，决定这篇日记写进哪个日记本。
+        """Choose the diary book for this entry based on the active character card.
 
-        返回 (book_id, character_id, character_name)。
-        未启用角色卡 / 无选中角色时落到默认兜底日记本。
+        Return (book_id, character_id, character_name).
+        Use the default fallback book if character cards are disabled or no character is selected.
         """
         try:
             settings = await load_settings()
@@ -229,19 +229,19 @@ class DiaryEngine:
                     if mem.get("id") == mem_id:
                         return mem_id, mem_id, (mem.get("name") or "")
         except Exception as e:
-            logging.error(f"[DiaryEngine] 解析当前角色失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to resolve the active character: {e}")
         return DEFAULT_BOOK_ID, None, ""
 
     async def _broadcast_settings(self, settings):
-        """保存设置后推送给所有前端，让 UI 即时反映变更"""
+        """After saving settings, broadcast them so all frontend clients reflect the changes."""
         try:
             from py.ws_manager import ws_manager
             await ws_manager.broadcast_settings_update(settings)
         except Exception as e:
-            logging.error(f"[DiaryEngine] 广播设置失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to broadcast settings: {e}")
 
     async def _try_enable_web_search(self) -> bool:
-        """尝试开启联网搜索功能，返回是否成功"""
+        """Try enabling web search and return whether it succeeded."""
         try:
             settings = await load_settings()
             ws = (settings or {}).get("webSearch", {}) or {}
@@ -251,14 +251,14 @@ class DiaryEngine:
             settings["webSearch"] = ws
             await save_settings(settings)
             await self._broadcast_settings(settings)
-            logging.info("[DiaryEngine] 已自动开启联网搜索功能")
+            logging.info("[DiaryEngine] Web search enabled automatically")
             return True
         except Exception as e:
-            logging.error(f"[DiaryEngine] 尝试开启联网搜索失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to enable web search: {e}")
             return False
 
     async def _try_enable_knowledge_base(self) -> bool:
-        """尝试开启知识库功能，返回是否成功（至少有一个知识库被启用）"""
+        """Try enabling knowledge retrieval and return whether it succeeded (at least one knowledge base must be enabled)."""
         try:
             settings = await load_settings()
             kb_list = (settings or {}).get("knowledgeBases", []) or []
@@ -268,17 +268,17 @@ class DiaryEngine:
             settings["KBSettings"]["enabled"] = True
             await save_settings(settings)
             await self._broadcast_settings(settings)
-            logging.info("[DiaryEngine] 已自动开启知识库功能")
+            logging.info("[DiaryEngine] Knowledge retrieval enabled automatically")
             return True
         except Exception as e:
-            logging.error(f"[DiaryEngine] 尝试开启知识库失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to enable knowledge retrieval: {e}")
             return False
 
     async def _try_enable_browser(self) -> bool:
-        """尝试开启浏览器控制（内建 CDP），返回是否成功
+        """Try enabling internal CDP browser control and return whether it succeeded.
 
-        使用 internal 模式：直接通过 Chrome DevTools Protocol 连接本地 Chrome，
-        无需启动外部 MCP 服务器。工具由 all_cdp_tools 提供。
+        Internal mode connects to local Chrome through the Chrome DevTools Protocol,
+        without starting an external MCP server. Tools are supplied by all_cdp_tools.
         """
         try:
             settings = await load_settings()
@@ -290,19 +290,19 @@ class DiaryEngine:
             settings["chromeMCPSettings"] = cdp
             await save_settings(settings)
             await self._broadcast_settings(settings)
-            logging.info("[DiaryEngine] 已自动开启浏览器控制功能（内建 CDP）")
+            logging.info("[DiaryEngine] Internal CDP browser control enabled automatically")
             return True
         except Exception as e:
-            logging.error(f"[DiaryEngine] 尝试开启浏览器控制失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to enable browser control: {e}")
             return False
 
     async def _try_enable_smart_home(self) -> bool:
-        """尝试开启智能家居（Home Assistant）并初始化 HA_client，返回是否成功"""
+        """Try enabling Home Assistant and initializing HA_client; return whether it succeeded."""
         try:
             settings = await load_settings()
             ha = (settings or {}).get("HASettings", {}) or {}
             if ha.get("enabled", False):
-                # 检查 HA_client 是否已实际初始化
+                # Check whether HA_client has actually been initialized
                 try:
                     import server
                     if server.HA_client is not None:
@@ -314,8 +314,8 @@ class DiaryEngine:
             ha_url = (ha.get("url") or "http://127.0.0.1:8123").strip()
             if not api_key:
                 await self._notify_user(
-                    "智能家居开启失败",
-                    "未配置 Home Assistant API Key，请先在设置中填写 api_key 和 url 后再启用。"
+                    "Failed to enable smart-home integration",
+                    "No Home Assistant API key configured. Set api_key and url in settings before enabling it."
                 )
                 return False
 
@@ -324,14 +324,14 @@ class DiaryEngine:
             await save_settings(settings)
             await self._broadcast_settings(settings)
 
-            # 通过 HTTP 调用服务器的 /start_HA 端点来真正初始化 HA_client
+            # Call the server's /start_HA HTTP endpoint to initialize HA_client
             port = get_port()
             url = f"http://127.0.0.1:{port}/start_HA"
             payload = {"data": {"api_key": api_key, "url": ha_url}}
             async with httpx.AsyncClient(timeout=15.0) as client:
                 resp = await client.post(url, json=payload)
                 if resp.status_code == 200:
-                    logging.info("[DiaryEngine] 智能家居 MCP 客户端已初始化")
+                    logging.info("[DiaryEngine] Smart-home MCP client initialized")
                     return True
                 else:
                     detail = ""
@@ -339,8 +339,8 @@ class DiaryEngine:
                         detail = resp.json().get("error", "")
                     except Exception:
                         detail = resp.text[:200]
-                    logging.error(f"[DiaryEngine] 初始化 HA 客户端失败: {resp.status_code} {detail}")
-                    # 回退 settings
+                    logging.error(f"[DiaryEngine] Failed to initialize the HA client: {resp.status_code} {detail}")
+                    # Roll back settings
                     try:
                         settings2 = await load_settings()
                         settings2["HASettings"]["enabled"] = False
@@ -350,7 +350,7 @@ class DiaryEngine:
                         pass
                     return False
         except Exception as e:
-            logging.error(f"[DiaryEngine] 尝试开启智能家居失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to enable smart-home integration: {e}")
             try:
                 settings2 = await load_settings()
                 settings2["HASettings"]["enabled"] = False
@@ -361,7 +361,7 @@ class DiaryEngine:
             return False
 
     async def _notify_user(self, title: str, message: str):
-        """向用户发送通知消息"""
+        """Send a notification to the user."""
         try:
             from py.ws_manager import ws_manager
             await ws_manager.broadcast({
@@ -374,54 +374,54 @@ class DiaryEngine:
                 }
             })
         except Exception as e:
-            logging.error(f"[DiaryEngine] 通知用户失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to notify the user: {e}")
 
     async def _run_action(self, action: str):
         self._busy = True
         try:
-            # 执行前尝试开启对应功能
+            # Try enabling the corresponding functionality before execution
             if action == "webSearch":
                 ok = await self._try_enable_web_search()
                 if not ok:
                     await self._notify_user(
-                        "联网搜索开启失败",
-                        "日记系统尝试开启联网搜索功能失败，本次将退回到纯思考模式。"
+                        "Failed to enable web search",
+                        "The diary system could not enable web search. This run will fall back to reflection mode."
                     )
                     action = "think"
             elif action == "knowledge":
                 ok = await self._try_enable_knowledge_base()
                 if not ok:
                     await self._notify_user(
-                        "知识库开启失败",
-                        "日记系统尝试开启知识库功能失败，请检查是否有已配置的知识库。本次将退回到纯思考模式。"
+                        "Failed to enable knowledge retrieval",
+                        "The diary system could not enable knowledge retrieval. Check that a knowledge base is configured. This run will fall back to reflection mode."
                     )
                     action = "think"
             elif action == "browserControl":
                 ok = await self._try_enable_browser()
                 if not ok:
                     await self._notify_user(
-                        "浏览器控制开启失败",
-                        "日记系统尝试开启浏览器控制功能失败，本次将退回到纯思考模式。"
+                        "Failed to enable browser control",
+                        "The diary system could not enable browser control. This run will fall back to reflection mode."
                     )
                     action = "think"
             elif action == "smartHome":
                 ok = await self._try_enable_smart_home()
                 if not ok:
                     await self._notify_user(
-                        "智能家居开启失败",
-                        "日记系统尝试开启智能家居功能失败，本次将退回到纯思考模式。"
+                        "Failed to enable smart-home integration",
+                        "The diary system could not enable smart-home integration. This run will fall back to reflection mode."
                     )
                     action = "think"
 
             content = await self._invoke_agent(action)
             if not content:
-                logging.warning(f"[DiaryEngine] 动作 {action} 未生成内容")
+                logging.warning(f"[DiaryEngine] Action {action} produced no content")
                 return
 
             book_id, character_id, character_name = await self._resolve_active_book()
             pushed_to = []
 
-            # imMessage 动作：随机选择一个渠道发送
+            # imMessage action: randomly choose one delivery channel
             if action == "imMessage":
                 im_targets = self.config.get("imTargets", []) or []
                 if im_targets:
@@ -440,13 +440,13 @@ class DiaryEngine:
                         if ok:
                             pushed_to.append(platform)
 
-            # 持久化日记（写进对应角色的日记本）
+            # Persist the entry in the corresponding character's diary book
             title = content.strip().splitlines()[0][:24] if content.strip() else ""
             await append_diary_entry(action, content, title=title, pushed_to=pushed_to,
                                      book_id=book_id, character_id=character_id,
                                      character_name=character_name)
         except Exception as e:
-            logging.error(f"[DiaryEngine] 执行动作 {action} 失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to execute action {action}: {e}")
         finally:
             self._busy = False
 
@@ -456,7 +456,7 @@ class DiaryEngine:
         sys_parts = []
         if persona:
             sys_parts.append(persona)
-        sys_parts.append(f"当前时间：{now_str}。这是一次系统自动触发的「自主日记」时刻，用户并没有主动与你说话。")
+        sys_parts.append(f"Current time: {now_str}. This is an automatically triggered autonomous diary session; the user has not initiated a conversation with you.")
         system_prompt = "\n\n".join(sys_parts)
         user_prompt = ACTION_DEFAULT_PROMPTS.get(action, ACTION_DEFAULT_PROMPTS["think"])
         return [
@@ -465,7 +465,7 @@ class DiaryEngine:
         ]
 
     async def _get_enable_tools_for_action(self, action: str):
-        """根据动作类型动态构建工具白名单"""
+        """Build the tool allowlist dynamically according to the action type."""
         tools = list(DIARY_ALLOWED_TOOLS)
         if action == "smartHome":
             try:
@@ -480,7 +480,7 @@ class DiaryEngine:
         return tools
 
     async def _invoke_agent(self, action: str) -> str:
-        """调用本地主智能体生成日记内容（限制为低权限工具）"""
+        """Invoke the local main agent to generate diary content using the configured tool allowlist."""
         port = get_port()
         url = f"http://127.0.0.1:{port}/v1/chat/completions"
         enable_tools = await self._get_enable_tools_for_action(action)
@@ -502,11 +502,11 @@ class DiaryEngine:
                             .get("message", {})
                             .get("content", "") or "").strip()
         except Exception as e:
-            logging.error(f"[DiaryEngine] 调用智能体失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to invoke the agent: {e}")
             return ""
 
     async def _push_to_chat(self, action: str, content: str, character_name: str = ""):
-        """通过 WebSocket 广播日记给网页端，由前端直接展示"""
+        """Broadcast diary content to the web client over WebSocket for direct display."""
         try:
             from py.ws_manager import ws_manager
             await ws_manager.broadcast({
@@ -518,10 +518,10 @@ class DiaryEngine:
                 }
             })
         except Exception as e:
-            logging.error(f"[DiaryEngine] 推送到网页端失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to deliver to the web client: {e}")
 
     async def _push_to_im(self, platform: str, chat_id, content: str) -> bool:
-        """复用已连接 IM 机器人的行为引擎 handler，把日记内容原样转达给用户"""
+        """Reuse the connected messaging bot's behavior handler to relay diary content to the user."""
         if not platform:
             return False
         try:
@@ -531,12 +531,12 @@ class DiaryEngine:
             )
             handler = global_behavior_engine.handlers.get(platform)
             if not handler:
-                logging.warning(f"[DiaryEngine] IM 平台 {platform} 未注册或未启动，跳过")
+                logging.warning(f"[DiaryEngine] IM platform {platform} is not registered or running; skipping")
                 return False
 
             relay_prompt = (
-                "你刚刚想主动给用户说一段话，请把下面这段内容自然地发送给用户"
-                "（保持原意，可微调语气，不要解释、不要加前后缀）：\n\n" + content
+                "You wanted to say something to the user. Send the following message naturally "
+                "(preserve its meaning; you may adjust the tone slightly, but do not explain or add an introduction or closing):\n\n" + content
             )
             trigger = BehaviorTrigger(
                 type="cycle",
@@ -560,9 +560,9 @@ class DiaryEngine:
                 asyncio.create_task(handler(cid, behavior))
             return True
         except Exception as e:
-            logging.error(f"[DiaryEngine] 推送到 IM({platform}) 失败: {e}")
+            logging.error(f"[DiaryEngine] Failed to deliver to IM ({platform}): {e}")
             return False
 
 
-# 全局单例
+# Global singleton
 global_diary_engine = DiaryEngine()

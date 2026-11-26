@@ -16,15 +16,15 @@ async def update_workspace_settings(
     wsl_permission_mode: str = None,
 ):
     """
-    动态调整工作区工具的开启状态、执行引擎以及权限模式。
-    支持本地环境(local)、Docker沙箱(ds)、ACP协议(acp)和WSL沙箱(wsl)四种引擎。
-    WSL 引擎仅在 Windows 上可用。
+    Dynamically adjust whether workspace tools are enabled, the execution engine and permission mode.
+    Four engines are supported: local environment (local), Docker sandbox (ds), ACP protocol (acp) and WSL sandbox (wsl).
+    The WSL engine is available only on Windows.
     """
     try:
         settings = await load_settings()
         changed = False
 
-        # 1. 主开关和引擎
+        # 1. Main switch and engine
         if cli_enabled is not None:
             settings["CLISettings"]["enabled"] = cli_enabled
             changed = True
@@ -38,28 +38,28 @@ async def update_workspace_settings(
             settings["CLISettings"]["engine"] = engine
             changed = True
 
-        # 2. 本地环境权限
+        # 2. Local environment permissions
         if local_permission_mode in ["plan", "default", "auto-approve", "yolo", "cowork", "goal"]:
             if "localEnvSettings" not in settings:
                 settings["localEnvSettings"] = {}
             settings["localEnvSettings"]["permissionMode"] = local_permission_mode
             changed = True
 
-        # 3. Docker Sandbox 权限
+        # 3. Docker Sandbox permissions
         if ds_permission_mode in ["plan", "default", "auto-approve", "yolo", "cowork", "goal"]:
             if "dsSettings" not in settings:
                 settings["dsSettings"] = {}
             settings["dsSettings"]["permissionMode"] = ds_permission_mode
             changed = True
 
-        # 4. ★ ACP 协议权限
+        # 4. ★ ACP protocol permissions
         if acp_permission_mode in ["plan", "default", "auto-approve", "yolo", "cowork", "goal"]:
             if "acpSettings" not in settings:
                 settings["acpSettings"] = {}
             settings["acpSettings"]["permissionMode"] = acp_permission_mode
             changed = True
 
-        # 5. ★ WSL 沙盒权限（仅 Windows）
+        # 5. ★ WSL sandbox permissions (Windows only)
         if wsl_permission_mode in ["plan", "default", "auto-approve", "yolo", "cowork", "goal"]:
             if "wslSettings" not in settings:
                 settings["wslSettings"] = {}
@@ -70,7 +70,7 @@ async def update_workspace_settings(
             await save_settings(settings)
             await ws_manager.broadcast_settings_update(settings)
             
-            # 构建状态消息
+            # Build the status message
             parts = ["Workspace settings updated."]
             
             if cli_enabled is not None:

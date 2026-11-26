@@ -104,7 +104,7 @@ async def summarize_and_save_buffers(idle_minutes: int = 15):
                                          book_id=buf["book_id"],
                                          character_id=buf["book_id"] if buf["book_id"] != DEFAULT_BOOK_ID else None,
                                          character_name=buf.get("character_name", ""))
-                logging.info(f"[DiaryChat] 已自动总结对话到日记 [{buf['book_id']}]")
+                logging.info(f"[DiaryChat] Automatically summarized conversation into diary [{buf['book_id']}]")
             clear_chat_buffer(key)
         except Exception as e:
-            logging.error(f"[DiaryChat] 总结对话失败 [{key}]: {e}")
+            logging.error(f"[DiaryChat] Failed to summarize conversation [{key}]: {e}")

@@ -4,11 +4,11 @@ async def auto_behavior(behaviorType="delay", time="00:00:00", prompt="", days=[
     # Load settings
     settings = await load_settings()
     
-    # 构造新行为项
+    # Build a new behavior item
     new_behavior = {
         "enabled": True,
-        "platform": platforms[0] if platforms else "chat", # 兼容旧版单一字段逻辑
-        "platforms": platforms,                           # 支持多选的新字段
+        "platform": platforms[0] if platforms else "chat", # Compatibility with the legacy single-platform field
+        "platforms": platforms,                           # Supports multiple selected channels
         "trigger": {
             "type": "time" if behaviorType == "time" else "cycle",
             "time":{
@@ -44,26 +44,26 @@ auto_behavior_tool = {
     "type": "function",
     "function": {
         "name": "auto_behavior",
-        "description": "当用户需要你在特定时间、隔一段时间或在特定渠道自动执行某些行为时使用。你可以一次性设置在多个渠道（如微信、飞书、网页）同步执行任务。",
+        "description": "Use when the user asks you to perform an action at a specific time, after a delay, or on a specified channel. A task can be scheduled across multiple configured channels.",
         "parameters": {
             "type": "object",
             "properties": {
                 "behaviorType": {
                     "type": "string",
-                    "description": "行为类型：time（特定时间点执行，如3点钟），delay（隔一段时间执行，如5分钟后）",
+                    "description": "Behavior type: time (at a specific time, such as 3 PM) or delay (after an interval, such as 5 minutes).",
                     "enum": ["time", "delay"],
                 },
                 "time": {
                     "type": "string",
-                    "description": "时间格式 HH:MM:SS。time类型下为执行点，delay类型下为时间间隔。",
+                    "description": "Time in HH:MM:SS format. For time, this is the execution time; for delay, it is the interval.",
                 },
                 "prompt": {
                     "type": "string",
-                    "description": "任务描述，例如：提醒用户开会、发送问候语",
+                    "description": "Task description, for example: remind the user about a meeting or send a greeting.",
                 },
                 "days": {
                     "type": "array",
-                    "description": "time类型下生效，[1,2,3,4,5]代表工作日，[0]代表周日，[]不重复",
+                    "description": "Applies to time mode: [1,2,3,4,5] means weekdays, [0] means Sunday, and [] means no repeat.",
                     "items": {
                         "type": "number",
                         "enum": [0, 1, 2, 3, 4, 5, 6],
@@ -72,22 +72,22 @@ auto_behavior_tool = {
                 },
                 "repeatNumber": {
                     "type": "number",
-                    "description": "delay类型下的重复次数 (1-100)",
+                    "description": "Repeat count for delay mode (1-100).",
                     "minimum": 1,
                     "maximum": 100,
                     "default": 1,
                 },
                 "isInfiniteLoop": {
                     "type": "boolean",
-                    "description": "delay类型下是否无限循环",
+                    "description": "Whether delay mode repeats indefinitely.",
                     "default": False,
                 },
                 "platforms": {
                     "type": "array",
-                    "description": "要推送的渠道列表。chat:网页对话, wechat:微信, feishu:飞书, dingtalk:钉钉, telegram, discord, slack, wecom:企微",
+                    "description": "Delivery channels: chat (web conversation), telegram, discord, slack.",
                     "items": {
                         "type": "string",
-                        "enum": ["chat", "wechat", "feishu", "dingtalk", "telegram", "discord", "slack", "wecom"]
+                        "enum": ["chat", "telegram", "discord", "slack"]
                     },
                     "default": ["chat"],
                 }

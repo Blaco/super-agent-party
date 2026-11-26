@@ -6,21 +6,21 @@ import shortuuid
 from datetime import datetime
 from py.get_setting import USER_DATA_DIR
 
-# 存放所有日记本的目录（独立于系统配置文件，每个角色一个 JSON 文件）
+# Directory for all diary books (separate from system settings; one JSON file per character)
 DIARY_DIR = os.path.join(USER_DATA_DIR, 'diary')
 
-# 兜底日记本（无角色 / 未启用角色卡时使用）
+# Fallback diary book (used when no character is selected or character cards are disabled)
 DEFAULT_BOOK_ID = 'default'
 
-# 旧版单文件日记（用于一次性迁移到 default 日记本）
+# Legacy single-file diary (used for the one-time migration to the default book)
 LEGACY_DIARY_FILE = os.path.join(DIARY_DIR, 'diary_data.json')
 
-# 每个日记本最多保留的条目数量（防止文件无限膨胀）
+# Maximum entries per book, to prevent unbounded file growth
 MAX_ENTRIES = 500
 
 
 def _safe_book_id(book_id) -> str:
-    """把角色 id 规整成安全的文件名片段"""
+    """Convert the character ID to a safe filename component."""
     bid = str(book_id or '').strip()
     if not bid:
         return DEFAULT_BOOK_ID
@@ -41,7 +41,7 @@ def _empty_book(character_id=None, character_name=""):
 
 
 async def _migrate_legacy_if_needed():
-    """把旧版 diary_data.json 迁移为 default 日记本（仅一次）"""
+    """Migrate legacy diary_data.json to the default diary book (once only)."""
     default_file = _book_file(DEFAULT_BOOK_ID)
     if os.path.exists(default_file) or not os.path.exists(LEGACY_DIARY_FILE):
         return
@@ -55,13 +55,13 @@ async def _migrate_legacy_if_needed():
             with open(default_file, 'w', encoding='utf-8') as f:
                 json.dump(book, f, ensure_ascii=False, indent=4)
         await asyncio.to_thread(_do)
-        print("📔 [日记系统] 已将旧版日记迁移到默认日记本")
+        print("📔 [Diary] Migrated the legacy diary to the default book")
     except Exception as e:
-        print(f"[Diary] 迁移旧版日记失败: {e}")
+        print(f"[Diary] Failed to migrate the legacy diary: {e}")
 
 
 async def load_diary_data(book_id: str = DEFAULT_BOOK_ID):
-    """读取某个日记本，返回 {"characterId":..., "characterName":..., "entries":[...]}"""
+    """Read a diary book, returning {"characterId":..., "characterName":..., "entries":[...]}."""
     os.makedirs(DIARY_DIR, exist_ok=True)
     if _safe_book_id(book_id) == DEFAULT_BOOK_ID:
         await _migrate_legacy_if_needed()
@@ -81,12 +81,12 @@ async def load_diary_data(book_id: str = DEFAULT_BOOK_ID):
         data.setdefault("characterName", "")
         return data
     except Exception as e:
-        print(f"[Diary] 读取日记本 {book_id} 失败: {e}")
+        print(f"[Diary] Failed to read diary book {book_id}: {e}")
         return _empty_book()
 
 
 async def save_diary_data(data, book_id: str = DEFAULT_BOOK_ID):
-    """全量保存某个日记本"""
+    """Save an entire diary book."""
     os.makedirs(DIARY_DIR, exist_ok=True)
     if not isinstance(data, dict):
         data = _empty_book()
@@ -94,7 +94,7 @@ async def save_diary_data(data, book_id: str = DEFAULT_BOOK_ID):
         data["entries"] = []
     data.setdefault("characterId", None)
     data.setdefault("characterName", "")
-    # 截断，仅保留最近 MAX_ENTRIES 条
+    # Keep only the most recent MAX_ENTRIES entries
     data["entries"] = data["entries"][-MAX_ENTRIES:]
     path = _book_file(book_id)
     try:
@@ -103,16 +103,16 @@ async def save_diary_data(data, book_id: str = DEFAULT_BOOK_ID):
                 json.dump(data, f, ensure_ascii=False, indent=4)
         await asyncio.to_thread(_write)
     except Exception as e:
-        print(f"[Diary] 保存日记本 {book_id} 失败: {e}")
+        print(f"[Diary] Failed to save diary book {book_id}: {e}")
 
 
 async def append_diary_entry(entry_type: str, content: str, title: str = "", pushed_to=None,
                              book_id: str = DEFAULT_BOOK_ID, character_id=None, character_name=""):
-    """向指定日记本追加一条日记，返回新条目"""
+    """Append an entry to the specified diary book and return the new entry."""
     if not content:
         return None
     data = await load_diary_data(book_id)
-    # 同步本子的角色信息（角色可能改名）
+    # Synchronize the book's character metadata (the character may have been renamed)
     if character_id is not None:
         data["characterId"] = character_id
     if character_name:
@@ -127,12 +127,12 @@ async def append_diary_entry(entry_type: str, content: str, title: str = "", pus
     }
     data["entries"].append(entry)
     await save_diary_data(data, book_id)
-    print(f"📔 [日记系统] 新增日记 [{book_id}/{entry_type}]: {(title or content)[:30]}")
+    print(f"📔 [Diary] Added entry [{book_id}/{entry_type}]: {(title or content)[:30]}")
     return entry
 
 
 async def delete_diary_entry(entry_id: str, book_id: str = DEFAULT_BOOK_ID):
-    """从指定日记本删除一条日记"""
+    """Delete an entry from the specified diary book."""
     data = await load_diary_data(book_id)
     before = len(data["entries"])
     data["entries"] = [e for e in data["entries"] if e.get("id") != entry_id]
@@ -143,11 +143,11 @@ async def delete_diary_entry(entry_id: str, book_id: str = DEFAULT_BOOK_ID):
 
 
 async def list_diary_books():
-    """列出所有日记本，自动：新建角色本 / 同名重联 / 清空无日记的孤儿本"""
+    """List all books, creating character books, reconnecting matching names and removing empty orphaned books."""
     os.makedirs(DIARY_DIR, exist_ok=True)
     await _migrate_legacy_if_needed()
 
-    # 1. 加载当前角色卡列表
+    # 1. Load the current character card list
     memories = []
     memory_by_name = {}
     try:
@@ -163,7 +163,7 @@ async def list_diary_books():
 
     memory_ids = {mem.get("id") for mem in memories if mem.get("id")}
 
-    # 2. 扫描已有本子文件
+    # 2. Scan existing diary book files
     books = []
     existing_files = set()
     try:
@@ -183,16 +183,16 @@ async def list_diary_books():
         char_name = data.get("characterName", "")
 
         if char_id and char_id in memory_ids:
-            # 角色仍存在 → 同步名称
+            # Character still exists: synchronize its name
             mem = next((m for m in memories if m.get("id") == char_id), None)
             if mem and data.get("characterName") != (mem.get("name") or ""):
                 data["characterName"] = mem.get("name", "")
                 await save_diary_data(data, book_id)
                 char_name = data["characterName"]
         elif char_id:
-            # 角色已删除
+            # Character was deleted
             if char_name and char_name.lower() in memory_by_name:
-                # 同名角色重建 → 重联
+                # Character recreated with the same name: reconnect the book
                 mem = memory_by_name[char_name.lower()]
                 data["characterId"] = mem.get("id")
                 data["characterName"] = mem.get("name", "")
@@ -200,14 +200,14 @@ async def list_diary_books():
                 char_id = data["characterId"]
                 char_name = data["characterName"]
             elif len(entries) == 0:
-                # 无日记的孤儿本 → 删除文件并跳过
+                # Empty orphaned book: delete its file and skip it
                 try:
                     await asyncio.to_thread(lambda: os.remove(_book_file(book_id)))
                 except Exception:
                     pass
-                print(f"📔 [日记系统] 已清理孤儿日记本: {char_name or book_id}")
+                print(f"📔 [Diary] Removed orphaned diary book: {char_name or book_id}")
                 continue
-            # 有日记的孤儿本 → 保留
+            # Orphaned book with entries: retain it
 
         last_time = ""
         if entries:
@@ -224,7 +224,7 @@ async def list_diary_books():
             "isDefault": book_id == DEFAULT_BOOK_ID,
         })
 
-    # 3. 为还没有本子的角色自动创建空本
+    # 3. Create empty books for characters that do not yet have one
     for mem in memories:
         mid = mem.get("id")
         if not mid:
@@ -242,7 +242,7 @@ async def list_diary_books():
             })
             existing_files.add(fname)
 
-    # 4. 确保默认兜底本
+    # 4. Ensure the default fallback book exists
     if not any(b["bookId"] == DEFAULT_BOOK_ID for b in books):
         books.append({
             "bookId": DEFAULT_BOOK_ID,
@@ -253,14 +253,14 @@ async def list_diary_books():
             "isDefault": True,
         })
 
-    # 5. 安全过滤：移除所有死标签（非默认 + 角色已删 + 无日记）
+    # 5. Filter stale entries (non-default, deleted character, no diary entries)
     books = [b for b in books if (
         b["isDefault"] or
         b["characterId"] in memory_ids or
         b["count"] > 0
     )]
 
-    # 6. 排序：默认本 → 有日记的按最近更新倒序 → 空本按名字正序
+    # 6. Sort: default book, nonempty books by latest update descending, empty books by name ascending
     default_b = [b for b in books if b["isDefault"]]
     with_entries = sorted(
         [b for b in books if b["lastTime"] and not b["isDefault"]],
@@ -276,7 +276,7 @@ async def list_diary_books():
 async def query_diary_entries(query: str = "", book_id: str = DEFAULT_BOOK_ID,
                               start_time: str = "", end_time: str = "",
                               max_results: int = 5, entry_type: str = ""):
-    """按时间范围和关键词搜索日记条目，返回匹配列表"""
+    """Search diary entries by time range and keywords, returning matching entries."""
     data = await load_diary_data(book_id)
     entries = data.get("entries", [])
     results = []
@@ -301,7 +301,7 @@ async def query_diary_entries(query: str = "", book_id: str = DEFAULT_BOOK_ID,
 
 
 async def get_recent_diary_entries(book_id: str = DEFAULT_BOOK_ID, n: int = 5):
-    """获取最近 N 条日记条目"""
+    """Get the N most recent diary entries."""
     data = await load_diary_data(book_id)
     entries = data.get("entries", [])
     return entries[-n:] if n > 0 else []

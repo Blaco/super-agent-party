@@ -8,6 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MODULES = (
     "agent", "agent_tool", "a2a_tool", "affection_api", "affection_system",
     "diary_api", "scheduler", "task_center", "llm_tool", "task_tools",
+    "sub_agent", "diary_system", "diary_chat_integration", "diary_engine",
+    "autoBehavior", "behavior_engine", "mode_change", "mcp_clients",
 )
 HAN = re.compile(r"[\u3400-\u9fff\U00020000-\U0002A6DF]")
 
@@ -34,6 +36,35 @@ class EnglishDelegationModules(unittest.TestCase):
                 )
                 return
         self.fail("create_subtask_tool schema not found")
+
+    def test_automatic_behavior_delivery_channels(self):
+        source = (ROOT / "py/autoBehavior.py").read_text(encoding="utf-8")
+        for node in ast.parse(source).body:
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id == "auto_behavior_tool"
+                for target in node.targets
+            ):
+                schema = ast.literal_eval(node.value)
+                platforms = schema["function"]["parameters"]["properties"]["platforms"]
+                self.assertEqual(
+                    platforms["items"]["enum"], ["chat", "telegram", "discord", "slack"]
+                )
+                return
+        self.fail("auto_behavior_tool schema not found")
+
+    def test_diary_does_not_advertise_removed_search_tool(self):
+        source = (ROOT / "py/diary_engine.py").read_text(encoding="utf-8")
+        for node in ast.parse(source).body:
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id == "DIARY_ALLOWED_TOOLS"
+                for target in node.targets
+            ):
+                tools = ast.literal_eval(node.value)
+                self.assertNotIn("bochaai_search", tools)
+                self.assertIn("DDGsearch", tools)
+                self.assertIn("query_diary", tools)
+                return
+        self.fail("DIARY_ALLOWED_TOOLS not found")
 
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")

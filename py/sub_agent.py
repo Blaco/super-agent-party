@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from py.task_center import get_task_center, TaskStatus
 from py.get_setting import load_settings, get_port
-# 关键导入：必须包含所有相关的 Pydantic 模型
+# Required imports: include all relevant Pydantic models
 from py.behavior_engine import (
     global_behavior_engine, 
     BehaviorItem, 
@@ -19,7 +19,7 @@ from py.behavior_engine import (
 from py.ws_manager import ws_manager
 
 class SubAgentExecutor:
-    """子智能体执行器 - 完美处理周期与定时任务结束逻辑"""
+    """Subagent executor: handle completion of recurring and scheduled tasks."""
     
     def __init__(self, workspace_dir: str, settings: Dict):
         self.workspace_dir = workspace_dir
@@ -41,7 +41,7 @@ class SubAgentExecutor:
         if not task:
             return {"success": False, "error": f"Task {task_id} not found"}
         
-        # 标记开始
+        # Mark execution as started
         await task_center.update_task_progress(task.task_id, 0, status=TaskStatus.RUNNING)
         await ws_manager.broadcast({
             "type": "island_task_progress",
@@ -73,19 +73,19 @@ class SubAgentExecutor:
                         task.task_id, task_center, current_progress, assistant_only_history
                     )
                     
-                    # 避免在遇到网络断连时造成高频请求死循环
+                    # Avoid a high-frequency request loop after a network disconnection
                     if not assistant_response.strip():
-                        print(f"[SubAgent] 警告: 第 {iteration} 次迭代收到空回复(可能是API连接失败)，休眠3秒...")
+                        print(f"[SubAgent] Warning: empty response on iteration {iteration} (possible API connection failure); sleeping for 3 seconds...")
                         await asyncio.sleep(3)
 
                     conversation_history.append({"role": "assistant", "content": assistant_response})
                     
                     latest_task = await task_center.get_task(task_id)
-                    # 检查是否通过工具完成（此时必定不会再被意外覆盖了）
+                    # Check whether the completion tool was called; do not overwrite that state
                     if latest_task.status == TaskStatus.COMPLETED:
                         return await self._finalize_task_record(task_id, task_center, latest_task.result, assistant_only_history, iteration)
 
-                    # 更新进度
+                    # Update progress
                     await task_center.update_task_progress(
                         task.task_id, current_progress, 
                         status=TaskStatus.RUNNING,
@@ -105,24 +105,24 @@ class SubAgentExecutor:
             return {"success": False, "error": str(e)}
 
     async def _finalize_task_record(self, task_id, task_center, result, history, iteration):
-        """核心逻辑：决定任务是进入 COMPLETED 还是回到 PENDING，并推送结果"""
+        """Choose COMPLETED or PENDING as the next task state and deliver the result."""
         task = await task_center.get_task(task_id)
         t_type = task.context.get("task_type", "once")
         config = task.context.get("trigger_config", {})
         
-        # 1. 结果存档
+        # 1. Archive the result
         results_history = task.context.get("results_history",[])
         results_history.append({
             "time": datetime.now().isoformat(),
             "result": result,
             "iteration": iteration
         })
-        results_history = results_history[-20:] # 仅保留最近20次
+        results_history = results_history[-20:] # Keep the 20 most recent runs
 
-        # 2. 日志截断
+        # 2. Truncate logs
         trimmed_history = history[-30:] if len(history) > 30 else history
         
-        # 3. 状态判定
+        # 3. Determine status
         final_status = TaskStatus.COMPLETED
         final_progress = 100
         next_run_at = None
@@ -145,7 +145,7 @@ class SubAgentExecutor:
                 final_status = TaskStatus.PENDING
                 final_progress = 0
 
-        # 4. 更新数据库
+        # 4. Update stored task data
         new_ctx = {
             "history": trimmed_history,
             "results_history": results_history,
@@ -175,15 +175,15 @@ class SubAgentExecutor:
             }
         })
 
-        # 5. 多渠道推送逻辑
+        # 5. Multi-channel delivery
         target_platforms = task.platforms if task.platforms else []
 
-        # B. 推送到外部平台 (Wechat, Feishu, etc.)
+        # B. Deliver to configured external platforms
         for platform in target_platforms:
             if platform == "chat":
-                print(f"[TaskExecutor] 正在广播任务完成信号到网页端并触发自动对话: {task.title}")
+                print(f"[TaskExecutor] Broadcasting task completion to the web client and triggering an automatic conversation: {task.title}")
                 
-                # 跟发给其他平台一样的 prompt 内容
+                # Use the same prompt content as for other platforms
                 chat_prompt = f"[Autonomous task report]\nTask name:{task.title}\nTask ID:{task_id}\n\nResult:\n{result}\n\nAs the assistant, briefly summarize this result for the user."
                 
                 await ws_manager.broadcast({
@@ -192,7 +192,7 @@ class SubAgentExecutor:
                         "title": f"Task completed: {task.title}",
                         "message": result[:150] + ("..." if len(result) > 150 else ""),
                         "task_id": task_id,
-                        # 这里构造与前端 runBehavior 匹配的数据结构
+                        # Build the structure expected by the frontend runBehavior function
                         "behavior": {
                             "enabled": True,
                             "action": {
@@ -208,7 +208,7 @@ class SubAgentExecutor:
 
             handler = global_behavior_engine.handlers.get(platform)
             if not handler:
-                print(f"[TaskExecutor] 平台 {platform} 尚未注册 handler，跳过推送")
+                print(f"[TaskExecutor] No handler registered for platform {platform}; skipping delivery")
                 continue
 
             trigger_obj = BehaviorTrigger(
@@ -231,13 +231,13 @@ class SubAgentExecutor:
 
             targets = global_behavior_engine.platform_targets.get(platform, [])
             if not targets:
-                print(f"[TaskExecutor] 平台 {platform} 未配置目标 ChatID，尝试使用空 ID 触发 fallback")
+                print(f"[TaskExecutor] No target ChatID configured for {platform}; trying the empty-ID fallback")
                 asyncio.create_task(handler("", fake_behavior))
                 continue
 
             for chat_id in set(targets):
                 if chat_id:
-                    print(f"[TaskExecutor] 正在触发平台动作 -> {platform}:{chat_id}")
+                    print(f"[TaskExecutor] Triggering platform action -> {platform}:{chat_id}")
                     asyncio.create_task(handler(chat_id, fake_behavior))
 
         return {"success": True, "task_id": task_id, "result": result}
@@ -350,7 +350,7 @@ class SubAgentExecutor:
                                 print(f"[SubAgent] Stream aborted due to cancellation of {task_id}")
                                 return ""
 
-                            # 修复核心点1：将 status=TaskStatus.RUNNING 删去或改为 status=None，防止抹去已触发的完成状态
+                            # Fix 1: omit status=TaskStatus.RUNNING (or use status=None) to avoid overwriting completion
                             await task_center.update_task_progress(
                                 task_id, base_progress, status=None,
                                 context={"history": display_history, "live_content": full_content[-800:] if full_content else ""}
@@ -372,7 +372,7 @@ class SubAgentExecutor:
         if current_text_buffer.strip():
             display_history.append(current_text_buffer.strip())
         
-        # 修复核心点2：同样将结尾强制覆盖状态的逻辑移除
+        # Fix 2: remove the forced status override at the end as well
         await task_center.update_task_progress(
             task_id, base_progress + 10, status=None,
             context={"history": display_history, "live_content": full_content[-1000:] if full_content else ""}
