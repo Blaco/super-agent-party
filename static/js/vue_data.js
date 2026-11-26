@@ -1733,16 +1733,8 @@ let vue_data = {
       filterMode: 'danmaku_only',
       danmakuQueueLimit: 5,
       wakeWord: '',
-      bilibili_enabled: false,
-      bilibili_type: 'open_live',
-      bilibili_room_id: '',
-      bilibili_sessdata: '',
-      bilibili_ACCESS_KEY_ID: '',
-      bilibili_ACCESS_KEY_SECRET: '',
-      bilibili_APP_ID: '',
-      bilibili_ROOM_OWNER_AUTH_CODE: '',
       youtube_enabled: false,
-      youtube_vedio_id:  "",
+      youtube_video_id:  "",
       youtube_api_key:  "",
       twitch_enabled: false,
       twitch_channel: "",
@@ -1780,7 +1772,7 @@ let vue_data = {
     },
 
     danmu: [], // 弹幕列表
-    bilibiliWs: null, // WebSocket连接
+    liveWs: null, // Livestream websocket connection
     danmuProcessTimer: null, // 弹幕处理定时器
     isProcessingDanmu: false, // 是否正在处理弹幕
     shouldReconnectWs :false,

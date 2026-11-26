@@ -1879,26 +1879,12 @@ docker-compose -f ${composeFile} up -d`;
     //     return this.WXBotConfig.nickNameList && this.WXBotConfig.nickNameList.length > 0;
     // },
     isLiveConfigValid() {
-        if (this.liveConfig.bilibili_enabled) {
-            // if(this.liveConfig.bilibili_type === 'web'){
-            //     return this.liveConfig.bilibili_room_id && this.liveConfig.bilibili_room_id.trim() !== '';
-            // }
-            // else if(this.liveConfig.bilibili_type === 'open_live'){
-                return this.liveConfig.bilibili_ACCESS_KEY_ID !== '' &&
-                this.liveConfig.bilibili_SECRET_ACCESS_KEY !== '' &&
-                this.liveConfig.bilibili_APP_ID !== '' &&
-                this.liveConfig.bilibili_ROOM_OWNER_AUTH_CODE !== '';
-            // }
-        }
-        else if (this.liveConfig.youtube_enabled) {
-          return this.liveConfig.youtube_video_id !== '' &&
-          this.liveConfig.youtube_api_key !== '';
-        }
-        else if (this.liveConfig.twitch_enabled) {
-          return this.liveConfig.twitch_channel !== '' &&
-          this.liveConfig.twitch_access_token !== '';
-        }
-        return false;
+      const youtubeValid = !this.liveConfig.youtube_enabled ||
+        (this.liveConfig.youtube_video_id && this.liveConfig.youtube_api_key);
+      const twitchValid = !this.liveConfig.twitch_enabled ||
+        (this.liveConfig.twitch_channel && this.liveConfig.twitch_access_token);
+      return !!((this.liveConfig.youtube_enabled || this.liveConfig.twitch_enabled) &&
+        youtubeValid && twitchValid);
     },
     updateButtonText() {
       if (this.updateDownloaded) return this.t('installNow');

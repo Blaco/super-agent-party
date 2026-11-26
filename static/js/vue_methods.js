@@ -12455,13 +12455,13 @@ copyIslandEndpoint(){
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws/live/danmu`;
       
-      this.bilibiliWs = new WebSocket(wsUrl);
+      this.liveWs = new WebSocket(wsUrl);
       
-      this.bilibiliWs.onopen = (event) => {
+      this.liveWs.onopen = (event) => {
         console.log('WebSocket连接已建立');
       };
       
-      this.bilibiliWs.onmessage = (event) => {
+      this.liveWs.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           this.handleDanmuMessage(data);
@@ -12470,7 +12470,7 @@ copyIslandEndpoint(){
         }
       };
       
-      this.bilibiliWs.onclose = (event) => {
+      this.liveWs.onclose = (event) => {
         console.log('WebSocket连接已关闭');
         
         // 只有在允许重连且直播还在运行时才重连
@@ -12490,7 +12490,7 @@ copyIslandEndpoint(){
         }
       };
       
-      this.bilibiliWs.onerror = (error) => {
+      this.liveWs.onerror = (error) => {
         console.error('WebSocket连接错误:', error);
       };
     } catch (error) {
@@ -12502,10 +12502,10 @@ copyIslandEndpoint(){
   disconnectLiveWebSocket() {
     console.log('断开WebSocket连接');
     
-    if (this.bilibiliWs) {
+    if (this.liveWs) {
       // 先设置为null，避免onclose事件中的重连逻辑
-      const ws = this.bilibiliWs;
-      this.bilibiliWs = null;
+      const ws = this.liveWs;
+      this.liveWs = null;
       
       // 然后关闭连接
       ws.close();
@@ -12597,7 +12597,7 @@ copyIslandEndpoint(){
         id: data.id,
         content: data.content,
         type: danmuType,
-        platform: data.platform || 'bilibili',
+        platform: data.platform || 'unknown',
         timestamp: new Date().toLocaleTimeString('zh-CN', { hour12: false })
       };
 

@@ -110,3 +110,10 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - **Files:** `server.py`, `static/index.html`, `static/js/vue_methods.js`, `static/js/vue_data.js`, `py/qq_bot_manager.py`, `py/feishu_bot_manager.py`, `py/dingtalk_bot_manager.py`, `py/wechat_bot_manager.py`, `py/wecom_bot_manager.py`, `tests/test_legacy_bot_removal.py`, `.github/workflows/companion-audit.yml`, `docs/agent-creation/FEATURE_MATRIX.md` and this ledger.
 - **Limits:** Additional frontend state/method definitions and dependency lock entries remain as inactive legacy references. Remove them only after another dependency scan. Bilibili streaming is independent and not covered here. No live runtime validation of Western bots yet.
 - **Verification:** Static route assertions and Python syntax check added to CI; verify run after push. Roll back using the preceding commit and restore deleted files via Git.
+
+## 2026-11-26 — Retire dedicated Bilibili client; preserve optional YouTube/Twitch
+
+- **Parent:** `6ef3f77728070d414ed32d904ae56dbd18af7a95`; working branch `agent-creation`.
+- **Files changed:** `py/live_router.py` retains REST and websocket routes, YouTube and Twitch clients, but removes dedicated Bilibili SDK, threaded client and credentials. `py/blivedm/**` deleted. `static/index.html` drops Bilibili tab. `config/settings_template.json` and `static/js/vue_data.js` drop Bilibili defaults and fix the `youtube_vedio_id` typo; `static/js/vue_methods.js` renames the shared stream socket from `bilibiliWs` to `liveWs` and does not falsely identify stream events as Bilibili. `static/js/renderer.js` checks YouTube/Twitch configurations. CI adds Python compile and static isolation checks.
+- **Preservation:** YouTube, Twitch, optional streaming view, websocket event format, agent features, character and memory data. Persisted obsolete Bilibili config is ignored by Pydantic; no account data migration.
+- **Validation:** CI source test pending; no YouTube/Twitch live integration tested. Region-specific SDK dependencies, translated labels, bot method remnants and source text still need review. Revert this commit to restore the client.
