@@ -662,10 +662,10 @@ def _get_target_message(message, role):
     """
     # 验证输入参数
     if not isinstance(message, list):
-        raise TypeError("message必须是列表类型")
+        raise TypeError("message must be a list")
     
     if role not in ['user', 'assistant', 'system']:
-        raise ValueError("role必须是'user'或'assistant'或'system'")
+        raise ValueError("role must be 'user', 'assistant' or 'system'")
     
     target_message = None
     
@@ -769,18 +769,18 @@ def _wrap_client_chat_with_retry(client, max_retries=3, base_delay=1.0):
             try:
                 if attempt > 0:
                     delay = base_delay * (2 ** (attempt - 1))
-                    print(f"[Retry] chat.completions.create 第 {attempt}/{max_retries} 次重试, 等待 {delay:.1f}s...")
+                    print(f"[Retry] chat.completions.create attempt {attempt}/{max_retries}; waiting {delay:.1f}s...")
                     await asyncio.sleep(delay)
                 return await _original_create(*args, **kwargs)
             except Exception as e:
                 last_error = e
                 if isinstance(e, httpx.HTTPStatusError):
                     if e.response.status_code in RETRYABLE_STATUSES:
-                        print(f"[Retry] HTTP {e.response.status_code}, 将重试")
+                        print(f"[Retry] HTTP {e.response.status_code}; retrying")
                         continue
                     raise
                 if isinstance(e, RETRYABLE_EXCEPTIONS):
-                    print(f"[Retry] 网络错误 {type(e).__name__}: {e}, 将重试")
+                    print(f"[Retry] Network error {type(e).__name__}: {e}; retrying")
                     continue
                 raise
         raise last_error
@@ -835,11 +835,11 @@ async def lifespan(app: FastAPI):
     try:
         await asyncio.to_thread(sleep_guard.start)
         if sleep_guard.is_running():
-            print("🛡️ 防休眠保护已启动，系统将不会自动休眠")
+            print("🛡️ Sleep prevention started; automatic system sleep is disabled")
         else:
-            print("⚠️ 防休眠启动失败，系统可能会在空闲时休眠")
+            print("⚠️ Failed to start sleep prevention; the system may sleep while idle")
     except Exception as e:
-        print(f"防休眠启动异常: {e}")
+        print(f"Failed to start sleep prevention: {e}")
 
 
     from py.scheduler import AgentScheduler
@@ -855,7 +855,7 @@ async def lifespan(app: FastAPI):
         global_diary_engine.update_config((settings or {}).get("diarySettings"))
         diary_engine_task = asyncio.create_task(global_diary_engine.start())
     except Exception as e:
-        print(f"日记引擎启动异常: {e}")
+        print(f"Failed to start diary engine: {e}")
         diary_engine_task = None
 
     # --- [日志系统初始化] ---
@@ -882,10 +882,10 @@ async def lifespan(app: FastAPI):
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
-    logger.info("===== 日志系统初始化成功 =====")
-    logger.info(f"用户数据目录: {USER_DATA_DIR}")
-    logger.info(f"设置数据库路径: {DATABASE_PATH}")
-    logger.info(f"日志文件保存至: {log_path}")  # 额外加一行，方便确认路径
+    logger.info("===== Logging initialized =====")
+    logger.info(f"User data directory: {USER_DATA_DIR}")
+    logger.info(f"Settings database path: {DATABASE_PATH}")
+    logger.info(f"Log file: {log_path}")  # 额外加一行，方便确认路径
 
     # --- [代理与 HTTP 客户端初始化] ---
     proxy_url = None
@@ -899,7 +899,7 @@ async def lifespan(app: FastAPI):
         if mode == "manual" and manual_url:
             # 手动模式：如果是 socks，由于没安装库，直接跳过并警告
             if manual_url.lower().startswith("socks"):
-                logger.error("检测到手动设置了 SOCKS 代理，但当前环境不支持。代理已失效。")
+                logger.error("A manually configured SOCKS proxy is unsupported in this environment; the proxy is unavailable.")
                 proxy_url = None
             else:
                 proxy_url = manual_url
@@ -957,7 +957,7 @@ async def lifespan(app: FastAPI):
         from py.sherpa_asr import _get_recognizer
         asyncio.get_running_loop().run_in_executor(None, _get_recognizer)
     except Exception as e:
-        logger.error(f"尝试启动sherpa失败: {e}")
+        logger.error(f"Failed to start sherpa: {e}")
 
     try:
         from py.moss_tts import _get_moss_runtime
@@ -1027,25 +1027,25 @@ async def lifespan(app: FastAPI):
     try:
         from py.local_app_control import cleanup_all
         await cleanup_all()
-        print("[LocalAppControl] 所有 CDP 连接已清理")
+        print("[LocalAppControl] All CDP connections cleared")
     except Exception as e:
-        print(f"[LocalAppControl] 清理 CDP 连接异常: {e}")
+        print(f"[LocalAppControl] Failed to clear CDP connections: {e}")
 
     try:
         # 注意：此处需要根据您实际的文件结构导入 process_manager
         # 假设上述 ProcessManager 代码保存在 py/agent_tool.py 中
         from py.cli_tool import process_manager 
         
-        print("正在清理工具管理的后台进程...")
+        print("Cleaning up tool-managed background processes...")
         await process_manager.kill_all()
     except Exception as e:
-        print(f"清理后台进程时发生异常: {e}")
+        print(f"Failed to clean up background processes: {e}")
 
     try:
         await asyncio.to_thread(sleep_guard.stop)
-        print("🛡️ 防休眠保护已停止，系统将恢复正常休眠策略")
+        print("🛡️ Sleep prevention stopped; normal system sleep policy restored")
     except Exception as e:
-        print(f"防休眠停止异常: {e}")
+        print(f"Failed to stop sleep prevention: {e}")
 
     if scheduler_task:
         scheduler_task.cancel()
@@ -1055,7 +1055,7 @@ async def lifespan(app: FastAPI):
             global_diary_engine.stop()
             diary_engine_task.cancel()
     except Exception as e:
-        print(f"日记引擎停止异常: {e}")
+        print(f"Failed to stop diary engine: {e}")
     from py.node_runner import node_mgr
     ext_ids = list(node_mgr.exts.keys())
     for ext_id in ext_ids:
@@ -1287,7 +1287,7 @@ async def call_node_extension_tool(ext_id: str, tool_name: str, tool_params: dic
         result = await asyncio.wait_for(future, timeout=30.0)
         return str(result)
     except asyncio.TimeoutError:
-        return f"调用扩展 {ext_id} 的工具 {tool_name} 超时"
+        return f"Extension {ext_id} tool {tool_name} timed out"
     finally:
         if call_id in mcp_call_results:
             del mcp_call_results[call_id]
@@ -2652,7 +2652,7 @@ Example:
                 if mem_content.strip():
                     content_append(request.messages, 'system', f"\n\n**MEMORY.md**:\n{mem_content}\n\n")
             except Exception as e:
-                print(f"读取 MEMORY.md 失败: {e}")
+                print(f"Failed to read MEMORY.md: {e}")
 
         # AGENTS.md
         try:
@@ -2660,7 +2660,7 @@ Example:
             if agents_md:
                 content_append(request.messages, 'system', " **Important instructions** (.agents/AGENTS.md):\n\n"+agents_md+"\n\n")
         except Exception as e:
-            print(f"[Agent Loader] 跳过AGENTS.md加载: {e}")
+            print(f"[Agent Loader] Skipping AGENTS.md: {e}")
             pass
 
         # 项目技能摘要
@@ -2669,7 +2669,7 @@ Example:
             if skills_message:
                 content_append(request.messages, 'system', skills_message)
         except Exception as e:
-            print(f"[Skill Loader] 扫描技能失败: {e}")
+            print(f"[Skill Loader] Failed to scan skills: {e}")
 
     # 群聊模式（半固定，成员变化才会变）
     cur_memory = None
@@ -2753,7 +2753,7 @@ Example:
                 todo_message = "\n".join(todo_lines)
                 content_append(request.messages, 'system', todo_message)
         except Exception as e:
-            print(f"[Todo Loader] 跳过待办事项加载: {e}")
+            print(f"[Todo Loader] Skipping task list: {e}")
 
     # 3. 子任务进度（cowork 模式）
     if permissionMode == "cowork" and not request.is_sub_agent:
@@ -2863,7 +2863,7 @@ The application automatically hides data tags enclosed in angle brackets. Output
                         if request.messages[-1]['role'] == 'user':
                             request.messages[-1]['content'] += f"\n\n[System note: the user saved this memory with the '#' command: {mem_content_to_save}. Briefly confirm it was recorded.]"
                     except Exception as e:
-                        print(f"保存 MEMORY.md 失败: {e}")
+                        print(f"Failed to save MEMORY.md: {e}")
             elif user_text_trimmed.startswith('/'):
                 parts = user_text_trimmed[1:].split()
                 if parts:
@@ -2884,7 +2884,7 @@ The application automatically hides data tags enclosed in angle brackets. Output
                                 if request.messages[-1]['role'] == 'user':
                                     request.messages[-1]['content'] += f"\n\n[System note: the user activated skill '{skill_name}'. Skill instructions:\n{skill_content}\nFollow these instructions when handling the request.]"
                             except Exception as e:
-                                print(f"读取技能文档失败: {e}")
+                                print(f"Failed to read skill documentation: {e}")
 
     # 时间戳（每轮绝对变化）
     if settings['tools']['time']['enabled'] and settings['tools']['time']['triggerMode'] == 'beforeThinking':
@@ -3117,7 +3117,7 @@ def sanitize_tool_calls(messages: list) -> list:
                     msgs[i]["tool_calls"] = None
                     # 同时删除后面那些已经找到的孤立的 tool 消息（因为它们现在没有对应的 assistant tool_calls 了）
                     del msgs[i+1:j]  # 删除 i+1 到 j-1 的所有 tool 消息
-                    print(f"[Sanitizer] 抹除 assistant 的 tool_calls 并移除相关 tool 消息，保留文本。缺失 id: {missing_ids}")
+                    print(f"[Sanitizer] Removing assistant tool_calls and associated tool messages while retaining text. Missing IDs: {missing_ids}")
                 else:
                     # 没有实质内容，直接删除这条 assistant 和它带的无效 tool 消息
                     del msgs[i]        # 删除 assistant 本身
@@ -3125,7 +3125,7 @@ def sanitize_tool_calls(messages: list) -> list:
                     # 删除原来跟在它后面的 tool 消息
                     # i 已经指向原来 i+1 的位置（因为删了 i），所以删除从 i 到 j-1
                     del msgs[i:j-1]    # 因为 i 已经指向了原来 i+1，所以删除 tool 消息的长度要调整
-                    print(f"[Sanitizer] 删除无内容的 tool_calls assistant 及后续孤立的 tool 消息。缺失 id: {missing_ids}")
+                    print(f"[Sanitizer] Removing empty assistant tool-call message and subsequent orphaned tool messages. Missing IDs: {missing_ids}")
                     # 因为 i 已经被删除，指针不能前进，继续从当前位置检查
                     continue
             else:
@@ -3149,7 +3149,7 @@ def sanitize_tool_calls(messages: list) -> list:
             if not found:
                 # 孤立的 tool 消息，删除
                 del msgs[i]
-                print(f"[Sanitizer] 删除孤立的 tool 消息: {msg.get('tool_call_id')}")
+                print(f"[Sanitizer] Removing orphaned tool message: {msg.get('tool_call_id')}")
                 continue
         
         i += 1
@@ -3241,7 +3241,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 screen_size = v_settings.get('ScreenSize', [0, 0, 1280, 720])
                 is_grid_enabled = vision_control_enabled and v_settings.get('isEnableGrid', False)
 
-                print(f"正在执行桌面截图 (全屏: {is_full_screen}, 网格: {is_grid_enabled})...")
+                print(f"Capturing desktop screenshot (full screen: {is_full_screen}, grid: {is_grid_enabled})...")
                 
                 # 初始化截图偏移量
                 offset_x, offset_y = 0, 0
@@ -3270,7 +3270,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 # 3. 缩放到传输尺寸 (1280x720 左右)
                 target_w, target_h = scale_to_fit(logical_width, logical_height, 1280, 720)
                 if screenshot.width > target_w or screenshot.height > target_h:
-                    print(f"检测到高分辨率屏幕，正在从 {screenshot.size} 缩放到 {(target_w, target_h)}")
+                    print(f"High-resolution screen detected; resizing from {screenshot.size} to {(target_w, target_h)}")
                     screenshot = await asyncio.to_thread(
                         screenshot.resize, (target_w, target_h), Image.Resampling.LANCZOS
                     )
@@ -3285,7 +3285,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
 
                 ui_tree_hint = ""
                 if vision_control_enabled:
-                    print("正在异步提取跨平台无障碍 UI 树并进行 0-1000 坐标对齐...")
+                    print("Extracting cross-platform accessibility UI tree asynchronously and aligning coordinates to 0-1000...")
                     # 传入逻辑视口尺寸 (logical_width, logical_height) 和 偏移量 (offset_x, offset_y)
                     ui_tree_json = await get_desktop_ui_tree(
                         logical_width=logical_width,
@@ -3341,12 +3341,12 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                 msg['content'] = new_content[0]['text']
                             else:
                                 msg['content'] = new_content
-                    print("已清理历史上下文中的旧截图。")
+                    print("Removed older screenshots from conversation context.")
 
-                print(f"桌面截图与精简 UI 树已成功合并注入: {desktop_url}")
+                print(f"Desktop screenshot and compact UI tree injected: {desktop_url}")
 
             except Exception as e:
-                print(f"后端桌面截图或 UI 树提取失败: {e}")
+                print(f"Failed to capture desktop or extract UI tree: {e}")
 
         # =========================================================================
         # 第一阶段：上下文压缩 (仅在达到阈值时触发，决定“保留哪些消息”)
@@ -3404,7 +3404,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     final_messages.append(msg)
                     pending_tool_call_ids.remove(t_id) # 匹配成功，移除
                 else:
-                    print(f"[Sanitizer] 丢弃孤立的 tool 消息: {t_id}")
+                    print(f"[Sanitizer] Discarding orphaned tool message: {t_id}")
                     continue
             
             elif role == "assistant":
@@ -3439,11 +3439,11 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         last_msg["tool_calls"] = None
                     else:
                         setattr(last_msg, "tool_calls", None)
-                    print("[Sanitizer] 抹除末尾未闭合的 tool_calls")
+                    print("[Sanitizer] Removing incomplete trailing tool_calls")
                     break # 处理完毕
                 else:
                     final_messages.pop()
-                    print("[Sanitizer] 弹出末尾无内容的孤立 tool_call 发起消息")
+                    print("[Sanitizer] Removing empty trailing orphaned tool-call message")
             else:
                 break
 
@@ -3464,7 +3464,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     break
             if cur_memory: _sanitize_card_strings(cur_memory)
             if cur_memory and cur_memory["providerId"]:
-                print("长期记忆启用")
+                print("Long-term memory enabled")
                 # 以已有 faiss 索引实际维度为准，防止更换 provider/model 维度不匹配导致数据清空
                 _effective_dims = cur_memory.get("embedding_dims", 1024)
                 _faiss_path = os.path.join(MEMORY_CACHE_DIR, memoryId, "agent-party.faiss")
@@ -3473,10 +3473,10 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         import faiss
                         _existing = faiss.read_index(_faiss_path)
                         if _existing.d != _effective_dims:
-                            print(f"[WARNING] stored dims({_effective_dims}) != faiss actual dims({_existing.d})，以实际维度为准")
+                            print(f"[WARNING] stored dims({_effective_dims}) != faiss actual dims({_existing.d}); using actual dimensions")
                         _effective_dims = _existing.d
                     except Exception as e:
-                        print(f"[WARNING] 无法读取已有 faiss 索引维度: {e}")
+                        print(f"[WARNING] Could not read existing FAISS index dimensions: {e}")
                 config={
                     "embedder": {
                         "provider": 'openai',
@@ -3506,7 +3506,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     }
                 }
                 m0 = Memory.from_config(config)
-                print("长期记忆配置加载完成")
+                print("Long-term memory configuration loaded")
         open_tag = "<think>"
         close_tag = "</think>"
 
@@ -3544,7 +3544,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         }
                     })
                 else:
-                    print(f"[WARNING] 跳过重复工具: {tool_name}")
+                    print(f"[WARNING] Skipping duplicate tool: {tool_name}")
 
         get_llm_tool_fuction = await get_llm_tool(settings)
         if get_llm_tool_fuction:
@@ -3754,9 +3754,9 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     diary_text = "\n".join(diary_lines)
                     content_append(request.messages, 'system',
                         "\n\n[Character diary - recent memories]\nRecent entries from the character diary, provided as context for mood and experiences:\n" + diary_text + "\n")
-                    print(f"📔 [日记集成] 已注入 {len(recent)} 条日记到对话上下文")
+                    print(f"📔 [Diary Integration] Injected {len(recent)} diary entries into conversation context")
             except Exception as e:
-                print(f"[日记集成] 提取日记失败: {e}")
+                print(f"[Diary Integration] Failed to retrieve diary entries: {e}")
 
         # ========== 动态上下文收集（统一追加到用户消息末尾） ==========
         dynamic_user_context = ""
@@ -3819,7 +3819,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 if last_msg and last_msg.get("role") == "user":
                     append_to_chat_buffer(buffer_key, "user", _extract_text_content(last_msg.get("content", "")))
         except Exception as e:
-            print(f"[DiaryBuffer] 记录对话缓冲失败: {e}")
+            print(f"[DiaryBuffer] Failed to record conversation buffer: {e}")
         # 如果系统消息为空字符串或者仅包含空白符，则将系统消息改成"you are a helpful assistant."
         if request.messages[0]['role'] == 'system' and not request.messages[0]['content'].strip():
             request.messages[0]['content'] = "you are a helpful assistant."
@@ -4724,7 +4724,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 while tool_calls or search_not_done:
                     drs_rounds += 1
                     if drs_rounds > MAX_DRS_ROUNDS:
-                        print(f"[DeepSearch] 达到最大轮数 {MAX_DRS_ROUNDS}，强制结束深度研究循环")
+                        print(f"[DeepSearch] Maximum of {MAX_DRS_ROUNDS} rounds reached; ending deep research loop")
                         search_not_done = False
                         tool_calls = []
                         break
@@ -5178,7 +5178,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             # ScreenSize 格式为 [x, y, width, height]
                             screen_size = v_settings.get('ScreenSize',[0, 0, 1920, 1080])
                             time.sleep(0.5) # 等待一下，确保截图工具已经准备好
-                            print(f"正在执行桌面截图 (全屏: {is_full_screen}, 网格: {is_grid_enabled})...")
+                            print(f"Capturing desktop screenshot (full screen: {is_full_screen}, grid: {is_grid_enabled})...")
                             
                             # 初始化坐标偏移量
                             offset_x, offset_y = 0, 0
@@ -5237,7 +5237,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
 
                             ui_tree_hint = ""
                             if vision_control_enabled:
-                                print("正在异步提取跨平台无障碍 UI 树并进行 0-1000 坐标对齐...")
+                                print("Extracting cross-platform accessibility UI tree asynchronously and aligning coordinates to 0-1000...")
                                 # 传入逻辑视口尺寸 (logical_width, logical_height) 和 偏移量 (offset_x, offset_y)
                                 ui_tree_json = await get_desktop_ui_tree(
                                     logical_width=logical_width,
@@ -5275,7 +5275,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                             msg['content'] = ""
 
                         except Exception as e:
-                            print(f"后端桌面截图或获取 UI 树失败: {e}")
+                            print(f"Failed to capture desktop or retrieve UI tree: {e}")
                             
                         images = await images_in_messages(request.messages, fastapi_base_url)
                         request.messages = await message_without_images(request.messages)
@@ -5618,7 +5618,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         # full_content 是当前轮次 AI 的完整回复文本
                         await extract_and_update_affection(full_content)
                     except Exception as e:
-                        print(f"解析好感度标签出错: {e}")
+                        print(f"Failed to parse relationship tags: {e}")
                 # ========== 对话缓冲：记录助手回复用于闲时自动总结 ==========
                 try:
                     diary_settings_inner = (settings.get("diarySettings", {}) or {})
@@ -5628,9 +5628,9 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         if full_content:
                             append_to_chat_buffer(buffer_key, "assistant", full_content)
                 except Exception as e:
-                    print(f"[DiaryBuffer] 记录助手回复失败: {e}")
+                    print(f"[DiaryBuffer] Failed to record assistant reply: {e}")
                 if m0 and not request.is_sub_agent:
-                    print("记忆更新任务开始提交")
+                    print("Submitting memory update task")
                     messages = f"User said: {user_prompt}\n\n---\n\nYou said: {full_content}"
                     infer = cur_memory.get('infer', False) or False
                     
@@ -5646,25 +5646,25 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                 }
                                 func = partial(m0.add, user_id=memoryId, metadata=metadata, infer=infer)
                                 await loop.run_in_executor(executor, func, messages)
-                                print("记忆更新完成")
+                                print("Memory update complete")
                         
                         try:
                             loop = asyncio.get_running_loop()
                             task = asyncio.create_task(add())
                             task.add_done_callback(
-                                lambda t: print(f"任务异常: {t.exception()}") if t.exception() else None
+                                lambda t: print(f"Task exception: {t.exception()}") if t.exception() else None
                             )
                         except RuntimeError:
                             # 没有运行的事件循环
                             asyncio.run(add())
                         except Exception as e:
-                            print(f"run_task 异常: {e}")
+                            print(f"run_task exception: {e}")
                             traceback.print_exc()
                     
                     import threading
                     thread = threading.Thread(target=run_task, daemon=True)
                     thread.start()
-                    print("记忆更新任务已提交到后台线程")
+                    print("Memory update task submitted to background thread")
 
                 return
             except Exception as e:
@@ -5765,7 +5765,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     final_messages.append(msg)
                     pending_tool_call_ids.remove(t_id) # 匹配成功，移除
                 else:
-                    print(f"[Sanitizer] 丢弃孤立的 tool 消息: {t_id}")
+                    print(f"[Sanitizer] Discarding orphaned tool message: {t_id}")
                     continue
             
             elif role == "assistant":
@@ -5800,11 +5800,11 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         last_msg["tool_calls"] = None
                     else:
                         setattr(last_msg, "tool_calls", None)
-                    print("[Sanitizer] 抹除末尾未闭合的 tool_calls")
+                    print("[Sanitizer] Removing incomplete trailing tool_calls")
                     break # 处理完毕
                 else:
                     final_messages.pop()
-                    print("[Sanitizer] 弹出末尾无内容的孤立 tool_call 发起消息")
+                    print("[Sanitizer] Removing empty trailing orphaned tool-call message")
             else:
                 break
 
@@ -5822,7 +5822,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 break
         if cur_memory: _sanitize_card_strings(cur_memory)
         if cur_memory and cur_memory["providerId"]:
-            print("长期记忆启用")
+            print("Long-term memory enabled")
             _effective_dims = cur_memory.get("embedding_dims", 1024)
             _faiss_path = os.path.join(MEMORY_CACHE_DIR, memoryId, "agent-party.faiss")
             if os.path.exists(_faiss_path):
@@ -5830,10 +5830,10 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     import faiss
                     _existing = faiss.read_index(_faiss_path)
                     if _existing.d != _effective_dims:
-                        print(f"[WARNING] stored dims({_effective_dims}) != faiss actual dims({_existing.d})，以实际维度为准")
+                        print(f"[WARNING] stored dims({_effective_dims}) != faiss actual dims({_existing.d}); using actual dimensions")
                     _effective_dims = _existing.d
                 except Exception as e:
-                    print(f"[WARNING] 无法读取已有 faiss 索引维度: {e}")
+                    print(f"[WARNING] Could not read existing FAISS index dimensions: {e}")
             config={
                 "embedder": {
                     "provider": 'openai',
@@ -6695,7 +6695,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 func = partial(m0.add, user_id=memoryId,metadata=metadata,infer=infer)
                 # 传递 messages 作为位置参数
                 await loop.run_in_executor(executor, func, messages)
-                print("知识库更新完成")
+                print("Knowledge base update complete")
 
             asyncio.create_task(add())
         return JSONResponse(content=response_dict)
@@ -6938,7 +6938,7 @@ async def chat_endpoint(request: ChatRequest, fastapi_request: Request):
         if len(parts) >= 2:
             override_memory_id = parts[1]
             request.model = parts[2] if len(parts) > 2 else 'super-model'
-            print(f"检测到动态 Memory ID: {override_memory_id}, 目标模型更新为: {request.model}")
+            print(f"Dynamic memory ID detected: {override_memory_id}; target model updated to {request.model}")
     
     model = request.model or 'super-model'
     enable_thinking = request.enable_thinking or False
@@ -6960,7 +6960,7 @@ async def chat_endpoint(request: ChatRequest, fastapi_request: Request):
             print(f"[content_safety] input blocked words: {matched}")
             return JSONResponse(
                 status_code=403,
-                content={"error": {"message": "您的输入包含敏感内容，已被安全策略拦截。", "type": "content_safety", "code": 403}}
+                content={"error": {"message": "Your input was blocked by the content safety policy.", "type": "content_safety", "code": 403}}
             )
 
     await _apply_group_memory_context(request)
@@ -7257,7 +7257,7 @@ async def simple_chat_endpoint(request: ChatRequest):
             print(f"[content_safety] blocked words: {matched}")
             return JSONResponse(
                 status_code=403,
-                content={"error": {"message": "您的输入包含敏感内容，已被安全策略拦截。",
+                content={"error": {"message": "Your input was blocked by the content safety policy.",
                                    "type": "content_safety", "code": 403}}
             )
 
@@ -7408,7 +7408,7 @@ async def create_task_endpoint(req: TaskCreateRequest):
     workspace_dir = current_settings.get("CLISettings", {}).get("cc_path")
     
     if not workspace_dir:
-        raise HTTPException(status_code=400, detail="工作区路径未配置")
+        raise HTTPException(status_code=400, detail="Workspace path is not configured")
 
     try:
         task_center = await get_task_center(workspace_dir)
@@ -7488,17 +7488,17 @@ def sanitize_proxy_url(input_url: str) -> str:
     针对代理场景优化的 URL 安全过滤
     """
     if not input_url:
-        raise HTTPException(status_code=400, detail="URL 不能为空")
+        raise HTTPException(status_code=400, detail="URL must not be empty")
     
     # 1. 解析 URL
     parsed = urlparse(input_url)
     
     # 2. 验证协议 (禁止 file://, gopher:// 等协议)
     if parsed.scheme not in ["http", "https"]:
-        raise HTTPException(status_code=400, detail="仅支持 http 或 https 协议")
+        raise HTTPException(status_code=400, detail="Only http or https URLs are supported")
     
     if not parsed.netloc:
-        raise HTTPException(status_code=400, detail="无效的域名或 IP")
+        raise HTTPException(status_code=400, detail="Invalid domain or IP address")
 
     # 3. 重新构造 URL (消除 SSRF 污点)
     # 排除 userinfo, 只保留必要部分
@@ -7827,7 +7827,7 @@ async def asr_websocket_endpoint(websocket: WebSocket):
                             funasr_websocket = await websockets.connect(funasr_url)
                         except Exception as e:
                             funasr_websocket = None
-                            print(f"连接FunASR失败: {e}")
+                            print(f"Failed to connect to FunASR: {e}")
                 await websocket.send_json({
                     "type": "init_response",
                     "status": "ready"
@@ -7866,10 +7866,10 @@ async def asr_websocket_endpoint(websocket: WebSocket):
                             # 2. 开启一个异步任务处理FunASR的响应
                             asyncio.create_task(handle_funasr_response(funasr_websocket, websocket))
                         except Exception as e:
-                            print(f"连接FunASR失败: {e}")
+                            print(f"Failed to connect to FunASR: {e}")
                             await websocket.send_json({
                                 "type": "error",
-                                "message": f"无法连接FunASR服务器: {str(e)}"
+                                "message": f"Could not connect to FunASR server: {str(e)}"
                             })
                             # 标记连接失败，避免后续操作
                             funasr_websocket = None
@@ -7912,7 +7912,7 @@ async def asr_websocket_endpoint(websocket: WebSocket):
                                     funasr_websocket = await websockets.connect(funasr_url)
                                 except Exception as e:
                                     funasr_websocket = None
-                                    print(f"连接FunASR失败: {e}")
+                                    print(f"Failed to connect to FunASR: {e}")
             elif msg_type == "audio_complete":
                 # 处理完整的音频数据（非流式模式）
                 frame_id = message.get("id")
@@ -7972,7 +7972,7 @@ async def asr_websocket_endpoint(websocket: WebSocket):
                                     await funasr_websocket.send(json.dumps(end_config))
                                     print("Sent end signal")
                                 except websockets.exceptions.ConnectionClosed:
-                                    print("FunASR连接已关闭，无法发送结束信号")
+                                    print("FunASR connection closed; cannot send end signal")
                             funasr_websocket = None
 
                         elif asr_engine == "sherpa":
@@ -8041,7 +8041,7 @@ async def asr_transcription(
             base_url = asr_settings.get('base_url', '') or "https://api.openai.com/v1"
             
             if not api_key:
-                raise HTTPException(status_code=400, detail="OpenAI ASR API密钥未配置")
+                raise HTTPException(status_code=400, detail="OpenAI ASR API key is not configured")
 
             # --- 核心改进：使用缓存的客户端 ---
             cache_key = (api_key, base_url)
@@ -8775,7 +8775,7 @@ async def text_to_speech(request: Request):
         index = data.get('index', 0)
         tts_engine = tts_settings.get('engine', 'edgetts')
                 
-        print(f"TTS请求 - 引擎: {tts_engine}, 格式: {target_format}, 移动端优化: {mobile_optimized}")
+        print(f"TTS request - engine: {tts_engine}, format: {target_format}, mobile optimization: {mobile_optimized}")
                 
         # ==========================================
         # 1. EdgeTTS 引擎
@@ -8863,7 +8863,7 @@ async def text_to_speech(request: Request):
                             for i in range(0, len(audio_data), chunk_size):
                                 yield audio_data[i:i + chunk_size]
                 except Exception as e:
-                    raise HTTPException(status_code=502, detail=f"Custom TTS 连接失败: {str(e)}")
+                    raise HTTPException(status_code=502, detail=f"Custom TTS connection failed: {str(e)}")
 
             media_type = "audio/ogg" if target_format == "opus" else "audio/wav"
             filename = f"tts_{index}.opus" if target_format == "opus" else f"tts_{index}.wav"
@@ -8896,7 +8896,7 @@ async def text_to_speech(request: Request):
                         async for chunk in response.aiter_bytes():
                             yield chunk
                 except Exception as e:
-                    raise HTTPException(status_code=502, detail=f"GSV服务错误: {str(e)}")
+                    raise HTTPException(status_code=502, detail=f"GSV service error: {str(e)}")
             
             return StreamingResponse(generate_audio(), media_type="audio/ogg", headers={"Content-Disposition": f"inline; filename=tts_{index}.opus"})
 
@@ -9066,9 +9066,9 @@ async def text_to_speech(request: Request):
             rate = float(tts_settings.get('elevenLabsRate', 1.0))
             
             if not api_key:
-                raise HTTPException(status_code=400, detail="ElevenLabs API Key 未配置")
+                raise HTTPException(status_code=400, detail="ElevenLabs API key is not configured")
             if not voice_id:
-                raise HTTPException(status_code=400, detail="ElevenLabs Voice ID 未配置")
+                raise HTTPException(status_code=400, detail="ElevenLabs voice ID is not configured")
             
             if mobile_optimized:
                 rate = min(rate * 0.95, 1.2)
@@ -9088,15 +9088,15 @@ async def text_to_speech(request: Request):
             except Exception as e:
                 error_msg = str(e)
                 if "API key" in error_msg.lower() or "authentication" in error_msg.lower():
-                    raise HTTPException(status_code=401, detail="ElevenLabs API Key 无效")
+                    raise HTTPException(status_code=401, detail="Invalid ElevenLabs API key")
                 elif "voice" in error_msg.lower() or "not found" in error_msg.lower():
-                    raise HTTPException(status_code=400, detail=f"Voice ID 无效: {voice_id}")
+                    raise HTTPException(status_code=400, detail=f"Invalid voice ID: {voice_id}")
                 elif "model" in error_msg.lower():
-                    raise HTTPException(status_code=400, detail=f"Model ID 无效: {model_id}")
+                    raise HTTPException(status_code=400, detail=f"Invalid model ID: {model_id}")
                 elif "credit" in error_msg.lower() or "quota" in error_msg.lower() or "characters" in error_msg.lower():
-                    raise HTTPException(status_code=429, detail="ElevenLabs 额度不足")
+                    raise HTTPException(status_code=429, detail="Insufficient ElevenLabs quota")
                 else:
-                    raise HTTPException(status_code=502, detail=f"ElevenLabs 服务错误: {error_msg}")
+                    raise HTTPException(status_code=502, detail=f"ElevenLabs service error: {error_msg}")
 
             async def generate_audio():
                 # 2. 【性能修复】利用线程池安全地拉取同步生成器的数据，避免阻塞并发循环
@@ -9115,7 +9115,7 @@ async def text_to_speech(request: Request):
                             yield chunk
                     except Exception as e:
                         # 注意：在这里如果流传输中断了，不能再 raise HTTPException 了，只需中断流即可
-                        print(f"ElevenLabs 传输中断: {str(e)}")
+                        print(f"ElevenLabs stream interrupted: {str(e)}")
                         break
 
             # 移动端：转换为 opus（需要先收集所有 chunk）
@@ -9254,7 +9254,7 @@ async def list_tetos_voices(request: Request):
             elif provider == 'fish':
                 api_key = config.get('api_key')
                 if not api_key:
-                    raise ValueError("Fish Audio 需要配置 API Key")
+                    raise ValueError("Fish Audio requires an API key")
 
                 # 请求 Fish Audio 官方 API
                 # page_size 设置为 30 以获取更多热门音色
@@ -9336,12 +9336,12 @@ async def list_tetos_voices(request: Request):
         })
 
     except Exception as e:
-        print(f"获取 {provider} 音色列表失败: {e}")
+        print(f"Failed to retrieve {provider} voices: {e}")
         # 捕获鉴权失败、网络错误等
         return JSONResponse(status_code=500, content={
             "status": "error", 
             "message": str(e),
-            "detail": f"获取 {provider} 音色列表失败，请检查密钥配置是否正确。"
+            "detail": f"Failed to retrieve {provider} voices; check the API key configuration."
         })
 
 @app.get("/system/voices")
@@ -9440,10 +9440,10 @@ async def get_system_voices():
             return processed_voices
             
         except ImportError:
-            print("错误: 未找到 pyttsx3 驱动")
+            print("Error: pyttsx3 driver not found")
             return []
         except Exception as e:
-            print(f"获取系统音色错误: {str(e)}")
+            print(f"Failed to retrieve system voices: {str(e)}")
             return []
 
     try:
@@ -9470,7 +9470,7 @@ async def create_mcp_endpoint(request: Request, background_tasks: BackgroundTask
     # 将任务添加到后台队列
     background_tasks.add_task(process_mcp, mcp_id)
     
-    return {"success": True, "message": "MCP服务器初始化已开始"}
+    return {"success": True, "message": "MCP server initialization started"}
 
 @app.get("/mcp_status/{mcp_id}")
 async def get_mcp_status(mcp_id: str):
@@ -9505,7 +9505,7 @@ async def process_mcp(mcp_id: str):
         if mcp_id in mcp_client_list:
             mcp_client_list[mcp_id].disabled = True
             await mcp_client_list[mcp_id].close()
-            print(f"关闭MCP服务器: {mcp_id}")
+            print(f"Stopping MCP server: {mcp_id}")
 
         init_done.set()          # 唤醒主协程
 
@@ -9544,7 +9544,7 @@ async def process_mcp(mcp_id: str):
             try:
                 tool = await mcp_client_list[mcp_id].get_openai_functions(disable_tools=[])
             except Exception as e:
-                print(f"获取工具失败: {str(e)}")
+                print(f"Failed to retrieve tools: {str(e)}")
             finally:
                 retry += 1
                 await asyncio.sleep(0.5)
@@ -9588,7 +9588,7 @@ async def remove_mcp_server(request: Request):
                 mcp_client_list[server_name].disabled = True
                 await mcp_client_list[server_name].close()
                 del mcp_client_list[server_name]
-                print(f"关闭MCP服务器: {server_name}")
+                print(f"Stopping MCP server: {server_name}")
 
             return JSONResponse({"success": True, "removed": server_name})
         else:
@@ -9596,7 +9596,7 @@ async def remove_mcp_server(request: Request):
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format")
     except Exception as e:
-        logger.error(f"移除MCP服务器失败: {str(e)}")
+        logger.error(f"Failed to remove MCP server: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/remove_memory")
@@ -10188,7 +10188,7 @@ async def upload_gsv_ref_audio(
     if file_extension not in ALLOWED_AUDIO_EXTENSIONS:
         return JSONResponse(
             status_code=400,
-            content={"success": False, "message": f"不支持的文件类型: {file_extension}"}
+            content={"success": False, "message": f"Unsupported file type: {file_extension}"}
         )
     
     # 生成唯一文件名
@@ -10206,7 +10206,7 @@ async def upload_gsv_ref_audio(
         
         return JSONResponse(content={
             "success": True,
-            "message": "参考音频上传成功",
+            "message": "Reference audio uploaded successfully",
             "file": {
                 "path": file_link,
                 "name": file.filename,
@@ -10215,10 +10215,10 @@ async def upload_gsv_ref_audio(
         })
     
     except Exception as e:
-        logger.error(f"参考音频上传失败: {str(e)}")
+        logger.error(f"Failed to upload reference audio: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"文件保存失败: {str(e)}"}
+            content={"success": False, "message": f"Failed to save file: {str(e)}"}
         )
 
 @app.delete("/delete_audio/{filename}")
@@ -10237,19 +10237,19 @@ async def delete_audio(filename: str):
             os.remove(file_path)
             return JSONResponse(content={
                 "success": True,
-                "message": "音频文件已删除"
+                "message": "Audio file deleted"
             })
         else:
             return JSONResponse(
                 status_code=404,
-                content={"success": False, "message": "文件不存在"}
+                content={"success": False, "message": "File not found"}
             )
             
     except Exception as e:
-        logger.error(f"删除音频失败: {str(e)}")
+        logger.error(f"Failed to delete audio: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"删除失败: {str(e)}"}
+            content={"success": False, "message": f"Deletion failed: {str(e)}"}
         )
 
 # 允许的VRM文件扩展名
@@ -10268,7 +10268,7 @@ async def upload_vrm_model(
     if file_extension not in ALLOWED_VRM_EXTENSIONS:
         return JSONResponse(
             status_code=400,
-            content={"success": False, "message": f"不支持的文件类型: {file_extension}，只支持.vrm文件"}
+            content={"success": False, "message": f"Unsupported file type: {file_extension}; only .vrm files are supported"}
         )
     
     # 生成唯一文件名
@@ -10299,7 +10299,7 @@ async def upload_vrm_model(
         logger.error(f"VRM model upload failed: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"文件保存失败: {str(e)}"}
+            content={"success": False, "message": f"Failed to save file: {str(e)}"}
         )
 
 @app.get("/get_default_vrm_models")
@@ -10345,7 +10345,7 @@ async def get_default_vrm_models(request: Request):
         logger.error(f"Failed to retrieve default VRM models: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"获取默认模型失败: {str(e)}"}
+            content={"success": False, "message": f"Failed to retrieve default models: {str(e)}"}
         )
 
 # 修改删除VRM模型的接口，添加安全检查
@@ -10378,14 +10378,14 @@ async def delete_vrm_model(filename: str):
         else:
             return JSONResponse(
                 status_code=404,
-                content={"success": False, "message": "文件不存在"}
+                content={"success": False, "message": "File not found"}
             )
             
     except Exception as e:
         logger.error(f"Failed to delete VRM model: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"删除失败: {str(e)}"}
+            content={"success": False, "message": f"Deletion failed: {str(e)}"}
         )
 
 ALLOWED_VRMA_EXTENSIONS = {"vrma"}
@@ -10443,7 +10443,7 @@ async def get_default_vrma_motions(request: Request):
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"获取默认动作失败: {str(e)}"}
+            content={"success": False, "message": f"Failed to retrieve default motions: {str(e)}"}
         )
 
 
@@ -10462,7 +10462,7 @@ async def get_user_vrma_motions(request: Request):
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"获取用户动作失败: {str(e)}"}
+            content={"success": False, "message": f"Failed to retrieve user motions: {str(e)}"}
         )
 
 
@@ -10477,7 +10477,7 @@ async def upload_vrma_motion(
     if file_extension not in ALLOWED_VRMA_EXTENSIONS:
         return JSONResponse(
             status_code=400,
-            content={"success": False, "message": f"不支持的文件类型: {file_extension}"}
+            content={"success": False, "message": f"Unsupported file type: {file_extension}"}
         )
 
     # 生成唯一文件名
@@ -10496,7 +10496,7 @@ async def upload_vrma_motion(
 
         return JSONResponse(content={
             "success": True,
-            "message": "动作上传成功",
+            "message": "Motion uploaded successfully",
             "file": {
                 "unique_filename": unique_filename,
                 "display_name": display_name,
@@ -10507,7 +10507,7 @@ async def upload_vrma_motion(
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"保存文件失败: {str(e)}"}
+            content={"success": False, "message": f"Failed to save file: {str(e)}"}
         )
 
 
@@ -10528,22 +10528,22 @@ async def delete_vrma_motion(filename: str):
         if not abs_file.startswith(abs_upload):
             return JSONResponse(
                 status_code=403,
-                content={"success": False, "message": "禁止删除系统文件"}
+                content={"success": False, "message": "System files cannot be deleted"}
             )
 
         if os.path.exists(file_path):
             os.remove(file_path)
-            return {"success": True, "message": "动作文件已删除"}
+            return {"success": True, "message": "Motion file deleted"}
         else:
             return JSONResponse(
                 status_code=404,
-                content={"success": False, "message": "文件不存在"}
+                content={"success": False, "message": "File not found"}
             )
 
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"删除失败: {str(e)}"}
+            content={"success": False, "message": f"Deletion failed: {str(e)}"}
         )
 
 # -------------- GAUSS 场景相关 --------------
@@ -10560,7 +10560,7 @@ async def upload_gauss_scene(
     if ext not in ALLOWED_GAUSS:
         return JSONResponse(status_code=400, content={
             "success": False,
-            "message": f"不支持的文件类型: {ext}"
+            "message": f"Unsupported file type: {ext}"
         })
     unique = f"{uuid.uuid4()}.{ext}"
     destination = os.path.join(UPLOAD_FILES_DIR, unique)
@@ -10624,8 +10624,8 @@ async def delete_gauss_scene(filename: str):
     file_path = os.path.join(UPLOAD_FILES_DIR, filename)
     if os.path.exists(file_path):
         os.remove(file_path)
-        return {"success": True, "message": "场景已删除"}
-    return JSONResponse(status_code=404, content={"success": False, "message": "文件不存在"})
+        return {"success": True, "message": "Scene deleted"}
+    return JSONResponse(status_code=404, content={"success": False, "message": "File not found"})
 
 
 @app.get("/update_storage")
@@ -10671,7 +10671,7 @@ async def create_kb_endpoint(request: Request, background_tasks: BackgroundTasks
     # 将任务添加到后台队列
     background_tasks.add_task(process_kb, kb_id)
     
-    return {"success": True, "message": "知识库处理已开始，请稍后查询状态"}
+    return {"success": True, "message": "Knowledge base processing started; check its status later"}
 
 @app.delete("/remove_kb")
 async def remove_kb_endpoint(request: Request, background_tasks: BackgroundTasks):
@@ -10684,7 +10684,7 @@ async def remove_kb_endpoint(request: Request, background_tasks: BackgroundTasks
         background_tasks.add_task(remove_kb, kb_id)
     except Exception as e:
         return {"success": False, "message": str(e)}
-    return {"success": True, "message": "知识库已删除"}
+    return {"success": True, "message": "Knowledge base deleted"}
 
 # 删除知识库
 async def remove_kb(kb_id):
@@ -10734,9 +10734,9 @@ async def create_sticker_pack(
     try:
         # 验证输入数据
         if not pack_name:
-            raise HTTPException(status_code=400, detail="表情包名称不能为空")
+            raise HTTPException(status_code=400, detail="Sticker pack name must not be empty")
         if len(files) == 0:
-            raise HTTPException(status_code=400, detail="至少需要上传一个表情")
+            raise HTTPException(status_code=400, detail="Upload at least one sticker")
         if len(descriptions) != len(files):
             raise HTTPException(
                 status_code=400, 
@@ -10796,8 +10796,8 @@ async def create_sticker_pack(
     except HTTPException as he:
         raise he
     except Exception as e:
-        logger.error(f"创建表情包时出错: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"服务器错误: {str(e)}")
+        logger.error(f"Failed to create sticker pack: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 # ==========================================
 # Optional bot managers (lazy initialization)
@@ -10839,7 +10839,7 @@ async def start_discord_bot(config_data: dict):
         from py.discord_bot_manager import DiscordBotConfig
         config = DiscordBotConfig(**config_data)
         BotContainer.get_discord().start_bot(config)
-        return {"success": True, "message": "Discord 机器人已启动"}
+        return {"success": True, "message": "Discord bot started"}
     except Exception as e:
         return JSONResponse(status_code=400, content={"success": False, "message": str(e)})
 
@@ -10847,7 +10847,7 @@ async def start_discord_bot(config_data: dict):
 async def stop_discord_bot():
     if BotContainer._discord:
         BotContainer.get_discord().stop_bot()
-    return {"success": True, "message": "Discord 机器人已停止"}
+    return {"success": True, "message": "Discord bot stopped"}
 
 @app.get("/discord_bot_status")
 async def discord_bot_status():
@@ -10864,7 +10864,7 @@ async def reload_discord_bot(config_data: dict):
         manager.stop_bot()
         await asyncio.sleep(1)
         manager.start_bot(config)
-        return {"success": True, "message": "Discord 机器人已重载"}
+        return {"success": True, "message": "Discord bot reloaded"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
 
@@ -10878,7 +10878,7 @@ async def start_slack_bot(config_data: dict):
         from py.slack_bot_manager import SlackBotConfig
         config = SlackBotConfig(**config_data)
         BotContainer.get_slack().start_bot(config)
-        return {"success": True, "message": "Slack 机器人已启动"}
+        return {"success": True, "message": "Slack bot started"}
     except Exception as e:
         return JSONResponse(status_code=400, content={"success": False, "message": str(e)})
 
@@ -10886,7 +10886,7 @@ async def start_slack_bot(config_data: dict):
 async def stop_slack_bot():
     if BotContainer._slack:
         BotContainer.get_slack().stop_bot()
-    return {"success": True, "message": "Slack 机器人已停止"}
+    return {"success": True, "message": "Slack bot stopped"}
 
 @app.get("/slack_bot_status")
 async def slack_bot_status():
@@ -10903,7 +10903,7 @@ async def reload_slack_bot(config_data: dict):
         manager.stop_bot()
         await asyncio.sleep(1)
         manager.start_bot(config)
-        return {"success": True, "message": "Slack 机器人已重载"}
+        return {"success": True, "message": "Slack bot reloaded"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
 
@@ -10917,17 +10917,17 @@ async def start_telegram_bot(config_data: dict):
         from py.telegram_bot_manager import TelegramBotConfig
         config = TelegramBotConfig(**config_data)
         BotContainer.get_telegram().start_bot(config)
-        return {"success": True, "message": "Telegram 机器人已成功启动", "environment": "thread-based"}
+        return {"success": True, "message": "Telegram bot started successfully", "environment": "thread-based"}
     except Exception as e:
-        logger.error(f"启动 Telegram 机器人失败: {e}")
-        return JSONResponse(status_code=400, content={"success": False, "message": f"启动失败: {str(e)}", "error_type": "startup_error"})
+        logger.error(f"Failed to start Telegram bot: {e}")
+        return JSONResponse(status_code=400, content={"success": False, "message": f"Startup failed: {str(e)}", "error_type": "startup_error"})
 
 @app.post("/stop_telegram_bot")
 async def stop_telegram_bot():
     try:
         if BotContainer._telegram:
             BotContainer.get_telegram().stop_bot()
-        return {"success": True, "message": "Telegram 机器人已停止"}
+        return {"success": True, "message": "Telegram bot stopped"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
 
@@ -10949,7 +10949,7 @@ async def reload_telegram_bot(config_data: dict):
         manager.stop_bot()
         await asyncio.sleep(1)
         manager.start_bot(config)
-        return {"success": True, "message": "Telegram 机器人已重新加载", "config_changed": True}
+        return {"success": True, "message": "Telegram bot reloaded", "config_changed": True}
     except Exception as e:
         return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
 
@@ -11097,10 +11097,10 @@ async def upload_soulx_image(
             }
         })
     except Exception as e:
-        logger.error(f"上传SoulX参考图失败: {str(e)}")
+        logger.error(f"Failed to upload SoulX reference image: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"上传失败: {str(e)}"}
+            content={"success": False, "message": f"Upload failed: {str(e)}"}
         )
 
 
@@ -11141,7 +11141,7 @@ async def get_soulx_images(request: Request):
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"获取参考图列表失败: {str(e)}"}
+            content={"success": False, "message": f"Failed to retrieve reference images: {str(e)}"}
         )
 
 
@@ -11149,14 +11149,14 @@ async def get_soulx_images(request: Request):
 async def delete_soulx_image(image_id: str):
     try:
         if not re.fullmatch(r'[\w\-]+', image_id):
-            return JSONResponse(status_code=400, content={"success": False, "message": "非法的图片id"})
+            return JSONResponse(status_code=400, content={"success": False, "message": "Invalid image ID"})
         # 禁止删除默认形象
         default_path = os.path.join(DEFAULT_SOULX_IMAGES_DIR, f"{image_id}.png")
         if os.path.exists(default_path):
-            return JSONResponse(status_code=403, content={"success": False, "message": "默认形象不可删除"})
+            return JSONResponse(status_code=403, content={"success": False, "message": "The default avatar cannot be deleted"})
         path = os.path.join(SOULX_IMAGES_DIR, f"{image_id}.png")
         if not os.path.exists(path):
-            return JSONResponse(status_code=404, content={"success": False, "message": "图片不存在"})
+            return JSONResponse(status_code=404, content={"success": False, "message": "Image not found"})
         os.remove(path)
         settings = await load_settings()
         soulx = settings.get("SoulxConfig", {})
@@ -11164,11 +11164,11 @@ async def delete_soulx_image(image_id: str):
             soulx["selectedImageId"] = ""
             settings["SoulxConfig"] = soulx
             await save_settings(settings)
-        return JSONResponse(content={"success": True, "message": "参考图已删除"})
+        return JSONResponse(content={"success": True, "message": "Reference image deleted"})
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"删除失败: {str(e)}"}
+            content={"success": False, "message": f"Deletion failed: {str(e)}"}
         )
 
 
@@ -11376,10 +11376,10 @@ async def _get_m0_config_for_memory(memory_id: str):
             import faiss
             _existing = faiss.read_index(_faiss_path)
             if _existing.d != _effective_dims:
-                print(f"[WARNING] stored dims({_effective_dims}) != faiss actual dims({_existing.d})，以实际维度为准")
+                print(f"[WARNING] stored dims({_effective_dims}) != faiss actual dims({_existing.d}); using actual dimensions")
             _effective_dims = _existing.d
         except Exception as e:
-            print(f"[WARNING] 无法读取已有 faiss 索引维度: {e}")
+            print(f"[WARNING] Could not read existing FAISS index dimensions: {e}")
 
     # 确保 pickle 是 mem0 兼容的 (docstore, index_to_id) 元组格式
     _ppath = os.path.join(MEMORY_CACHE_DIR, memory_id, "agent-party.pkl")
@@ -11435,9 +11435,9 @@ async def _get_m0_config_for_memory(memory_id: str):
                 with open(_ppath, "wb") as f:
                     pickle.dump((docstore, idx2id), f)
                 action = "已迁移" if _needs_migration else "已修复(补充 user_id)"
-                print(f"[INFO] pickle {action}为 mem0 兼容格式: {_ppath}")
+                print(f"[INFO] pickle {action} to mem0-compatible format: {_ppath}")
         except Exception as e:
-            print(f"[WARNING] pickle 处理失败: {e}")
+            print(f"[WARNING] pickle processing failed: {e}")
 
     config = {
         "embedder": {
@@ -11737,10 +11737,10 @@ settings_lock = asyncio.Lock()
 async def websocket_endpoint(websocket: WebSocket):
     # 1. 建立连接
     await ws_manager.connect(websocket)
-    print(f"[DEBUG] WebSocket连接建立成功")
+    print(f"[DEBUG] WebSocket connection established")
     # [状态标记] 为当前连接生成唯一ID并初始化状态
     connection_id = str(shortuuid.ShortUUID().random(length=8))
-    print(f"[DEBUG] 连接ID: {connection_id}")
+    print(f"[DEBUG] Connection ID: {connection_id}")
     has_sent_prompt = False
     has_start_tts = False
     registered_ext_ids = set()
@@ -11802,7 +11802,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         is_safe, matched = await check_content_safety(sys_prompt)
                         if not is_safe:
                             print(f"[content_safety] ws save_settings blocked words: {matched}")
-                            await ws_manager.send_json({"type": "error", "message": "系统提示词包含敏感内容，设置未保存。"}, websocket)
+                            await ws_manager.send_json({"type": "error", "message": "The system prompt was blocked by the content safety policy; settings were not saved."}, websocket)
                             break
                 from py.get_setting import deep_update
                 deep_update(cur_settings, settings_dict)
@@ -11814,7 +11814,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     from py.diary_engine import global_diary_engine
                     global_diary_engine.update_config(cur_settings.get("diarySettings"))
                 except Exception as e:
-                    print(f"日记引擎配置同步异常: {e}")
+                    print(f"Failed to synchronize diary engine configuration: {e}")
 
                 await ws_manager.send_json({
                     "type": "settings_saved",
@@ -11861,7 +11861,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     try:
                         await save_single_cov(conv_id, conv_data)
                     except Exception as e:
-                        print(f"[save_current_conversation] 保存失败: {e}")
+                        print(f"[save_current_conversation] Save failed: {e}")
 
             elif msg_type == "get_settings":
                 settings = await load_settings()
@@ -11910,7 +11910,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     is_safe, matched = await check_content_safety(extension_system_prompt)
                     if not is_safe:
                         print(f"[content_safety] ws set_system_prompt blocked words: {matched}")
-                        await ws_manager.send_json({"type": "error", "message": "系统提示词包含敏感内容，已被安全策略拦截。"}, websocket)
+                        await ws_manager.send_json({"type": "error", "message": "The system prompt was blocked by the content safety policy."}, websocket)
                         break
                 await ws_manager.broadcast({
                     "type": "update_system_prompt",
@@ -11956,7 +11956,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 if ext_id and tools:
                     node_ext_mcp_tools[ext_id] = tools
                     registered_ext_ids.add(ext_id)  # 🔥 记录
-                    print(f"[MCP] Node扩展 {ext_id} 注册了 {len(tools)} 个工具")
+                    print(f"[MCP] Node extension {ext_id} registered {len(tools)} tools")
                     
                     # 通知所有客户端更新工具列表
                     await ws_manager.broadcast({

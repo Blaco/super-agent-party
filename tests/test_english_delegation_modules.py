@@ -214,6 +214,19 @@ class EnglishDelegationModules(unittest.TestCase):
             if re.search(r"showNotification|showToast|showErrorToast|this\.\$(?:alert|confirm|message)|throw new Error", line):
                 self.assertIsNone(HAN.search(line), line)
 
+    def test_server_english_runtime_messages(self):
+        source = (ROOT / "server.py").read_text(encoding="utf-8")
+        ast.parse(source)
+        for message in (
+            "Logging initialized", "OpenAI ASR API key is not configured",
+            "ElevenLabs voice ID is not configured", "MCP server initialization started",
+            "Reference audio uploaded successfully", "Workspace path is not configured",
+            "Knowledge base processing started", "Discord bot started",
+            "Slack bot started", "Telegram bot started successfully",
+        ):
+            self.assertIn(message, source)
+        self.assertEqual(source.count("Your input was blocked by the content safety policy."), 2)
+
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")
         self.assertIn(
