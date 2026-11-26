@@ -1,4 +1,6 @@
 window.lang_enUS = {
+        'showOptionalFeatures': 'Additional features',
+        'hideOptionalFeatures': 'Hide additional features',
         'chat': 'Chat',
         'mainModel': 'Main Model',
         'tools': 'Tools',

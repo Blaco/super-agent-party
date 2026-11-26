@@ -502,7 +502,7 @@ function updateElement(el, rawMarkdown, formatFn) {
           :default-active="activeMenu"
           class="el-menu-vertical"
           @select="handleSelect">
-          <el-menu-item index="dashboard" id="menu-dashboard">
+          <el-menu-item index="dashboard" id="menu-dashboard" v-if="showOptionalFeatures">
             <el-icon>
               <i class="fa-solid fa-house-chimney"></i>
             </el-icon>
@@ -533,7 +533,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             </el-icon>
             <template #title>{{ t('role') }}</template>
           </el-menu-item>
-          <el-menu-item index="deploy-bot">
+          <el-menu-item index="deploy-bot" v-if="showOptionalFeatures">
               <el-icon>
                   <i class="fa-solid fa-robot"></i>
               </el-icon>
@@ -545,7 +545,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             </el-icon>
             <template #title>{{ t('aiBrowser') }}</template>
           </el-menu-item>
-          <el-menu-item index="api-group">
+          <el-menu-item index="api-group" v-if="showOptionalFeatures">
             <el-icon>
               <i class="fa-solid fa-plug"></i>
             </el-icon>
@@ -570,6 +570,15 @@ function updateElement(el, rawMarkdown, formatFn) {
             <template #title>{{ t('aboutUs') }}</template>
           </el-menu-item>
         </el-menu>
+        <el-button
+          text
+          class="companion-optional-toggle"
+          :title="t(showOptionalFeatures ? 'hideOptionalFeatures' : 'showOptionalFeatures')"
+          @click="toggleOptionalFeatures"
+          style="width: calc(100% - 16px); margin: 8px; justify-content: flex-start;">
+          <i :class="showOptionalFeatures ? 'fa-solid fa-chevron-up' : 'fa-solid fa-ellipsis'"></i>
+          <span v-if="!isCollapse" style="margin-left: 10px;">{{ t(showOptionalFeatures ? 'hideOptionalFeatures' : 'showOptionalFeatures') }}</span>
+        </el-button>
       </el-aside>
       <div 
         class="sidebar-mask"
@@ -3290,7 +3299,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             <div class="suite-sidebar">
               <div class="tile-nav">
                 <div 
-                  v-for="tile in roleTiles" 
+                  v-for="tile in roleTiles.filter(tile => showOptionalFeatures || tile.id !== 'sticker')" 
                   :key="tile.id"
                   class="nav-item"
                   :class="{ active: subMenu === tile.id }"
@@ -6516,7 +6525,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             <div class="suite-sidebar">
               <div class="tile-nav">
                 <div 
-                  v-for="tile in modelTiles" 
+                  v-for="tile in modelTiles.filter(tile => showOptionalFeatures || tile.id !== 'text2img')" 
                   :key="tile.id"
                   class="nav-item"
                   :class="{ active: subMenu === tile.id }"
@@ -9408,7 +9417,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             <div class="suite-sidebar">
               <div class="tile-nav">
                 <div 
-                  v-for="tile in toolkitTiles" 
+                  v-for="tile in toolkitTiles.filter(tile => showOptionalFeatures || !['HA', 'sql', 'comfyui', 'customHttpTool'].includes(tile.id))" 
                   :key="tile.id"
                   class="nav-item"
                   :class="{ active: subMenu === tile.id }"

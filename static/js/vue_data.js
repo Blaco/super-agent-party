@@ -90,7 +90,9 @@ let vue_data = {
     isStandaloneChatPage: window.location.pathname.includes('chat.html'),
     isCollapse: true,
     isBtnCollapse: true,
-    activeMenu: 'dashboard',
+    activeMenu: 'home',
+    // Display companion-relevant settings by default. Optional SAP panels remain available.
+    showOptionalFeatures: false,
     activeLiveTab: 'live',
     isMaximized: false,
     hasUpdate: false,

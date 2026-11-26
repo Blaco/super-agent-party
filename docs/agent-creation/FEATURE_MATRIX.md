@@ -18,13 +18,13 @@ Statuses: **KEEP** = retain and expose; **HIDE** = keep code but remove from nor
 | OpenClaw via ACPX/ACP | KEEP | P5 | py/acpx_tools.py, agent settings | Windows integration test needed |
 | Multi-account isolation and data export | KEEP | P0/P1 | main.js, persistence | Verify profiles and backups |
 | Group chat / multi-role party | HIDE | Future/optional | group mode UI, group memory | Keep source; remove from simplified default navigation |
-| Livestreaming integrations (including YouTube/Twitch) | HIDE | Outside scope | streamer modules and controls | Preserve for possible future use |
+| Livestreaming integrations (including YouTube/Twitch) | HIDE (bot deployment entry now under Additional features; streaming internals unchanged) | Outside scope | streamer modules and controls | Preserve source; audit stream-specific alternate navigation |
 | Gaming integrations (Minecraft/Factorio etc.) | HIDE if present | Outside scope | extensions/tool modules | Verify actual presence before inventory |
 | Standard Western social/chat bots (Discord, Telegram, Slack) | HIDE | Outside scope | py/*_bot_manager.py | Keep code for optional later integrations |
 | China-focused social/enterprise bots (QQ, WeChat, Feishu, DingTalk) | REMOVE-CANDIDATE | Outside scope | py/*_bot_manager.py, frontend | Trace imports/routes/configuration first |
 | China-focused media platforms (Bilibili, Douyin, etc.) | REMOVE-CANDIDATE if present | Outside scope | README, livestream extensions | Verify existence and dependencies first |
 | Chinese cloud providers and country-specific download mirrors | REMOVE-CANDIDATE | Outside scope | vendor lists, defaults, docs | Do not break generic OpenAI-compatible providers |
-| Unrelated dashboards, decorative widgets and novelty modules | HIDE | Optional | navigation tile lists | Retain code, preserve advanced access where worthwhile |
+| Unrelated dashboards, decorative widgets and novelty modules | HIDE (first-pass reversible sidebar filtering implemented) | Optional | navigation tile lists | Check all alternate entry points and Windows layout before further hiding |
 | Native Chinese language default prompts, examples, errors and docs | REPLACE (partial: English initial defaults and core character prompt paths) | All | frontend, backend, configs, docs | Continue optional agent/TTS/tool prompt and UI translation; no claim of full completion |
 | Updater, packaging, telemetry/network behaviors | KEEP / AUDIT | Delivery | main.js, build.yml, package.json | Prevent upstream publish or unexpected remote communication |
 

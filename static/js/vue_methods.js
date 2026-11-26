@@ -6207,7 +6207,19 @@ formatMessage(content, index) {
       this.activeMenu = 'role';
       this.subMenu = 'memory'; 
     },
-    // 在 methods 中添加
+    toggleOptionalFeatures() {
+      this.showOptionalFeatures = !this.showOptionalFeatures;
+      if (!this.showOptionalFeatures) {
+        if (['dashboard', 'deploy-bot', 'api-group'].includes(this.activeMenu)) {
+          this.activeMenu = 'home';
+          this.subMenu = '';
+        }
+        if (this.activeMenu === 'role' && this.subMenu === 'sticker') this.subMenu = 'memory';
+        if (this.activeMenu === 'model-config' && this.subMenu === 'text2img') this.subMenu = 'main';
+        if (this.activeMenu === 'toolkit' && ['HA', 'sql', 'comfyui', 'customHttpTool'].includes(this.subMenu)) this.subMenu = 'tools';
+      }
+    },
+    // Character and model settings remain available when optional panels are hidden.
     t(key) {
       return this.translations[this.currentLanguage]?.[key] || this.translations['en-US']?.[key] || key;
     },

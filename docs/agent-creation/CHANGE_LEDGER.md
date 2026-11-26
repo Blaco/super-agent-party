@@ -62,3 +62,17 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - **Research check:** current SAP source and pinned waifuai/hermes-waifu, waifuai/waifu-companion, moeru-ai/airi, NousResearch/hermes-agent references evaluated; no code copied because an isolated compatibility shim is smaller and safer than replacing SAP's chat pipeline.
 - **Self-audit:** preserving saved settings prevents character/data loss, but explicit old language selection and voice choices survive. Native TabbyAPI thinking/reasoning is unaffected and may still be exposed by model settings. Not all Chinese strings or region-specific integrations have been removed. UI simplification and complete English audit remain pending.
 - **Rollback:** revert this change commit to return to `27d518fb9e7f0c4168449704596f36975e876f93`, or inspect baseline at upstream `3aac964`. All original code remains in Git history.
+
+## 2026-11-26 — Reversible companion-focused navigation
+
+- **Parent / upstream:** branch `agent-creation`, parent `f692ccf20f40cb763596cc668a0b287225f85839`; baseline `3aac964122415fe289a1b8af1000474b397c916b`.
+- **Scope:** reduce default navigation to companion-related features, with one discoverable `Additional features` toggle for reversible access to all legacy menus. This is UI-only; backend modules, settings and saved data remain unchanged.
+- **`static/index.html`:** always expose Chat, Model Configuration, Role, Toolkit, AI Browser (Electron), Storage and System Settings. Initially hide top-level Dashboard, Bot Deployment and API pages; filter Role's Sticker panel, Model's Text-to-Image panel, and Toolkit's Home Assistant, SQL, ComfyUI and Custom HTTP panels. The original markup and content for every hidden panel remain intact; enabling additional features reveals them. A toggle button is placed immediately below the main sidebar menu, with a title when sidebar is collapsed.
+- **`static/js/vue_data.js`:** first launch opens Chat instead of Dashboard; `showOptionalFeatures` defaults false (session-only, no database migration).
+- **`static/js/vue_methods.js`:** adds `toggleOptionalFeatures()` to show or hide optional navigation; if hiding an active optional page or subpanel, redirects to visible Chat/Character/Main Model/Tools rather than leaving a hidden selection.
+- **`static/js/locales/en-US.js`:** English labels for Additional features and Hide additional features; existing language fallback resolves these labels to English.
+- **`scripts/companion-ui-smoke.js`:** static structural assertions confirm core pages are present, optional pages remain in source, reversible filters and toggle methods exist; cannot substitute for manual Electron UI testing.
+- **`.github/workflows/companion-audit.yml`:** adds UI structural smoke check before existing language and Python tests. No Windows build/release requested.
+- **Verification:** source replacement counts validated and staged tree created. GitHub Actions to be checked after push. Visual responsiveness, keyboard navigation and user-profile persistence not yet Windows-tested.
+- **Self-audit:** no China-specific integrations removed; hiding deployment pages does not disable any network integrations already enabled in a user's settings. No privacy protection added to model switching; separate future task. Settings for all planned features remain directly visible or accessible via one toggle.
+- **Rollback:** revert this commit, or compare against `f692ccf20f40cb763596cc668a0b287225f85839`; no user data migration needed.

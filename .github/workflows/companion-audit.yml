@@ -28,6 +28,8 @@ jobs:
           node-version: '22'
       - name: Existing SAP JavaScript and JSON smoke check
         run: npm test
+      - name: Check reversible companion navigation wiring
+        run: node scripts/companion-ui-smoke.js
       - name: Companion prompt compatibility tests
         run: python -m unittest discover -s tests -p 'test_companion_defaults.py' -v
       - name: Check Python syntax in edited modules
