@@ -185,3 +185,9 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Correct avatar prompt test boundary
 
 - Parent: 5fd5d7888e037432083209f822612a9831bd8321. CI failure 45902813090 came from a test-only regex that assumed Expression_messages ended with a standalone closing parenthesis. It accidentally consumed the next Chinese comment, despite the actual English prompt being complete. tests/test_english_avatar_instructions.py now uses Python AST assignment source ranges, and also parses the entire edited server.py to catch syntax errors. Runtime source is unchanged. Re-run CI on this commit.
+
+## 2026-11-26 — English project documentation and installation routing
+
+- Parent: fefb3761a8d6fc2fdad0e907fd468efb5cc948f0. Replace inherited README.md and README_AGENT.md with fork-specific English documentation: actual Windows local-first target, TabbyAPI/WhisperBox/OpenClaw system boundaries, optional bot/livestream scope, privacy invariants, source setup, Windows build/test limitations, AGPL and attribution.
+- Delete nine foreign-language upstream README variants (README_AR, README_DE, README_ES, README_FR, README_JA, README_KO, README_PT, README_RU, README_ZH) from the active branch; content remains recoverable from Git history and is not shipped as fork guidance. No license notices or user-created data were removed.
+- This is documentation cleanup only. Do not infer successful Windows application validation from README; build status remains GitHub Actions dependent.
