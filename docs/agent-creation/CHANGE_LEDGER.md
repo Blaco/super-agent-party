@@ -26,3 +26,13 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - **Verification:** GitHub fork/admin permission and branch starting SHA confirmed; file content checked for consistency; code/runtime tests not applicable to documentation-only revision. GitHub commit confirmation recorded in history.
 - **Caveats:** existing upstream settings, documentation, UI, hardcoded Chinese prompts and packaging remain unmodified. Future audit must inventory each separately.
 - **Rollback:** compare/revert this single documentation-bootstrap commit; upstream implementation remains in the root Git history at baseline SHA.
+
+## 2026-11-26 — Add read-only English-surface audit and CI smoke checks
+
+- **Branch / parent:** `agent-creation`, parent `fb1ecc1bc5cad2e5528400b819b7ee590b465bca`; current commit discoverable from Git history for this file.
+- **Files added:** `scripts/audit_english_surface.py` inventories Han code points and China-specific platform names in source text, with path/line/category and optional JSON. It never edits source and does not pretend Han detection is linguistic classification. Optional `--fail-on-han` is disabled by default while the upstream baseline remains non-English.
+- **Files added:** `.github/workflows/companion-audit.yml` runs the upstream `npm test` smoke check plus source inventory on pushes/PRs to this development branch; uploads a short-lived machine-readable report. It does not build, release, publish, or modify existing application behavior.
+- **Disposition:** audit tooling added; no SAP runtime feature removed or hidden; no user-facing text translated yet.
+- **Review focus:** repo contains legacy non-English locales and media/provider references; human review required before removal. Scanner skips vendored/binary directories by explicit rules (see script). No automatic deletion or translation.
+- **Tests:** static code review completed; GitHub Actions result must be inspected after push. No Windows runtime test or application build performed.
+- **Rollback:** revert the commit that added these two files and this log entry.

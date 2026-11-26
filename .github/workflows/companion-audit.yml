@@ -1,0 +1,38 @@
+name: Agent Creation — source audit
+
+on:
+  push:
+    branches:
+      - agent-creation
+  pull_request:
+    branches:
+      - agent-creation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline-audit:
+    name: Smoke check and English-surface inventory
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Existing SAP JavaScript and JSON smoke check
+        run: npm test
+      - name: Audit source text (inventory only; no automatic edits)
+        run: python scripts/audit_english_surface.py --root . --json english-surface-report.json --limit 25
+      - name: Upload text inventory for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: english-surface-audit
+          path: english-surface-report.json
+          retention-days: 14
