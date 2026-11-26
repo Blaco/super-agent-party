@@ -19299,9 +19299,6 @@ closeTaskCenter() {
         case 'serper':
           if (!settings.serper_api_key?.trim()) errorMsg = this.t('pleaseConfigSerperApiKey');
           break;
-        case 'bochaai':
-          if (!settings.bochaai_api_key?.trim()) errorMsg = this.t('pleaseConfigBochaaiApiKey');
-          break;
         // duckduckgo 无需强制配置，直接放行
       }
 

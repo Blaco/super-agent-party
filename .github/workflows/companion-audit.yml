@@ -32,6 +32,8 @@ jobs:
         run: node scripts/companion-ui-smoke.js
       - name: Companion prompt compatibility tests
         run: python -m unittest discover -s tests -p 'test_companion_defaults.py' -v
+      - name: Search provider isolation tests
+        run: python -m unittest discover -s tests -p 'test_search_provider_isolation.py' -v
       - name: Regional TTS provider isolation tests
         run: python -m unittest discover -s tests -p 'test_region_tts_isolation.py' -v
       - name: Curated Western provider preset tests

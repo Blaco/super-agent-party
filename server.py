@@ -22,10 +22,10 @@ from py.ws_manager import ws_manager
 # === Pre-load heavy tool modules at startup to avoid blocking first request ===
 from py.web_search import (
     DDGsearch, searxng, Tavily_search, Google_search,
-    Brave_search, Exa_search, Serper_search, bochaai_search, youcom_search,
+    Brave_search, Exa_search, Serper_search, youcom_search,
     jina_crawler, Crawl4Ai_search, firecrawl_search, simple_fetch, markdown_new,
     duckduckgo_tool, searxng_tool, tavily_tool, google_tool,
-    brave_tool, exa_tool, serper_tool, bochaai_tool, youcom_tool,
+    brave_tool, exa_tool, serper_tool, youcom_tool,
     jina_crawler_tool, simple_fetch_tool, Crawl4Ai_tool, firecrawl_tool, markdown_new_tool,
 )
 from py.know_base import kb_tool, query_knowledge_base, rerank_knowledge_base
@@ -1320,8 +1320,7 @@ async def dispatch_tool(tool_name: str, tool_params: dict, settings: dict,is_sub
         "Brave_search": Brave_search,
         "Exa_search": Exa_search,
         "Serper_search": Serper_search,
-        "bochaai_search": bochaai_search,
-        "youcom_search": youcom_search,
+            "youcom_search": youcom_search,
         "comfyui_tool_call": comfyui_tool_call,
         "time": time,
         "get_weather": get_weather,
@@ -4064,8 +4063,6 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             results = await Exa_search(user_prompt)
                         elif settings['webSearch']['engine'] == 'serper':
                             results = await Serper_search(user_prompt)
-                        elif settings['webSearch']['engine'] == 'bochaai':
-                            results = await bochaai_search(user_prompt)
                         elif settings['webSearch']['engine'] == 'youcom':
                             results = await youcom_search(user_prompt)
                         if results:
@@ -4093,8 +4090,6 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             tools.append(exa_tool)
                         elif settings['webSearch']['engine'] == 'serper':
                             tools.append(serper_tool)
-                        elif settings['webSearch']['engine'] == 'bochaai':
-                            tools.append(bochaai_tool)
                         elif settings['webSearch']['engine'] == 'youcom':
                             tools.append(youcom_tool)
 
@@ -6200,8 +6195,6 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     results = await Exa_search(user_prompt)
                 elif settings['webSearch']['engine'] == 'serper':
                     results = await Serper_search(user_prompt)
-                elif settings['webSearch']['engine'] == 'bochaai':
-                    results = await bochaai_search(user_prompt)
                 elif settings['webSearch']['engine'] == 'youcom':
                     results = await youcom_search(user_prompt)
                 if results:
@@ -6221,8 +6214,6 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     tools.append(exa_tool)
                 elif settings['webSearch']['engine'] == 'serper':
                     tools.append(serper_tool)
-                elif settings['webSearch']['engine'] == 'bochaai':
-                    tools.append(bochaai_tool)
                 elif settings['webSearch']['engine'] == 'youcom':
                     tools.append(youcom_tool)
 

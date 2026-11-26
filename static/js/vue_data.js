@@ -375,8 +375,6 @@ let vue_data = {
       exa_api_key: '',
       serper_max_results:10,
       serper_api_key: '',
-      bochaai_max_results:10,
-      bochaai_api_key: '',
       youcom_max_results: 10,
       youcom_api_key: '',
       youcom_tier: 'free',
