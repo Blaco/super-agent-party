@@ -164,3 +164,5 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 
 - Parent: bfa30752ce8536863a289aaf4a577405c3e9d8bc. Windows development build run 45901818901 failed at `npm ci`: Electron install.js download received HTTP 504 Gateway Timeout. Python `uv sync` succeeded, the packaging stages did not start and no ZIP was produced. Do not mark that build complete.
 - .github/workflows/build.yml adds up to three guarded npm ci attempts with progressive backoff and npm fetch retries; explicit final failure if all fail. The build still has no tag/release/signing access and uploads only a development ZIP if successful. Normalized electron-version manifest expression. Windows runner will retest this source commit when the workflow changes.
+
+- Manifest refinement: Electron version is now read from package.json by PowerShell ConvertFrom-Json, eliminating nested command quoting in build.yml.

@@ -103,6 +103,7 @@ jobs:
           $sha = (git rev-parse HEAD).Trim()
           $short = $sha.Substring(0, 12)
           $root = 'release/win-unpacked'
+          $electronVersion = (Get-Content 'node_modules/electron/package.json' -Raw | ConvertFrom-Json).version
           $manifest = @(
             'Agent Creation — Windows x64 development snapshot'
             "Source repository: https://github.com/${{ github.repository }}"
@@ -111,7 +112,7 @@ jobs:
             "OS: $([System.Environment]::OSVersion.VersionString)"
             "Python: $(uv run python --version)"
             "Node: $(node --version)"
-            "Electron: $(node -p 'require(\x22./node_modules/electron/package.json\x22).version')"
+            "Electron: $electronVersion"
             'Package type: extracted Electron directory with bundled PyInstaller backend'
             'Automated build check only; no GUI launch or audio/agent integration test performed.'
             'No signing, installer, publishing, auto-updates or release tags.'
