@@ -14,16 +14,16 @@ class TaskCreateRequest(BaseModel):
     description: str
     agent_type: str = "default"
     task_type: str = "once"           # once, scheduled, recurring
-    run_at_time: Optional[str] = None  # 定时任务的时间点 (ISO格式)
-    interval_minutes: int = 60         # 周期任务的间隔
-    platforms: List[str] = []    # 新增：多渠道支持
+    run_at_time: Optional[str] = None  # Scheduled execution time (ISO format)
+    interval_minutes: int = 60         # Recurring task interval
+    platforms: List[str] = []    # Multi-channel support
     trigger_config: Optional[dict] = {}
 
-# 1. 增加任务类型枚举
+# 1. Task type enumeration
 class TaskType(str, Enum):
-    ONCE = "once"           # 单次任务 (立即执行)
-    SCHEDULED = "scheduled" # 定时任务 (未来某个时间点执行一次)
-    RECURRING = "recurring" # 周期任务 (每隔一段时间执行)
+    ONCE = "once"           # One-time task (execute immediately)
+    SCHEDULED = "scheduled" # Scheduled task (execute once at a future time)
+    RECURRING = "recurring" # Recurring task (execute at regular intervals)
 
 class TaskStatus(str, Enum):
     PENDING = "pending"
@@ -46,22 +46,22 @@ class SubTask(BaseModel):
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
     agent_type: str = "default"
-    # 使用 Field(default_factory=dict) 确保每个实例有独立的字典
+    # Use Field(default_factory=dict) to give each instance its own dictionary
     context: Dict[str, Any] = Field(default_factory=dict)
     
     task_type: TaskType = TaskType.ONCE
     platforms: List[str] = Field(default_factory=list) 
     
-    # 时间配置
+    # Time configuration
     schedule_config: Optional[Dict[str, Any]] = None 
     
-    # 状态跟踪
+    # Status tracking
     next_run_at: Optional[str] = None
     last_run_at: Optional[str] = None
-    occurrence_count: int = 0  # 已执行次数
+    occurrence_count: int = 0  # Number of executions so far
 
 class TaskCenter:
-    """任务中心 - 管理所有主任务和子任务"""
+    """Task center - manage all main tasks and subtasks."""
     
     def __init__(self, workspace_dir: str):
         self.workspace_dir = Path(workspace_dir)
@@ -70,11 +70,11 @@ class TaskCenter:
         self._ensure_task_dir()
     
     def _ensure_task_dir(self):
-        """确保任务目录存在"""
+        """Ensure the task directory exists."""
         self.task_dir.mkdir(parents=True, exist_ok=True)
     
     def _get_task_file(self, task_id: str) -> Path:
-        """获取任务文件路径"""
+        """Get the task file path."""
         return self.task_dir / f"{task_id}.json"
     
     async def create_task(
@@ -84,9 +84,9 @@ class TaskCenter:
         parent_task_id: Optional[str] = None,
         agent_type: str = "default",
         context: Optional[Dict[str, Any]] = None,
-        platforms: List[str] = None # 新增参数
+        platforms: List[str] = None # Delivery channels
     ) -> SubTask:
-        """创建新任务"""
+        """Create a new task."""
         async with self._lock:
             task_id = str(uuid.uuid4())[:8]
             now = datetime.now().isoformat()
@@ -100,20 +100,20 @@ class TaskCenter:
                 updated_at=now,
                 agent_type=agent_type,
                 context=context or {},
-                platforms=platforms or [] # 赋值
+                platforms=platforms or [] # Assign delivery channels
             )
             
             await self._save_task(task)
             return task
     
     async def _save_task(self, task: SubTask):
-        """保存任务到文件"""
+        """Save the task to a file."""
         task_file = self._get_task_file(task.task_id)
         async with aiofiles.open(task_file, 'w', encoding='utf-8') as f:
             await f.write(task.model_dump_json(indent=2))
     
     async def get_task(self, task_id: str) -> Optional[SubTask]:
-        """获取任务详情"""
+        """Get task details."""
         task_file = self._get_task_file(task_id)
         if not task_file.exists():
             return None
@@ -135,14 +135,14 @@ class TaskCenter:
         error: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None
     ) -> bool:
-        """更新任务进度和上下文"""
+        """Update task progress and context."""
         async with self._lock:
             task = await self.get_task(task_id)
             if not task:
                 return False
             
             if task.status == TaskStatus.CANCELLED and status is not None and status != TaskStatus.CANCELLED:
-                print(f"[TaskCenter] 任务 {task_id} 已被取消，拒绝状态更新为 {status}")
+                print(f"[TaskCenter] Task {task_id} was cancelled; refusing status update to {status}")
                 return False
             
             safe_progress = max(0, min(100, progress))
@@ -186,7 +186,7 @@ class TaskCenter:
         parent_task_id: Optional[str] = None,
         status: Optional[TaskStatus] = None
     ) -> List[SubTask]:
-        """列出任务"""
+        """List tasks."""
         tasks = []
         if not self.task_dir.exists():
             return tasks

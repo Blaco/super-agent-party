@@ -7132,7 +7132,7 @@ async def chat_endpoint(request: ChatRequest, fastapi_request: Request):
 
                         request.messages.append({
                             "role": "user",
-                            "content": "请审视你的任务是否已经完成？如果已完成，请调用 finish_main_task 工具并提供最终产出结果来标记任务完成；如果尚未完成，请继续执行。"
+                            "content": "Assess whether the task is complete. If it is, call finish_main_task with the final output to mark it complete; otherwise continue working."
                         })
 
                 return StreamingResponse(goal_wrapper([0]), media_type="text/event-stream")

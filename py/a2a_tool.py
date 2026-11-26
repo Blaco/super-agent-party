@@ -12,17 +12,17 @@ async def get_a2a_tool(settings):
             "type": "function",
             "function": {
                 "name": "a2a_tool_call",
-                "description": f"参考A2A智能体中的配置信息调用指定A2A服务，返回结果。当前可用的A2A服务器有：{a2a_agent_list}",
+                "description": f"Call the specified A2A service using its agent configuration and return the result. Available A2A servers: {a2a_agent_list}",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "agent_url": {
                             "type": "string",
-                            "description": "需要调用的A2A智能体URL",
+                            "description": "URL of the A2A agent to call",
                         },
                         "query": {
                             "type": "string",
-                            "description": "需要向A2A智能体发送的问题",
+                            "description": "Question to send to the A2A agent",
                         }
                     },
                     "required": ["agent_url", "query"]

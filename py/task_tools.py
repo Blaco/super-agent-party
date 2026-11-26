@@ -9,12 +9,12 @@ create_subtask_tool = {
     "type": "function",
     "function": {
         "name": "create_subtask",
-        "description": "创建一个子任务并在后台异步执行。支持多渠道发布结果。",
+        "description": "Create a subtask and execute it asynchronously in the background. Results can be delivered through multiple channels.",
         "parameters": {
             "type": "object",
             "properties": {
-                "title": {"type": "string", "description": "子任务标题，不要体现发到哪个平台，而是在platforms中指定。"},
-                "description": {"type": "string", "description": "任务详细目标，目标中不要体现发到哪个平台，而是在platforms中指定。这会导致子智能体无法完成任务。"},
+                "title": {"type": "string", "description": "Subtask title. Do not include the delivery platform in the title; specify it in platforms instead."},
+                "description": {"type": "string", "description": "Detailed task objective. Do not include the delivery platform in the objective; specify it in platforms instead, since the subagent cannot complete platform-delivery instructions itself."},
                 "task_type": {
                     "type": "string",
                     "enum": ["once", "time", "cycle"],
@@ -24,9 +24,9 @@ create_subtask_tool = {
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "enum": ["chat", "wechat", "feishu", "dingtalk", "telegram", "discord", "slack", "wecom"]
+                        "enum": ["chat", "telegram", "discord", "slack"]
                     },
-                    "description": "如果希望在任务完成后主动推送到聊天软件，请在此处指定",
+                    "description": "Specify delivery channels here if results should be sent to a chat application when the task completes.",
                     "default": []
                 },
                 "trigger_config": {
@@ -46,12 +46,12 @@ create_subtask_tool = {
     }
 }
 
-# (query_tasks_tool, cancel_subtask_tool, finish_task_tool 保持不变...)
+# (query_tasks_tool, cancel_subtask_tool, finish_task_tool remain unchanged...)
 query_tasks_tool = {
     "type": "function",
     "function": {
         "name": "query_task_progress",
-        "description": "查询任务进度与结果。",
+        "description": "Query task progress and results.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -69,7 +69,7 @@ cancel_subtask_tool = {
     "type": "function",
     "function": {
         "name": "cancel_subtask",
-        "description": "取消任务",
+        "description": "Cancel a task.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -84,7 +84,7 @@ finish_task_tool = {
     "type": "function",
     "function": {
         "name": "finish_task",
-        "description": "任务完成确认工具。",
+        "description": "Mark a task as complete.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -100,11 +100,11 @@ finish_main_task_tool = {
     "type": "function",
     "function": {
         "name": "finish_main_task",
-        "description": "主智能体任务完成确认工具。当你确认用户的任务已经全部达成时，必须调用此工具来标记任务完成并停止后续操作。",
+        "description": "Mark the main agent's task as complete. Once you confirm all of the user's objectives have been met, call this tool to mark the task complete and stop further operations.",
         "parameters": {
             "type": "object",
             "properties": {
-                "result": {"type": "string", "description": "你的最终执行产出结果，需详细总结你完成的工作内容。"}
+                "result": {"type": "string", "description": "Your final output, including a detailed summary of the work completed."}
             },
             "required": ["result"]
         }
@@ -143,7 +143,7 @@ async def create_subtask(
             parent_task_id=actual_parent_id,
             agent_type=agent_type,
             context=context,
-            platforms=platforms # 传入平台列表
+            platforms=platforms # Pass delivery channels
         )
         
         if task_type == "once":
@@ -155,19 +155,19 @@ async def create_subtask(
                     consensus_content=consensus_content
                 )
             )
-            mode_msg = "已立即开始执行。"
+            mode_msg = "Execution started immediately."
         else:
-            mode_msg = f"已进入计划清单，等待调度触发 (模式: {task_type})。"
+            mode_msg = f"Added to the schedule; waiting for the scheduler (mode: {task_type})."
             
     except Exception as e:
-        return f"❌ 创建子任务失败: {str(e)}"
+        return f"❌ Failed to create subtask: {str(e)}"
     
-    return (f"✅ 子任务创建成功！\n\n"
-            f"任务ID: {task.task_id}\n"
-            f"标题: {task.title}\n"
-            f"类型: {task_type}\n"
-            f"渠道: {', '.join(platforms)}\n"
-            f"状态: {mode_msg}")
+    return (f"✅ Subtask created successfully!\n\n"
+            f"Task ID: {task.task_id}\n"
+            f"Title: {task.title}\n"
+            f"Type: {task_type}\n"
+            f"Channels: {', '.join(platforms)}\n"
+            f"Status: {mode_msg}")
 
 async def query_task_progress(
     workspace_dir: str,
@@ -177,7 +177,7 @@ async def query_task_progress(
     verbose: bool = False,
     history_index: int = -1
 ) -> str:
-    """查询任务进度 - 增强版：支持周期/定时任务的深度回溯"""
+    """Query task progress, including execution history for recurring and scheduled tasks."""
     try:
         from py.task_center import get_task_center, TaskStatus
         task_center = await get_task_center(workspace_dir)
@@ -186,15 +186,15 @@ async def query_task_progress(
         if task_id:
             single_task = await task_center.get_task(task_id)
             if single_task: tasks = [single_task]
-            else: return f"❌ 未找到 ID 为 {task_id} 的任务。"
+            else: return f"❌ No task found with ID {task_id}."
         else:
             status_enum = TaskStatus(status) if status else None
             tasks = await task_center.list_tasks(parent_task_id=parent_task_id, status=status_enum)
 
         if not tasks:
-            return "📋 任务中心当前没有相关任务。"
+            return "📋 No matching tasks in the task center."
 
-        result_lines = [f"📋 任务中心状态报告 (共 {len(tasks)} 个任务)"]
+        result_lines = [f"📋 Task center status report ({len(tasks)} tasks)"]
         result_lines.append("-" * 40)
 
         for task in tasks:
@@ -202,93 +202,93 @@ async def query_task_progress(
             t_type = ctx.get("task_type", "once").upper()
             ran_count = ctx.get("ran_count", 0)
             
-            # 1. 标题与基本状态行
+            # 1. Title and basic status
             icon = "🔁" if t_type == "CYCLE" else "⏰" if t_type == "TIME" else "📄"
             status_icon = "✅" if task.status == TaskStatus.COMPLETED else "🔄" if task.status == TaskStatus.RUNNING else "⏳"
             result_lines.append(f"{status_icon} [{task.task_id}] {icon} {task.title}")
             
             display_platforms = task.platforms or ctx.get("platforms", [])
-            platform_str = ", ".join(display_platforms) if display_platforms else "无"
-            result_lines.append(f"   推送渠道: {platform_str}")
+            platform_str = ", ".join(display_platforms) if display_platforms else "None"
+            result_lines.append(f"   Delivery channels: {platform_str}")
 
-            # 2. 类型与频率信息
-            type_info = f"   类型: {t_type}"
+            # 2. Type and frequency information
+            type_info = f"   Type: {t_type}"
             if t_type == "CYCLE":
-                type_info += f" (间隔: {ctx.get('trigger_config', {}).get('cycleValue', 'N/A')})"
+                type_info += f" (Interval: {ctx.get('trigger_config', {}).get('cycleValue', 'N/A')})"
             elif t_type == "TIME":
                 days = ctx.get('trigger_config', {}).get('days', [])
-                type_info += f" (时间: {ctx.get('trigger_config', {}).get('timeValue', 'N/A')} 周几: {days if days else '单次'})"
+                type_info += f" (Time: {ctx.get('trigger_config', {}).get('timeValue', 'N/A')} Weekdays: {days if days else 'One-time'})"
             result_lines.append(type_info)
 
-            # 3. 调度统计
-            schedule_info = f"   运行统计: 已触发 {ran_count} 次"
+            # 3. Scheduling statistics
+            schedule_info = f"   Run statistics: triggered {ran_count} times"
             if ctx.get("next_run_at"):
                 next_run = ctx.get("next_run_at").replace("T", " ")[:16]
-                schedule_info += f" | 下次运行: {next_run}"
+                schedule_info += f" | Next run: {next_run}"
             result_lines.append(schedule_info)
-            result_lines.append(f"   当前状态: {task.status.value.upper()} | 总进度: {task.progress}%")
+            result_lines.append(f"   Current status: {task.status.value.upper()} | Overall progress: {task.progress}%")
 
-            # 4. 结果内容处理 (核心改进)
+            # 4. Process result content
             results_history = ctx.get("results_history", [])
             
             if task.status == TaskStatus.RUNNING:
                 history = ctx.get("history", [])
                 if history:
-                    result_lines.append(f"   ⚡ 实时动态: {history[-1][:120]}...")
+                    result_lines.append(f"   ⚡ Live update: {history[-1][:120]}...")
 
             elif task.status in [TaskStatus.COMPLETED, TaskStatus.PENDING] and ran_count > 0:
                 if verbose:
-                    # 尝试从历史中提取特定结果
+                    # Try to retrieve a specific result from history
                     try:
                         target_record = results_history[history_index]
                         record_time = target_record.get("time", "").replace("T", " ")[:16]
-                        result_lines.append(f"\n   🎯 第 {results_history.index(target_record)+1} 次执行产出 ({record_time}):")
-                        result_lines.append(f"--- CONTENT START ---\n{target_record.get('result', '无结果内容')}\n--- CONTENT END ---")
+                        result_lines.append(f"\n   🎯 Run {results_history.index(target_record)+1} output ({record_time}):")
+                        result_lines.append(f"--- CONTENT START ---\n{target_record.get('result', 'No result content')}\n--- CONTENT END ---")
                     except (IndexError, TypeError):
-                        result_lines.append(f"   ⚠️ 无法找到索引为 {history_index} 的历史记录。")
+                        result_lines.append(f"   ⚠️ No history record found at index {history_index}.")
                     
-                    # 如果有多次历史，展示简易索引列表
+                    # Show a compact index if multiple historical results exist
                     if len(results_history) > 1:
                         history_list = ", ".join([f"#{i}" for i in range(len(results_history))])
-                        result_lines.append(f"   📜 可回溯记录索引: {history_list} (总计 {len(results_history)} 条)")
+                        result_lines.append(f"   📜 Available history indices: {history_list} ({len(results_history)} records)")
                 else:
-                    # 非 verbose 模式显示最新摘要
+                    # In non-verbose mode, show the latest summary
                     last_res = results_history[-1].get("result", "") if results_history else task.result
-                    summary = (last_res[:150] + "...") if last_res else "无内容"
-                    result_lines.append(f"   📝 最新结果摘要: {summary}")
+                    summary = (last_res[:150] + "...") if last_res else "No content"
+                    result_lines.append(f"   📝 Latest result summary: {summary}")
                     if len(results_history) > 1:
-                        result_lines.append(f"   💡 (该任务有 {len(results_history)} 条历史记录，使用 verbose=true 和 history_index 查询详情)")
+                        result_lines.append(f"   💡 (This task has {len(results_history)} history records; use verbose=true and history_index for details)")
 
             elif task.status == TaskStatus.FAILED:
-                result_lines.append(f"   ❌ 错误信息: {task.error}")
+                result_lines.append(f"   ❌ Error: {task.error}")
 
-            result_lines.append("") # 换行分隔任务
+            result_lines.append("") # Separate tasks with a blank line
 
     except Exception as e:
-        return f"❌ 查询任务进度失败: {str(e)}"
+        return f"❌ Failed to query task progress: {str(e)}"
 
     return "\n".join(result_lines)
 
 async def cancel_subtask(workspace_dir: str, task_id: str) -> str:
-    """取消子任务"""
+    """Cancel a subtask."""
     try:
         task_center = await get_task_center(workspace_dir)
         success = await task_center.cancel_task(task_id)
     except Exception as e:
-        return f"❌ 取消任务失败: {str(e)}"
-    return f"✅ 任务 {task_id} 已取消" if success else f"❌ 取消任务 {task_id} 失败"
+        return f"❌ Failed to cancel task: {str(e)}"
+    return f"✅ Task {task_id} cancelled" if success else f"❌ Failed to cancel task {task_id}"
 
-# ⭐ 新增实现：finish_task
+# ⭐ Implementation: finish_task
 async def finish_task(
     workspace_dir: str,
     task_id: str,
     result: str
 ) -> str:
     try:
-        """子智能体调用此函数来标记任务完成"""
+        """The subagent calls this function to mark its task complete."""
         task_center = await get_task_center(workspace_dir)
         
-        # 强制更新为 COMPLETED，进度 100，并保存最终结果
+        # Force status to COMPLETED, progress to 100, and save the final result
         success = await task_center.update_task_progress(
             task_id=task_id,
             progress=100,
@@ -296,15 +296,15 @@ async def finish_task(
             result=result
         )
     except Exception as e:
-        return f"❌ 标记任务完成失败: {str(e)}"
+        return f"❌ Failed to mark task complete: {str(e)}"
     
     if success:
-        return f"🎉 任务 {task_id} 已成功标记为完成！结果已保存。请停止后续操作。"
+        return f"🎉 Task {task_id} marked complete successfully! The result is saved. Stop further operations."
     else:
-        return f"❌ 任务 {task_id} 状态更新失败（可能任务ID错误）。"
+        return f"❌ Failed to update status for task {task_id} (the task ID may be incorrect)."
 
 async def finish_main_task(
     result: str
 ) -> str:
-    """主智能体调用此函数来标记任务完成（无需 task_center）"""
-    return f"🎉 主任务已完成。最终结果：\n\n{result}"
+    """The main agent calls this function to mark completion (no task_center required)."""
+    return f"🎉 Main task complete. Final result:\n\n{result}"

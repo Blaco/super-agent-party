@@ -5,51 +5,51 @@ from py.diary_system import (
     list_diary_books, query_diary_entries, DEFAULT_BOOK_ID,
 )
 
-# 日记系统的数据路由
+# Data routes for the diary system
 router = APIRouter(prefix="/api/diary", tags=["Diary System"])
 
 
 @router.get("/books")
 async def list_diary_books_api():
-    """列出所有日记本（每个角色一本 + 默认兜底本）"""
+    """List all diary books (one per character, plus the default fallback book)."""
     try:
         return {"books": await list_diary_books()}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"读取日记本列表失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to read diary book list: {str(e)}")
 
 
 @router.get("/get_data")
 async def get_diary_data_api(book_id: str = Query(DEFAULT_BOOK_ID)):
-    """获取某个日记本的全部条目，返回 {"characterId":..., "characterName":..., "entries":[...]}"""
+    """Get all entries in a diary book, returning {"characterId":..., "characterName":..., "entries":[...]}."""
     try:
         return await load_diary_data(book_id)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"读取日记数据失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to read diary data: {str(e)}")
 
 
 @router.post("/save_data")
 async def save_diary_data_api(payload: Dict[str, Any] = Body(...)):
-    """全量保存某个日记本，请求体: {"book_id": "xxx", "entries": [...]}（不传 book_id 则存默认本）"""
+    """Save an entire diary book. Request: {"book_id": "xxx", "entries": [...]} (omit book_id for the default book)."""
     try:
         book_id = payload.get("book_id", DEFAULT_BOOK_ID) or DEFAULT_BOOK_ID
         await save_diary_data(payload, book_id)
-        return {"status": "success", "message": "日记数据保存成功"}
+        return {"status": "success", "message": "Diary data saved successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"保存日记数据失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to save diary data: {str(e)}")
 
 
 @router.post("/delete")
 async def delete_diary_entry_api(payload: Dict[str, Any] = Body(...)):
-    """删除一条日记，请求体: {"id": "xxx", "book_id": "xxx"}"""
+    """Delete a diary entry. Request: {"id": "xxx", "book_id": "xxx"}."""
     entry_id = payload.get("id")
     if not entry_id:
-        raise HTTPException(status_code=400, detail="缺少日记 id")
+        raise HTTPException(status_code=400, detail="Missing diary entry ID")
     book_id = payload.get("book_id", DEFAULT_BOOK_ID) or DEFAULT_BOOK_ID
     try:
         ok = await delete_diary_entry(entry_id, book_id)
         return {"status": "success" if ok else "not_found"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"删除日记失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete diary entry: {str(e)}")
 
 
 @router.get("/query")
@@ -61,7 +61,7 @@ async def query_diary_api(
     max_results: Optional[int] = Query(5),
     entry_type: Optional[str] = Query(""),
 ):
-    """按条件查询日记条目"""
+    """Query diary entries using the supplied filters."""
     try:
         results = await query_diary_entries(
             query=query or "", book_id=book_id or DEFAULT_BOOK_ID,
@@ -70,4 +70,4 @@ async def query_diary_api(
         )
         return {"entries": results}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"查询日记失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to query diary entries: {str(e)}")

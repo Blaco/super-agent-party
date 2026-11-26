@@ -1,0 +1,48 @@
+"""Protect English task, delegation and relationship module surfaces."""
+import ast
+from pathlib import Path
+import re
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+MODULES = (
+    "agent", "agent_tool", "a2a_tool", "affection_api", "affection_system",
+    "diary_api", "scheduler", "task_center", "llm_tool", "task_tools",
+)
+HAN = re.compile(r"[\u3400-\u9fff\U00020000-\U0002A6DF]")
+
+
+class EnglishDelegationModules(unittest.TestCase):
+    def test_localized_modules_parse_and_contain_no_literal_han(self):
+        for name in MODULES:
+            with self.subTest(module=name):
+                source = (ROOT / "py" / (name + ".py")).read_text(encoding="utf-8")
+                ast.parse(source)
+                self.assertIsNone(HAN.search(source))
+
+    def test_advertised_task_delivery_channels(self):
+        source = (ROOT / "py/task_tools.py").read_text(encoding="utf-8")
+        for node in ast.parse(source).body:
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id == "create_subtask_tool"
+                for target in node.targets
+            ):
+                schema = ast.literal_eval(node.value)
+                platforms = schema["function"]["parameters"]["properties"]["platforms"]
+                self.assertEqual(
+                    platforms["items"]["enum"], ["chat", "telegram", "discord", "slack"]
+                )
+                return
+        self.fail("create_subtask_tool schema not found")
+
+    def test_main_task_completion_reminder(self):
+        source = (ROOT / "server.py").read_text(encoding="utf-8")
+        self.assertIn(
+            "Assess whether the task is complete. If it is, call finish_main_task "
+            "with the final output to mark it complete; otherwise continue working.",
+            source,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
