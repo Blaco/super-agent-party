@@ -212,3 +212,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 
 - Parent: `2f72354d4703e05ac6a271711733acf4b4a103c5`. Removed the Bocha proprietary search API implementation and model tool schema from `py/web_search.py`, its tool registry and pre/post search routing in both `server.py` response paths, option/config UI in `static/index.html`, frontend form state and validation, and first-run template credentials. Existing saved keys are not deleted from user profiles; they become inactive and are never sent to the removed endpoint.
 - Preserved DuckDuckGo, SearXNG, Tavily, Google, Brave, Exa, Serper and You.com, plus general crawling options. `tests/test_search_provider_isolation.py` is wired into CI. First-party Chinese search-tool descriptions still require translation separately.
+
+## 2026-11-26 — Translate crawler and search tool instructions/results
+
+- Parent: `ff019576e2768f8205bfbc4b4cc41304409f80fb`. Translate 82 occurrences in `py/web_search.py` affecting model-facing tool descriptions, argument guidance and search/crawler feedback. Preserve crawler access controls, robot restrictions and the open/general search backends. The Chinese comment and docstring audit still requires work; the new AST-based `test_english_search_tools.py` protects the tool-schema boundary.
