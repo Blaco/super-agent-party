@@ -77,6 +77,23 @@ jobs:
         shell: pwsh
         run: npm test
 
+      - name: Validate current Python and Electron sources
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          uv run python -m py_compile server.py py/live_router.py py/web_search.py py/sub_agent.py
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Python syntax validation failed.'
+          }
+          node --check main.js
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Electron main-process syntax validation failed.'
+          }
+          uv run python -m unittest discover -s tests -p 'test_english_search_tools.py' -v
+          if ($LASTEXITCODE -ne 0) {
+            throw 'English search model-tool schema test failed.'
+          }
+
       - name: Package Python server
         shell: pwsh
         run: |

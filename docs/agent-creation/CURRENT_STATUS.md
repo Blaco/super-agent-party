@@ -1,49 +1,37 @@
-# Current implementation status — 2026-11-26
+# Agent Creation — current implementation status
 
-**Fork:** https://github.com/Blaco/super-agent-party
+**Updated:** November 26, 2026
+**Repository:** https://github.com/Blaco/super-agent-party
 **Development branch:** `agent-creation`
-**Clean upstream comparison:** fork `main` at `3aac964122415fe289a1b8af1000474b397c916b`
-**Latest functional commit:** `e3f7c49758c68d494095a55494c267583194f30c`
+**Reference commit before this status update:** `83cc189d48c2b4ea42cadda6350579ee7a2d8215`
+**Upstream reference:** fork `main`, retained without the current rewrite.
 
 ## Implemented in source
 
-- English first-run UI locale and core TTS/ASR examples.
-- Fresh generic character prompt is blank, rather than upstream's forced language-mirroring rule.
-- A hash-based compatibility function suppresses only the exact legacy default in existing saved profiles; custom character prompts remain untouched.
-- Two main character-chat assembly paths use English role labels for character details, dialogue, lore and relevant memories. Many feature-specific tool prompts still contain Chinese.
-- Default main navigation focuses on Chat, Models, Character, Tools, Browser, Storage, System.
-- **Additional features** restores optional SAP pages and panels, without deleting their code or settings.
+- English-only runtime UI locale, English menu defaults, packaged character relationship/diary/wake-word prompts and many agent-facing tool, vision, memory, avatar, TTS and delegation instructions.
+- Default navigation centers on chat, models, characters, tools, browser, storage and system. Additional features remain accessible to users who need adjacent functionality.
+- Dedicated QQ, WeChat, WeCom, Feishu, DingTalk and Bilibili managers/clients, routes and primary UI controls removed; dormant Western Discord/Telegram/Slack and YouTube/Twitch are preserved.
+- Removed region-specific model-download mirrors, proprietary TTS providers (Volcengine, Baidu, MiniMax, Xunfei), Bocha search, and regional cloud inference API presets. Public model downloads use Hugging Face; self-hosted OpenAI-compatible inference and selected Western services remain configurable.
+- Inherited app update feed disabled. Fork release destinations configured and original legal attribution, contributor history, AGPLv3 and third-party license notices maintained.
+- English README/install guide and test coverage for the above contracts, with detailed per-commit record in `CHANGE_LEDGER.md`.
 
-## Verified by automation
+## Verified
 
-- [English prompt commit run](https://github.com/Blaco/super-agent-party/actions/runs/45898426838): success.
-- [Navigation commit run](https://github.com/Blaco/super-agent-party/actions/runs/45898627871): success.
-- `npm test`: SAP JS syntax/JSON smoke check passed.
-- `scripts/companion-ui-smoke.js`: static UI wiring assertions passed.
-- Four `tests/test_companion_defaults.py` tests passed.
-- `python -m py_compile py/companion_defaults.py server.py`: passed.
-- Source inventory: 16,755 Han-flagged lines and 379 region-platform references among 199 inspected files.
+- [Current source audit](https://github.com/Blaco/super-agent-party/actions/runs/45904011969) at `83cc189d48c2b4ea42cadda6350579ee7a2d8215`: successful JS smoke, Python compile and all companion/English/provider isolation tests. Inventory found **12,532 Han-flagged lines** and **106 region-platform references** after the major removal commits; these counts include Chinese comments, third-party references and original legal identifiers. They are **not** proof that remaining text is harmless.
+- [Successful Windows x64 development package](https://github.com/Blaco/super-agent-party/actions/runs/45902506130) for historical SHA `8080027404a4d579070acbd55afabfac3b552d71`: PyInstaller server, Electron directory, ZIP, SHA-256 and GitHub artifact upload all completed.
+- The current source has changed since that earlier package; the Windows development workflow is re-triggered with additional syntax and search-schema checks in the next commit. Inspect its run before assuming a new ZIP exists.
 
-## Not yet validated or completed
+## Still incomplete
 
-1. **Windows runtime test:** Electron UI navigation, font/layout, clean-profile startup, character chat and Qwen/TabbyAPI integration are not yet executed in a live Windows build.
-2. **Complete English conversion:** current implementation still has Chinese source comments, UI literals, other locale data, optional system prompts, tool descriptions, errors, localization fallbacks and documentation. No claim of a fully English application.
-3. **China-only services:** QQ, WeChat, Feishu, DingTalk, Bilibili and regional cloud integrations remain in upstream code. Bot deployment was hidden in the sidebar only; existing background services are not disabled or removed.
-4. **Model reasoning:** Qwen/TabbyAPI thinking behavior and exposed reasoning remain to be tested and controlled per provider.
-5. **Cloud data privacy:** do not switch a private local conversation to a remote model until a history-scope/consent gate has been implemented.
-6. **Build pipeline:** package.json and upstream build workflow still contain upstream publisher/release configuration. Audit and fix before building a distributable. No build has been requested or produced.
-7. **Avatar/voice:** WhisperBox remains independent; SAP ASR/TTS, AV sync and VRM/THA integration have not been validated in this fork.
+1. **Absolute English source conversion:** thousands of Han-character lines remain across inherited UI/backend modules, predominantly comments, some UI literals and model tools. The English-only product requirement is **not yet satisfied in full**; do not market this as China-free.
+2. **Windows interactive validation:** clean and existing profile launch, UI layout, TabbyAPI/Qwen chat, avatar movement, TTS/audio and permissions require interactive testing. Passing a package build cannot establish them.
+3. **Privacy and consent:** cloud-provider history-sharing consent and per-provider memory scoping must be implemented/tested before treating cloud switching as safe for private local conversations.
+4. **Lockfile:** `uv.lock` still reflects upstream lock resolution. Windows `uv sync` resolves project dependencies during the build, but the repository's lock has not been regenerated and reviewed.
+5. **Branding:** the inherited Electron product identity and data storage paths remain to avoid breaking existing user profiles; a separate carefully tested migration/rebranding is required.
+6. **Voice pipeline:** WhisperBox stays in its own repository and its HTTP service must be integrated/tested without importing GUI-only code into SAP. Optional native/third-party speech engines have not been exhaustively live-tested.
 
-## Next source work
+## Next work
 
-- Inventory and translate remaining **model-facing** Chinese prompts and English fallback paths, prioritizing tool descriptions, optional ASR/TTS instructions, vision, diaries and agent/tool modes.
-- Trace China-focused bot, provider and media platform dependencies in backend imports, startup hooks, UI, settings and documentation. Remove only after dependency and recovery review; use source-code preserving wrappers for shared core modules.
-- Improve navigation layout and keyboard/screen reader behavior based on a real Windows build test.
-- Implement cloud inference consent and scoped conversation export before enabling model switching with private histories.
-- When the user says **build**, build and package Windows x64 from source at a specific SHA, verify it and provide an actual ZIP; do not treat GitHub source files as a build.
+Translate the remaining **active UI labels/model-facing diagnostic strings**, then developer comments and documentation while preserving code behavior. Review residual region-platform references and package provenance. Validate Windows clean/existing profile data paths and local TabbyAPI. Add cloud consent gate and optional WhisperBox adapter. Regenerate Python lockfile on a trusted Windows checkout. Only distribute a user-facing release after those checks; current ZIP artifacts are development snapshots.
 
-The current state is source-implemented and CI-reviewed, **not** Windows-tested or packaged.
-
-## English-only runtime boundary follow-up (2026-11-26)
-
-A source change narrows UI and backend message localization to English, translates shipped relationship/diary and topic generation prompts, removes Chinese registry mirror behavior and disables inherited auto-updating while a fork-owned feed is not verified. Other Chinese text and China-specific integrations remain and must be audited. Check the latest branch CI: the prior audit totals above are historical.
+Legal source attribution and unmodified user-authored multilingual content are deliberately preserved and are not targets for localization.

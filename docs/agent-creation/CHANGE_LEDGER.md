@@ -216,3 +216,8 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Translate crawler and search tool instructions/results
 
 - Parent: `ff019576e2768f8205bfbc4b4cc41304409f80fb`. Translate 82 occurrences in `py/web_search.py` affecting model-facing tool descriptions, argument guidance and search/crawler feedback. Preserve crawler access controls, robot restrictions and the open/general search backends. The Chinese comment and docstring audit still requires work; the new AST-based `test_english_search_tools.py` protects the tool-schema boundary.
+
+## 2026-11-26 — Refresh current status and rebuild the current source
+
+- Parent `83cc189d48c2b4ea42cadda6350579ee7a2d8215`. Replace stale `docs/agent-creation/CURRENT_STATUS.md` assertions that old Chinese bot adapters are still active or no build exists. Include real CI audit data (12,532 Han lines, 106 regional references at source commit 83cc189d48c2b4ea42cadda6350579ee7a2d8215) and successful earlier Windows x64 development artifact, with explicit outstanding work.
+- `.github/workflows/build.yml` adds a pre-PyInstaller Python compile, Electron syntax and model-facing search-tool schema check. Workflow-file change triggers a fresh Windows build at this new commit. It does not publish an installer, release tag or source outside the fork.
