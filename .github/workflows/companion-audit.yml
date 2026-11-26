@@ -32,6 +32,8 @@ jobs:
         run: node scripts/companion-ui-smoke.js
       - name: Companion prompt compatibility tests
         run: python -m unittest discover -s tests -p 'test_companion_defaults.py' -v
+      - name: Electron English startup and account dialogs
+        run: python -m unittest discover -s tests -p 'test_electron_english_dialogs.py' -v
       - name: English web search tool schema tests
         run: python -m unittest discover -s tests -p 'test_english_search_tools.py' -v
       - name: Search provider isolation tests

@@ -221,3 +221,8 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 
 - Parent `83cc189d48c2b4ea42cadda6350579ee7a2d8215`. Replace stale `docs/agent-creation/CURRENT_STATUS.md` assertions that old Chinese bot adapters are still active or no build exists. Include real CI audit data (12,532 Han lines, 106 regional references at source commit 83cc189d48c2b4ea42cadda6350579ee7a2d8215) and successful earlier Windows x64 development artifact, with explicit outstanding work.
 - `.github/workflows/build.yml` adds a pre-PyInstaller Python compile, Electron syntax and model-facing search-tool schema check. Workflow-file change triggers a fresh Windows build at this new commit. It does not publish an installer, release tag or source outside the fork.
+
+## 2026-11-26 — Translate Electron startup, account chooser, desktop errors
+
+- Parent `0b48abde2f3dcf0e42d9b13f85c256ffbc466002`. Translated 105 occurrences across startup/health diagnostics, account storage/selection/creation/deletion dialogs, browser process control, download and screenshot/file-copy errors in `main.js`. Preserved existing account IDs/paths, argument names, HTTP ports and session semantics. Embedded account chooser now says Agent Creation rather than upstream brand, without changing Electron's disk identity.
+- `tests/test_electron_english_dialogs.py` validates core user-visible English labels; source CI checks JS syntax. Remaining code comments and other UI modules still contain Chinese.

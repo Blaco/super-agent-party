@@ -45,7 +45,7 @@ function appendLogToBuffer(source, data) {
 async function cropDesktop(rect) {
   if (!rect || typeof rect.x !== 'number' || typeof rect.y !== 'number' ||
       typeof rect.width !== 'number' || typeof rect.height !== 'number') {
-    throw new Error('cropDesktop 需要 {x,y,width,height} 且均为数字')
+    throw new Error('cropDesktop requires numeric {x,y,width,height} values')
   }
 
   const { width, height } = screen.getPrimaryDisplay().bounds
@@ -53,7 +53,7 @@ async function cropDesktop(rect) {
     types: ['screen'],
     thumbnailSize: { width, height }
   })
-  if (!sources.length) throw new Error('无法获取屏幕源')
+  if (!sources.length) throw new Error('Could not acquire a screen source')
 
   // 1. 拿到全屏 PNG 缓冲区
   const pngBuffer = sources[0].thumbnail.toPNG()
@@ -117,14 +117,14 @@ function startVMCReceiver(cfg) {
 
 
   vmcReceiverActive = true;
-  console.log(`[VMC] 接收已启动 @ ${cfg.receive.port}`);
+  console.log(`[VMC] Receiver started @ ${cfg.receive.port}`);
 }
 function stopVMCReceiver() {
   if (!vmcReceiverActive) return;
   vmcUdpPort.close();
   vmcUdpPort = null;
   vmcReceiverActive = false;
-  console.log('[VMC] 接收已停止');
+  console.log('[VMC] Receiver stopped');
 }
 
 // 发送 VMC Bone -------------------------------------------------
@@ -301,7 +301,7 @@ function loadEnvVariables() {
       }
       return config; // ★ 返回完整配置对象给 CDP 逻辑使用
     } catch (e) {
-      console.error('加载配置失败:', e);
+      console.error('Failed to load settings:', e);
     }
   }
   return {};
@@ -316,7 +316,7 @@ function saveEnvVariable(key, value) {
     if (fs.existsSync(configPath)) {
       config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     }
-  } catch (e) { console.error('配置文件读取出错:', e); }
+  } catch (e) { console.error('Settings file read error:', e); }
 
   // 2. 更新文件内容 (对象和字符串都能存)
   config[key] = value;
@@ -352,7 +352,7 @@ function loadAccounts() {
         defaultAccountId: data.defaultAccountId || null
       };
     } catch (e) {
-      console.error('[Accounts] 加载账户列表失败:', e);
+      console.error('[Accounts] Failed to load accounts:', e);
     }
   }
   return { accounts: [], defaultAccountId: null };
@@ -365,7 +365,7 @@ function saveAccounts(data) {
     fs.mkdirSync(dir, { recursive: true });
   }
   fs.writeFileSync(accountsPath, JSON.stringify(data, null, 2), 'utf8');
-  console.log('[Accounts] 账户列表已保存');
+  console.log('[Accounts] Account list saved');
 }
 
 function getAccountById(id) {
@@ -380,7 +380,7 @@ const ACCOUNT_ARG_KEY = '--account=';
 for (const arg of process.argv) {
   if (arg.startsWith(ACCOUNT_ARG_KEY)) {
     launchAccountId = arg.substring(ACCOUNT_ARG_KEY.length);
-    console.log('[Accounts] 检测到 --account 参数:', launchAccountId);
+    console.log('[Accounts] Received --account argument:', launchAccountId);
     break;
   }
 }
@@ -396,12 +396,12 @@ app.commandLine.appendSwitch('remote-debugging-port', '0');
 app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1');
 app.commandLine.appendSwitch('remote-allow-origins', '*');
 IS_INTERNAL_MODE_ACTIVE = true;
-console.log('[CDP] 已请求系统自动分配内置浏览器调试端口...');
+console.log('[CDP] Requested an automatically allocated browser debugging port...');
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096'); // 允许使用 4GB 内存
 if (isDev) {
   // 开发模式下禁用 HTTP 缓存，修改前端文件（JS/CSS/HTML）后立即生效
   app.commandLine.appendSwitch('disable-http-cache');
-  console.log('[DEV] HTTP 缓存已关闭，前端修改即时生效');
+  console.log('[DEV] HTTP cache disabled; frontend changes take effect immediately');
 }
 // 新增：检测端口是否可用
 function isPortAvailable(port) {
@@ -423,7 +423,7 @@ async function findAvailablePort(startPort = DEFAULT_PORT, maxAttempts = 20000) 
       return port
     }
   }
-  throw new Error(`无法找到可用端口，已尝试 ${startPort} 到 ${startPort + maxAttempts - 1}`)
+  throw new Error(`No available port found; tried ${startPort} 到 ${startPort + maxAttempts - 1}`)
 }
 
 
@@ -456,7 +456,7 @@ async function launchAppWithDebugging(appPath, port, forceNewInstance) {
           execPath = path.join(macosDir, chosen);
         }
       }
-      console.log('[LocalAppControl] 启动命令:', execPath, debugArgs.join(' '));
+      console.log('[LocalAppControl] Launch command:', execPath, debugArgs.join(' '));
       child = spawn(execPath, debugArgs, { detached: true, stdio: 'ignore' });
     } else {
       let execPath = appPath;
@@ -488,18 +488,18 @@ async function launchAppWithDebugging(appPath, port, forceNewInstance) {
         } catch (e) {}
       }
 
-      console.log('[LocalAppControl] 启动命令:', execPath, debugArgs.join(' '));
+      console.log('[LocalAppControl] Launch command:', execPath, debugArgs.join(' '));
       child = spawn(execPath, debugArgs, { detached: true, stdio: 'ignore' });
     }
     child.on('error', (err) => {
-      console.error('[LocalAppControl] 启动进程失败:', err.message);
+      console.error('[LocalAppControl] Failed to launch process:', err.message);
     });
     child.on('exit', (code) => {
-      console.log('[LocalAppControl] 进程退出, code:', code);
+      console.log('[LocalAppControl] Process exited, code:', code);
     });
     child.unref();
 
-    // 轮询等待 CDP 端口就绪，最多 20 秒
+    // 轮询等待 CDP 端口就绪，最多 20 seconds
     let portReady = false;
     for (let i = 0; i < 20; i++) {
       await new Promise(r => setTimeout(r, 1000));
@@ -512,18 +512,18 @@ async function launchAppWithDebugging(appPath, port, forceNewInstance) {
           req.setTimeout(800, () => { req.destroy(); reject(new Error('timeout')); });
         });
         portReady = true;
-        console.log('[LocalAppControl] CDP 端口就绪, 耗时:', (i+1), '秒');
+        console.log('[LocalAppControl] CDP port ready after:', (i+1), 'seconds');
         // 确认进程没有立刻退出
         await new Promise(r => setTimeout(r, 2000));
         if (child.exitCode !== null) {
-          console.log(`[LocalAppControl] 进程已退出 code=${child.exitCode}，CDP 端口不可用`);
-          return { success: false, pid: child.pid, port: port, error: `进程退出 code=${child.exitCode}` };
+          console.log(`[LocalAppControl] 进程已退出 code=${child.exitCode}，CDP port unavailable`);
+          return { success: false, pid: child.pid, port: port, error: `Process exited code=${child.exitCode}` };
         }
         break;
       } catch (e) {}
     }
     if (!portReady) {
-      console.error('[LocalAppControl] CDP 端口超时未就绪 port:', port);
+      console.error('[LocalAppControl] CDP port did not become ready port:', port);
     }
     return { success: portReady, pid: child.pid, port: port };
   } catch (e) {
@@ -607,7 +607,7 @@ async function getStartPortForAccount(accountData) {
   // 获取其他账户占用的端口
   const usedPorts = getUsedPortsByOtherAccounts();
   
-  // 主账户(root)始终优先使用 DEFAULT_PORT (3456)，不使用 lastPort
+  // Primary account(root)始终优先使用 DEFAULT_PORT (3456)，不使用 lastPort
   if (accountData.type === 'root') {
     const available = await isPortAvailable(DEFAULT_PORT);
     if (available) {
@@ -617,7 +617,7 @@ async function getStartPortForAccount(accountData) {
     while (usedPorts.includes(port) || !(await isPortAvailable(port))) {
       port++;
       if (port > DEFAULT_PORT + 20000) {
-        throw new Error('无法找到可用端口');
+        throw new Error('No available port found');
       }
     }
     return port;
@@ -638,7 +638,7 @@ async function getStartPortForAccount(accountData) {
   while (usedPorts.includes(port) || !(await isPortAvailable(port))) {
     port++;
     if (port > DEFAULT_PORT + 20000) {
-      throw new Error('无法找到可用端口');
+      throw new Error('No available port found');
     }
   }
   return port;
@@ -668,14 +668,14 @@ async function showAccountSelectionWindow(registry) {
       const typeLabel = acc.type === 'root' ? 'Root' : 'User';
       const lastLaunch = acc.lastLaunched
         ? new Date(acc.lastLaunched).toLocaleString()
-        : '从未启动';
+        : 'Never launched';
       const isDefault = acc.id === registry.defaultAccountId ? 'default' : '';
       return `<div class="account-item ${isDefault}" data-id="${acc.id}">
         <div class="acc-icon">${acc.type === 'root' ? '👑' : '👤'}</div>
         <div class="acc-info">
           <div class="acc-name">${acc.name} <span class="acc-type-badge ${acc.type}">${typeLabel}</span></div>
           <div class="acc-path">${acc.dataPath}</div>
-          <div class="acc-last">上次启动: ${lastLaunch}</div>
+          <div class="acc-last">Last launched: ${lastLaunch}</div>
         </div>
       </div>`;
     }).join('');
@@ -757,14 +757,14 @@ async function showAccountSelectionWindow(registry) {
 <body>
   <button class="close-btn" onclick="window.close()">&times;</button>
   <div class="header">
-    <h1>选择账户</h1>
-    <p>选择一个账户以启动 Super Agent Party</p>
+    <h1>Select account</h1>
+    <p>Choose an account to start Agent Creation</p>
   </div>
   <div class="account-list" id="accountList">
     ${accountsHtml}
   </div>
   <div class="footer">
-    <label><input type="checkbox" id="rememberChoice"> 记住我的选择（设为默认账户）</label>
+    <label><input type="checkbox" id="rememberChoice"> Remember my selection (set as default account)</label>
   </div>
   <script>
     const { ipcRenderer } = require('electron');
@@ -870,7 +870,7 @@ function getAcpxPath() {
 async function startBackend(startPort = DEFAULT_PORT, dataDir = null) {
   return new Promise((resolve, reject) => {
     try {
-      console.log('🔍 准备启动后端进程...');
+      console.log('🔍 Starting the backend process...');
       const npmCliPath = isDev 
         ? path.join(__dirname, 'node_modules', 'npm', 'bin', 'npm-cli.js')
         : path.join(process.resourcesPath, 'npm', 'bin', 'npm-cli.js');
@@ -895,7 +895,7 @@ async function startBackend(startPort = DEFAULT_PORT, dataDir = null) {
         const acct = getAccountById(currentAccountId);
         if (acct && acct.type !== 'root') {
           spawnOptions.env.SUPER_AGENT_PARTY_DATA_DIR = dataDir;
-          console.log(`[Accounts] 注入 user 账户数据目录: ${dataDir}`);
+          console.log(`[Accounts] Using account data directory: ${dataDir}`);
         }
       }
 
@@ -925,7 +925,7 @@ async function startBackend(startPort = DEFAULT_PORT, dataDir = null) {
         backendArgs.push('--data-dir', dataDir);
       }
 
-      console.log(`🚀 执行路径: ${execPath}`);
+      console.log(`🚀 Executable path: ${execPath}`);
       backendProcess = spawn(execPath, backendArgs, spawnOptions);
 
       let isHandshaked = false;
@@ -948,7 +948,7 @@ async function startBackend(startPort = DEFAULT_PORT, dataDir = null) {
           if (actualPort > 0) {
             isHandshaked = true;
             PORT = actualPort; // 更新全局 PORT 变量
-            console.log(`✅ 握手成功！后端运行端口: ${PORT}`);
+            console.log(`✅ Handshake complete. Backend port: ${PORT}`);
             resolve(PORT);
           }
         }
@@ -959,15 +959,15 @@ async function startBackend(startPort = DEFAULT_PORT, dataDir = null) {
 
       // 进程错误处理
       backendProcess.on('error', (err) => {
-        console.error('❌ 后端启动失败:', err);
+        console.error('❌ Backend startup failed:', err);
         reject(err);
       });
 
       // 进程意外退出处理
       backendProcess.on('close', (code) => {
-        console.log(`ℹ️ 后端进程已退出 (code ${code})`);
+        console.log(`ℹ️ Backend process exited (code ${code})`);
         if (!isHandshaked) {
-          reject(new Error(`后端进程在分配端口前已关闭，退出码: ${code}`));
+          reject(new Error(`Backend exited before allocating a port; exit code: ${code}`));
         }
       });
 
@@ -975,7 +975,7 @@ async function startBackend(startPort = DEFAULT_PORT, dataDir = null) {
       setTimeout(() => {
         if (!isHandshaked) {
           if (backendProcess) backendProcess.kill();
-          reject(new Error('后端启动超时：未能从 Python 日志捕获 REAL_PORT_FOUND 信号'));
+          reject(new Error('Backend startup timeout: REAL_PORT_FOUND was not detected in Python logs'));
         }
       }, 360000*5);
 
@@ -987,18 +987,18 @@ async function startBackend(startPort = DEFAULT_PORT, dataDir = null) {
 
 // 修改等待后端函数
 async function waitForBackend() {
-  const MAX_RETRIES = 60; // 最多等 30 秒
+  const MAX_RETRIES = 60; // 最多等 30 seconds
   const RETRY_INTERVAL = 500;
   let retries = 0;
 
-  console.log(`⏳ 正在等待 http://127.0.0.1:${PORT}/health 响应...`);
-  console.log(`⏳ 更新后的首次启动时会花费更久的时间，请耐心等待...`);
+  console.log(`⏳ Waiting for http://127.0.0.1:${PORT}/health response...`);
+  console.log(`⏳ First launch after an update may take longer...`);
   console.log(`⏳ The first launch after an update may take longer, please be patient...`);
   while (retries < MAX_RETRIES) {
     try {
       const response = await fetch(`http://127.0.0.1:${PORT}/health`);
       if (response.ok) {
-        console.log('✨ 后端健康检查通过！');
+        console.log('✨ Backend health check passed！');
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('backend-ready', { host: HOST, port: PORT });
         }
@@ -1009,13 +1009,13 @@ async function waitForBackend() {
       await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
     }
   }
-  throw new Error('后端已启动但健康检查响应超时');
+  throw new Error('后端已启动但健康检查response超时');
 }
 // 通用下载处理函数
 function handleDownloadItem(event, item, webContents) {
   // ✅ 修复：直接使用全局定义的 mainWindow，而不是 getAllWindows()[0]
   if (!mainWindow || mainWindow.isDestroyed()) {
-      console.log('主窗口不存在或已销毁，无法发送下载状态');
+      console.log('Main window is missing; cannot send download status');
       return;
   }
   const win = mainWindow;
@@ -1074,7 +1074,7 @@ ipcMain.handle('download-control', (event, { id, action }) => {
   const item = activeDownloads.get(id);
   
   if (!item) {
-    console.log(`未找到下载任务 ID: ${id}`);
+    console.log(`Download task ID not found: ${id}`);
     return;
   }
 
@@ -1163,7 +1163,7 @@ function handleProtocolUrl(url) {
         }
       }
     }
-  } catch (e) { console.error('协议解析失败:', e); }
+  } catch (e) { console.error('Protocol parsing failed:', e); }
 }
 
 // macOS open-url 事件
@@ -1203,7 +1203,7 @@ app.whenReady().then(async () => {
       // 以 --account=<id> 参数指定的账户启动
       accountData = getAccountById(launchAccountId);
       if (!accountData) {
-        console.error(`[Accounts] 账户 ${launchAccountId} 不存在，回退默认`);
+        console.error(`[Accounts] Account ${launchAccountId} not found; falling back to default`);
         launchAccountId = null;
       }
     }
@@ -1216,7 +1216,7 @@ app.whenReady().then(async () => {
         // 首次运行，自动创建 root 账户
         const rootAccount = {
           id: require('crypto').randomUUID(),
-          name: '主账户',
+          name: 'Primary account',
           type: 'root',
           dataPath: app.getPath('userData'),
           isDefault: true,
@@ -1229,23 +1229,23 @@ app.whenReady().then(async () => {
         registry.defaultAccountId = rootAccount.id;
         saveAccounts(registry);
         accountData = rootAccount;
-        console.log('[Accounts] 首次运行，已创建 root 账户');
+        console.log('[Accounts] First run: created the root account');
       } else if (registry.defaultAccountId) {
         // 有默认账户，直接用
         accountData = registry.accounts.find(a => a.id === registry.defaultAccountId);
         if (accountData) {
-          console.log(`[Accounts] 使用默认账户: ${accountData.name}`);
+          console.log(`[Accounts] Using default account: ${accountData.name}`);
         }
       } else if (registry.accounts.length === 1) {
         // 只有一个账户，直接用
         accountData = registry.accounts[0];
-        console.log(`[Accounts] 唯一账户: ${accountData.name}`);
+        console.log(`[Accounts] Only account: ${accountData.name}`);
       } else {
         // 多账户且无默认，显示选择窗口
-        console.log('[Accounts] 多账户无默认，显示选择窗口');
+        console.log('[Accounts] Multiple accounts without a default: showing account chooser');
         accountData = await showAccountSelectionWindow(registry);
         if (!accountData) {
-          console.log('[Accounts] 用户关闭了选择窗口，退出');
+          console.log('[Accounts] Account chooser closed by user; quitting');
           app.quit();
           return;
         }
@@ -1253,7 +1253,7 @@ app.whenReady().then(async () => {
     }
 
     if (!accountData) {
-      console.error('[Accounts] 无法确定启动账户，退出');
+      console.error('[Accounts] Could not determine startup account; quitting');
       app.quit();
       return;
     }
@@ -1274,12 +1274,12 @@ app.whenReady().then(async () => {
     // 确保数据目录存在
     if (!fs.existsSync(currentAccountDataPath)) {
       fs.mkdirSync(currentAccountDataPath, { recursive: true });
-      console.log(`[Accounts] 已创建数据目录: ${currentAccountDataPath}`);
+      console.log(`[Accounts] Created data directory: ${currentAccountDataPath}`);
     }
 
     // 端口分配：优先 lastPort，避开其他账户端口
     const startPort = await getStartPortForAccount(accountData);
-    console.log(`[Accounts] 使用端口: ${startPort}`);
+    console.log(`[Accounts] Using port: ${startPort}`);
 
     // ============================================================
     // 原有启动逻辑
@@ -1287,7 +1287,7 @@ app.whenReady().then(async () => {
     const partySession = session.fromPartition('persist:party-browser-session');
 
     partySession.on('will-download', (event, item, webContents) => {
-        console.log('捕获到下载请求 (来自 Webview 分区):', item.getFilename());
+        console.log('Download requested from WebView partition:', item.getFilename());
         handleDownloadItem(event, item, webContents);
     });
 
@@ -1324,12 +1324,12 @@ app.whenReady().then(async () => {
         
         // 给每一个新创建的会话（包括 webview 的）都挂上下载监听
         sess.on('will-download', (event, item, webContents) => {
-            console.log('捕获到下载请求 (来自 Webview/Session):', item.getFilename());
+            console.log('Download requested from WebView session:', item.getFilename());
             handleDownloadItem(event, item, webContents);
         });
     });
     session.defaultSession.on('will-download', (event, item, webContents) => {
-        console.log('捕获到下载请求 (来自主窗口):', item.getFilename());
+        console.log('Download requested from main window:', item.getFilename());
         handleDownloadItem(event, item, webContents);
     });    
       // 默认配置
@@ -1347,14 +1347,14 @@ app.whenReady().then(async () => {
     if (global.vmcCfg.receive.enable) startVMCReceiver(global.vmcCfg);
     // 启动后端服务（传递账户端口和数据目录）
     await startBackend(startPort, currentAccountDataPath)
-    // 更新账户的 lastPort（主账户不保存，始终使用默认端口3456）
+    // 更新账户的 lastPort（Primary account不保存，始终使用默认端口3456）
     if (currentAccountId && PORT) {
       const registry = loadAccounts();
       const idx = registry.accounts.findIndex(a => a.id === currentAccountId);
       if (idx >= 0 && registry.accounts[idx].type !== 'root') {
         registry.accounts[idx].lastPort = PORT;
         saveAccounts(registry);
-        console.log(`[Accounts] 更新账户端口: ${currentAccountId} -> ${PORT}`);
+        console.log(`[Accounts] Updated account port: ${currentAccountId} -> ${PORT}`);
       }
     }
     ipcMain.handle('get-backend-logs', () => {
@@ -1384,13 +1384,13 @@ app.whenReady().then(async () => {
                 
                 if (!isNaN(realPort)) {
                     SESSION_CDP_PORT = realPort;
-                    console.log(`✅ [CDP] 成功获取系统分配内置浏览器调试端口: ${SESSION_CDP_PORT}`);
+                    console.log(`✅ [CDP] Acquired allocated browser debugging port: ${SESSION_CDP_PORT}`);
                 }
             } else {
-                console.error('❌ [CDP] 未找到 DevToolsActivePort 文件，无法获取端口');
+                console.error('❌ [CDP] DevToolsActivePort file not found; cannot determine port');
             }
         } catch (e) {
-            console.error('❌ [CDP] 读取端口文件失败:', e);
+            console.error('❌ [CDP] Failed reading DevToolsActivePort file:', e);
         }
     }
 
@@ -1440,7 +1440,7 @@ app.whenReady().then(async () => {
         const result = await launchAppWithDebugging(appPath, port, forceNewInstance);
         return result;
       } catch (e) {
-        console.error('[LocalAppControl] 启动失败:', e);
+        console.error('[LocalAppControl] Launch failed:', e);
         return { success: false, error: e.message };
       }
     });
@@ -1450,7 +1450,7 @@ app.whenReady().then(async () => {
         const result = await quitAppProcess(pid, appPath);
         return result;
       } catch (e) {
-        console.error('[LocalAppControl] 退出失败:', e);
+        console.error('[LocalAppControl] Exit failed:', e);
         return { success: false, error: e.message };
       }
     });
@@ -1482,12 +1482,12 @@ app.whenReady().then(async () => {
 
       // 只有 root 账户可以创建
       if (!currentAccount || currentAccount.type !== 'root') {
-        return { success: false, error: '只有 root 账户可以创建新账户' };
+        return { success: false, error: 'Only the root account can create additional accounts' };
       }
 
       // 验证路径
       if (!dataPath || !path.isAbsolute(dataPath)) {
-        return { success: false, error: '无效的数据存储路径' };
+        return { success: false, error: 'Invalid storage path' };
       }
 
       // 追加应用名子目录，与 appdirs.user_data_dir 行为一致
@@ -1503,11 +1503,11 @@ app.whenReady().then(async () => {
       if (!cloneFromRoot) {
         const dirContents = fs.readdirSync(actualDataPath).filter(f => f !== '.DS_Store');
         if (dirContents.length > 0) {
-          return { success: false, error: '目标目录必须为空' };
+          return { success: false, error: 'Destination directory must be empty' };
         }
       }
 
-      // 克隆 root 数据
+      // Cloning root data
       if (cloneFromRoot && currentAccount) {
         // 从后端 API 获取 root 实际的 USER_DATA_DIR，
         // 而非 Electron 的 userData 路径（两者可能不同）
@@ -1518,14 +1518,14 @@ app.whenReady().then(async () => {
             const json = await resp.json();
             if (json.path && fs.existsSync(json.path)) {
               sourceDataPath = json.path;
-              console.log(`[Accounts] 从后端获取 root 实际数据路径: ${sourceDataPath}`);
+              console.log(`[Accounts] Resolved actual root account data path from backend: ${sourceDataPath}`);
             }
           }
         } catch (e) {
-          console.log(`[Accounts] 无法从后端获取数据路径，使用记录的路径: ${sourceDataPath}`);
+          console.log(`[Accounts] Unable to resolve backend data path; using stored path: ${sourceDataPath}`);
         }
 
-        console.log(`[Accounts] 克隆 root 数据: ${sourceDataPath} -> ${actualDataPath}`);
+        console.log(`[Accounts] Cloning root data: ${sourceDataPath} -> ${actualDataPath}`);
         copyFolderSync(sourceDataPath, actualDataPath);
       }
 
@@ -1541,7 +1541,7 @@ app.whenReady().then(async () => {
       const accountId = require('crypto').randomUUID();
       const newAccount = {
         id: accountId,
-        name: name || `账户 ${data.accounts.length + 1}`,
+        name: name || `Account ${data.accounts.length + 1}`,
         type: 'user',
         dataPath: actualDataPath,
         isDefault: false,
@@ -1558,7 +1558,7 @@ app.whenReady().then(async () => {
       }
 
       saveAccounts(data);
-      console.log(`[Accounts] 新账户已创建: ${newAccount.name} (${accountId})`);
+      console.log(`[Accounts] New account created: ${newAccount.name} (${accountId})`);
       return { success: true, account: newAccount };
     });
 
@@ -1567,12 +1567,12 @@ app.whenReady().then(async () => {
       const account = data.accounts.find(a => a.id === accountId);
 
       if (!account) {
-        return { success: false, error: '账户不存在' };
+        return { success: false, error: 'Account does not exist' };
       }
 
       // root 账户不能删除
       if (account.type === 'root') {
-        return { success: false, error: '不能删除 root 账户' };
+        return { success: false, error: 'Cannot delete the root account' };
       }
 
       // 删除文件夹
@@ -1580,10 +1580,10 @@ app.whenReady().then(async () => {
         try {
           if (fs.existsSync(account.dataPath)) {
             fs.rmSync(account.dataPath, { recursive: true, force: true });
-            console.log(`[Accounts] 已删除账户数据目录: ${account.dataPath}`);
+            console.log(`[Accounts] Deleted account data directory: ${account.dataPath}`);
           }
         } catch (e) {
-          console.error(`[Accounts] 删除目录失败: ${e.message}`);
+          console.error(`[Accounts] Failed to delete directory: ${e.message}`);
         }
       }
 
@@ -1603,7 +1603,7 @@ app.whenReady().then(async () => {
       const data = loadAccounts();
       const account = data.accounts.find(a => a.id === accountId);
       if (!account) {
-        return { success: false, error: '账户不存在' };
+        return { success: false, error: 'Account does not exist' };
       }
       account.name = newName;
       saveAccounts(data);
@@ -1614,7 +1614,7 @@ app.whenReady().then(async () => {
       const data = loadAccounts();
       const account = data.accounts.find(a => a.id === accountId);
       if (!account) {
-        return { success: false, error: '账户不存在' };
+        return { success: false, error: 'Account does not exist' };
       }
       data.defaultAccountId = accountId;
       data.accounts.forEach(a => { a.isDefault = (a.id === accountId); });
@@ -1625,14 +1625,14 @@ app.whenReady().then(async () => {
     ipcMain.handle('accounts:launch', async (event, { accountId }) => {
       const account = getAccountById(accountId);
       if (!account) {
-        return { success: false, error: '账户不存在' };
+        return { success: false, error: 'Account does not exist' };
       }
 
       const execPath = process.execPath;
       const args = process.argv.slice(1).filter(a => !a.startsWith('--account='));
       args.push(`--account=${accountId}`);
 
-      console.log(`[Accounts] 启动新实例: ${account.name} (${accountId})`);
+      console.log(`[Accounts] Launching additional instance: ${account.name} (${accountId})`);
 
       const child = spawn(execPath, args, {
         detached: true,
@@ -1647,14 +1647,14 @@ app.whenReady().then(async () => {
     ipcMain.handle('accounts:switch', async (event, { accountId }) => {
       const account = getAccountById(accountId);
       if (!account) {
-        return { success: false, error: '账户不存在' };
+        return { success: false, error: 'Account does not exist' };
       }
 
       const execPath = process.execPath;
       const args = process.argv.slice(1).filter(a => !a.startsWith('--account='));
       args.push(`--account=${accountId}`);
 
-      console.log(`[Accounts] 切换账户: ${account.name} (${accountId})`);
+      console.log(`[Accounts] Switching account: ${account.name} (${accountId})`);
 
       const child = spawn(execPath, args, {
         detached: true,
@@ -1719,7 +1719,7 @@ app.whenReady().then(async () => {
         if (entry.name.startsWith('.')) continue;
         if (entry.name.endsWith('-wal') || entry.name.endsWith('-shm') || entry.name.endsWith('-journal')) continue;
         if (entry.isDirectory() && skipDirs.includes(entry.name)) {
-          console.log(`[Accounts] 跳过运行时目录: ${entry.name}`);
+          console.log(`[Accounts] Skipping runtime directory: ${entry.name}`);
           continue;
         }
         const srcPath = path.join(src, entry.name);
@@ -1735,9 +1735,9 @@ app.whenReady().then(async () => {
               try {
                 const content = fs.readFileSync(srcPath);
                 fs.writeFileSync(destPath, content);
-                console.log(`[Accounts] 已通过读写方式复制被占用的文件: ${path.basename(srcPath)}`);
+                console.log(`[Accounts] Copied locked file using read/write fallback: ${path.basename(srcPath)}`);
               } catch (e2) {
-                console.log(`[Accounts] 跳过无法复制的文件: ${srcPath}`);
+                console.log(`[Accounts] Skipping file that could not be copied: ${srcPath}`);
               }
             } else {
               throw e;
@@ -1980,7 +1980,7 @@ app.whenReady().then(async () => {
 ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFilePaths }) => {
   try {
     if (!fs.existsSync(targetDirPath)) {
-      return { success: false, error: '目标路径不存在' };
+      return { success: false, error: 'Destination path does not exist' };
     }
 
     for (const source of sourceFilePaths) {
@@ -1992,7 +1992,7 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
     }
     return { success: true };
   } catch (error) {
-    console.error('上传失败:', error);
+    console.error('Upload failed:', error);
     return { success: false, error: error.message };
   }
 });
@@ -2060,7 +2060,7 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
         types: ['screen'],
         thumbnailSize: { width: 1920, height: 1080 } // 可按需改
       })
-      if (!sources.length) throw new Error('无法获取屏幕源')
+      if (!sources.length) throw new Error('Could not acquire a screen source')
       const pngBuffer = sources[0].thumbnail.toPNG() // 返回原生 Buffer
       return pngBuffer // 给渲染进程
     })
@@ -2325,7 +2325,7 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
           } : null
         }
       } catch (error) {
-        console.error('检查更新出错:', error)
+        console.error('Update check failed:', error)
         return { 
           updateAvailable: false, 
           error: error.message 
@@ -2591,10 +2591,10 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
         // 4. 一次性写入所有格式
         clipboard.write(clipboardData);
         
-        console.log(`已复制图片及文件路径: ${filePath}`);
+        console.log(`Copied image and file path: ${filePath}`);
 
       } catch (err) {
-        console.error('增强复制失败，回退到普通复制:', err);
+        console.error('Enhanced copy failed; falling back to standard copy:', err);
         // 如果出错，至少尝试写入纯图片
         clipboard.writeImage(image);
       }
@@ -2641,7 +2641,7 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
                   clipboard.writeImage(image);
                 }
               } catch (error) {
-                console.error('复制图片失败:', error);
+                console.error('Failed to copy image:', error);
               }
             }
           },
@@ -2681,8 +2681,8 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
                   fs.writeFileSync(filePath, buffer);
                 }
               } catch (error) {
-                console.error('图片另存为失败:', error);
-                dialog.showErrorBox('保存失败', '无法保存该图片: ' + error.message);
+                console.error('Failed to save image as:', error);
+                dialog.showErrorBox('Save failed', 'Could not save the image: ' + error.message);
               }
             }
           }
@@ -2820,11 +2820,11 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
     })
 
   } catch (err) {
-    console.error('启动失败:', err)
+    console.error('Launch failed:', err)
     if (loadingWindow && !loadingWindow.isDestroyed()) {
       loadingWindow.close()
     }
-    dialog.showErrorBox('启动失败', `服务启动失败: ${err.message}`)
+    dialog.showErrorBox('Launch failed', `服务Launch failed: ${err.message}`)
     app.quit()
   }
 
@@ -2998,7 +2998,7 @@ app.on('before-quit', async (event) => {
       try {
         console.log('通知后端执行优雅关闭...');
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2秒超时
+        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2seconds超时
 
         await fetch(`http://${HOST}:${PORT}/sys/shutdown`, { 
           method: 'POST',
@@ -3006,7 +3006,7 @@ app.on('before-quit', async (event) => {
         });
         clearTimeout(timeoutId);
 
-        // 给 Python 1.5 秒的时间去执行 lifespan 中的 node_mgr.stop()
+        // 给 Python 1.5 seconds的时间去执行 lifespan 中的 node_mgr.stop()
         console.log('等待后端清理资源...');
         await new Promise(resolve => setTimeout(resolve, 1500));
       } catch (err) {
