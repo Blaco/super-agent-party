@@ -27,3 +27,10 @@ For each implementation task:
 - AIRI is an alternative architecture/reference for avatar and streaming speech, not a planned replacement for SAP.
 - Hermes is a comparison point for agent operations; do not introduce a second task orchestrator without scope review.
 - **No source files, character models, thumbnails or binaries have been copied from these projects** in the bootstrap commit.
+
+
+## 2026-11-26 — Utility localization reference
+
+- Open-Meteo forecast API documentation, https://open-meteo.com/en/docs (reviewed November 26, 2026): WMO weather-code descriptions and automatic timezone handling. Correct inherited mismatched descriptions while keeping the same code values and provider. No reference source code copied.
+- 7Timer API documentation, https://7timer.info/doc.php (reviewed November 26, 2026): graphical API uses `lang=en`; retain the existing global weather service, change its default language and keep the existing API call shape. No provider migration or third-party code import.
+- Existing SAP at pinned upstream `3aac964122415fe289a1b8af1000474b397c916b` remains the implementation reference for CDP, Node runner, overlay and Docker discovery; this pass translates their text, not their architecture. Provider adapters and character pipeline are not reimplemented from other projects.

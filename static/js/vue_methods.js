@@ -11505,7 +11505,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       source: 'director',
       // 默认不上 OBS 弹幕叠加层（这是一大段提示词）
       silent: payload ? payload.silent !== false : true,
-      timestamp: new Date().toLocaleTimeString('zh-CN', { hour12: false })
+      timestamp: new Date().toLocaleTimeString('en-US', { hour12: false, hourCycle: 'h23' })
     });
     this.trimDanmuQueue();
 
@@ -11831,7 +11831,7 @@ copyIslandEndpoint(){
         content: data.content,
         type: danmuType,
         platform: data.platform || 'unknown',
-        timestamp: new Date().toLocaleTimeString('zh-CN', { hour12: false })
+        timestamp: new Date().toLocaleTimeString('en-US', { hour12: false, hourCycle: 'h23' })
       };
 
       // 连续重复内容防刷屏

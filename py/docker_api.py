@@ -6,11 +6,11 @@ router = APIRouter(prefix="/api/docker")
 @router.get("/probe")
 def probe_docker():
     """
-    检查系统环境变量中是否有 docker 命令
-    shutil.which 在 Windows 下会检查 .exe, Linux/Mac 下检查执行权限
+    Check whether the docker command is available on PATH.
+    shutil.which checks .exe on Windows and executable permissions on Linux/macOS.
     """
     docker_path = shutil.which("docker")
     return {
         "installed": docker_path is not None,
-        "path": docker_path  # 可选：返回具体安装路径
+        "path": docker_path  # Optional: return the actual installation path
     }

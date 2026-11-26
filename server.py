@@ -8783,8 +8783,8 @@ async def text_to_speech(request: Request):
         if tts_engine == 'edgetts':
             if _is_steam_build:
                 return JSONResponse({"error": "EdgeTTS is not available in this build"}, status_code=403)
-            edgettsLanguage = tts_settings.get('edgettsLanguage', 'zh-CN')
-            edgettsVoice = tts_settings.get('edgettsVoice', 'XiaoyiNeural')
+            edgettsLanguage = tts_settings.get('edgettsLanguage', 'en-US')
+            edgettsVoice = tts_settings.get('edgettsVoice', 'JennyNeural')
             rate = tts_settings.get('edgettsRate', 1.0)
             full_voice_name = f"{edgettsLanguage}-{edgettsVoice}"
             

@@ -12,6 +12,7 @@ MODULES = (
     "autoBehavior", "behavior_engine", "mode_change", "mcp_clients",
     "ClaudeAsOpenAI", "GeminiAsOpenAI", "ResponsesAsOpenAI", "know_base",
     "comfyui_tool", "code_interpreter", "custom_http", "ws_manager",
+    "utility_tools", "cdp_tool", "overlay_router", "node_runner", "docker_api",
 )
 HAN = re.compile(r"[\u3400-\u9fff\U00020000-\U0002A6DF]")
 
@@ -86,6 +87,60 @@ class EnglishDelegationModules(unittest.TestCase):
         for fragment, count in expected.items():
             with self.subTest(fragment=fragment):
                 self.assertEqual(source.count(fragment), count)
+
+    def test_utility_defaults_and_weather_code_mapping(self):
+        source = (ROOT / "py/utility_tools.py").read_text(encoding="utf-8")
+        module = ast.parse(source)
+        definitions = {node.name: node for node in module.body
+                       if isinstance(node, ast.AsyncFunctionDef)}
+        for name in ("get_wikipedia_summary_and_sections", "get_wikipedia_section_content"):
+            self.assertEqual(ast.literal_eval(definitions[name].args.defaults[-1]), "en")
+        self.assertEqual(ast.literal_eval(definitions["get_weather_by_city"].args.defaults[0]), "en")
+        assignments = {target.id: node.value for node in module.body
+                       if isinstance(node, ast.Assign) for target in node.targets
+                       if isinstance(target, ast.Name)}
+        for name in ("wikipedia_summary_tool", "wikipedia_section_tool"):
+            schema = ast.literal_eval(assignments[name])
+            self.assertEqual(schema["function"]["parameters"]["properties"]["language"]["default"], "en")
+        weather = ast.literal_eval(assignments["_WCODE_MAP"])
+        self.assertEqual([weather[i] for i in range(4)],
+                         ["Clear sky", "Mainly clear", "Partly cloudy", "Overcast"])
+        self.assertEqual(weather[55], "Dense drizzle")
+        self.assertEqual(weather[99], "Thunderstorm with heavy hail")
+
+    def test_weather_chart_uses_english_coordinate_report(self):
+        import asyncio
+        import json
+        from unittest.mock import Mock, AsyncMock
+
+        source = (ROOT / "py/utility_tools.py").read_text(encoding="utf-8")
+        module = ast.parse(source)
+        function = next(node for node in module.body
+                        if isinstance(node, ast.AsyncFunctionDef)
+                        and node.name == "get_weather_by_city")
+        response = Mock()
+        response.json.return_value = {"dataseries": []}
+        requests = Mock()
+        requests.get.return_value = response
+        namespace = {
+            "get_location_coordinates": AsyncMock(return_value="Coordinates: 40.0, -80.0"),
+            "requests": requests,
+            "json": json,
+        }
+        exec(compile(ast.Module(body=[function], type_ignores=[]), "<weather>", "exec"), namespace)
+        output = asyncio.run(namespace["get_weather_by_city"]("Test City"))
+        self.assertIn("lang=en", output)
+        self.assertIn("lat=40.0", output)
+        self.assertIn("lon=-80.0", output)
+        self.assertEqual(requests.get.call_args.kwargs["params"]["lang"], "en")
+        response.raise_for_status.assert_called_once()
+
+    def test_english_runtime_fallbacks(self):
+        source = (ROOT / "server.py").read_text(encoding="utf-8")
+        self.assertIn("tts_settings.get('edgettsLanguage', 'en-US')", source)
+        self.assertIn("tts_settings.get('edgettsVoice', 'JennyNeural')", source)
+        frontend = (ROOT / "static/js/vue_methods.js").read_text(encoding="utf-8")
+        self.assertNotIn("toLocaleTimeString('zh-CN'", frontend)
 
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")
