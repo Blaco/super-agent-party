@@ -36,3 +36,12 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 - **Review focus:** repo contains legacy non-English locales and media/provider references; human review required before removal. Scanner skips vendored/binary directories by explicit rules (see script). No automatic deletion or translation.
 - **Tests:** static code review completed; GitHub Actions result must be inspected after push. No Windows runtime test or application build performed.
 - **Rollback:** revert the commit that added these two files and this log entry.
+
+## 2026-11-26 — Automated audit verification and frozen baseline
+
+- **Prior commit:** `290eeca71f23b06c3673624c3d94b05a8c5bd8a9`; source script and workflow unchanged.
+- **Observed CI:** [run 45897427966](https://github.com/Blaco/super-agent-party/actions/runs/45897427966) completed successfully. Existing `npm test` smoke check passed; the source language inventory completed and produced a JSON artifact.
+- **Baseline:** 194 files inspected; 16,793 Han-matching lines, 378 region-platform matching lines; zero unreadable files. See `AUDIT_BASELINE.md` for categories and limitations.
+- **Changed:** added `AUDIT_BASELINE.md` to preserve measurements after CI artifact expiration; appended this evidence to ledger. No application code changed and no Windows build performed.
+- **Self-audit:** scanner is a coarse source-inventory tool, not a language classifier or prompt trace. Automated test covers syntax/JSON only, not functional SAP interactions. Next step requires per-file, model-facing and UI inspection.
+- **Rollback:** revert the documentation-only commit; run data remains attached to its original SHA.
