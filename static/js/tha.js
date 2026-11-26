@@ -16,14 +16,14 @@ let allModels = [], currentModelIndex = 0;
 let audioCtx = null, audioAnalyser = null, mouthTimer = null;
 let mediaRecorder = null, pttWs = null, recording = false;
 
-// ==================== I18n Translation Engine (对齐 3D 逻辑) ====================
+// ==================== I18n Translation Engine (aligned with 3D renderer) ====================
 async function fetchLanguage() {
     try {
         let res = await fetch(`${window.location.protocol}//${window.location.host}/cur_language`);
         const data = await res.json();
-        return data.language || 'zh-CN';
+        return data.language || 'en-US';
     } catch (error) { 
-        return 'zh-CN'; 
+        return 'en-US'; 
     }
 }
 
@@ -33,10 +33,10 @@ async function t(key) {
         return window.translations[lang][key];
     }
     const fb = {
-        'zh-CN': { 'LockWindow': '锁定窗口', 'UnlockWindow': '解锁窗口', 'AutoHideDescription': '鼠标悬停自动隐藏', 'AutoHideEnabled': '自动隐藏已启用', 'Previous': '上一个模型', 'Next': '下一个模型', 'refreshWindow': '刷新 / 重置', 'closeWindow': '关闭挂件', 'WebSocketConnected': '服务已连接', 'WebSocketDisconnected': '服务重连中...', 'EnableVoiceInput': '开启语音唤醒', 'DisableVoiceInput': '关闭语音唤醒', 'EnableTextInput': '开启文字输入', 'DisableTextInput': '关闭文字输入', 'dragWindow': '按住拖动', 'SubtitleEnabled': '字幕已开启', 'SubtitleDisabled': '字幕已关闭' },
+
         'en-US': { 'LockWindow': 'Lock Window', 'UnlockWindow': 'Unlock Window', 'AutoHideDescription': 'Auto Hide on Hover', 'AutoHideEnabled': 'Auto Hide Enabled', 'Previous': 'Previous Model', 'Next': 'Next Model', 'refreshWindow': 'Refresh / Reset', 'closeWindow': 'Close Widget', 'WebSocketConnected': 'Services Connected', 'WebSocketDisconnected': 'Services Disconnected', 'EnableVoiceInput': 'Enable Voice Input', 'DisableVoiceInput': 'Disable Voice Input', 'EnableTextInput': 'Enable Text Input', 'DisableTextInput': 'Disable Text Input', 'dragWindow': 'Drag to move', 'SubtitleEnabled': 'Subtitle Enabled', 'SubtitleDisabled': 'Subtitle Disabled' }
     };
-    return fb[lang]?.[key] || key;
+    return fb[lang]?.[key] || fb['en-US'][key] || key;
 }
 
 // ==================== Tooltip Customization ====================
@@ -68,8 +68,10 @@ customTooltip.style.cssText = `
 tooltipContainer.appendChild(customTooltip);
 document.body.appendChild(tooltipContainer);
 
+let activeTooltipButton = null;
 function showTooltip(button, text) {
     if (!text) return;
+    activeTooltipButton = button;
     const rect = button.getBoundingClientRect();
     customTooltip.textContent = text;
     const topPosition = rect.top + (rect.height - customTooltip.offsetHeight) / 2;
@@ -80,6 +82,7 @@ function showTooltip(button, text) {
 }
 
 function hideTooltip() {
+    activeTooltipButton = null;
     tooltipContainer.style.opacity = '0';
     tooltipContainer.style.transform = 'translateX(-10px)';
 }
@@ -122,7 +125,7 @@ function bindTapEvent(element, callback) {
 }
 
 // ==================== PixiJS Init (v7) ====================
-const BG_THRESHOLD = 0.18; // 绿幕剔除初始灵敏度，你可以微调它
+const BG_THRESHOLD = 0.18; // Initial chroma-key sensitivity; adjust as needed
 
 const bgFilterVert = `
 attribute vec2 aVertexPosition;
@@ -138,19 +141,19 @@ void main(void) {
 const bgFilterFrag = `
 varying vec2 vTextureCoord;
 uniform sampler2D uSampler;
-uniform float uThreshold; // 对应传入的 BG_THRESHOLD
+uniform float uThreshold; // Corresponds to BG_THRESHOLD
 
 void main(void) {
   vec4 color = texture2D(uSampler, vTextureCoord);
   
-  // 🌟 经典绿幕（Chroma Key）剔除算法
-  // 绿色通道差值 = 绿色分量 - 红色与蓝色分量中的较大值
+  // Classic green-screen chroma-key algorithm
+  // Green difference = green channel minus the larger of red and blue
   float greenDifference = color.g - max(color.r, color.b);
   
-  // 自动将 uThreshold (0.18) 缩放为最佳的绿幕阈值 (0.144 左右)
+  // Scale uThreshold (0.18) to a suitable chroma-key threshold (about 0.144)
   float sensitivity = uThreshold * 0.8;
   
-  // 如果绿色差值明显大于门限且绿色本身有亮度，则设为完全透明，否则保留原色
+  // Make sufficiently bright green pixels transparent; otherwise retain their color
   if (greenDifference > sensitivity && color.g > 0.3) {
     gl_FragColor = vec4(0.0);
   } else {
@@ -186,7 +189,7 @@ function initPixi() {
   } catch (e) {}
 }
 
-// ==================== Render (帧跳跃 + 显存泄漏修复) ====================
+// ==================== Render (frame skipping and VRAM leak fix) ====================
 let _framePending = false;
 let _lastFrameTime = 0;
 
@@ -275,12 +278,12 @@ const SR = {
         this.adapter = await navigator.gpu.requestAdapter();
         this.device = await this.adapter.requestDevice();
         this.method = 'webgpu';
-        console.log('[SR] WebGPU ready (点击 按钮启用) 设备:', this.adapter.info?.architecture || 'ok');
+        console.log('[SR] WebGPU ready (click button to enable), device:', this.adapter.info?.architecture || 'ok');
       } catch (e) { console.warn('[SR] WebGPU init fail:', e); }
     }
     if (this.method === 'none') {
       this.method = 'canvas';
-      console.log('[SR] Canvas 2D bicubic ready (点击 按钮启用)');
+      console.log('[SR] Canvas 2D bicubic ready (click button to enable)');
     }
   },
 
@@ -293,7 +296,7 @@ const SR = {
   _logFirstFrame(width, height) {
     if (!this._logged) {
       this._logged = true;
-      console.log('[SR] 首帧超分: ' + width + 'x' + height + ' -> ' + this.TARGET + 'x' + this.TARGET + ' (' + this.method + ')');
+      console.log('[SR] First upscaled frame: ' + width + 'x' + height + ' -> ' + this.TARGET + 'x' + this.TARGET + ' (' + this.method + ')');
     }
   },
 
@@ -423,11 +426,11 @@ document.addEventListener('mousemove', (e) => {
   const cy = rect.top + rect.height / 2;
   const maxD = Math.max(window.innerWidth, window.innerHeight);
   
-  // 更新看向的方向
+  // Update gaze direction
   mx = ((e.clientX - cx) / maxD) * 2;
   my = ((e.clientY - cy) / maxD) * 2;
 
-  // 鼠标悬浮自动隐藏判断
+  // Check hover-based auto-hide
   if (isAutoHideEnabled && !isLocked && !isModelHiddenByHover && !isPanelHovered) {
       isModelHiddenByHover = true;
       app.view.style.transition = 'opacity 150ms ease';
@@ -436,7 +439,7 @@ document.addEventListener('mousemove', (e) => {
 });
 
 document.addEventListener('mouseleave', () => {
-  // 核心特性：鼠标离开窗口之后，自动恢复看向前方
+  // Return gaze to the front when the mouse leaves the window
   mx = 0;
   my = 0; 
   
@@ -614,7 +617,7 @@ setInterval(async () => {
   if (connected && ttsConnected) { i.style.color = '#28a745'; statusText = await t('WebSocketConnected'); }
   else { i.style.color = '#dc3545'; statusText = await t('WebSocketDisconnected'); }
   wsStatusBtn.dataset.title = statusText;
-  if (isPanelHovered && tooltipContainer.style.opacity === '1' && customTooltip.textContent !== statusText && customTooltip.textContent.includes('服')) {
+  if (activeTooltipButton === wsStatusBtn && tooltipContainer.style.opacity === '1' && customTooltip.textContent !== statusText) {
       customTooltip.textContent = statusText;
   }
 }, 1000);
@@ -684,7 +687,7 @@ bindTapEvent(prevModelBtn, () => switchModel(-1));
 bindTapEvent(nextModelBtn, () => switchModel(1));
 
 
-// ==================== Subtitle Engine (对齐 3D 高级打字机) ====================
+// ==================== Subtitle Engine (aligned with 3D typewriter) ====================
 let fullTargetText = "";          
 let currentVisibleCount = 0;      
 let displayStartIndex = 0; 
@@ -765,7 +768,7 @@ function stopTypewriterLoop() {
     if (typewriterTimer) { cancelAnimationFrame(typewriterTimer); typewriterTimer = null; }
 }
 
-// 强制清空字幕
+// Clear subtitles immediately
 function clearSubtitle() {
     if (subtitleEl) {
         subtitleEl.style.transition = 'opacity 0.5s ease';
@@ -822,13 +825,13 @@ function getAudioCtx() {
   return audioCtx;
 }
 
-// 核心唇律提取器：【对准 8Hz 经典说唱波段调制】
+// Mouth amplitude extraction with 8 Hz rhythmic modulation
 function startMouthTracking(source) {
   stopMouthTracking();
   const ctx = getAudioCtx();
   audioAnalyser = ctx.createAnalyser();
   audioAnalyser.fftSize = 512;
-  audioAnalyser.smoothingTimeConstant = 0.0; // 绝对零残影，提供超清脆响应
+  audioAnalyser.smoothingTimeConstant = 0.0; // No residual smoothing for responsive amplitude
   source.connect(audioAnalyser);
 
   const bufferLength = audioAnalyser.frequencyBinCount;
@@ -841,7 +844,7 @@ function startMouthTracking(source) {
     mouthTimer = requestAnimationFrame(trackLoop);
 
     const now = performance.now();
-    // 🌟 发包频率匹配渲染帧率 ~30Hz，避免无效高频消息堆积
+    // Match message frequency to rendering at roughly 30 Hz to avoid accumulating redundant messages
     if (now - lastSendTime < 33) return;
 
     audioAnalyser.getByteFrequencyData(dataArray);
@@ -858,10 +861,10 @@ function startMouthTracking(source) {
     if (avgVol > NOISE_GATE) {
         const baseIntensity = Math.min(1.0, (avgVol - NOISE_GATE) / 35.0);
         
-        // 🌟 引入 8Hz 二次正弦调制，强行制造高频颤动。
-        // 这完美杜绝了声音持续发出“啊”长音时嘴巴呆滞定格的毛病！
+        // Apply secondary 8 Hz sinusoidal modulation for rapid mouth movement.
+        // Avoid a static mouth pose during sustained vowels such as "ah".
         const modulation = 0.5 + 0.5 * Math.sin(now * 0.03); 
-        amp = baseIntensity * (0.3 + 0.7 * modulation); // 限制振幅在 30% ~ 100% 极速颤动
+        amp = baseIntensity * (0.3 + 0.7 * modulation); // Modulate amplitude between 30% and 100%
         amp = Math.min(1.0, amp);
     }
 
@@ -921,7 +924,7 @@ function playAudioChunk(audioBytes, meta) {
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
 
-      // 声音延迟 150ms 匹配渲染时间，硬件级锁同步
+      // Delay audio by 150 ms to align with rendering
       const delayNode = ctx.createDelay();
       delayNode.delayTime.value = 0.15; 
 
@@ -955,7 +958,7 @@ function handleTTSBinary(buffer) {
   try {
     const meta = JSON.parse(new TextDecoder().decode(jsonBytes));
     
-    // 🌟 添加去重逻辑：拦截前端因为状态同步而产生的重复音频分片
+    // Deduplicate audio chunks repeated during state synchronization
     if (meta.chunkIndex !== undefined) {
         if (processedChunks.has(meta.chunkIndex)) return;
         processedChunks.add(meta.chunkIndex);
@@ -996,7 +999,7 @@ function handleTTSMessage(msg) {
       stopTypewriterLoop();
       haltCurrentAudio();
       
-      processedChunks.clear(); // 🌟 清理已播放的音频块记录，防止历史记录重放失败
+      processedChunks.clear(); // Clear playback history so older audio can be replayed
       
       if (type === 'stopSpeaking') finalizeSpeech(true);
       else clearSubtitle();
@@ -1115,16 +1118,16 @@ SR.init().then(async () => {
     const cfg = await res.json();
     const mode = cfg.THAConfig?.srMode || 'cnnx2vl';
     if (mode === 'off' || SR.method === 'none') {
-      console.log('[SR] 配置: 关闭 (mode=' + mode + ', method=' + SR.method + ')');
+      console.log('[SR] Configuration: disabled (mode=' + mode + ', method=' + SR.method + ')');
     } else {
       SR.mode = mode;
       SR.setEnabled(true);
-      console.log('[SR] 配置已启用 -> ' + SR.getLabel());
+      console.log('[SR] Configuration enabled -> ' + SR.getLabel());
     }
   } catch (e) {
     if (SR.method !== 'none') {
       SR.setEnabled(true);
-      console.log('[SR] 无法读取配置，默认启用 CNNx2VL');
+      console.log('[SR] Cannot read configuration; enabling CNNx2VL by default');
     }
   }
 });

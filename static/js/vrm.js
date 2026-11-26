@@ -65,15 +65,15 @@ async function fetchLanguage() {
         const HOST = window.location.host;
         let res = await fetch(`${http_protocol}//${HOST}/cur_language`);
         const data = await res.json();
-        return data.language;
+        return data.language || 'en-US';
     } catch (error) {
         console.error('Error fetching language:', error);
-        return 'zh-CN';
+        return 'en-US';
     }
 }
 async function t(key) {
     const currentLanguage = await fetchLanguage();
-    return translations[currentLanguage][key] || key;
+    return translations[currentLanguage]?.[key] || translations['en-US']?.[key] || key;
 }
 // 用fetch查询/cur_language的值
 async function fetchVRMConfig() {

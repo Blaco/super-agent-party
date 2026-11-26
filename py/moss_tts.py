@@ -11,17 +11,17 @@ from py.get_setting import DEFAULT_TTS_DIR, TOOL_TEMP_DIR
 _moss_runtime = None
 _runtime_lock = threading.Lock()
 
-# 匹配我们在管理器中定义的根目录
+# Match the root directory defined in the manager
 MOSS_DIR_NAME = "MOSS-TTS"
 
 def _get_moss_runtime():
-    """彻底的懒加载：在第一次请求生成时，才会导入重型的 numpy/scipy/onnxruntime"""
+    """Lazy-load heavy numpy/scipy/onnxruntime dependencies on the first generation request."""
     global _moss_runtime
     if _moss_runtime is not None:
         return _moss_runtime
     
     with _runtime_lock:
-        # 双重检查，避免多个线程同时加载
+        # Double-check to prevent concurrent model loads
         if _moss_runtime is not None:
             return _moss_runtime
 
@@ -30,43 +30,43 @@ def _get_moss_runtime():
             import scipy.signal
             from py.moss.tts_runtime import TTSRuntime
         except ImportError as e:
-            print(f"MOSS TTS 依赖缺失，请确认 numpy/scipy/onnxruntime/sentencepiece/soundfile 已安装: {e}")
+            print(f"MOSS TTS dependencies missing; install numpy/scipy/onnxruntime/sentencepiece/soundfile: {e}")
             return None
 
-        # 将父目录丢给 TTSRuntime，它内部会根据 MANIFEST_CANDIDATE_RELATIVE_PATHS 自动定位
+        # Pass the parent directory to TTSRuntime, which resolves MANIFEST_CANDIDATE_RELATIVE_PATHS internally
         model_dir = Path(DEFAULT_TTS_DIR) / MOSS_DIR_NAME
         if not (model_dir / "MOSS-TTS-Nano-100M-ONNX").exists():
-            print("提示: MOSS TTS 模型未找到，请先通过 SDK 接口下载。")
+            print("MOSS TTS model not found; download it through the SDK first.")
             return None
 
-        print(f"正在加载 MOSS TTS 模型 [{model_dir}]...")
+        print(f"Loading MOSS TTS model [{model_dir}]...")
         try:
             _moss_runtime = TTSRuntime(
                 model_dir=str(model_dir),
-                thread_count=4,  # 控制 CPU 占用
+                thread_count=4,  # Limit CPU usage
             )
-            # 预热模型，避免第一次推理时卡顿
-            print("正在进行模型预热...")
+            # Warm up the model to reduce initial inference delay
+            print("Warming up the model...")
             _moss_runtime.warmup()
-            print("MOSS TTS 模型加载完成")
+            print("MOSS TTS model loaded")
             return _moss_runtime
         except Exception as e:
-            print(f"加载 MOSS TTS 失败: {e}")
+            print(f"Failed to load MOSS TTS: {e}")
             return None
 
 
 def _validate_audio_quality(waveform, min_energy=0.0001, max_peak=1.0):
     """
-    检查生成的音频质量
+    Check generated audio quality.
     
-    参数:
-        waveform: numpy数组，形状为(samples, channels)或(samples,)
-        min_energy: 最小平均能量，低于此值认为是静音
-        max_peak: 最大峰值，超过此值认为是削波
+    Parameters:
+        waveform: numpy array shaped (samples, channels) or (samples,)
+        min_energy: minimum mean energy; below this threshold audio is treated as silent
+        max_peak: maximum peak; above this threshold audio is considered clipped
     
-    返回:
-        bool: 音频是否通过质量检查
-        str: 未通过的原因（如果通过则为空字符串）
+    Returns:
+        bool: whether audio passed the quality check
+        str: failure reason (empty string on success)
     """
     import numpy as np
     
@@ -76,21 +76,21 @@ def _validate_audio_quality(waveform, min_energy=0.0001, max_peak=1.0):
     if waveform.size == 0:
         return False, "Waveform is empty"
     
-    # 检查是否全为NaN或Inf
+    # Check for all-NaN or infinite values
     if np.any(np.isnan(waveform)) or np.any(np.isinf(waveform)):
         return False, "Waveform contains NaN or Inf values"
     
-    # 计算能量（均方值）
+    # Calculate mean-square energy
     energy = np.mean(waveform ** 2)
     if energy < min_energy:
         return False, f"Audio energy too low: {energy:.6f} < {min_energy}"
     
-    # 检查削波
+    # Check clipping
     max_val = np.max(np.abs(waveform))
     if max_val > max_peak:
         return False, f"Audio clipping detected: peak={max_val:.3f} > {max_peak}"
     
-    # 检查异常采样点比例
+    # Check the proportion of abnormal samples
     zero_ratio = np.sum(np.abs(waveform) < 1e-8) / waveform.size
     if zero_ratio > 0.5:
         return False, f"Too many near-zero samples: {zero_ratio:.2%}"
@@ -100,15 +100,15 @@ def _validate_audio_quality(waveform, min_energy=0.0001, max_peak=1.0):
 
 def _validate_generated_frames(frames, audio_codebook_size):
     """
-    检查生成的音频帧是否合法
+    Check whether generated audio frames are valid.
     
-    参数:
-        frames: list[list[int]]，生成的音频token序列
-        audio_codebook_size: int，码本大小
+    Parameters:
+        frames: list[list[int]], generated audio token sequence
+        audio_codebook_size: int, codebook size
     
-    返回:
-        bool: 帧是否合法
-        str: 不合法原因
+    Returns:
+        bool: whether frames are valid
+        str: reason for invalid frames
     """
     if not frames:
         return False, "No frames generated"
@@ -125,32 +125,32 @@ def _validate_generated_frames(frames, audio_codebook_size):
 
 
 def _process_tts_sync(text: str, voice: str, speed: float, prompt_audio_path: str) -> bytes:
-    """同步阻塞推理，返回 WAV 二进制格式"""
+    """Run synchronous inference and return WAV bytes."""
     import numpy as np
     import scipy.signal
     import logging
     
     runtime = _get_moss_runtime()
     if not runtime:
-        raise RuntimeError("MOSS TTS 模型未就绪（未下载或加载失败）")
+        raise RuntimeError("MOSS TTS model is not ready (not downloaded or failed to load)")
     
-    # 每次推理前重置流式解码器状态，避免状态污染
+    # Reset streaming decoder state before each inference to prevent state carryover
     if hasattr(runtime, 'codec_streaming_session'):
         runtime.codec_streaming_session.reset()
     
-    # 清除编码缓存（可选，确保每次都是新鲜的编码）
+    # Optionally clear encoding cache to ensure fresh encoding
     if hasattr(runtime, '_audio_codes_cache') and not prompt_audio_path:
-        # 使用内置声音时不清理缓存，提升性能
+        # Keep the cache for built-in voices to improve performance
         pass
     elif hasattr(runtime, '_audio_codes_cache'):
-        # 使用自定义参考音频时，可以在这里清理
+        # Clear here if needed for custom reference audio
         pass
 
-    # MOSS TTS_runtime 代码默认会在磁盘写一个 wav，为了不残留垃圾文件，我们将路径指定到工具临时目录并及时删除
+    # TTSRuntime writes a WAV by default; use a temporary path and delete the file afterward
     temp_wav_path = Path(TOOL_TEMP_DIR) / f"moss_temp_{uuid.uuid4().hex}.wav"
 
     try:
-        # 执行推理
+        # Run inference
         result = runtime.synthesize(
             text=text,
             voice=voice,
@@ -166,17 +166,17 @@ def _process_tts_sync(text: str, voice: str, speed: float, prompt_audio_path: st
         import numpy as np
         max_val = np.max(np.abs(waveform))
         if max_val > 1.0:
-            # 这里的 0.95 是为了留出一点余量（Headroom），防止后续处理再次溢出
+            # Leave headroom at 0.95 to avoid clipping in later processing
             waveform = (waveform / max_val) * 0.95
             logging.info(f"Audio peak {max_val:.3f} normalized to 0.95 to avoid clipping.")
 
-        # 验证音频质量
+        # Validate audio quality
         is_valid, quality_msg = _validate_audio_quality(waveform)
         if not is_valid:
             logging.warning(f"Generated audio quality issue: {quality_msg}")
-            # 不直接抛出异常，让客户端自己决定是否接受
+            # Let the client decide whether to accept the result rather than raising immediately
         
-        # 验证帧质量
+        # Validate frame quality
         if "audio_token_ids" in result:
             audio_codebook_size = int(runtime.tts_meta["model_config"]["audio_codebook_sizes"][0])
             frames_valid, frames_msg = _validate_generated_frames(
@@ -186,7 +186,7 @@ def _process_tts_sync(text: str, voice: str, speed: float, prompt_audio_path: st
             if not frames_valid:
                 logging.warning(f"Generated frames quality issue: {frames_msg}")
 
-        # 调整语速逻辑
+        # Adjust speaking speed
         if abs(speed - 1.0) >= 0.01:
             try:
                 if waveform.ndim == 2:
@@ -204,7 +204,7 @@ def _process_tts_sync(text: str, voice: str, speed: float, prompt_audio_path: st
         else:
             sample_rate = original_sr
 
-        # 转换为 WAV 的二进制 Bytes 以供前端 StreamingResponse
+        # Convert to WAV bytes for the frontend StreamingResponse
         audio = np.asarray(waveform, dtype=np.float32)
         if audio.ndim == 1:
             audio = audio.reshape(-1, 1)
@@ -222,14 +222,14 @@ def _process_tts_sync(text: str, voice: str, speed: float, prompt_audio_path: st
         return wav_io.getvalue()
         
     except Exception as e:
-        # 发生异常时，确保清理状态
+        # Clean up state on exception
         if hasattr(runtime, 'codec_streaming_session'):
             runtime.codec_streaming_session.reset()
         logging.error(f"TTS generation failed: {e}")
-        raise RuntimeError(f"语音生成失败: {str(e)}")
+        raise RuntimeError(f"Speech generation failed: {str(e)}")
         
     finally:
-        # 执行完毕后，立刻删掉刚才被写入的临时 wav，实现伪纯内存效果
+        # Remove the temporary WAV immediately after generation
         if temp_wav_path.exists():
             try:
                 temp_wav_path.unlink(missing_ok=True)
@@ -238,13 +238,13 @@ def _process_tts_sync(text: str, voice: str, speed: float, prompt_audio_path: st
 
 
 async def moss_generate_audio(text: str, voice: str = "Junhao", speed: float = 1.0, prompt_audio_path: str = "") -> bytes:
-    """异步封装：将繁重的推理推向线程池"""
-    # 参数验证
+    """Asynchronous wrapper: run heavy inference in a thread pool."""
+    # Validate arguments
     if not text or not text.strip():
-        raise ValueError("文本内容不能为空")
+        raise ValueError("Text must not be empty")
     
     if speed <= 0 or speed > 3.0:
-        raise ValueError(f"语速参数不合法: {speed}，应在 0.1-3.0 之间")
+        raise ValueError(f"Invalid speaking speed: {speed}; expected 0.1-3.0")
     
     try:
         wav_bytes = await asyncio.to_thread(
@@ -252,12 +252,12 @@ async def moss_generate_audio(text: str, voice: str = "Junhao", speed: float = 1
         )
         
         if not wav_bytes:
-            raise RuntimeError("生成的音频为空")
+            raise RuntimeError("Generated audio is empty")
         
         return wav_bytes
         
     except asyncio.CancelledError:
-        # 任务被取消时，尝试清理资源
+        # Try to release resources when the task is cancelled
         logging.warning("TTS generation was cancelled")
         if _moss_runtime and hasattr(_moss_runtime, 'codec_streaming_session'):
             _moss_runtime.codec_streaming_session.reset()

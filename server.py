@@ -964,7 +964,7 @@ async def lifespan(app: FastAPI):
         # 将重型的本地 TTS 加载也扔到后台线程池，如果没有下载模型它只会静默返回 None
         asyncio.get_running_loop().run_in_executor(None, _get_moss_runtime)
     except Exception as e:
-        logger.error(f"尝试预热 MOSS TTS 失败: {e}")
+        logger.error(f"MOSS TTS warm-up failed: {e}")
 
     # MCP 初始化逻辑 (保持你原有的逻辑，但内部会复用 global_http_client)
     mcp_init_tasks = []
@@ -9197,8 +9197,8 @@ async def text_to_speech(request: Request):
                 except Exception as e:
                     import traceback
                     traceback.print_exc()
-                    print(f"MOSS TTS 生成错误: {e}")
-                    raise HTTPException(status_code=500, detail=f"MOSS TTS 错误: {str(e)}")
+                    print(f"MOSS TTS generation failed: {e}")
+                    raise HTTPException(status_code=500, detail=f"MOSS TTS error: {str(e)}")
 
             # 根据返回格式决定响应头
             media_type = "audio/ogg" if target_format == "opus" else "audio/wav"
@@ -10286,7 +10286,7 @@ async def upload_vrm_model(
         
         return JSONResponse(content={
             "success": True,
-            "message": "VRM模型上传成功",
+            "message": "VRM model uploaded successfully",
             "file": {
                 "path": file_link,
                 "display_name": display_name,
@@ -10296,7 +10296,7 @@ async def upload_vrm_model(
         })
     
     except Exception as e:
-        logger.error(f"VRM模型上传失败: {str(e)}")
+        logger.error(f"VRM model upload failed: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={"success": False, "message": f"文件保存失败: {str(e)}"}
@@ -10342,7 +10342,7 @@ async def get_default_vrm_models(request: Request):
         })
         
     except Exception as e:
-        logger.error(f"获取默认VRM模型失败: {str(e)}")
+        logger.error(f"Failed to retrieve default VRM models: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={"success": False, "message": f"获取默认模型失败: {str(e)}"}
@@ -10373,7 +10373,7 @@ async def delete_vrm_model(filename: str):
             os.remove(file_path)
             return JSONResponse(content={
                 "success": True,
-                "message": "VRM模型文件已删除"
+                "message": "VRM model file deleted"
             })
         else:
             return JSONResponse(
@@ -10382,7 +10382,7 @@ async def delete_vrm_model(filename: str):
             )
             
     except Exception as e:
-        logger.error(f"删除VRM模型失败: {str(e)}")
+        logger.error(f"Failed to delete VRM model: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={"success": False, "message": f"删除失败: {str(e)}"}
@@ -11204,21 +11204,21 @@ async def tha_emotion(request: Request):
             if not isinstance(emotions, dict) or not all(
                     isinstance(v, (int, float)) for v in emotions.values()):
                 return JSONResponse(status_code=400, content={
-                    "success": False, "message": "emotions 必须是 {表情名: 数值权重} 字典"})
+                    "success": False, "message": "emotions must be a mapping of expression names to numeric weights"})
             expressions = [f"{k}:{v}" for k, v in emotions.items()]
         elif "expressions" in payload:
             if not isinstance(payload["expressions"], list):
                 return JSONResponse(status_code=400, content={
-                    "success": False, "message": "expressions 必须是字符串列表"})
+                    "success": False, "message": "expressions must be a list of strings"})
             expressions = payload["expressions"]
         elif "emotion" in payload:
             if not isinstance(payload["emotion"], str):
                 return JSONResponse(status_code=400, content={
-                    "success": False, "message": "emotion 必须是字符串"})
+                    "success": False, "message": "emotion must be a string"})
             expressions = [payload["emotion"]]
         else:
             return JSONResponse(status_code=400, content={
-                "success": False, "message": "需要 emotion / expressions / emotions 之一"})
+                "success": False, "message": "Provide one of emotion, expressions or emotions"})
         await tts_manager.broadcast_expressions_to_tha(expressions)
         return {"success": True, "expressions": expressions}
     except Exception as e:
@@ -11237,7 +11237,7 @@ async def upload_tha_model(
     if file_extension not in ('onnx', 'zip'):
         return JSONResponse(
             status_code=400,
-            content={"success": False, "message": "只支持 .onnx 或 .zip (CoreML) 格式的THA模型文件"}
+            content={"success": False, "message": "Only .onnx or .zip (CoreML) THA model files are supported"}
         )
 
     try:
@@ -11260,10 +11260,10 @@ async def upload_tha_model(
                 content={"success": False, "message": msg}
             )
     except Exception as e:
-        logger.error(f"上传THA模型失败: {str(e)}")
+        logger.error(f"THA model upload failed: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"上传失败: {str(e)}"}
+            content={"success": False, "message": f"Upload failed: {str(e)}"}
         )
 
 
@@ -11277,7 +11277,7 @@ async def get_default_tha_models(request: Request):
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"获取默认模型失败: {str(e)}"}
+            content={"success": False, "message": f"Failed to retrieve default models: {str(e)}"}
         )
 
 
@@ -11291,7 +11291,7 @@ async def get_user_tha_models(request: Request):
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"获取用户模型失败: {str(e)}"}
+            content={"success": False, "message": f"Failed to retrieve user models: {str(e)}"}
         )
 
 
@@ -11301,16 +11301,16 @@ async def delete_tha_model(model_id: str):
     try:
         manager = THAModelManager(DEFAULT_THA_DIR, THA_USER_MODELS_DIR)
         if manager.delete_model(model_id):
-            return JSONResponse(content={"success": True, "message": "THA模型已删除"})
+            return JSONResponse(content={"success": True, "message": "THA model deleted"})
         else:
             return JSONResponse(
                 status_code=404,
-                content={"success": False, "message": "模型不存在或无法删除默认模型"}
+                content={"success": False, "message": "Model does not exist or is a protected default model"}
             )
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={"success": False, "message": f"删除失败: {str(e)}"}
+            content={"success": False, "message": f"Deletion failed: {str(e)}"}
         )
 
 

@@ -38,3 +38,8 @@ The five legacy China-specific bot managers (QQ, WeChat, WeCom, Feishu, DingTalk
 ## English runtime conversion — 2026-11-26
 
 The provider adapters for Anthropic, Gemini and OpenAI Responses, knowledge retrieval, ComfyUI, custom HTTP, WebSocket and code interpreter remain KEEP; only human/model-facing text and documentation are changed. Both main chat paths retain ComfyUI schemas and their workflow parameters. Group-memory schema and existing profile data are unchanged. Full English conversion is still in progress.
+
+
+## Avatar and speech localization — 2026-11-26
+
+THA rendering, VRM, native MOSS voice cloning and model selection remain KEEP. THA HTML/JS and backend engine localized; VRM locale fallback fixed without changing its renderer. No permission, model asset or speech provider migration. Windows avatar and speech testing remains pending.

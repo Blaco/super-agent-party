@@ -13,6 +13,7 @@ MODULES = (
     "ClaudeAsOpenAI", "GeminiAsOpenAI", "ResponsesAsOpenAI", "know_base",
     "comfyui_tool", "code_interpreter", "custom_http", "ws_manager",
     "utility_tools", "cdp_tool", "overlay_router", "node_runner", "docker_api",
+    "tha_engine", "moss_tts",
 )
 HAN = re.compile(r"[\u3400-\u9fff\U00020000-\U0002A6DF]")
 
@@ -141,6 +142,20 @@ class EnglishDelegationModules(unittest.TestCase):
         self.assertIn("tts_settings.get('edgettsVoice', 'JennyNeural')", source)
         frontend = (ROOT / "static/js/vue_methods.js").read_text(encoding="utf-8")
         self.assertNotIn("toLocaleTimeString('zh-CN'", frontend)
+
+    def test_avatar_language_fallbacks(self):
+        tha = (ROOT / "static/js/tha.js").read_text(encoding="utf-8")
+        html = (ROOT / "static/tha.html").read_text(encoding="utf-8")
+        vrm = (ROOT / "static/js/vrm.js").read_text(encoding="utf-8")
+        self.assertIsNone(HAN.search(tha))
+        self.assertIsNone(HAN.search(html))
+        self.assertIn('<html lang="en-US">', html)
+        self.assertIn("return fb[lang]?.[key] || fb['en-US'][key] || key;", tha)
+        self.assertIn("activeTooltipButton === wsStatusBtn", tha)
+        self.assertIn("activeTooltipButton = button;", tha)
+        self.assertIn("activeTooltipButton = null;", tha)
+        self.assertIn("translations['en-US']?.[key]", vrm)
+        self.assertNotIn("return 'zh-CN';", vrm)
 
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")
