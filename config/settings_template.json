@@ -16,7 +16,7 @@
     "omniVoice": "Cherry",
     "extra_params":[],
     "systemSettings": {
-      "language": "auto",
+      "language": "en-US",
       "theme": "light",
       "fontScale": 1, 
       "codeFontScale": 1, 
@@ -182,7 +182,7 @@
       "is_memory": false,
       "memoryLimit": 10,
       "userName":"user",
-      "genericSystemPrompt": "{{char}}必须使用{{user}}使用的语言与之交流，例如：当{{user}}使用中文时，你也必须尽可能地使用中文！当{{user}}使用英文时，你也必须尽可能地使用英文！包括交代旁白等文字也是同理！"
+      "genericSystemPrompt": ""
     },
     "codeSettings": {
       "enabled": false,
@@ -329,9 +329,9 @@
       "funasr_mode": "offline",
       "interactionMethod": "auto",
       "hotkey" : "Alt",
-      "wakeWord": "小派",
-      "endWord": "结束对话",
-      "hotwords": "小派 80\nagent party 60\n结束对话 80"
+      "wakeWord": "companion",
+      "endWord": "end conversation",
+      "hotwords": "companion 80\nend conversation 80"
     },
     "ttsSettings": {
       "enabled": false,
@@ -340,15 +340,15 @@
       "maxConcurrency": 2,
       "enabledInterruption": false,
       "bufferWordList": [],
-      "SampleText": "super agent party链接一切！",
-      "edgettsLanguage": "zh-CN",
+      "SampleText": "Hello! This is a voice test.",
+      "edgettsLanguage": "en-US",
       "edgettsGender": "Female",
-      "edgettsVoice": "XiaoyiNeural",
+      "edgettsVoice": "JennyNeural",
       "edgettsRate": 1.0,
       "gsvServer": "http://127.0.0.1:9880",
-      "gsvTextLang": "zh",
+      "gsvTextLang": "en",
       "gsvRate": 1.0,
-      "gsvPromptLang": "zh",
+      "gsvPromptLang": "en",
       "gsvPromptText": "",
       "gsvSample_steps": 4,
       "gsvRefAudioPath": "",
@@ -637,7 +637,7 @@
     },
     "workflows": [],
     "stickerPacks": [],
-    "currentLanguage": "zh-CN",
+    "currentLanguage": "en-US",
     "isBtnCollapse": true,
     "showHistorySidebar":true,
     "is_sandbox": false,

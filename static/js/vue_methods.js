@@ -2316,7 +2316,7 @@ formatMessage(content, index) {
           }
           this.changeMemory();
           // this.target_lang改成navigator.language || navigator.userLanguage;
-          this.target_lang = this.targetLangSelected!="system"? this.targetLangSelected: navigator.language || navigator.userLanguage || 'zh-CN';
+          this.target_lang = this.targetLangSelected!="system"? this.targetLangSelected: navigator.language || navigator.userLanguage || 'en-US';
           this.loadDefaultModels();
           this.loadDefaultMotions();
           this.loadGaussScenes();
@@ -6209,14 +6209,13 @@ formatMessage(content, index) {
     },
     // 在 methods 中添加
     t(key) {
-      return this.translations[this.currentLanguage][key] || (this.translations['en-US'] && this.translations['en-US'][key]) || key;
+      return this.translations[this.currentLanguage]?.[key] || this.translations['en-US']?.[key] || key;
     },
     async handleSystemLanguageChange(val) {
       this.systemSettings.language = val;
       if (val === 'auto') {
-        // 获取系统设置，默认是'en-US'，如果系统语言是中文，则设置为'zh-CN'
-        const systemLanguage = navigator.language || navigator.userLanguage || 'en-US';
-        val = systemLanguage.startsWith('zh') ? 'zh-CN' : 'en-US';
+        // Automatic UI language defaults to English for this companion fork.
+        val = 'en-US';
       }
       this.currentLanguage = val; // 更新当前语言
       await this.autoSaveSettings();
@@ -14483,16 +14482,16 @@ stopTTSActivities() {
     this.newTTSConfig = {
       name: '',
       enabled: true,
-      SampleText: 'super agent party链接一切！',
+      SampleText: 'Hello! This is a voice test.',
       engine: 'moss',
-      edgettsLanguage: 'zh-CN',
+      edgettsLanguage: 'en-US',
       edgettsGender: 'Female',
-      edgettsVoice: 'XiaoyiNeural',
+      edgettsVoice: 'JennyNeural',
       edgettsRate: 1.0,
       gsvServer: "http://127.0.0.1:9880",
-      gsvTextLang: 'zh',
+      gsvTextLang: 'en',
       gsvRate: 1.0,
-      gsvPromptLang: 'zh',
+      gsvPromptLang: 'en',
       gsvPromptText: '',
       gsvRefAudioPath: '',
       gsvAudioOptions: [],
@@ -15172,7 +15171,7 @@ isTargetPlatform(behavior, platformKey) {
     this.translatedText = ''
   },
   changeLanguage() {
-    this.target_lang = this.targetLangSelected!="system"? this.targetLangSelected: navigator.language || navigator.userLanguage || 'zh-CN';
+    this.target_lang = this.targetLangSelected!="system"? this.targetLangSelected: navigator.language || navigator.userLanguage || 'en-US';
     this.autoSaveSettings()
   },
   copyTranslated() {

@@ -25,7 +25,7 @@ Statuses: **KEEP** = retain and expose; **HIDE** = keep code but remove from nor
 | China-focused media platforms (Bilibili, Douyin, etc.) | REMOVE-CANDIDATE if present | Outside scope | README, livestream extensions | Verify existence and dependencies first |
 | Chinese cloud providers and country-specific download mirrors | REMOVE-CANDIDATE | Outside scope | vendor lists, defaults, docs | Do not break generic OpenAI-compatible providers |
 | Unrelated dashboards, decorative widgets and novelty modules | HIDE | Optional | navigation tile lists | Retain code, preserve advanced access where worthwhile |
-| Native Chinese language default prompts, examples, errors and docs | REPLACE | All | frontend, backend, configs, docs | Translate in batches, trace model-facing paths |
+| Native Chinese language default prompts, examples, errors and docs | REPLACE (partial: English initial defaults and core character prompt paths) | All | frontend, backend, configs, docs | Continue optional agent/TTS/tool prompt and UI translation; no claim of full completion |
 | Updater, packaging, telemetry/network behaviors | KEEP / AUDIT | Delivery | main.js, build.yml, package.json | Prevent upstream publish or unexpected remote communication |
 
 Audit each individual UI setting and backend route before declaring its final disposition. Update this matrix as precise component-level inventories become available; retain upstream source in Git rather than duplicating code in documentation.

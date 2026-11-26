@@ -16,6 +16,7 @@ from PIL import Image
 _is_steam_build = os.environ.get("IS_STEAM_BUILD", "0") == "1"
 from py.cli_tool import read_file_tool_local
 from py.task_tools import query_task_progress
+from py.companion_defaults import resolve_generic_system_prompt
 from py.ws_manager import ws_manager
 
 # === Pre-load heavy tool modules at startup to avoid blocking first request ===
@@ -3920,7 +3921,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
             print("fileLinks",request.fileLinks)
             # 异步获取文件内容
             files_content = await get_files_content(request.fileLinks)
-            fileLinks_message = f"\n\n相关文件内容：{files_content}"
+            fileLinks_message = f"\n\nRelevant file content: {files_content}"
             
             # 修复字符串拼接错误
             content_append(request.messages, 'system', fileLinks_message)
@@ -3932,29 +3933,29 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
             # 用户名提示（固定）
             if settings["memorySettings"]["userName"]:
                 print("添加用户名：\n\n" + settings["memorySettings"]["userName"] + "\n\n用户名结束\n\n")
-                content_append(request.messages, 'system', "与你交流的默认用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n注意！除非用户消息中提到了是其他用户发送，否则视为默认用户发送的消息\n\n")
+                content_append(request.messages, 'system', "The default user speaking with you is: \n\n" + settings["memorySettings"]["userName"] + "\n\nUnless a message explicitly identifies another sender, treat it as coming from this user.\n\n")
 
             # 固定人设：角色描述、性格、对话示例、自定义 systemPrompt、通用 systemPrompt
             if cur_memory["description"]:
                 if settings["memorySettings"]["userName"]:
                     cur_memory["description"] = cur_memory["description"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
-                print("添加角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
-                content_append(request.messages, 'system', "角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
+                print("添加角色设定：\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
+                content_append(request.messages, 'system', "Character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
 
             if cur_memory["personality"]:
                 if settings["memorySettings"]["userName"]:
                     cur_memory["personality"] = cur_memory["personality"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["personality"] = cur_memory["personality"].replace("{{char}}", cur_memory["name"])
-                print("添加性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n")
-                content_append(request.messages, 'system', "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n")
+                print("添加性格设定：\n\n" + cur_memory["personality"] + "\n\nEnd of personality.\n\n")
+                content_append(request.messages, 'system', "Personality:\n\n" + cur_memory["personality"] + "\n\nEnd of personality.\n\n")
 
             if cur_memory['mesExample']:
                 if settings["memorySettings"]["userName"]:
                     cur_memory['mesExample'] = cur_memory['mesExample'].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory['mesExample'] = cur_memory['mesExample'].replace("{{char}}", cur_memory["name"])
-                print("添加对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
-                content_append(request.messages, 'system', "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
+                print("添加对话示例：\n\n" + cur_memory['mesExample'] + "\n\nEnd of example dialogue.\n\n")
+                content_append(request.messages, 'system', "Example dialogue:\n\n" + cur_memory['mesExample'] + "\n\nEnd of example dialogue.\n\n")
 
             if cur_memory["systemPrompt"]:
                 if settings["memorySettings"]["userName"]:
@@ -3962,11 +3963,13 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 cur_memory["systemPrompt"] = cur_memory["systemPrompt"].replace("{{char}}", cur_memory["name"])
                 content_append(request.messages, 'system', "\n\n" + cur_memory["systemPrompt"] + "\n\n")
 
-            if settings["memorySettings"]["genericSystemPrompt"]:
-                if settings["memorySettings"]["userName"]:
-                    settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{user}}", settings["memorySettings"]["userName"])
-                settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{char}}", cur_memory["name"])
-                content_append(request.messages, 'system', "\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n")
+            generic_prompt = resolve_generic_system_prompt(
+                settings["memorySettings"].get("genericSystemPrompt", ""),
+                settings["memorySettings"].get("userName", ""),
+                cur_memory["name"]
+            )
+            if generic_prompt:
+                content_append(request.messages, 'system', "\n\n" + generic_prompt + "\n\n")
 
         # ========== 日记集成：将近期日记注入对话上下文 ==========
         diary_cfg = (settings.get("diarySettings", {}) or {}).get("chatIntegration", {}) or {}
@@ -3985,7 +3988,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         diary_lines.append(f"- [{e.get('time', '')[:16]}] ({e.get('type', '')}) {diary_title}: {e.get('content', '')[:200]}")
                     diary_text = "\n".join(diary_lines)
                     content_append(request.messages, 'system',
-                        "\n\n[角色日记 - 近期回忆]\n以下是该角色最近的日记记录，可供你参考其心境和经历：\n" + diary_text + "\n")
+                        "\n\n[Character diary - recent memories]\nRecent entries from the character diary, provided as context for mood and experiences:\n" + diary_text + "\n")
                     print(f"📔 [日记集成] 已注入 {len(recent)} 条日记到对话上下文")
             except Exception as e:
                 print(f"[日记集成] 提取日记失败: {e}")
@@ -4013,7 +4016,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 lore_content = lore_content.replace("{{user}}", settings["memorySettings"]["userName"])
             lore_content = lore_content.replace("{{char}}", cur_memory["name"])
             print("添加世界观设定（动态，注入到用户消息）：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
-            dynamic_user_context += f"\n\n[世界设定]\n{lore_content}"
+            dynamic_user_context += f"\n\n[World information]\n{lore_content}"
 
         # 记忆检索（动态，基于当前用户输入）
         if m0 and not request.is_sub_agent:
@@ -4031,7 +4034,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 relevant_memories = ""
             if relevant_memories:
                 print("添加相关记忆（动态，注入到用户消息）：\n\n" + relevant_memories + "\n\n相关结束\n\n")
-                dynamic_user_context += f"\n\n[相关记忆]\n{relevant_memories}"
+                dynamic_user_context += f"\n\n[Relevant memories]\n{relevant_memories}"
 
         # 将动态内容追加到最后一条 user 消息的末尾
         if dynamic_user_context:
@@ -4248,7 +4251,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                 all_kb_content = await rerank_knowledge_base(user_prompt,all_kb_content)
                         if all_kb_content:
                             all_kb_content = json.dumps(all_kb_content, ensure_ascii=False, indent=4)
-                            kb_message = f"\n\n可参考的知识库内容：{all_kb_content}"
+                            kb_message = f"\n\nRelevant knowledge base content: {all_kb_content}"
                             content_append(request.messages, 'user',  f"\n\n知识库内容：{all_kb_content}\n\n")
                             tool_chunk = {
                                 "choices": [{
@@ -4260,7 +4263,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             yield f"data: {json.dumps(tool_chunk)}\n\n"
                 if settings["KBSettings"]["when"] == "after_thinking" or settings["KBSettings"]["when"] == "both":
                     if kb_list:
-                        kb_list_message = f"\n\n可调用的知识库列表：{json.dumps(kb_list, ensure_ascii=False)}"
+                        kb_list_message = f"\n\nAvailable knowledge bases: {json.dumps(kb_list, ensure_ascii=False)}"
                         content_append(request.messages, 'system', kb_list_message)
                 else:
                     kb_list = []
@@ -4498,7 +4501,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 if settings['reasoner']['enabled'] or enable_thinking:
                     reasoner_messages = copy.deepcopy(request.messages)
                     if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
-                        content_append(reasoner_messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
+                        content_append(reasoner_messages, 'user',  f"\n\nReference steps: {user_prompt}\n\n")
                         drs_msg = get_drs_stage(DRS_STAGE)
                         if drs_msg:
                             content_append(reasoner_messages, 'user',  f"\n\n{drs_msg}\n\n")
@@ -4621,7 +4624,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 reasoning_buffer = []
                 content_buffer = []
                 if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
-                    content_append(request.messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
+                    content_append(request.messages, 'user',  f"\n\nReference steps: {user_prompt}\n\n")
                     drs_msg = get_drs_stage(DRS_STAGE)
                     if drs_msg:
                         content_append(request.messages, 'user',  f"\n\n{drs_msg}\n\n")
@@ -6268,7 +6271,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
         if request.fileLinks:
             # 异步获取文件内容
             files_content = await get_files_content(request.fileLinks)
-            system_message = f"\n\n相关文件内容：{files_content}"
+            system_message = f"\n\nRelevant file content: {files_content}"
             
             # 修复字符串拼接错误
             content_append(request.messages, 'system', system_message)
@@ -6279,29 +6282,29 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             # 用户名提示（固定）
             if settings["memorySettings"]["userName"]:
                 print("添加用户名：\n\n" + settings["memorySettings"]["userName"] + "\n\n用户名结束\n\n")
-                content_append(request.messages, 'system', "与你交流的默认用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n注意！除非用户消息中提到了是其他用户发送，否则视为默认用户发送的消息\n\n")
+                content_append(request.messages, 'system', "The default user speaking with you is: \n\n" + settings["memorySettings"]["userName"] + "\n\nUnless a message explicitly identifies another sender, treat it as coming from this user.\n\n")
 
             # 固定人设：角色描述、性格、对话示例、自定义 systemPrompt、通用 systemPrompt
             if cur_memory["description"]:
                 if settings["memorySettings"]["userName"]:
                     cur_memory["description"] = cur_memory["description"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
-                print("添加角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
-                content_append(request.messages, 'system', "角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
+                print("添加角色设定：\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
+                content_append(request.messages, 'system', "Character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
 
             if cur_memory["personality"]:
                 if settings["memorySettings"]["userName"]:
                     cur_memory["personality"] = cur_memory["personality"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["personality"] = cur_memory["personality"].replace("{{char}}", cur_memory["name"])
-                print("添加性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n")
-                content_append(request.messages, 'system', "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n")
+                print("添加性格设定：\n\n" + cur_memory["personality"] + "\n\nEnd of personality.\n\n")
+                content_append(request.messages, 'system', "Personality:\n\n" + cur_memory["personality"] + "\n\nEnd of personality.\n\n")
 
             if cur_memory['mesExample']:
                 if settings["memorySettings"]["userName"]:
                     cur_memory['mesExample'] = cur_memory['mesExample'].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory['mesExample'] = cur_memory['mesExample'].replace("{{char}}", cur_memory["name"])
-                print("添加对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
-                content_append(request.messages, 'system', "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
+                print("添加对话示例：\n\n" + cur_memory['mesExample'] + "\n\nEnd of example dialogue.\n\n")
+                content_append(request.messages, 'system', "Example dialogue:\n\n" + cur_memory['mesExample'] + "\n\nEnd of example dialogue.\n\n")
 
             if cur_memory["systemPrompt"]:
                 if settings["memorySettings"]["userName"]:
@@ -6309,11 +6312,13 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 cur_memory["systemPrompt"] = cur_memory["systemPrompt"].replace("{{char}}", cur_memory["name"])
                 content_append(request.messages, 'system', "\n\n" + cur_memory["systemPrompt"] + "\n\n")
 
-            if settings["memorySettings"]["genericSystemPrompt"]:
-                if settings["memorySettings"]["userName"]:
-                    settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{user}}", settings["memorySettings"]["userName"])
-                settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{char}}", cur_memory["name"])
-                content_append(request.messages, 'system', "\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n")
+            generic_prompt = resolve_generic_system_prompt(
+                settings["memorySettings"].get("genericSystemPrompt", ""),
+                settings["memorySettings"].get("userName", ""),
+                cur_memory["name"]
+            )
+            if generic_prompt:
+                content_append(request.messages, 'system', "\n\n" + generic_prompt + "\n\n")
 
         # ========== 动态上下文收集（统一追加到用户消息末尾） ==========
         dynamic_user_context = ""
@@ -6338,7 +6343,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 lore_content = lore_content.replace("{{user}}", settings["memorySettings"]["userName"])
             lore_content = lore_content.replace("{{char}}", cur_memory["name"])
             print("添加世界观设定（动态，注入到用户消息）：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
-            dynamic_user_context += f"\n\n[世界设定]\n{lore_content}"
+            dynamic_user_context += f"\n\n[World information]\n{lore_content}"
 
         # 记忆检索（动态，基于当前用户输入）
         if m0 and not request.is_sub_agent:
@@ -6356,7 +6361,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 relevant_memories = ""
             if relevant_memories:
                 print("添加相关记忆（动态，注入到用户消息）：\n\n" + relevant_memories + "\n\n相关结束\n\n")
-                dynamic_user_context += f"\n\n[相关记忆]\n{relevant_memories}"
+                dynamic_user_context += f"\n\n[Relevant memories]\n{relevant_memories}"
 
         # 将动态内容追加到最后一条 user 消息的末尾
         if dynamic_user_context:
@@ -6377,11 +6382,11 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     if settings["KBSettings"]["is_rerank"]:
                         all_kb_content = await rerank_knowledge_base(user_prompt,all_kb_content)
                 if all_kb_content:
-                    kb_message = f"\n\n可参考的知识库内容：{all_kb_content}"
+                    kb_message = f"\n\nRelevant knowledge base content: {all_kb_content}"
                     content_append(request.messages, 'user',  f"{kb_message}\n\n用户：{user_prompt}")
         if settings["KBSettings"]["when"] == "after_thinking" or settings["KBSettings"]["when"] == "both":
             if kb_list:
-                kb_list_message = f"\n\n可调用的知识库列表：{json.dumps(kb_list, ensure_ascii=False)}"
+                kb_list_message = f"\n\nAvailable knowledge bases: {json.dumps(kb_list, ensure_ascii=False)}"
                 content_append(request.messages, 'system', kb_list_message)
         else:
             kb_list = []
@@ -6434,7 +6439,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 elif settings['webSearch']['engine'] == 'youcom':
                     results = await youcom_search(user_prompt)
                 if results:
-                    content_append(request.messages, 'user',  f"\n\n联网搜索结果：{results}")
+                    content_append(request.messages, 'user',  f"\n\nWeb search results: {results}")
             if settings['webSearch']['when'] == 'after_thinking' or settings['webSearch']['when'] == 'both':
                 if settings['webSearch']['engine'] == 'duckduckgo' and not _is_steam_build:
                     tools.append(duckduckgo_tool)
@@ -6484,7 +6489,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 drs_msg = get_drs_stage(DRS_STAGE)
                 if drs_msg:
                     content_append(reasoner_messages, 'user',  f"\n\n{drs_msg}\n\n")
-                content_append(reasoner_messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
+                content_append(reasoner_messages, 'user',  f"\n\nReference steps: {user_prompt}\n\n")
             if tools:
                 content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
             for modelProvider in settings['modelProviders']: 
@@ -6550,7 +6555,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         reasoning_buffer = ""
                         content_prepend(request.messages, 'assistant', reasoning_buffer) # 可参考的推理过程
         if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
-            content_append(request.messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
+            content_append(request.messages, 'user',  f"\n\nReference steps: {user_prompt}\n\n")
             drs_msg = get_drs_stage(DRS_STAGE)
             if drs_msg:
                 content_append(request.messages, 'user',  f"\n\n{drs_msg}\n\n")
