@@ -192,6 +192,28 @@ class EnglishDelegationModules(unittest.TestCase):
         self.assertIsNone(HAN.search(html))
         self.assertIsNone(HAN.search(locale))
 
+    def test_frontend_prompt_defaults_match_backend(self):
+        import json
+        source = (ROOT / "static/js/vue_data.js").read_text(encoding="utf-8")
+        config = json.loads((ROOT / "config/settings_template.json").read_text(encoding="utf-8"))
+        for key in ("loveSettings", "diarySettings"):
+            with self.subTest(key=key):
+                prompt = config[key]["prompt"]
+                self.assertIn("prompt: " + json.dumps(prompt, ensure_ascii=False), source)
+                self.assertIsNone(HAN.search(prompt))
+        commands = source.split("shortcutCommands: [", 1)[1].split("defaultSeparators:", 1)[0]
+        self.assertIsNone(HAN.search(commands))
+        self.assertIn("aliases: ['/reset']", commands)
+        self.assertEqual(source.count("What can you help me with?"), 3)
+
+    def test_frontend_notifications_english(self):
+        source = (ROOT / "static/js/vue_methods.js").read_text(encoding="utf-8")
+        for line in source.splitlines():
+            if line.lstrip().startswith("//") or "//" in line:
+                continue
+            if re.search(r"showNotification|showToast|showErrorToast|this\.\$(?:alert|confirm|message)|throw new Error", line):
+                self.assertIsNone(HAN.search(line), line)
+
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")
         self.assertIn(

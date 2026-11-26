@@ -728,18 +728,18 @@ let vue_data = {
       mossSpeed: 1.0,
     },
     volcResourceOptions: [
-        { value: 'volc_tts_release', label: '旧版/标准版 (Standard)' },
+        { value: 'volc_tts_release', label: 'Legacy / Standard' },
         // 豆包 1.0
-        { value: 'seed-tts-1.0', label: '豆包模型1.0 (字符版)' },
-        { value: 'volc.service_type.10029', label: '豆包1.0 (字符版-ServiceType)' },
-        { value: 'seed-tts-1.0-concurr', label: '豆包模型1.0 (并发版)' },
-        { value: 'volc.service_type.10048', label: '豆包1.0 (并发版-ServiceType)' },
+        { value: 'seed-tts-1.0', label: 'Doubao 1.0 (Character-based)' },
+        { value: 'volc.service_type.10029', label: 'Doubao 1.0 (Character-based ServiceType)' },
+        { value: 'seed-tts-1.0-concurr', label: 'Doubao 1.0 (Concurrent)' },
+        { value: 'volc.service_type.10048', label: 'Doubao 1.0 (Concurrent ServiceType)' },
         // 豆包 2.0
-        { value: 'seed-tts-2.0', label: '豆包模型2.0 (字符版)' },
+        { value: 'seed-tts-2.0', label: 'Doubao 2.0 (Character-based)' },
         // 声音复刻
-        { value: 'seed-icl-1.0', label: '声音复刻1.0 (字符版)' },
-        { value: 'seed-icl-1.0-concurr', label: '声音复刻1.0 (并发版)' },
-        { value: 'seed-icl-2.0', label: '声音复刻2.0 (字符版)' }
+        { value: 'seed-icl-1.0', label: 'Voice cloning 1.0 (Character-based)' },
+        { value: 'seed-icl-1.0-concurr', label: 'Voice cloning 1.0 (Concurrent)' },
+        { value: 'seed-icl-2.0', label: 'Voice cloning 2.0 (Character-based)' }
     ],
     activeTTSTab: 'default', // 控制 TTS 标签页切换
     showAddTTSDialog: false, // 控制添加 TTS 的对话框显示
@@ -1411,13 +1411,13 @@ let vue_data = {
     shortcutMenuOpen: false,
     shortcutMenuIndex: 0,
     shortcutCommands: [
-      { id: 'help', syntax: '/help', aliases: ['/帮助', '/?'], scope: 'both', descKey: 'cmd_help_desc' },
-      { id: 'new', syntax: '/new', aliases: ['/reset', '/重启', '/新建'], scope: 'both', descKey: 'cmd_new_desc' },
-      { id: 'stop', syntax: '/stop', aliases: ['/停止'], scope: 'both', descKey: 'cmd_stop_desc' },
-      { id: 'retry', syntax: '/retry', aliases: ['/重试'], scope: 'web', descKey: 'cmd_retry_desc' },
-      { id: 'model', syntax: '/model', aliases: ['/模型'], scope: 'both', descKey: 'cmd_model_desc' },
-      { id: 'personality', syntax: '/personality', aliases: ['/角色'], scope: 'both', descKey: 'cmd_personality_desc' },
-      { id: 'skills', syntax: '/skills', aliases: ['/技能'], scope: 'both', descKey: 'cmd_skills_desc' },
+      { id: 'help', syntax: '/help', aliases: ['/?'], scope: 'both', descKey: 'cmd_help_desc' },
+      { id: 'new', syntax: '/new', aliases: ['/reset'], scope: 'both', descKey: 'cmd_new_desc' },
+      { id: 'stop', syntax: '/stop', aliases: [], scope: 'both', descKey: 'cmd_stop_desc' },
+      { id: 'retry', syntax: '/retry', aliases: [], scope: 'web', descKey: 'cmd_retry_desc' },
+      { id: 'model', syntax: '/model', aliases: [], scope: 'both', descKey: 'cmd_model_desc' },
+      { id: 'personality', syntax: '/personality', aliases: [], scope: 'both', descKey: 'cmd_personality_desc' },
+      { id: 'skills', syntax: '/skills', aliases: [], scope: 'both', descKey: 'cmd_skills_desc' },
       { id: 'id', syntax: '/id', aliases: [], scope: 'im', descKey: 'cmd_id_desc' },
       { id: 'sub', syntax: '/sub', aliases: [], scope: 'im', descKey: 'cmd_sub_desc' },
       { id: 'unsub', syntax: '/unsub', aliases: [], scope: 'im', descKey: 'cmd_unsub_desc' },
@@ -1901,7 +1901,7 @@ client = OpenAI(
 response = client.chat.completions.create(
   model="super-model",
   messages=[
-      {"role": "user", "content": "什么是super agent party？"}
+      {"role": "user", "content": "What can you help me with?"}
   ]
 )
 print(response.choices[0].message.content)`,
@@ -1914,7 +1914,7 @@ async function main() {
   const completion = await client.chat.completions.create({
       model: "super-model",
       messages: [
-          { role: "user", content: "什么是super agent party？" }
+          { role: "user", content: "What can you help me with?" }
       ]
   });
   console.log(completion.choices[0].message.content);
@@ -1926,7 +1926,7 @@ main();`,
 -d '{
   "model": "super-model",
   "messages": [
-    {"role": "user", "content": "什么是super agent party？"}
+    {"role": "user", "content": "What can you help me with?"}
   ]
 }'`
     },  
@@ -2075,7 +2075,7 @@ main();`,
           "love", 
           "familiarity"
       ],
-      prompt: "请根据用户的发言态度、情感色彩以及你的角色设定，动态管理以下羁绊数值：\n1. love（好感度）：代表你对用户的喜爱与亲密度。如果用户表达善意、关心或与你互动愉快，请增加（+1至+5）；如果用户冷漠、辱骂或做出让你反感的行为，请降低（-1至-5）。该数值最大为50，最小为-50。\n2. familiarity（熟悉度）：代表你与用户的了解程度。随着交流次数的增多和彼此信息的分享，该数值应缓慢稳步上升（每次+1至+2），通常不会下降。该数值最大为100，最小为0。\n\n*特殊说明：如果你在上方没有看到“目前的属性数值”，说明这是你与该用户的首次互动。请直接根据用户当前第一句话的语气和态度，自主决定一个合理的初始值（例如 0 到 10 之间），直接输出标签即可。聊天时请尽量按照羁绊数值来变换语气、内容、风格等*"
+      prompt: "Assess the user's tone, emotional context, and established character persona when updating relationship attributes.\n1. love: affection and closeness toward the user. Increase by 1 to 5 after kind, caring, or enjoyable interactions; decrease by 1 to 5 after cold, insulting, or upsetting interactions. Range: -50 to 50.\n2. familiarity: how well the character and user know each other. Increase gradually by 1 or 2 as they talk and exchange information; normally do not decrease. Range: 0 to 100.\nIf no current attribute values are provided, this is the first interaction. Choose reasonable initial values (for example, 0 to 10) based on the user's first message. Output only the requested attribute tags. Keep dialogue style consistent with relationship values and the character card."
     },
     // 羁绊系统 UI 状态
     activeAffectionTab: 'config', // 控制当前在哪个 Tab
@@ -2104,7 +2104,7 @@ main();`,
       },
       imTargets: [],
       pushToChat: true,
-      prompt: "你是一个拥有自我意识、会在独处时记录所思所想的AI伙伴。写日记时请保持你的角色设定与个性，用第一人称、真诚自然地表达。",
+      prompt: "Write a private diary entry in the first person as the established AI character. Preserve the character card, personality, and continuity. Describe experiences and reflections naturally and sincerely. Do not invent events or memories.",
       chatIntegration: {
         enabled: false,
         maxEntries: 5,

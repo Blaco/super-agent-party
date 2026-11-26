@@ -67,7 +67,7 @@ if (window.markdownitTaskLists) {
         labelAfter: true // label 放在 checkbox 之后
     });
 } else {
-    console.warn('markdown-it-task-lists 插件未加载，任务列表将不会渲染。');
+    console.warn('markdown-it-task-lists not loaded; task lists will not render.');
 }
 
 // 检查插件是否已加载
@@ -117,7 +117,7 @@ if (window.markdownitContainer) {
         }
     });
 } else {
-    console.warn('markdown-it-container 插件未加载，自定义容器将不会渲染。');
+    console.warn('markdown-it-container not loaded; custom containers will not render.');
 }
 
 if (window.texmath) {
@@ -1605,7 +1605,7 @@ formatMessage(content, index) {
         const codeContent = codeBlock.querySelector('code')?.textContent?.trim();
         if (!codeContent) {
           console.warn('⚠️ 空代码内容', codeBlock);
-          this.showErrorToast('代码内容为空');
+          this.showErrorToast('Code is empty');
           return;
         }
         // codeBlock中查找/创建预览容器
@@ -1750,7 +1750,7 @@ formatMessage(content, index) {
             await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
             await attemptRender();
           } else {
-            throw new Error(`Mermaid渲染失败: ${err.message}`);
+            throw new Error(`Mermaid rendering failed: ${err.message}`);
           }
         }
       };
@@ -1872,7 +1872,7 @@ formatMessage(content, index) {
                         });
                     }).catch(error => {
                         console.error('截图失败:', error);
-                        showNotification('截图失败，请检查控制台', 'error');
+                        showNotification('Screenshot failed. Check the console.', 'error');
                     });
                 }
                 else if (lang === 'html') {
@@ -1884,7 +1884,7 @@ formatMessage(content, index) {
                 }
             } catch (error) {
                 console.error('下载失败:', error);
-                showNotification('下载失败，请检查控制台', 'error');
+                showNotification('Download failed. Check the console.', 'error');
             }
         });
     },
@@ -2455,7 +2455,7 @@ formatMessage(content, index) {
         
         const success = await window.electronAPI.registerGlobalShortcut(globalKeyCombo);
         if (!success) {
-          this.$message.error(`全局快捷键 ${globalKeyCombo} 注册失败，可能被系统或其他软件占用`);
+          this.$message.error(`Failed to register global shortcut ${globalKeyCombo}; it may already be in use`);
         } else {
           console.log(`全局快捷键已更新为: ${globalKeyCombo}`);
         }
@@ -5926,7 +5926,7 @@ formatMessage(content, index) {
             body: JSON.stringify({ kbId }),
           });
           
-          if (!startResponse.ok) throw new Error('启动失败');
+          if (!startResponse.ok) throw new Error('Startup failed');
           // 2. 轮询状态
           const checkStatus = async () => {
             try {
@@ -6011,7 +6011,7 @@ formatMessage(content, index) {
           body: JSON.stringify({ kbId }),
         });
 
-        if (!Response.ok) throw new Error('删除失败');
+        if (!Response.ok) throw new Error('Deletion failed');
 
         // 保存 settings
         await this.autoSaveSettings();
@@ -6589,7 +6589,7 @@ formatMessage(content, index) {
         });
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.detail || '删除失败');
+          throw new Error(errorData.detail || 'Deletion failed');
         }
         
         showNotification(this.t('mcpDeleted'), 'success')
@@ -7094,7 +7094,7 @@ formatMessage(content, index) {
           // ******** 关键点 ********
           if (!resp.ok) {                           // 4xx/5xx 都进这里
             const txt = await resp.text();
-            throw new Error(`Embedding 接口异常 ${resp.status}: ${txt}`);
+            throw new Error(`Embedding API error ${resp.status}: ${txt}`);
           }
 
           const { dims } = await resp.json();
@@ -7220,7 +7220,7 @@ formatMessage(content, index) {
 async startTelegramBot() {
   this.isTelegramStarting = true;
   try {
-    showNotification('正在连接 Telegram 机器人...', 'info');
+    showNotification('Connecting Telegram bot...', 'info');
     const res = await fetch('/start_telegram_bot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -7229,12 +7229,12 @@ async startTelegramBot() {
     const json = await res.json();
     if (json.success) {
       this.isTelegramBotRunning = true;
-      showNotification('Telegram 机器人启动成功', 'success');
+      showNotification('Telegram bot started', 'success');
     } else {
-      showNotification(`启动失败：${json.message}`, 'error');
+      showNotification(`Startup failed: ${json.message}`, 'error');
     }
   } catch (e) {
-    showNotification('网络错误或服务器未响应', 'error');
+    showNotification('Network error or server not responding', 'error');
   } finally {
     this.isTelegramStarting = false;
   }
@@ -7246,12 +7246,12 @@ async stopTelegramBot() {
     const json = await res.json();
     if (json.success) {
       this.isTelegramBotRunning = false;
-      showNotification('Telegram 机器人已停止', 'success');
+      showNotification('Telegram bot stopped', 'success');
     } else {
-      showNotification(`停止失败：${json.message}`, 'error');
+      showNotification(`Stop failed: ${json.message}`, 'error');
     }
   } catch (e) {
-    showNotification('网络错误或服务器未响应', 'error');
+    showNotification('Network error or server not responding', 'error');
   } finally {
     this.isTelegramStopping = false;
   }
@@ -7266,12 +7266,12 @@ async reloadTelegramBotConfig() {
     });
     const json = await res.json();
     if (json.success) {
-      showNotification('Telegram 机器人已重载', 'success');
+      showNotification('Telegram bot reloaded', 'success');
     } else {
-      showNotification(`重载失败：${json.message}`, 'error');
+      showNotification(`Reload failed: ${json.message}`, 'error');
     }
   } catch (e) {
-    showNotification('网络错误或服务器未响应', 'error');
+    showNotification('Network error or server not responding', 'error');
   } finally {
     this.isTelegramReloading = false;
   }
@@ -7293,7 +7293,7 @@ handleCreateTelegramSeparator(val) {
 async startDiscordBot() {
   this.isDiscordStarting = true;
   try {
-    showNotification('正在连接 Discord 机器人...', 'info');
+    showNotification('Connecting Discord bot...', 'info');
     const res = await fetch('/start_discord_bot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -7302,12 +7302,12 @@ async startDiscordBot() {
     const json = await res.json();
     if (json.success) {
       this.isDiscordBotRunning = true;
-      showNotification('Discord 机器人启动成功', 'success');
+      showNotification('Discord bot started', 'success');
     } else {
-      showNotification(`启动失败：${json.message}`, 'error');
+      showNotification(`Startup failed: ${json.message}`, 'error');
     }
   } catch (e) {
-    showNotification('网络错误或服务器未响应', 'error');
+    showNotification('Network error or server not responding', 'error');
   } finally {
     this.isDiscordStarting = false;
   }
@@ -7319,12 +7319,12 @@ async stopDiscordBot() {
     const json = await res.json();
     if (json.success) {
       this.isDiscordBotRunning = false;
-      showNotification('Discord 机器人已停止', 'success');
+      showNotification('Discord bot stopped', 'success');
     } else {
-      showNotification(`停止失败：${json.message}`, 'error');
+      showNotification(`Stop failed: ${json.message}`, 'error');
     }
   } catch (e) {
-    showNotification('网络错误或服务器未响应', 'error');
+    showNotification('Network error or server not responding', 'error');
   } finally {
     this.isDiscordStopping = false;
   }
@@ -7339,12 +7339,12 @@ async reloadDiscordBot() {
     });
     const json = await res.json();
     if (json.success) {
-      showNotification('Discord 机器人已重载', 'success');
+      showNotification('Discord bot reloaded', 'success');
     } else {
-      showNotification(`重载失败：${json.message}`, 'error');
+      showNotification(`Reload failed: ${json.message}`, 'error');
     }
   } catch (e) {
-    showNotification('网络错误或服务器未响应', 'error');
+    showNotification('Network error or server not responding', 'error');
   } finally {
     this.isDiscordReloading = false;
   }
@@ -7385,7 +7385,7 @@ async requestSlackBotStopIfRunning() {
 async startSlackBot() {
   this.isSlackStarting = true;
   try {
-    showNotification('正在连接 Slack 机器人...', 'info');
+    showNotification('Connecting Slack bot...', 'info');
     // 注意：这里发送的是 slackBotConfig，但后端会自动处理共用的 memorySettings 状态
     const res = await fetch('/start_slack_bot', {
       method: 'POST',
@@ -7399,12 +7399,12 @@ async startSlackBot() {
     const json = await res.json();
     if (json.success) {
       this.isSlackBotRunning = true;
-      showNotification('Slack 机器人启动成功', 'success');
+      showNotification('Slack bot started', 'success');
     } else {
-      showNotification(`启动失败：${json.message}`, 'error');
+      showNotification(`Startup failed: ${json.message}`, 'error');
     }
   } catch (e) {
-    showNotification('网络错误或服务器未响应', 'error');
+    showNotification('Network error or server not responding', 'error');
   } finally {
     this.isSlackStarting = false;
   }
@@ -7416,12 +7416,12 @@ async stopSlackBot() {
     const json = await res.json();
     if (json.success) {
       this.isSlackBotRunning = false;
-      showNotification('Slack 机器人已停止', 'success');
+      showNotification('Slack bot stopped', 'success');
     } else {
-      showNotification(`停止失败：${json.message}`, 'error');
+      showNotification(`Stop failed: ${json.message}`, 'error');
     }
   } catch (e) {
-    showNotification('网络错误', 'error');
+    showNotification('Network error', 'error');
   } finally {
     this.isSlackStopping = false;
   }
@@ -7439,12 +7439,12 @@ async reloadSlackBot() {
     });
     const json = await res.json();
     if (json.success) {
-      showNotification('Slack 机器人已重载', 'success');
+      showNotification('Slack bot reloaded', 'success');
     } else {
-      showNotification(`重载失败：${json.message}`, 'error');
+      showNotification(`Reload failed: ${json.message}`, 'error');
     }
   } catch (e) {
-    showNotification('网络错误', 'error');
+    showNotification('Network error', 'error');
   } finally {
     this.isSlackReloading = false;
   }
@@ -7660,10 +7660,10 @@ handleCreateSlackSeparator(val) {
         })
         if (response.ok) {
           this.activeComfyUIUrl = url
-          showNotification('服务器连接成功')
+          showNotification('Connected to server')
         }
       } catch (e) {
-        showNotification('无法连接ComfyUI服务器', 'error')
+        showNotification('Could not connect to ComfyUI server', 'error')
       }
       this.isConnecting = false
     },
@@ -7695,15 +7695,15 @@ handleCreateSlackSeparator(val) {
         if (data.success) {
           this.workflows = this.workflows.filter(file => file.unique_filename !== filename);
           await this.autoSaveSettings();
-          showNotification('删除成功');
+          showNotification('Deleted successfully');
         } else {
           this.workflows = this.workflows.filter(file => file.unique_filename !== filename);
           await this.autoSaveSettings();
-          showNotification('删除失败', 'error');
+          showNotification('Deletion failed', 'error');
         }
       } catch (error) {
         console.error('删除失败:', error);
-       showNotification('删除失败', 'error');
+       showNotification('Deletion failed', 'error');
       }
     },
       // 处理文件拖拽
@@ -7824,13 +7824,13 @@ handleCreateSlackSeparator(val) {
           this.selectedSeedInput2 = null; // 重置选中
           this.workflowDescription = ''; // 清空描述
           await this.autoSaveSettings();
-          showNotification('上传成功');
+          showNotification('Upload successful');
         } else {
-          showNotification('上传失败', 'error');
+          showNotification('Upload failed', 'error');
         }
       } catch (error) {
         console.error('上传失败:', error);
-        showNotification('上传失败', 'error');
+        showNotification('Upload failed', 'error');
       }
     },
     cancelWorkflowUpload() {
@@ -9236,7 +9236,7 @@ handleCreateSlackSeparator(val) {
         await this.initASRWebSocket();
         await new Promise(r => setTimeout(r, 500));
       } catch (e) {
-        showNotification("无法连接语音服务器", 'error');
+        showNotification("Could not connect to speech server", 'error');
         return;
       }
     }
@@ -10486,7 +10486,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
   // 上传参考音频
   async uploadGsvAudio() {
     if (!this.newGsvAudio.file && !this.newGsvAudio.path) {
-      showNotification('请先选择音频文件', 'error');
+      showNotification('Select an audio file first', 'error');
       return;
     }
     if (!this.newGsvAudio.file) {
@@ -10505,7 +10505,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         // 自动保存设置
         await this.autoSaveSettings();
         
-        showNotification('参考音频上传成功');
+        showNotification('Reference audio uploaded');
         return;
     }
     
@@ -10537,13 +10537,13 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         // 自动保存设置
         await this.autoSaveSettings();
         
-        showNotification('参考音频上传成功');
+        showNotification('Reference audio uploaded');
       } else {
-        showNotification(`上传失败: ${result.message}`, 'error');
+        showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('上传参考音频失败:', error);
-      showNotification('上传失败，请检查网络连接', 'error');
+      showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
   
@@ -10581,7 +10581,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       if (this.ttsSettings.gsvAudioOptions[audioIndex].path == this.ttsSettings.gsvAudioOptions[audioIndex].name){
         // 为路径上传的音频，直接从选项中移除
         this.ttsSettings.gsvAudioOptions.splice(audioIndex, 1);
-        showNotification('音频已删除');
+        showNotification('Audio deleted');
         return;
       }
       // 获取文件名用于后端删除
@@ -10609,13 +10609,13 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         // 自动保存设置
         await this.autoSaveSettings();
         
-        showNotification('音频已删除');
+        showNotification('Audio deleted');
       } else {
-        showNotification(`删除失败: ${result.message}`, 'error');
+        showNotification(`Deletion failed: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('删除音频失败:', error);
-      showNotification('删除失败，请稍后再试', 'error');
+      showNotification('Deletion failed. Try again later.', 'error');
     }
   },
     goToMainApp() {
@@ -10729,7 +10729,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
               if (msg.data.success) {
                 // 真的连接成功了
                 this.VTSConfig.enabled = true;
-                showNotification(msg.data.message || 'VTube Studio 已连接', 'success', 'VTS');
+                showNotification(msg.data.message || 'VTube Studio connected', 'success', 'VTS');
               } else {
                 // 连接失败：回退开关状态
                 this.VTSConfig.enabled = false;
@@ -10793,7 +10793,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         const file = files[0];
         // 检查文件扩展名
         if (!file.name.toLowerCase().endsWith('.vrm')) {
-          showNotification('只支持.vrm格式的文件', 'error');
+          showNotification('Only .vrm files are supported', 'error');
           return;
         }
         this.newVrmModel.name = file.name;
@@ -10813,7 +10813,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const file = files[0];
       // 检查文件扩展名
       if (!file.name.toLowerCase().endsWith('.vrm')) {
-        showNotification('只支持.vrm格式的文件', 'error');
+        showNotification('Only .vrm files are supported', 'error');
         return;
       }
       this.newVrmModel.name = file.name;
@@ -10883,12 +10883,12 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
   // 修改上传VRM模型方法
   async uploadVrmModel() {
     if (!this.newVrmModel.file) {
-      showNotification('请先选择VRM模型文件', 'error');
+      showNotification('Select a VRM model file first', 'error');
       return;
     }
     
     if (!this.newVrmModel.displayName.trim()) {
-      showNotification('请输入模型显示名称', 'error');
+      showNotification('Enter a model display name', 'error');
       return;
     }
     
@@ -10921,13 +10921,13 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         // 自动保存设置
         await this.autoSaveSettings();
         
-        showNotification('VRM模型上传成功');
+        showNotification('VRM model uploaded');
       } else {
-        showNotification(`上传失败: ${result.message}`, 'error');
+        showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('上传VRM模型失败:', error);
-      showNotification('上传失败，请检查网络连接', 'error');
+      showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
   
@@ -10940,7 +10940,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       );
       
       if (modelIndex === -1) {
-        showNotification('无法删除默认模型', 'error');
+        showNotification('Cannot delete the default model', 'error');
         return;
       }
       
@@ -10967,13 +10967,13 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         // 自动保存设置
         await this.autoSaveSettings();
         
-        showNotification('VRM模型已删除');
+        showNotification('VRM model deleted');
       } else {
-        showNotification(`删除失败: ${result.message}`, 'error');
+        showNotification(`Deletion failed: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('删除VRM模型失败:', error);
-      showNotification('删除失败，请稍后再试', 'error');
+      showNotification('Deletion failed. Try again later.', 'error');
     }
   },
 
@@ -11104,7 +11104,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
 
   async uploadSoulxImage() {
     if (!this.newSoulxImage.file) {
-      showNotification('请先选择图片文件', 'error');
+      showNotification('Select an image file first', 'error');
       return;
     }
     const formData = new FormData();
@@ -11119,13 +11119,13 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         this.SoulxConfig.selectedImageId = result.image.id;
         this.cancelSoulxImageUpload();
         await this.autoSaveSettings();
-        showNotification('参考图上传成功');
+        showNotification('Reference image uploaded');
       } else {
-        showNotification(`上传失败: ${result.message}`, 'error');
+        showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('上传SoulX参考图失败:', error);
-      showNotification('上传失败，请检查网络连接', 'error');
+      showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
 
@@ -11133,7 +11133,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     try {
       const img = this.SoulxConfig.images.find(i => i.id === imageId);
       if (img && img.default) {
-        showNotification('默认形象不可删除', 'warning');
+        showNotification('The default avatar cannot be deleted', 'warning');
         return;
       }
       const response = await fetch(`/delete_soulx_image/${imageId}`, { method: 'DELETE' });
@@ -11145,13 +11145,13 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
           this.SoulxConfig.selectedImageId = this.SoulxConfig.images.length > 0 ? this.SoulxConfig.images[0].id : '';
         }
         await this.autoSaveSettings();
-        showNotification('参考图已删除');
+        showNotification('Reference image deleted');
       } else {
-        showNotification(`删除失败: ${result.message}`, 'error');
+        showNotification(`Deletion failed: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('删除SoulX参考图失败:', error);
-      showNotification('删除失败，请稍后再试', 'error');
+      showNotification('Deletion failed. Try again later.', 'error');
     }
   },
 
@@ -11189,11 +11189,11 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
 
   async uploadTHAModel() {
     if (!this.newThaModel.file) {
-      showNotification('请先选择ONNX模型文件', 'error');
+      showNotification('Select an ONNX model file first', 'error');
       return;
     }
     if (!this.newThaModel.displayName.trim()) {
-      showNotification('请输入模型显示名称', 'error');
+      showNotification('Enter a model display name', 'error');
       return;
     }
 
@@ -11217,14 +11217,14 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         this.THAConfig.userModels.push(newModelOption);
         this.cancelTHAModelUpload();
         await this.autoSaveSettings();
-        showNotification('THA模型上传成功');
+        showNotification('THA model uploaded');
         await this.loadTHAModels();
       } else {
-        showNotification(`上传失败: ${result.message}`, 'error');
+        showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('上传THA模型失败:', error);
-      showNotification('上传失败，请检查网络连接', 'error');
+      showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
 
@@ -11234,7 +11234,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         model => model.id === modelId
       );
       if (modelIndex === -1) {
-        showNotification('无法删除默认模型', 'error');
+        showNotification('Cannot delete the default model', 'error');
         return;
       }
 
@@ -11253,13 +11253,13 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
           }
         }
         await this.autoSaveSettings();
-        showNotification('THA模型已删除');
+        showNotification('THA model deleted');
       } else {
-        showNotification(`删除失败: ${result.message}`, 'error');
+        showNotification(`Deletion failed: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('删除THA模型失败:', error);
-      showNotification('删除失败，请稍后再试', 'error');
+      showNotification('Deletion failed. Try again later.', 'error');
     }
   },
 
@@ -12072,13 +12072,13 @@ copyIslandEndpoint(){
   async smartConnectApp(app) {
     if (!this.isElectron || !window.electronAPI) {
       this.connectingAppId = null;
-      showNotification('需要 Electron 环境', 'error');
+      showNotification('Electron is required', 'error');
       return;
     }
     if (this.connectingAppId) return; // 已有应用在连接中
     this.connectingAppId = app.id;
     console.log(`[smartConnect] 开始连接 ${app.name}, port=${app.cdpPort || this.localAppControlSettings.nextPort}, forceNewInstance=${this.localAppControlSettings.forceNewInstance}`);
-    showNotification(`正在连接 ${app.name}…`, 'info');
+    showNotification(`Connecting to ${app.name}…`, 'info');
     const port = app.cdpPort || this.localAppControlSettings.nextPort;
 
     // 1. 先试试直接连接（端口可能已经开着）
@@ -12173,7 +12173,7 @@ copyIslandEndpoint(){
 
   async scanLocalApps() {
     this.localAppControlSettings.scanning = true;
-    showNotification('正在扫描本地应用，这可能需要十几秒…', 'info');
+    showNotification('Scanning local applications. This may take several seconds…', 'info');
     try {
       const response = await fetch('/scan-local-apps', { method: 'POST' });
       if (response.ok) {
@@ -12199,25 +12199,25 @@ copyIslandEndpoint(){
   async addManualApp() {
     let path = (this.manualAppInput || '').trim();
     path = path.replace(/^["']|["']$/g, '');
-    if (!path) return showNotification('请输入应用路径', 'warning');
+    if (!path) return showNotification('Enter the application path', 'warning');
     const existing = (this.localAppControlSettings.manualApps || []).find(a => a.path.toLowerCase() === path.toLowerCase());
-    if (existing) return showNotification('该路径已添加', 'warning');
+    if (existing) return showNotification('This path has already been added', 'warning');
     // 已在扫描结果中，无需手动添加
     const alreadyScanned = (this.localAppControlSettings.scannedApps || []).find(a => a.path.toLowerCase() === path.toLowerCase());
-    if (alreadyScanned) return showNotification('该应用已在列表中', 'warning');
+    if (alreadyScanned) return showNotification('This application is already listed', 'warning');
     try {
       const resp = await fetch('/validate-app-path', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path }) });
-      if (!resp.ok) { showNotification('验证请求失败', 'error'); return; }
+      if (!resp.ok) { showNotification('Validation request failed', 'error'); return; }
       const d = await resp.json();
-      if (!d.valid) { showNotification(`无法识别为可用应用: ${d.error}`, 'error'); return; }
+      if (!d.valid) { showNotification(`Application could not be recognized: ${d.error}`, 'error'); return; }
       const app = { id: 'manual_' + Date.now(), name: d.name || path.split('\\').pop().replace('.exe',''), path: path, version: d.version || '', appType: d.appType || 'chromium', isElectron: d.appType === 'electron', isRunning: false, pid: 0, _manual: true };
       if (!this.localAppControlSettings.manualApps) this.localAppControlSettings.manualApps = [];
       this.localAppControlSettings.manualApps.push(app);
       this.localAppControlSettings.scannedApps = [app, ...(this.localAppControlSettings.scannedApps || [])];
       this.manualAppInput = '';
-      showNotification(`已添加 ${app.name}`);
+      showNotification(`Added ${app.name}`);
       this.autoSaveSettings();
-    } catch (e) { showNotification('验证失败: ' + e.message, 'error'); }
+    } catch (e) { showNotification('Validation failed: ' + e.message, 'error'); }
   },
 
   removeManualApp(app) {
@@ -12226,7 +12226,7 @@ copyIslandEndpoint(){
     this.localAppControlSettings.scannedApps = (this.localAppControlSettings.scannedApps || []).filter(a => !a._manual || a.path !== app.path);
     if (this.isAppConnected(app)) { delete this.localAppControlSettings.connectedApps[app.id]; }
     this.autoSaveSettings();
-    showNotification('已移除');
+    showNotification('Removed');
   },
 
   async launchAppWithCDP(app) {
@@ -12371,7 +12371,7 @@ copyIslandEndpoint(){
         const data = await response.json();
         if (data.success) {
           conn.activeWsUrl = page.webSocketDebuggerUrl;
-          showNotification('已切换 target');
+          showNotification('Target changed');
         }
       }
     } catch (e) {
@@ -12407,7 +12407,7 @@ copyIslandEndpoint(){
         body: JSON.stringify({ port: this.getAppPort(app), method: 'Page.captureScreenshot', params: {} })
       });
       if (response.ok) {
-        showNotification('截图成功');
+        showNotification('Screenshot captured');
       }
     } catch (e) {
       console.error('截图失败:', e);
@@ -12422,7 +12422,7 @@ copyIslandEndpoint(){
         body: JSON.stringify({ port: this.getAppPort(app), method: 'Runtime.evaluate', params: { expression: 'document.body.innerText', returnByValue: true } })
       });
       if (response.ok) {
-        showNotification('快照成功');
+        showNotification('Snapshot captured');
       }
     } catch (e) {
       console.error('快照失败:', e);
@@ -12432,7 +12432,7 @@ copyIslandEndpoint(){
   async executeJSInApp(app) {
     const conn = this.localAppControlSettings.connectedApps[app.id];
     if (!conn || !conn.wsUrl) {
-      showNotification('请先选择应用页面', 'warning');
+      showNotification('Select an application page first', 'warning');
       return;
     }
     try {
@@ -12442,7 +12442,7 @@ copyIslandEndpoint(){
         body: JSON.stringify({ port: this.getAppPort(app), method: 'Runtime.evaluate', params: { expression: '1 + 1', returnByValue: true } })
       });
       if (response.ok) {
-        showNotification('执行成功');
+        showNotification('Execution successful');
       }
     } catch (e) {
       console.error('执行JS失败:', e);
@@ -12576,7 +12576,7 @@ copyIslandEndpoint(){
         const file = files[0];
         // 检查文件扩展名
         if (!file.name.toLowerCase().endsWith('.vrma')) {
-          showNotification('只支持.vrma格式的文件', 'error');
+          showNotification('Only .vrma files are supported', 'error');
           return;
         }
         this.newVrmaMotion.name = file.name;
@@ -12596,7 +12596,7 @@ copyIslandEndpoint(){
       const file = files[0];
       // 检查文件扩展名
       if (!file.name.toLowerCase().endsWith('.vrma')) {
-        showNotification('只支持.vrma格式的文件', 'error');
+        showNotification('Only .vrma files are supported', 'error');
         return;
       }
       this.newVrmaMotion.name = file.name;
@@ -12624,12 +12624,12 @@ copyIslandEndpoint(){
   // 上传VRMA动作
   async uploadVrmaMotion() {
     if (!this.newVrmaMotion.file) {
-      showNotification('请先选择VRMA动作文件', 'error');
+      showNotification('Select a VRMA motion file first', 'error');
       return;
     }
     
     if (!this.newVrmaMotion.displayName.trim()) {
-      showNotification('请输入动作显示名称', 'error');
+      showNotification('Enter a motion display name', 'error');
       return;
     }
     
@@ -12667,13 +12667,13 @@ copyIslandEndpoint(){
         // 自动保存设置
         await this.autoSaveSettings();
         
-        showNotification('VRMA动作上传成功');
+        showNotification('VRMA motion uploaded');
       } else {
-        showNotification(`上传失败: ${result.message}`, 'error');
+        showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('上传VRMA动作失败:', error);
-      showNotification('上传失败，请检查网络连接', 'error');
+      showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
 
@@ -12798,7 +12798,7 @@ handleGaussSceneDrop(e) {
   if (!file) return;
   const ext = file.name.split('.').pop().toLowerCase();
   if (!['ply','spz','splat','ksplat','sog'].includes(ext)) {
-    return showNotification('不支持的文件类型', 'error');
+    return showNotification('Unsupported file type', 'error');
   }
   this.newGaussScene.name = file.name;
   this.newGaussScene.file = file;
@@ -12822,7 +12822,7 @@ async uploadGaussScene() {
   }).then(r => r.json());
 
   if (res.success) {
-    showNotification('场景上传成功');
+    showNotification('Scene uploaded');
     this.showGaussSceneDialog = false;
     // 添加新动作到用户动作列表
     const newgaussScenes = {
@@ -12836,7 +12836,7 @@ async uploadGaussScene() {
     // 自动选中新上传的场景
     if (newgaussScenes) this.handleGaussSceneChange(newgaussScenes.id);
   } else {
-    showNotification(res.message || '上传失败', 'error');
+    showNotification(res.message || 'Upload failed', 'error');
   }
 },
 
@@ -12858,7 +12858,7 @@ async deleteGaussSceneOption(sceneId) {
   }).then(r => r.json());
 
   if (res.success) {
-    showNotification('场景已删除');
+    showNotification('Scene deleted');
     // 如果当前正在使用被删场景，切回第一个默认场景
     if (this.VRMConfig.selectedGaussSceneId === sceneId) {
       const firstDef = this.VRMConfig.gaussDefaultScenes[0];
@@ -12866,7 +12866,7 @@ async deleteGaussSceneOption(sceneId) {
     }
     await this.loadGaussScenes();
   } else {
-    showNotification(res.message || '删除失败', 'error');
+    showNotification(res.message || 'Deletion failed', 'error');
   }
 },
 
@@ -13182,7 +13182,7 @@ resumeRead() {
     async createCombinedAudio(chunks) {
       if (!chunks || chunks.length === 0) return;
 
-      showNotification(this.t('audioProcessingStarted') || '正在处理音频...');
+      showNotification(this.t('audioProcessingStarted') || 'Processing audio...');
 
       try {
         // ================= 关键步骤：探测真实格式 =================
@@ -14523,7 +14523,7 @@ isTargetPlatform(behavior, platformKey) {
       try {
         json = JSON.parse(raw);
       } catch (e) {
-        throw new Error('AI 返回的不是合法 JSON：' + e.message);
+        throw new Error('The AI returned invalid JSON: ' + e.message);
       }
 
       // 3. 写入 newMemory 并保存
@@ -14821,7 +14821,7 @@ isTargetPlatform(behavior, platformKey) {
         }
       } catch (error) {
         console.error('选择目录出错:', error);
-        showNotification('选择目录失败', 'error');
+        showNotification('Failed to select directory', 'error');
       }
     }
   },
@@ -15190,7 +15190,7 @@ clearSegments() {
       const response = await fetch('/api/extensions/list');
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || '获取扩展列表失败');
+        throw new Error(errorData.detail || 'Failed to retrieve extensions');
       }
       
       const data = await response.json();
@@ -15226,7 +15226,7 @@ clearSegments() {
         return;
       } else if (res.mode === 'error') {
         // ❌ Node 服务启动失败！必须拦截并展示错误，不能往下走
-        showNotification(`插件服务启动失败: ${res.message}`, 'error');
+        showNotification(`Extension service failed to start: ${res.message}`, 'error');
         console.error("【Node Extension 报错】:", res.message);
         return; 
       }
@@ -15234,7 +15234,7 @@ clearSegments() {
       // 只有 res.mode === 'static'，才允许跳出 if，去走下面的静态路由兜底
     } catch (e) {
       // 网络断开或解析异常，也建议拦截
-      showNotification(`请求插件服务异常: ${e.message}`, 'error');
+      showNotification(`Extension service request failed: ${e.message}`, 'error');
       console.error(e);
       return; 
     }
@@ -15374,7 +15374,7 @@ clearSegments() {
       await fetch(`/api/extensions/${ext.id}/stop-node`, { method: 'POST' }).catch(() => {});
       try {
         const res = await fetch(`/api/extensions/${ext.id}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('删除失败');
+        if (!res.ok) throw new Error('Deletion failed');
         showNotification(this.t('deleteSuccess'), 'success');
         this.scanExtensions(); // 刷新列表
       } catch (e) {
@@ -15421,7 +15421,7 @@ clearSegments() {
     // 真正「安装」按钮触发
     async addExtension() {
       const url = this.newExtensionUrl.trim();
-      if (!url) return showNotification('请输入 GitHub 地址', 'error');
+      if (!url) return showNotification('Enter a GitHub URL', 'error');
       
       this.installLoading = true; // 开启 Loading 遮罩
       
@@ -15445,21 +15445,21 @@ clearSegments() {
         const extId = resData.ext_id;
 
         // --- 核心修改：开始轮询 ---
-        showNotification('正在后台下载，请稍候...', 'info');
+        showNotification('Downloading in the background...', 'info');
         
         this.pollInstallStatus(
           extId,
           (msg) => {
             // 成功回调
             this.installLoading = false;
-            showNotification(msg || '安装成功！', 'success');
+            showNotification(msg || 'Installed successfully', 'success');
             this.showExtensionForm = false; // 关闭弹窗
             this.scanExtensions(); // 立即刷新列表
           },
           (errMsg) => {
             // 失败回调
             this.installLoading = false;
-            showNotification(`安装失败: ${errMsg}`, 'error');
+            showNotification(`Installation failed: ${errMsg}`, 'error');
           }
         );
 
@@ -15491,7 +15491,7 @@ clearSegments() {
         if (res.status === 409) throw new Error(this.t('extensionExists'));
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.detail || '上传失败');
+          throw new Error(data.detail || 'Upload failed');
         }
         
         const resData = await res.json();
@@ -15564,13 +15564,13 @@ clearSegments() {
             }),
           });
 
-          if (res.status === 409) throw new Error('插件已存在');
-          if (!res.ok) throw new Error('请求失败');
+          if (res.status === 409) throw new Error('Extension already exists');
+          if (!res.ok) throw new Error('Request failed');
           
           const resData = await res.json();
           const extId = resData.ext_id;
 
-          showNotification('已开始下载，请耐心等待...', 'info');
+          showNotification('Download started...', 'info');
 
           // --- 核心修改：开始轮询 ---
           this.pollInstallStatus(
@@ -15580,14 +15580,14 @@ clearSegments() {
               this.installLoading = false;
               if (plugin) plugin.installing = false;
               plugin.installed = true; // 更新前端状态
-              showNotification('安装成功！', 'success');
+              showNotification('Installed successfully', 'success');
               this.scanExtensions(); // 刷新完整列表以确保数据一致
             },
             (errMsg) => {
               // 失败
               this.installLoading = false;
               if (plugin) plugin.installing = false;
-              showNotification(`安装失败: ${errMsg}`, 'error');
+              showNotification(`Installation failed: ${errMsg}`, 'error');
             }
           );
 
@@ -16013,7 +16013,7 @@ clearSegments() {
                   if (file.failed) {
                       es.close()
                       this.sherpaDownloading = false
-                      showNotification(this.t('modelDownloadFailed') + `: ${file.filename} 失败`, 'error')
+                      showNotification(this.t('modelDownloadFailed') + `: ${file.filename} failed`, 'error')
                   }
               })
           }
@@ -16105,9 +16105,9 @@ clearSegments() {
           
           if (data.exists) {
             this.mossPercent = 100 // 完成强制打满
-            showNotification(this.t('modelDownloadSuccess') || 'MOSS 模型下载成功')
+            showNotification(this.t('modelDownloadSuccess') || 'MOSS model downloaded')
           } else if (data.download_error) {
-            showNotification((this.t('modelDownloadFailed') || '下载失败: ') + data.download_error, 'error')
+            showNotification((this.t('modelDownloadFailed') || 'Download failed: ') + data.download_error, 'error')
           }
         }
       } catch (err) {
@@ -16121,10 +16121,10 @@ clearSegments() {
     try {
       const res = await fetch('/moss-model/remove', { method: 'DELETE' })
       if (!res.ok) throw new Error()
-      showNotification(this.t('deleteSuccess') || '模型删除成功')
+      showNotification(this.t('deleteSuccess') || 'Model deleted')
       this.mossModelExists = false
     } catch {
-      showNotification(this.t('deleteFailed') || '模型删除失败', 'error')
+      showNotification(this.t('deleteFailed') || 'Failed to delete model', 'error')
     }
   },
 
@@ -16228,7 +16228,7 @@ clearSegments() {
                       this.minilmDownloading = false;
                       const failedFile = data.files.find(f => f.failed);
                       if (typeof showNotification === 'function') {
-                        showNotification(this.t('modelDownloadFailed') + `: ${failedFile.filename} 失败`, 'error');
+                        showNotification(this.t('modelDownloadFailed') + `: ${failedFile.filename} failed`, 'error');
                       }
                       return;
                 }
@@ -16432,7 +16432,7 @@ clearSegments() {
       } catch (error) {
         console.error("获取系统音色失败:", error);
         if (this.$message) {
-           this.$message.error(`获取系统音色列表失败: ${error.message}`);
+           this.$message.error(`Failed to retrieve system voices: ${error.message}`);
         }
       } finally {
         this.isLoadingSystemVoices = false;
@@ -16471,7 +16471,7 @@ clearSegments() {
             await this.downloadTableAsXLSX(table);
           } catch (error) {
             console.error('Excel 导出失败:', error);
-            this.$message?.error('导出失败，请重试');
+            this.$message?.error('Export failed. Please try again.');
           } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
@@ -16545,7 +16545,7 @@ clearSegments() {
     } catch (error) {
       console.error('导出失败', error);
       // 如果有 Element Plus
-      if (this.$message) this.$message.error('导出失败');
+      if (this.$message) this.$message.error('Export failed');
     } finally {
       btn.innerHTML = originalHtml;
       btn.disabled = false;
@@ -18425,7 +18425,7 @@ isSkillInProject(skillId) {
 
       // 核心判断：如果全局里也没有了，说明这是彻底删除，必须警告！
       if (!skill.isGlobal) {
-        this.$confirm('此操作将彻底删除该技能文件，是否继续？', 'Warning', { type: 'warning' })
+        this.$confirm('This will permanently delete the skill file. Continue?', 'Warning', { type: 'warning' })
           .then(execDelete).catch(() => {});
       } else {
         // 全局里还有，属于安全操作，静默删除
@@ -19000,7 +19000,7 @@ async handleRefreshSkills() {
     async handleCancelTask(taskId) {
         try {
             await fetch(`/v1/tasks/cancel/${taskId}`, { method: 'POST' });
-            showNotification(this.t('cancelSuccess') || '取消任务成功');
+            showNotification(this.t('cancelSuccess') || 'Task cancelled');
             this.fetchTasks();
         } catch (e) { console.error(e); }
     },
@@ -19014,7 +19014,7 @@ async handleRefreshSkills() {
             });
             
             if (res.ok) {
-                showNotification(this.t('deleteSuccess') || '删除任务成功');
+                showNotification(this.t('deleteSuccess') || 'Task deleted');
                 this.fetchTasks(); // 刷新列表
             } else {
                 console.error("Delete failed with status:", res.status);
@@ -19395,7 +19395,7 @@ closeTaskCenter() {
         if (res.success) {
           return resolve(res.data);
         } else {
-          this.$message?.error(this.t('readDirError') || '读取工作区目录失败: ' + res.error);
+          this.$message?.error(this.t('readDirError') || 'Failed to read workspace directory: ' + res.error);
           return resolve([]);
         }
       } catch (error) {
@@ -19411,7 +19411,7 @@ closeTaskCenter() {
         if (res.success) {
           return resolve(res.data);
         } else {
-          this.$message?.error(this.t('readDirError') || '读取子目录失败: ' + res.error);
+          this.$message?.error(this.t('readDirError') || 'Failed to read subdirectory: ' + res.error);
           return resolve([]);
         }
       } catch (error) {
@@ -19488,7 +19488,7 @@ closeTaskCenter() {
             }
         } catch (err) {
             console.error('Upload Error:', err);
-            this.$message.error('操作失败，请检查控制台日志');
+            this.$message.error('Operation failed. Check the console log.');
         }
     },
 
@@ -19568,7 +19568,7 @@ closeTaskCenter() {
       console.log("✅ 羁绊数据加载成功:", this.affectionDataList); // 调试日志，按 F12 可以在控制台看到
     } catch (error) {
       console.error("❌ 获取羁绊数据失败:", error);
-      if (this.$message) this.$message.error("无法加载羁绊数据，请检查后端是否正常运行");
+      if (this.$message) this.$message.error("Could not load relationship data. Check that the backend is running.");
     }
   },
 
@@ -19597,10 +19597,10 @@ closeTaskCenter() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      if (this.$message) this.$message.success("羁绊数据已同步");
+      if (this.$message) this.$message.success("Relationship data synchronized");
     } catch (error) {
       console.error("❌ 保存羁绊数据失败:", error);
-      if (this.$message) this.$message.error("羁绊数据保存失败");
+      if (this.$message) this.$message.error("Failed to save relationship data");
     }
   },
 
@@ -19640,7 +19640,7 @@ closeTaskCenter() {
       // 查重：防止用户名重复
       const exists = this.affectionDataList.find(item => item.userName === form.userName);
       if (exists) {
-        this.$message.warning("该用户名已存在！");
+        this.$message.warning("This username already exists");
         return;
       }
       // 追加新用户
@@ -19653,7 +19653,7 @@ closeTaskCenter() {
 
   // 5. 删除用户数据
   deleteAffectionData(userName) {
-    this.$confirm(this.t('confirmDelete') || '确认删除该用户数据吗？', this.t('warning') || '警告', {
+    this.$confirm(this.t('confirmDelete') || "Delete this user's data?", this.t('warning') || 'Warning', {
       confirmButtonText: this.t('confirm') || '确定',
       cancelButtonText: this.t('cancel') || '取消', 
       type: 'warning'
@@ -19703,7 +19703,7 @@ closeTaskCenter() {
         this.diaryEntries = (data && Array.isArray(data.entries)) ? data.entries : [];
       } catch (error) {
         console.error("获取日记数据失败:", error);
-        if (this.$message) this.$message.error("无法加载日记数据，请检查后端是否正常运行");
+        if (this.$message) this.$message.error("Could not load diary data. Check that the backend is running.");
       }
     },
 
@@ -19746,7 +19746,7 @@ closeTaskCenter() {
     },
 
     deleteDiaryEntryById(id) {
-      this.$confirm(this.t('confirmDelete') || '确认删除这篇日记吗？', this.t('warning') || '警告', {
+      this.$confirm(this.t('confirmDelete') || 'Delete this diary entry?', this.t('warning') || 'Warning', {
         confirmButtonText: this.t('confirm') || '确定',
         cancelButtonText: this.t('cancel') || '取消',
         type: 'warning'
@@ -19761,10 +19761,10 @@ closeTaskCenter() {
           this.diaryEntries = this.diaryEntries.filter(e => e.id !== id);
           if (this.diaryDetailEntry && this.diaryDetailEntry.id === id) this.closeDiaryDetail();
           this.fetchDiaryBooks();
-          if (this.$message) this.$message.success(this.t('deleted') || '已删除');
+          if (this.$message) this.$message.success(this.t('deleted') || 'Deleted');
         } catch (error) {
           console.error("删除日记失败:", error);
-          if (this.$message) this.$message.error("删除日记失败");
+          if (this.$message) this.$message.error("Failed to delete diary entry");
         }
       }).catch(() => {});
     },
@@ -19782,19 +19782,19 @@ closeTaskCenter() {
           case 'webSearch':
             this.webSearchSettings.enabled = true;
             await this.autoSaveSettings();
-            showNotification(this.t('diaryAutoTool_webSearch') || '联网搜索工具已被自动开启', 'success');
+            showNotification(this.t('diaryAutoTool_webSearch') || 'Web search tools enabled automatically', 'success');
             break;
 
           case 'knowledge':
             if (!this.knowledgeBases || this.knowledgeBases.length === 0) {
-              showNotification(this.t('diaryAutoTool_noKb') || '没有已配置的知识库，请先在知识库设置中添加', 'warning');
+              showNotification(this.t('diaryAutoTool_noKb') || 'No knowledge base configured. Add one in Knowledge Base settings.', 'warning');
               break;
             }
             if (!this.knowledgeBases.some(kb => kb.enabled)) {
               this.knowledgeBases[0].enabled = true;
             }
             await this.autoSaveSettings();
-            showNotification(this.t('diaryAutoTool_knowledge') || '知识库工具已被自动开启', 'success');
+            showNotification(this.t('diaryAutoTool_knowledge') || 'Knowledge base tools enabled automatically', 'success');
             break;
 
           case 'browserControl':
@@ -19807,12 +19807,12 @@ closeTaskCenter() {
               }
             }
             await this.autoSaveSettings();
-            showNotification(this.t('diaryAutoTool_browser') || '浏览器控制工具（内建 CDP）已被自动开启', 'success');
+            showNotification(this.t('diaryAutoTool_browser') || 'Built-in CDP browser tools enabled automatically', 'success');
             break;
 
           case 'smartHome':
             if (!this.HASettings.api_key) {
-              showNotification(this.t('diaryAutoTool_noHaKey') || '未配置 Home Assistant API Key，请先在智能家居设置中填写', 'warning');
+              showNotification(this.t('diaryAutoTool_noHaKey') || 'Configure a Home Assistant API key in Smart Home settings first', 'warning');
               this.diarySettings.actions[key].enabled = false;
               await this.autoSaveSettings();
               break;
@@ -19825,19 +19825,19 @@ closeTaskCenter() {
               body: JSON.stringify({ data: this.HASettings })
             });
             if (haResp.ok) {
-              showNotification(this.t('diaryAutoTool_smartHome') || '智能家居工具已被自动开启', 'success');
+              showNotification(this.t('diaryAutoTool_smartHome') || 'Smart home tools enabled automatically', 'success');
             } else {
               this.HASettings.enabled = false;
               this.diarySettings.actions[key].enabled = false;
               await this.autoSaveSettings();
               const errText = await haResp.text().catch(() => '');
-              showNotification(this.t('diaryAutoTool_smartHomeFail') || ('智能家居工具开启失败：' + (errText || '请检查 HA 配置')), 'error');
+              showNotification(this.t('diaryAutoTool_smartHomeFail') || ('Failed to enable smart home tools: ' + (errText || 'Check the Home Assistant configuration')), 'error');
             }
             break;
         }
       } catch (e) {
         console.error('[Diary] 自动开启工具失败:', e);
-        showNotification(this.t('diaryAutoTool_error') || ('开启对应工具失败: ' + (e.message || '未知错误')), 'error');
+        showNotification(this.t('diaryAutoTool_error') || ('Failed to enable tools: ' + (e.message || 'Unknown error')), 'error');
       }
     },
 
@@ -20211,14 +20211,14 @@ gotoAddExtension(){
         setTimeout(() => {
           if (this.isVTSStarting) {
             this.isVTSStarting = false;
-            showNotification('VTS 连接超时，请检查后端程序是否运行', 'warning', '连接超时');
+            showNotification('VTS connection timed out. Check that the backend is running.', 'warning', 'Connection timed out');
           }
         }, 10000);
       }
     } catch (e) {
       console.error("VTS 操作失败:", e);
       this.isVTSStarting = false;
-      showNotification('指令发送失败，请检查网络', 'error');
+      showNotification('Failed to send command. Check the network.', 'error');
     }
   },
   
@@ -20289,7 +20289,7 @@ gotoAddExtension(){
   // 2. 浏览目录 (调用 Electron 对话框)
   async browseDataDirectory() {
     if (!this.isElectron) {
-      showNotification('仅支持桌面端操作', 'warning');
+      showNotification('Available only in the desktop app', 'warning');
       return;
     }
     try {
@@ -20301,7 +20301,7 @@ gotoAddExtension(){
       }
     } catch (error) {
       console.error('选择目录出错:', error);
-      showNotification('选择目录失败', 'error');
+      showNotification('Failed to select directory', 'error');
     }
   },
 
@@ -20329,7 +20329,7 @@ gotoAddExtension(){
         showNotification(this.t('pathUpdateSuccess'), 'success');
         this.showRestartDialog = true; // 触发重启询问弹窗
       } else {
-        showNotification(data.detail || '修改失败', 'error');
+        showNotification(data.detail || 'Update failed', 'error');
       }
     } catch (error) {
       if (error !== 'cancel') showNotification(error.message, 'error');
@@ -20354,7 +20354,7 @@ gotoAddExtension(){
         this.showRestartDialog = true;
       }
     } catch (error) {
-      if (error !== 'cancel') showNotification('重置失败', 'error');
+      if (error !== 'cancel') showNotification('Reset failed', 'error');
     }
   },
 
@@ -20366,10 +20366,10 @@ gotoAddExtension(){
         // 它的底层调用的是 shell.openPath，会直接打开并进入该目录
         window.electronAPI.openPath(this.customDataPath);
       } else {
-        showNotification('仅支持桌面端操作', 'warning');
+        showNotification('Available only in the desktop app', 'warning');
       }
     } else {
-      showNotification('路径尚未加载', 'warning');
+      showNotification('Path has not loaded', 'warning');
     }
   },
 
@@ -20500,7 +20500,7 @@ gotoAddExtension(){
 
     async confirmAddAccount() {
       if (!this.newAccountDataPath) {
-        showNotification(this.t('pleaseSelectDataPath') || '请选择数据存储路径', 'warning');
+        showNotification(this.t('pleaseSelectDataPath') || 'Select a data storage path', 'warning');
         return;
       }
 
@@ -20513,7 +20513,7 @@ gotoAddExtension(){
         );
 
         if (result.success) {
-          showNotification(this.t('accountCreated') || '新账户创建成功', 'success');
+          showNotification(this.t('accountCreated') || 'Account created', 'success');
           this.showAddAccountDialog = false;
           this.newAccountName = '';
           this.newAccountDataPath = '';
@@ -20521,11 +20521,11 @@ gotoAddExtension(){
           this.newAccountSetAsDefault = false;
           await this.loadAccountList();
         } else {
-          showNotification(result.error || (this.t('accountCreateFailed') || '账户创建失败'), 'error');
+          showNotification(result.error || (this.t('accountCreateFailed') || 'Failed to create account'), 'error');
         }
       } catch (e) {
         console.error('创建账户失败:', e);
-        showNotification(this.t('accountCreateFailed') || '账户创建失败', 'error');
+        showNotification(this.t('accountCreateFailed') || 'Failed to create account', 'error');
       }
     },
 
@@ -20540,16 +20540,16 @@ gotoAddExtension(){
       try {
         const result = await window.electronAPI.accountsDelete(this.deleteAccountId, this.deleteAccountRemoveFolder);
         if (result.success) {
-          showNotification(this.t('accountDeleted') || '账户已删除', 'success');
+          showNotification(this.t('accountDeleted') || 'Account deleted', 'success');
           this.showDeleteAccountDialog = false;
           this.deleteAccountId = null;
           await this.loadAccountList();
         } else {
-          showNotification(result.error || (this.t('accountDeleteFailed') || '账户删除失败'), 'error');
+          showNotification(result.error || (this.t('accountDeleteFailed') || 'Failed to delete account'), 'error');
         }
       } catch (e) {
         console.error('删除账户失败:', e);
-        showNotification(this.t('accountDeleteFailed') || '账户删除失败', 'error');
+        showNotification(this.t('accountDeleteFailed') || 'Failed to delete account', 'error');
       }
     },
 
@@ -20564,13 +20564,13 @@ gotoAddExtension(){
       try {
         const result = await window.electronAPI.accountsRename(this.renameAccountId, this.renameAccountName);
         if (result.success) {
-          showNotification(this.t('accountRenamed') || '账户已重命名', 'success');
+          showNotification(this.t('accountRenamed') || 'Account renamed', 'success');
           this.showRenameAccountDialog = false;
           this.renameAccountId = null;
           this.renameAccountName = '';
           await this.loadAccountList();
         } else {
-          showNotification(result.error || (this.t('accountRenameFailed') || '重命名失败'), 'error');
+          showNotification(result.error || (this.t('accountRenameFailed') || 'Rename failed'), 'error');
         }
       } catch (e) {
         console.error('重命名失败:', e);
@@ -20581,10 +20581,10 @@ gotoAddExtension(){
       try {
         const result = await window.electronAPI.accountsSetDefault(accountId);
         if (result.success) {
-          showNotification(this.t('defaultAccountSet') || '默认账户已设置', 'success');
+          showNotification(this.t('defaultAccountSet') || 'Default account set', 'success');
           await this.loadAccountList();
         } else {
-          showNotification(result.error || (this.t('defaultAccountSetFailed') || '设置失败'), 'error');
+          showNotification(result.error || (this.t('defaultAccountSetFailed') || 'Failed to save setting'), 'error');
         }
       } catch (e) {
         console.error('设置默认账户失败:', e);
@@ -20595,9 +20595,9 @@ gotoAddExtension(){
       try {
         const result = await window.electronAPI.accountsLaunch(accountId);
         if (result.success) {
-          showNotification(this.t('accountLaunching') || '正在启动新实例...', 'success');
+          showNotification(this.t('accountLaunching') || 'Launching a new instance...', 'success');
         } else {
-          showNotification(result.error || (this.t('accountLaunchFailed') || '启动失败'), 'error');
+          showNotification(result.error || (this.t('accountLaunchFailed') || 'Startup failed'), 'error');
         }
       } catch (e) {
         console.error('启动账户失败:', e);
@@ -20610,7 +20610,7 @@ gotoAddExtension(){
         await new Promise(r => setTimeout(r, 200));
         const result = await window.electronAPI.accountsSwitch(accountId);
         if (!result.success) {
-          showNotification(result.error || (this.t('accountSwitchFailed') || '切换失败'), 'error');
+          showNotification(result.error || (this.t('accountSwitchFailed') || 'Switch failed'), 'error');
         }
       } catch (e) {
         console.error('切换账户失败:', e);
