@@ -11272,12 +11272,12 @@ code {
 .license-notice > .social-links { animation-delay: 0.25s; }
 .license-notice > .agreement-section { animation-delay: 0.30s; }
 
-/* 3. 核心：社交链接列表的瀑布流 (Staggered Links) */
+/* 3. Core: staggered social links (Staggered Links) */
 .social-links > .link-item {
   animation: cardPopIn 0.5s var(--ease-out-smooth) both;
 }
 
-/* 为 9 条社交链接设置阶梯延迟 */
+/* Set stepped delays for nine social links */
 .social-links > .link-item:nth-child(1) { animation-delay: 0.30s; }
 .social-links > .link-item:nth-child(2) { animation-delay: 0.35s; }
 .social-links > .link-item:nth-child(3) { animation-delay: 0.40s; }
@@ -11288,19 +11288,19 @@ code {
 .social-links > .link-item:nth-child(8) { animation-delay: 0.65s; }
 .social-links > .link-item:nth-child(9) { animation-delay: 0.70s; }
 
-/* 4. 交互加固：链接项悬停动效 */
+/* 4. Reinforce link item hover animation */
 .link-item {
   transition: all 0.3s var(--ease-out-smooth) !important;
   cursor: default;
 }
 
 .link-item:hover {
-  transform: translateX(10px) !important; /* 保持你原本的向右位移设计，但使用平滑曲线 */
+  transform: translateX(10px) !important; /* Retain original rightward movement with smooth curve */
   background-color: var(--el-color-primary-light-9) !important;
   box-shadow: var(--shadow-sm) !important;
 }
 
-/* 链接文字点击时的反馈 */
+/* Link text click feedback */
 .social-link:active {
   opacity: 0.7;
   transform: scale(0.98);
@@ -11311,21 +11311,21 @@ code {
    Settings Form & Items Advanced Motion
    ========================================= */
 
-/* 1. 表单容器整体：柔和滑入 */
+/* 1. Entire form container: gentle slide in */
 .settings-form {
   animation: pageSlideFadeIn 0.6s var(--ease-out-smooth) both;
 }
 
-/* 2. 工具项卡片：Q弹进场 */
+/* 2. Tool card: spring entry */
 .settings-form .tool-item {
   animation: cardPopIn 0.6s var(--ease-out-back) both;
   transition: all 0.3s var(--ease-out-smooth) !important;
 }
 
-/* 3. 内容区 (tool-content)：呼吸感进场 */
+/* 3. Content area (tool-content): gentle entry */
 .tool-content {
   animation: formContentSlideIn 0.5s var(--ease-out-smooth) both;
-  animation-delay: 0.1s; /* 稍微晚于表头出现 */
+  animation-delay: 0.1s; /* Appear slightly after header */
 }
 
 @keyframes formContentSlideIn {
@@ -11341,8 +11341,8 @@ code {
   }
 }
 
-/* 4. 核心：表单项 (el-form-item) 的序列化瀑布流 */
-/* 我们让每一个输入框行都有一个细微的阶梯式延迟 */
+/* 4. Core: staggered entry of form items (el-form-item) */
+/* Give each input row a small stepped delay */
 .settings-form .el-form-item {
   animation: cardPopIn 0.5s var(--ease-out-smooth) both;
 }
@@ -11353,24 +11353,24 @@ code {
 .settings-form .el-form-item:nth-child(4) { animation-delay: 0.30s; }
 .settings-form .el-form-item:nth-child(n+5) { animation-delay: 0.35s; }
 
-/* 5. 提示框 (el-alert) 进场优化 */
+/* 5. Improve alert (el-alert) entry */
 .settings-form .el-alert {
   animation: cardPopIn 0.5s var(--ease-out-smooth) both;
-  animation-delay: 0.4s; /* 最后出现提示，作为收尾 */
+  animation-delay: 0.4s; /* Show alert last to finish sequence */
 }
 
-/* 6. 物理交互增强：输入框聚焦时的微位移 */
+/* 6. Enhance physical interaction: slight input displacement on focus */
 .full-width-input .el-input__wrapper {
   transition: all 0.3s var(--ease-out-smooth) !important;
 }
 
 .full-width-input .el-input__wrapper.is-focus {
-  transform: translateX(4px); /* 聚焦时向右微移，产生“被选中”的指向感 */
-  box-shadow: -4px 0 0 var(--el-color-primary), /* 左侧侧边条线 */
+  transform: translateX(4px); /* Move slightly right on focus to indicate selection */
+  box-shadow: -4px 0 0 var(--el-color-primary), /* Left accent line */
               var(--el-box-shadow-light) !important;
 }
 
-/* 7. 物理反馈：点击整个工具项时的反馈 */
+/* 7. Physical feedback when clicking entire tool item */
 .tool-item:hover {
   border-color: var(--el-color-primary-light-7) !important;
   background-color: color-mix(in srgb, var(--el-color-primary) 2%, var(--el-bg-color)) !important;
@@ -11381,13 +11381,13 @@ code {
    Dashboard Adaptive Centering (The "Perfect" Fix)
    ========================================= */
 
-/* 1. 主容器：负责滚动和基础对齐 */
+/* 1. Main container: scrolling and base alignment */
 .dashboard-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   
-  /* 🌟 核心：不要使用 justify-content: center，否则会导致溢出裁剪 */
+  /* 🌟 Key: do not use justify-content: center, which can clip overflow */
   justify-content: flex-start; 
   
   height: 100%;
@@ -11395,33 +11395,33 @@ code {
   overflow-y: auto;
   overflow-x: hidden;
   
-  /* 给予一个顶部和底部的最小安全间距，防止顶到头 */
+  /* Provide minimum safe top and bottom gaps to avoid touching edges */
   padding: 40px 20px 60px 20px !important;
   box-sizing: border-box;
   
-  /* 平滑滚动 */
+  /* Smooth scrolling */
   scroll-behavior: smooth;
 }
 
-/* 2. Hero 区域：通过 margin-top: auto 实现自适应垂直居中 */
+/* 2. Hero area: adaptive vertical centering via margin-top: auto */
 .dashboard-hero {
   width: 100%;
   max-width: 760px;
   flex-shrink: 0;
   
-  /* 🌟 核心魔法：
-     1. margin-top: auto 会自动吃掉顶部的所有剩余空间
-     2. 配合下方的 margin-bottom: auto，会让整个内容组在有空间时完美居中
-     3. 设定一个最小间距，确保扩展极多时，对话框离顶部还有一段距离 */
+  /* 🌟 Key technique:
+     1. margin-top: auto consumes all remaining top space
+     2. Combined with margin-bottom: auto below, centers the entire content group when space permits
+     3. Set a minimum gap so dialog stays clear of top when many extensions exist */
   margin-top: auto; 
   margin-bottom: 24px;
   
-  /* 动画保持 */
+  /* Retain animation */
   animation: cardPopIn 0.7s var(--ease-out-smooth) both;
   animation-delay: 0.1s;
 }
 
-/* 3. 建议卡片网格：通过 margin-bottom: auto 配合 Hero 实现上下平分空间 */
+/* 3. Suggestion grid: use margin-bottom: auto with Hero to divide vertical space */
 .guide-grid {
   width: 100%;
   max-width: 760px;
@@ -11430,20 +11430,20 @@ code {
   justify-content: center;
   gap: 12px;
   
-  /* 🌟 核心：吃掉底部剩余空间 */
+  /* 🌟 Key: consume remaining bottom space */
   margin-bottom: auto; 
   
   height: auto;
 }
 
-/* 4. 优化：如果屏幕太矮（比如手机横屏或调小窗口），手动设置一个更小的顶部边距 */
+/* 4. Optimization: use smaller top margin manually for short screens (landscape phone or small window) */
 @media (max-height: 500px) {
   .dashboard-hero {
     margin-top: 10px !important;
   }
 }
 
-/* 5. 滚动条美化 (Mac 风格隐身滚动条) */
+/* 5. Scrollbar styling (Mac-style hidden scrollbar) */
 .dashboard-container::-webkit-scrollbar {
   width: 5px;
 }
@@ -11456,54 +11456,54 @@ code {
 }
 
 /* =========================================
-   🚨 修复：卡片防抖与交互稳定性优化
+   🚨 Fix card jitter and interaction stability
    ========================================= */
 
-/* 1. 悬停 (Hover) 优化：取消缩放，仅保留极其轻微的上浮，防止误触 */
+/* 1. Hover: remove scaling, retain very slight lift to avoid accidental clicks */
 .provider-card:hover, 
 .guide-card:hover, 
 .extension-card:hover, 
 .vendor-card:hover, 
 .tool-item:hover,
 .market-link-banner:hover {
-  transform: translateY(-2px) !important; /* 取消 scale(1.01)，减少上浮幅度到 2px */
+  transform: translateY(-2px) !important; /* Remove scale(1.01), reduce lift to 2px */
 }
 
-/* 2. 点击 (Active) 优化：彻底取消容器卡片的物理缩放 */
-/* 仅保留纯粹的按钮或允许整体缩放的非复合组件 */
+/* 2. Active: remove physical scaling of container cards */
+/* Retain only for standalone buttons or non-composite components that can scale as a whole */
 .provider-card:active, 
 .guide-card:active, 
 .extension-card:active, 
 .vendor-card:active, 
 .tool-item:active,
 .market-link-banner:active {
-  transform: none !important; /* 彻底禁止卡片在点击时形变 */
+  transform: none !important; /* Prevent card deformation on click entirely */
 }
 
-/* 3. 针对普通按钮的点击反馈：减小缩放幅度，确保焦点不偏移 */
+/* 3. Ordinary button click feedback: reduce scaling to keep focus stable */
 .el-button:active {
-  transform: scale(0.98) !important; /* 从 0.96 改为 0.98，保证微小点击感的同时不移位 */
+  transform: scale(0.98) !important; /* Change from 0.96 to 0.98 for slight click feedback without displacement */
 }
 
-/* 4. 卡片内右上角/操作区按钮的防抖隔离 */
+/* 4. Isolate upper-right/action buttons inside cards from jitter */
 .card-actions .el-button:hover,
 .btn-top-right .el-button:hover {
-  transform: none !important; /* 悬停卡片内按钮时不放大 */
-  background-color: var(--el-fill-color-dark) !important; /* 用颜色代替物理形变 */
+  transform: none !important; /* Do not enlarge buttons inside card on hover */
+  background-color: var(--el-fill-color-dark) !important; /* Use color rather than physical deformation */
 }
 
 .card-actions .el-button:active,
 .btn-top-right .el-button:active {
-  transform: scale(0.95) !important; /* 按钮自身的点击反馈独立，不影响父级卡片 */
+  transform: scale(0.95) !important; /* Button click feedback is independent of parent card */
 }
 
 
 /* =========================================
-   🚨 修复：移除动态列表的长延迟，解决添加卡片时的卡顿感
+   🚨 Fix: remove long dynamic-list delays to prevent lag when adding cards
    ========================================= */
 
-/* 彻底取消所有网格/列表元素的 CSS 排队等待时间 */
-/* 让元素在 Vue 渲染出 DOM 的瞬间立刻播放弹出动画，实现 0 延迟响应 */
+/* Remove CSS queue delays from all grid/list elements */
+/* Start pop-in animation immediately when Vue renders DOM, with zero delay */
 .provider-grid > div, 
 .guide-grid > div, 
 .plugins-grid > div,
@@ -11515,11 +11515,11 @@ code {
   animation-delay: 0s !important; 
 }
 
-/* 稍微缩短一下卡片的入场动画时间，让它感觉更干脆、响应更迅速 */
+/* Shorten card entry animation slightly for quicker response */
 @keyframes cardPopIn {
   0% { 
     opacity: 0; 
-    transform: translateY(15px) scale(0.95); /* 缩小了起始位移，减少浮夸感 */
+    transform: translateY(15px) scale(0.95); /* Reduce initial displacement for a subtler effect */
   }
   100% { 
     opacity: 1; 
@@ -11532,7 +11532,7 @@ code {
    Task Center Premium Styles
    ========================================= */
 
-/* 布局基础 */
+/* Base layout */
 .task-center-container {
     height: 100%;
     display: flex;
@@ -11552,7 +11552,7 @@ code {
     padding: 16px;
 }
 
-/* 详情摘要卡片 */
+/* Detail summary card */
 .summary-card-premium {
     background: var(--el-bg-color);
     border: 1px solid var(--el-border-color-lighter);
@@ -11586,7 +11586,7 @@ code {
     font-weight: 600;
 }
 
-/* 列表卡片 (对齐 extension-card) */
+/* List card (match extension-card) */
 .task-card-premium {
     background: var(--el-bg-color) !important;
     border: 1px solid var(--el-border-color-lighter) !important;
@@ -11629,20 +11629,20 @@ code {
     line-height: 1.5;
 }
 
-/* 日志气泡 (仿微信/iMessage 对话) */
+/* Log bubbles (instant-message conversation style) */
 .log-bubble {
     background: var(--el-bg-color-page);
     border: 1px solid var(--el-border-color-lighter);
     border-radius: 12px;
-    padding: 4px 12px !important; /* 压缩 markdown padding */
+    padding: 4px 12px !important; /* Reduce Markdown padding */
     font-size: 13px !important;
 }
 
-/* 结果浏览器布局 */
+/* Results browser layout */
 .result-browser-layout {
     display: flex;
     height: 70vh;
-    margin: -24px -28px; /* 抵消 el-dialog 默认内边距 */
+    margin: -24px -28px; /* Offset default el-dialog padding */
 }
 
 .result-nav-sidebar {
@@ -11682,7 +11682,7 @@ code {
     align-items: center;
 }
 
-/* 绝对居中的空状态 */
+/* Absolutely centered empty state */
 .empty-state-centered {
     display: flex;
     flex-direction: column;
@@ -11704,10 +11704,10 @@ code {
 .empty-desc { color: var(--el-text-color-secondary); font-size: 13px; margin-bottom: 24px; max-width: 200px; }
 
 /* ============================================================
-   🚀 对话历史侧边栏 - 完整功能修复版
+   🚀 Conversation history sidebar - full functionality fix
    ============================================================ */
 
-/* 1. 侧边栏主容器 */
+/* 1. Main sidebar container */
 .chat-history-sidebar {
     width: 280px !important;
     min-width: 280px !important;
@@ -11720,7 +11720,7 @@ code {
     transition: background-color 0.3s;
 }
 
-/* 2. 顶部新建按钮 */
+/* 2. Top new-conversation button */
 .chat-history-sidebar .history-header { padding: 16px 16px 8px 16px; }
 .chat-history-sidebar .new-chat-btn {
     width: 100%; height: 44px !important; border-radius: 22px !important;
@@ -11736,7 +11736,7 @@ code {
     color: var(--el-color-primary) !important;
 }
 
-/* 3. 搜索行：保持按钮紧凑 */
+/* 3. Search row: keep buttons compact */
 .chat-history-sidebar .history-search-row {
     display: flex; align-items: center; gap: 8px;
     padding: 0 16px 12px 16px;
@@ -11765,7 +11765,7 @@ code {
     color: var(--el-color-primary) !important;
 }
 
-/* 4. 列表项与单条删除按钮 */
+/* 4. List item and individual delete button */
 .chat-history-sidebar .history-list-container { flex: 1; overflow-y: auto; padding: 0 8px 20px 8px; }
 
 .chat-history-sidebar .history-item-row {
@@ -11773,7 +11773,7 @@ code {
     padding: 10px 12px; margin: 2px 4px; border-radius: 10px;
     cursor: pointer; color: var(--el-text-color-regular);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative; /* 方便删除按钮定位 */
+    position: relative; /* Position delete button relative to item */
 }
 
 .chat-history-sidebar .history-item-row:hover {
@@ -11789,19 +11789,19 @@ code {
 .chat-history-sidebar .item-icon { font-size: 14px; margin-right: 12px; opacity: 0.6; }
 .chat-history-sidebar .item-title { flex: 1; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 30px; }
 
-/* ✨ 单条记录删除按钮样式 */
+/* ✨ Individual record delete button style */
 .chat-history-sidebar .item-delete-btn {
     position: absolute; right: 10px;
     width: 26px !important; height: 26px !important;
     padding: 0 !important; border: none !important;
     background: transparent !important;
     color: var(--el-text-color-placeholder) !important;
-    opacity: 0; /* 默认隐藏 */
+    opacity: 0; /* Hidden by default */
     transition: all 0.2s ease;
 }
 
 .chat-history-sidebar .history-item-row:hover .item-delete-btn {
-    opacity: 1; /* 悬停显示 */
+    opacity: 1; /* Show on hover */
 }
 
 .chat-history-sidebar .item-delete-btn:hover {
@@ -11809,7 +11809,7 @@ code {
     background-color: color-mix(in srgb, var(--el-color-danger) 10%, transparent) !important;
 }
 
-/* 5. 全主题深色适配补丁 */
+/* 5. Dark adaptation patch for all themes */
 [data-theme="dark"] .chat-history-sidebar .el-input__inner,
 [data-theme="midnight"] .chat-history-sidebar .el-input__inner,
 [data-theme="neon"] .chat-history-sidebar .el-input__inner { background: transparent !important; color: var(--el-text-color-primary) !important; }
@@ -11818,10 +11818,10 @@ code {
 [data-theme="midnight"] .chat-history-sidebar .el-input__wrapper.is-focus,
 [data-theme="neon"] .chat-history-sidebar .el-input__wrapper.is-focus { background-color: var(--el-bg-color) !important; }
 
-/* 底部按钮切换修正 */
+/* Correct bottom toggle button */
 .history-btn:hover { background-color: var(--el-fill-color-light) !important; color: var(--el-color-primary) !important; }
 
-/* 6. 书签手柄保护结构 */
+/* 6. Bookmark handle protection structure */
 .chat-main-body {
     flex: 1; display: flex; min-width: 0; height: 100%;
     position: relative; overflow: visible !important; 
@@ -11829,38 +11829,38 @@ code {
 .browser-toggle-handle, .browser-toggle-handle--left { z-index: 1000 !important; }
 
 /* ============================================================
-   🌟 完美终极修复：丝滑双向展开/收起动画
+   🌟 Fix: smooth bidirectional expand/collapse animation
    ============================================================ */
 
-/* 1. 恢复正常的从左到右流式布局 */
+/* 1. Restore normal left-to-right flow layout */
 .chat-main-body {
     flex: 1; display: flex; min-width: 0; height: 100%;
     position: relative; overflow: visible !important; 
     justify-content: flex-start !important; 
 }
 
-/* 2. 强制覆盖 v-show，支持 CSS 动画 */
+/* 2. Override v-show to support CSS animation */
 .chat-area, .side-panel {
     display: flex !important; 
     overflow: hidden;
-    /* 仅对 width, margin, opacity 进行过渡，千万不要去过渡 flex 属性 */
+    /* Transition only width, margin and opacity; never transition flex */
     transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
                 margin 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
                 opacity 0.2s ease !important;
 }
 
-/* 拖拽时必须禁用动画，保证跟手不卡顿 */
+/* Disable animation during dragging for smooth direct response */
 .chat-wrapper.resizing .chat-area,
 .chat-wrapper.resizing .side-panel {
     transition: none !important;
 }
 
-/* 3. 定义收起状态：仅用 width: 0 触发动画 */
+/* 3. Collapsed state: trigger animation with width: 0 only */
 .chat-area.collapsed,
 .side-panel.collapsed {
     width: 0 !important;
     min-width: 0 !important;
-    /* 🚨 核心修复：我已经删掉了 flex: 0 0 0，防止瞬间坍塌导致瞬移！ */
+    /* 🚨 Key fix: removed flex: 0 0 0 to prevent instantaneous collapse and jumps */
     opacity: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -11868,25 +11868,25 @@ code {
     white-space: nowrap; 
 }
 
-/* 4. 修复展开时的宽度挤压与完美向左吸附 */
+/* 4. Fix width compression during expansion and left alignment */
 .chat-wrapper.collapsed-left .side-panel {
     margin-left: 12px !important;
-    /* 扣除左右各 12px 的 margin = 24px，保证变宽时刚好填满。
-       左侧平滑缩小，右侧平滑变宽，总宽度恒定 100%，视觉上完美向左生长！ */
+    /* Subtract 12px margins on each side (24px total) to fill space when expanding.
+       Left shrinks smoothly as right widens, maintaining 100% total width and expanding toward left. */
     width: calc(100% - 24px) !important;
 }
 
-/* 👇 彻底移除多余的 12px 留白，使其完美贴合右侧边缘 */
+/* 👇 Remove extra 12px gap to fit right edge */
 .chat-wrapper.collapsed-right .chat-area {
     margin-right: 0 !important;
     width: 100% !important;
 }
 
 /* ============================================================
-   🚀 历史对话侧边栏：丝滑展开/收起过渡动画
+   🚀 Conversation history sidebar: smooth expand/collapse transitions
    ============================================================ */
 
-/* 1. 侧边栏主容器 - 添加动画基础属性 */
+/* 1. Main sidebar container - base animation properties */
 .chat-history-sidebar {
     width: 280px !important;
     min-width: 280px !important;
@@ -11896,11 +11896,11 @@ code {
     flex-shrink: 0;
     z-index: 10;
     
-    /* ✨ 核心修复 1：强制 display 始终为 flex，覆盖 v-show 的 display: none */
+    /* ✨ Core fix 1: force display: flex, overriding v-show display: none */
     display: flex !important;
-    overflow: hidden !important; /* 关键：尺寸缩小时裁剪内部内容 */
+    overflow: hidden !important; /* Key: clip inner content when shrinking */
     
-    /* ✨ 核心修复 2：加入宽度和透明度的弹性过渡动画 (曲线与右侧面板保持一致) */
+    /* ✨ Core fix 2: elastic width and opacity transitions (same curve as right panel) */
     transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
                 min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
                 border-right-width 0.35s ease,
@@ -11908,34 +11908,34 @@ code {
                 background-color 0.3s !important;
 }
 
-/* 2. 定义收起状态 - 拦截 Vue 的 v-show="false" */
-/* 当点击隐藏时，我们用 CSS 截获 display:none，并将其转化为尺寸和透明度的动画 */
+/* 2. Define collapsed state - intercept Vue v-show="false" */
+/* When hidden, CSS intercepts display:none and animates size and opacity instead */
 body.has-custom-bg .chat-history-sidebar[style*="display: none"],
 .chat-history-sidebar[style*="display: none"] {
     width: 0 !important;
     min-width: 0 !important;
     opacity: 0 !important;
-    border-right-width: 0 !important; /* 去掉边框，防止完全收起时残留一条线 */
-    margin: 0 !important;             /* 强力清除折叠/隐藏状态下的外边距，彻底解决偏右问题 */
-    padding: 0 !important;            /* 清除内边距 */
-    pointer-events: none;             /* 收起后禁止点击穿透 */
+    border-right-width: 0 !important; /* Remove border to prevent residual line when fully collapsed */
+    margin: 0 !important;             /* Clear collapsed/hidden margins to fix rightward offset */
+    padding: 0 !important;            /* Clear padding */
+    pointer-events: none;             /* Prevent click interaction when collapsed */
 }
 
-/* 3. 防挤压保护：防止收起过程中，内部文字和按钮被挤压换行导致鬼畜闪烁 */
+/* 3. Prevent compression: avoid wrapping inner text/buttons during collapse, which causes flickering */
 .chat-history-sidebar .history-header,
 .chat-history-sidebar .history-search-row,
 .chat-history-sidebar .history-list-container {
-    /* 强制内部容器保持 280px 原宽，这样在父容器变窄时，它们只会像“拉窗帘”一样被裁剪，而不会变形 */
+    /* Keep inner container at original 280px width so narrowing parent clips it like a curtain rather than deforming it */
     width: 280px !important; 
     box-sizing: border-box;
 }
 
 
 /* ============================================================
-   🚀 扩展内页：悬浮返回/关闭按钮 (移动唤醒，静止消失)
+   🚀 Extension page: floating back/close button (show on movement, hide when idle)
    ============================================================ */
 
-/* 外层容器 */
+/* Outer container */
 .ext-iframe-wrapper {
     position: relative; 
     width: 100%; 
@@ -11944,7 +11944,7 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
     border-radius: 16px;
 }
 
-/* 边缘感应区：不挡住中间网页的点击，只感应左侧和顶部 20px */
+/* Edge sensing area: do not block clicks in center; sense only left and top 20px */
 .ext-edge-trigger {
     position: absolute;
     z-index: 998;
@@ -11956,7 +11956,7 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
     top: 0; left: 0; width: 20px; height: 100%; 
 }
 
-/* 悬浮按钮基础样式 */
+/* Floating button base styles */
 .ext-floating-close-btn {
     position: absolute;
     top: 16px;
@@ -11966,7 +11966,7 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
     height: 36px;
     border-radius: 50%; 
     
-    /* 磨砂玻璃质感 */
+    /* Frosted glass appearance */
     background-color: color-mix(in srgb, var(--el-bg-color) 70%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -11980,21 +11980,21 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
     color: var(--el-text-color-primary);
     font-size: 16px;
     
-    /* 默认隐藏状态 (向左侧微微缩回) */
+    /* Hidden by default (retract slightly left) */
     opacity: 0;
     transform: translateX(-15px) scale(0.9);
-    pointer-events: none; /* 隐藏时不可点击，防止误触 */
+    pointer-events: none; /* Not clickable when hidden to prevent accidental clicks */
     transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* 激活状态 (鼠标移动时 JS 加上 is-active 类) */
+/* Active state (JS adds is-active class on mouse movement) */
 .ext-floating-close-btn.is-active {
     opacity: 1;
     transform: translateX(0) scale(1);
     pointer-events: auto; 
 }
 
-/* 悬停与点击反馈 */
+/* Hover and click feedback */
 .ext-floating-close-btn:hover {
     background-color: var(--el-color-primary);
     color: #ffffff;
@@ -12008,7 +12008,7 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
     transition-duration: 0.1s;
 }
 
-/* iframe 圆角适配 */
+/* Adapt iframe corner radius */
 .side-panel-iframe {
     width: 100%; 
     height: 100%;
@@ -12017,10 +12017,10 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
 
 
 /* =========================================
-   供应商过滤与搜索区域 (无外框、占满整行版)
+   Provider filtering and search area (frameless, full-width row)
    ========================================= */
 
-/* 1. 工具栏外层容器：全宽水平行 */
+/* 1. Outer toolbar container: full-width horizontal row */
 .vendor-filter-tools {
   display: flex;
   flex-direction: row;
@@ -12035,7 +12035,7 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
   padding: 0;
 }
 
-/* 2. 搜索框深度美化：胶囊悬浮风格 */
+/* 2. Search box styling: floating pill */
 .search-input {
   flex: 1;
   max-width: 320px;
@@ -12062,10 +12062,10 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
               0 6px 16px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* 3. 分类标签组：Mac/iOS 风格的分段控制器 */
+/* 3. Category tabs: Mac/iOS-style segmented control */
 .category-tabs {
   flex-shrink: 0;
-  /* 只保留标签组自身的底槽背景 */
+  /* Retain only tab group's track background */
   background-color: color-mix(in srgb, var(--el-text-color-primary) 6%, transparent);
   padding: 4px;
   border-radius: 14px;
@@ -12095,13 +12095,13 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
   transform: scale(1);
 }
 
-/* 4. 无结果时的空状态插画对齐优化 */
+/* 4. Align empty-state illustration when no results */
 .vendor-select-list .el-empty {
   padding: 40px 0;
   --el-empty-text-color: var(--el-text-color-secondary);
 }
 
-/* 5. 移动端自适应布局压缩 */
+/* 5. Responsive mobile layout compression */
 @media (max-width: 680px) {
   .vendor-filter-tools {
     flex-direction: column;
@@ -12131,16 +12131,16 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
 
 /* =========================================
    Minimalist Process Blocks (Linear / Vercel Style)
-   极致克制：0阴影，0嵌套背景，极紧凑间距
+   Minimal styling: no shadow, no nested backgrounds, very compact spacing
    ========================================= */
 
-/* 1. 修改流程块的基础间距 */
+/* 1. Change process block base spacing */
 .sap-process-block {
     background-color: var(--el-fill-color-light); 
     border: 1px solid var(--el-border-color-lighter);
     border-radius: 8px;
     
-    /* 🌟 修改这里：原来是 8px 0，现在改为 14px 0 (稍微增加一点点上下呼吸感) */
+    /* 🌟 Change here: from 8px 0 to 14px 0 for slightly more vertical spacing */
     margin: 14px 0; 
     
     overflow: hidden;
@@ -12148,34 +12148,34 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
     box-shadow: none; 
 }
 
-/* 2. 新增：相邻流程块防散落 */
-/* 当两个流程块紧挨着时（例如“调用工具”下面紧接着“工具结果”），保持它们之间的紧凑感，避免被 14px 撑得太开 */
+/* 2. New: keep adjacent process blocks together */
+/* Keep consecutive process blocks (e.g. tool call followed by result) compact so 14px spacing does not separate them too far */
 .sap-process-block + .sap-process-block {
     margin-top: 6px;
 }
 
-/* 3. 新增：给纯文本层一点保护间距 */
-/* 防止内部的 Markdown 文本 `<p>` 标签的外边距被吞掉导致贴边 */
+/* 3. New: add protective spacing to plain text layer */
+/* Prevent inner Markdown paragraph margins from collapsing against edges */
 .a2ui-text-wrapper {
     margin: 4px 0;
 }
 
 /* ----------------------------------------------------
-   修复首尾元素的间距叠加问题
+   Fix overlapping spacing on first and last elements
 ---------------------------------------------------- */
-/* 1. 如果流程块是气泡里的第一个元素，去除顶部外边距，完美贴合气泡边缘 */
+/* 1. If process block is first element in bubble, remove top margin to fit bubble edge */
 .message-blocks-container > .sap-process-block:first-child,
 .markdown-body > .sap-process-block:first-child {
     margin-top: 0 !important;
 }
 
-/* 2. 如果流程块是气泡里的最后一个元素，去除底部外边距 */
+/* 2. If process block is last element in bubble, remove bottom margin */
 .message-blocks-container > .sap-process-block:last-child,
 .markdown-body > .sap-process-block:last-child {
     margin-bottom: 0 !important;
 }
 
-/* (顺便补充) 如果纯文本是第一个或最后一个元素，也确保它们不产生多余缝隙 */
+/* Also ensure plain text as first or last element does not add extra gaps */
 .message-blocks-container > .a2ui-text-wrapper:first-child {
     margin-top: 0 !important;
 }
@@ -12183,12 +12183,12 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
     margin-bottom: 0 !important;
 }
 
-/* --- 极简头部 --- */
+/* --- Minimal header --- */
 .sp-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    /* 极小 padding */
+    /* Minimal padding */
     padding: 8px 12px;
     font-size: 12px;
     font-weight: 500;
@@ -12196,35 +12196,35 @@ body.has-custom-bg .chat-history-sidebar[style*="display: none"],
     user-select: none;
 }
 
-/* 头部小图标：降低不透明度，不抢戏 */
+/* Small header icon: reduce opacity to keep it unobtrusive */
 .sp-header i {
     font-size: 12px;
     opacity: 0.8;
 }
 
-/* 头部特殊强调文字 (如工具名) */
+/* Special emphasized header text (e.g. tool name) */
 .sp-header span {
     color: var(--el-text-color-primary);
     font-family: 'Menlo', 'Monaco', monospace;
 }
 
-/* --- 取消套娃：内容区不再有自己的底色和边框 --- */
+/* --- Remove nested styling: content no longer has separate background and border --- */
 .sp-content {
-    /* 顶部 0 padding，让它和 header 贴紧 */
+    /* Zero top padding to sit close to header */
     padding: 0 12px 10px 12px;
     font-size: 13px;
     color: var(--el-text-color-regular);
     line-height: 1.5;
 }
 
-/* 移除推理文本中无用的段落边距 */
+/* Remove unnecessary paragraph margins in reasoning text */
 .sp-content p { margin: 0 0 6px 0; }
 .sp-content p:last-child { margin: 0; }
 
-/* 代码/日志文本：彻底融于背景 */
+/* Code/log text: blend into background */
 pre.sp-code, .sp-code {
     margin: 0;
-    padding: 0; /* 0 Padding，由外层父级提供边距 */
+    padding: 0; /* Zero padding; outer parent provides spacing */
     background: transparent !important;
     border: none !important;
     font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
@@ -12236,23 +12236,23 @@ pre.sp-code, .sp-code {
     overflow-y: auto;
 }
 
-/* 如果 pre 本身就是子级，补齐它应有的底边距 */
+/* If pre itself is child, restore its appropriate bottom margin */
 pre.sp-content.sp-code {
     padding: 0 12px 10px 12px;
 }
 
-/* 内滚动条极简化 */
+/* Simplify inner scrollbar */
 .sp-code::-webkit-scrollbar { width: 4px; height: 4px; }
 .sp-code::-webkit-scrollbar-thumb { background: var(--el-border-color); border-radius: 2px; }
 
-/* --- 5 种状态的高级单色点缀 (莫兰迪色系) --- */
-.type-reasoning .sp-header i { color: #8b5cf6; } /* 柔紫 */
-.type-call .sp-header i      { color: #3b82f6; } /* 柔蓝 */
-.type-result .sp-header i    { color: #10b981; } /* 柔绿 */
-.type-error .sp-header i     { color: #ef4444; } /* 柔红 */
-.type-approval .sp-header i  { color: #f59e0b; } /* 柔橙 */
+/* --- Five muted monochrome status accents (Morandi palette) --- */
+.type-reasoning .sp-header i { color: #8b5cf6; } /* Soft purple */
+.type-call .sp-header i      { color: #3b82f6; } /* Soft blue */
+.type-result .sp-header i    { color: #10b981; } /* Soft green */
+.type-error .sp-header i     { color: #ef4444; } /* Soft red */
+.type-approval .sp-header i  { color: #f59e0b; } /* Soft orange */
 
-/* --- 权限审批卡片特殊适配 --- */
+/* --- Permission approval card special adaptation --- */
 .type-approval .sp-text {
     font-size: 13px;
     margin-bottom: 8px;
@@ -12265,10 +12265,10 @@ pre.sp-content.sp-code {
     font-weight: 600;
 }
 
-/* 只有审批参数为了区分文本，给了一层微弱的内嵌框 */
+/* Only approval parameters get a subtle inset frame to distinguish text */
 .type-approval .sp-code-box {
     margin: 0 0 12px 0;
-    background-color: var(--el-bg-color); /* 凹陷感 */
+    background-color: var(--el-bg-color); /* Recessed appearance */
     padding: 8px 10px;
     border-radius: 6px;
     border: 1px solid var(--el-border-color-lighter);
@@ -12280,7 +12280,7 @@ pre.sp-content.sp-code {
     overflow-y: auto;
 }
 
-/* --- 极简交互按钮 --- */
+/* --- Minimal interaction buttons --- */
 .sp-actions {
     display: flex;
     justify-content: flex-end;
@@ -12299,28 +12299,28 @@ pre.sp-content.sp-code {
     font-family: var(--el-font-family);
 }
 
-/* 幽灵按钮 (拒绝) */
+/* Ghost button (deny) */
 .sp-btn.ghost { color: var(--el-text-color-secondary); }
 .sp-btn.ghost:hover { color: var(--el-color-danger); background: var(--el-fill-color-darker); }
 
-/* 边框按钮 (一直允许) */
+/* Outlined button (always allow) */
 .sp-btn.outline { border-color: var(--el-border-color); color: var(--el-text-color-regular); background: var(--el-bg-color); }
 .sp-btn.outline:hover { border-color: var(--el-color-primary); color: var(--el-color-primary); }
 
-/* 实心按钮 (允许一次) */
+/* Solid button (allow once) */
 .sp-btn.primary { background: var(--el-color-primary); color: #fff; border-color: var(--el-color-primary); }
 .sp-btn.primary:hover { opacity: 0.85; }
 
 .sp-btn:active { transform: scale(0.96); }
 
-/* 暗色模式防色差 */
+/* Prevent color contrast issues in dark mode */
 [data-theme="dark"] .sap-process-block, 
 [data-theme="midnight"] .sap-process-block,[data-theme="neon"] .sap-process-block {
     background-color: rgba(255, 255, 255, 0.03);
     border-color: rgba(255, 255, 255, 0.08);
 }
 
-/* 1. 在原来的 .sap-process-block 中，确保有 transition 属性 */
+/* 1. Ensure original .sap-process-block has transition property */
 .sap-process-block {
     background-color: var(--el-fill-color-light); 
     border: 1px solid var(--el-border-color-lighter);
@@ -12328,22 +12328,22 @@ pre.sp-content.sp-code {
     margin: 14px 0; 
     overflow: hidden;
     font-family: var(--el-font-family);
-    box-shadow: none; /* 默认状态保持干净扁平 */
+    box-shadow: none; /* Clean and flat default state */
     
-    /* 🌟 新增：添加平滑的物理弹性过渡 */
+    /* 🌟 New: add smooth elastic transition */
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
 }
 
-/* 2. 🌟 新增：极其克制的悬浮与阴影效果 */
+/* 2. 🌟 New: restrained lift and shadow */
 .sap-process-block:hover {
-    transform: translateY(-1px); /* 只向上浮动 1 像素，避免眼花 */
-    /* 双层柔和阴影：底层提供边缘轮廓，外层提供环境光柔和弥散，透明度极低 (0.04) */
+    transform: translateY(-1px); /* Lift only 1px to avoid visual distraction */
+    /* Two soft shadow layers: inner edge definition and diffuse ambient outer shadow at very low opacity (0.04) */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02); 
-    border-color: var(--el-border-color); /* 边框稍微加深一个色阶，让边缘更锐利 */
+    border-color: var(--el-border-color); /* Darken border slightly for sharper edge */
 }
 
-/* 3. 🌟 新增：暗色主题防脏补丁 */
-/* 暗色背景下阴影需要深一点才能看出来，边框给一点泛白感 */[data-theme="dark"] .sap-process-block:hover, 
+/* 3. 🌟 New: dark theme clarity patch */
+/* Dark backgrounds require deeper shadows for visibility and slightly lighter borders */[data-theme="dark"] .sap-process-block:hover, 
 [data-theme="midnight"] .sap-process-block:hover,
 [data-theme="neon"] .sap-process-block:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -12352,20 +12352,20 @@ pre.sp-content.sp-code {
 
 
 /* =========================================
-   极致版：书签多标签系统 (上下对齐 + 极小精致)
+   Compact multi-tab bookmark system (top/bottom alignment and small dimensions)
    ========================================= */
 
-/* 1. 侧边栏整体：向上提拉对齐，并向下补偿高度 */
+/* 1. Entire sidebar: raise to align top and compensate height below */
 .side-panel {
   background-color: transparent !important;
   border: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
   
-  /* 🌟 对齐魔法：向上拉 14px 保持顶边平行 */
+  /* 🌟 Alignment: raise 14px to keep top edges parallel */
   margin: -14px 12px 12px 0 !important; 
   
-  /* 🌟 补偿魔法：增加 14px 高度，把提上去的底边“拽”回来，实现底部平行 */
+  /* 🌟 Compensation: increase height 14px to restore bottom edge alignment */
   height: calc(100% + 14px) !important; 
   
   overflow: visible !important; 
@@ -12376,27 +12376,27 @@ pre.sp-content.sp-code {
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* 2. 极简书签栏外层：不再需要很高的生长空间 */
+/* 2. Minimal outer bookmark bar: no longer needs large expansion space */
 .vscode-tabs-header {
   display: flex;
   align-items: flex-end; 
-  gap: 3px;              /* 间距更精密 */
+  gap: 3px;              /* Tighter spacing */
   padding-left: 14px;    
   margin-bottom: -1px;   
   z-index: 10;
   position: relative;
   background: transparent !important;
-  min-height: 24px;      /* 🌟 极低的高度，减少干扰 */
+  min-height: 24px;      /* 🌟 Very low height to reduce interference */
   overflow-x: auto;
   scrollbar-width: none;
 }
 .vscode-tabs-header::-webkit-scrollbar { display: none; }
 
-/* 3. 极小精致书签本体 */
+/* 3. Compact bookmark itself */
 .vscode-tab {
   display: flex;
   align-items: center;
-  /* 🌟 极致尺寸：非激活状态仅 20px 高 */
+  /* 🌟 Compact size: inactive state only 20px high */
   height: 20px; 
   padding: 0 8px;
   
@@ -12404,9 +12404,9 @@ pre.sp-content.sp-code {
   color: var(--el-text-color-regular);
   border: 1px solid var(--el-border-color-lighter);
   border-bottom: none;
-  border-radius: 6px 6px 0 0; /* 圆角更细腻 */
+  border-radius: 6px 6px 0 0; /* Finer rounded corners */
   
-  /* 文字更小，更像专业工具 */
+  /* Smaller text for a professional tool appearance */
   font-size: 11px; 
   letter-spacing: 0.2px;
   cursor: pointer;
@@ -12415,22 +12415,22 @@ pre.sp-content.sp-code {
   max-width: 120px;
 }
 
-/* 4. 激活态书签：仅微微拔高，与面板无缝融合 */
+/* 4. Active bookmark: slightly taller, blends into panel */
 .vscode-tab.active {
   background-color: var(--el-bg-color); 
   color: var(--el-color-primary);
   font-weight: 600;
-  /* 🌟 激活态高度控制在 26px，既有区分度又不突兀 */
+  /* 🌟 Active height 26px, distinct without being obtrusive */
   height: 26px; 
   border-color: var(--el-border-color-lighter);
   
-  /* 极细的顶部装饰线 */
+  /* Very thin top accent line */
   box-shadow: inset 0 2px 0 var(--el-color-primary); 
   z-index: 2;
   padding-bottom: 1px;
 }
 
-/* 5. 内部元素尺寸压缩 */
+/* 5. Reduce internal element sizes */
 .vscode-tab .tab-icon { 
   font-size: 11px; 
   opacity: 0.7; 
@@ -12448,7 +12448,7 @@ pre.sp-content.sp-code {
   flex: 1;
 }
 
-/* 6. 极致微小的关闭按钮 */
+/* 6. Very small close button */
 .vscode-tab .tab-close {
   display: flex;
   align-items: center;
@@ -12468,12 +12468,12 @@ pre.sp-content.sp-code {
   color: var(--el-color-danger);
 }
 
-/* 7. 白色主体面板容器：恢复 100% 宽度，并在提拉后依然稳健 */
+/* 7. White main panel container: restore 100% width and remain stable after raising */
 .side-panel-body-container {
   background-color: var(--el-bg-color); 
   border-radius: 12px !important; 
   border: 1px solid var(--el-border-color-lighter);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06); /* 阴影更轻柔，符合精致感 */
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06); /* Softer shadow for refined appearance */
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -12483,10 +12483,10 @@ pre.sp-content.sp-code {
   width: 100% !important;
 }
 
-/* 修复扩展列表里的卡片标题，防止因为精致化导致按钮覆盖文字 */
+/* Fix extension list card title to prevent buttons overlapping text */
 .extension-info h3.ext-title {
   padding-right: 90px !important;
-  font-size: 14px !important; /* 字体稍微调小一点 */
+  font-size: 14px !important; /* Slightly smaller font */
 }
 
 @media (max-width: 768px) {
@@ -12503,7 +12503,7 @@ pre.sp-content.sp-code {
     display: none;
   }
   
-  /* 完全清除左右缩进带来的偏左问题 */
+  /* Remove side indentation to fix leftward offset */
   .chat-wrapper.collapsed-right .chat-area,
   .chat-wrapper.collapsed-left .side-panel,
   .chat-area,
@@ -12521,10 +12521,10 @@ pre.sp-content.sp-code {
 
 
 /* ============================================================
-   桌面端侧边栏截断 & 展开按钮靠右问题
+   Desktop sidebar clipping and right-aligned expand button issue
    ============================================================ */
 
-/* 1. 撤销上一个补丁对桌面端的误伤 (解除全局锁定) */
+/* 1. Undo previous patch's unintended desktop effect (remove global lock) */
 @media (min-width: 769px) {
   html, body {
     position: static !important;
@@ -12535,19 +12535,19 @@ pre.sp-content.sp-code {
   }
 }
 
-/* 2. 修复侧边栏顶部的书签被截断：放弃负边距，采用安全内部排版 */
+/* 2. Fix clipped top sidebar bookmarks: use safe internal layout instead of negative margins */
 .side-panel {
-  margin: 12px 12px 12px 0 !important; /* 去掉之前的负边距，回归正常 */
-  height: calc(100% - 24px) !important; /* 恢复正常高度 */
+  margin: 12px 12px 12px 0 !important; /* Remove previous negative margins and restore normal layout */
+  height: calc(100% - 24px) !important; /* Restore normal height */
   overflow: visible !important; 
 }
 
 .vscode-tabs-header {
   margin-top: 0 !important; 
-  margin-bottom: -1px !important; /* 紧紧贴合下方主体面板 */
+  margin-bottom: -1px !important; /* Fit tightly against main panel below */
 }
 
-/* 保证收起时严格隐藏，解决视觉残留 */
+/* Ensure fully hidden when collapsed to eliminate visual residue */
 .side-panel.collapsed {
   overflow: hidden !important;
   opacity: 0 !important;
@@ -12555,30 +12555,30 @@ pre.sp-content.sp-code {
   margin: 0 !important;
 }
 
-/* 3. 修复侧边栏收起时的“书签按钮”（展开把手）过于靠边的问题 */
+/* 3. Fix collapsed sidebar bookmark/expand handle too close to edge */
 .resizer-collapsed-right {
-  right: 0px !important; /* 离开屏幕绝对右边缘，预留呼吸空间 */
+  right: 0px !important; /* Intended spacing from absolute right screen edge */
 }
 .resizer-collapsed-left {
-  left: 0px !important;  /* 左侧也同理 */
+  left: 0px !important;  /* Same for left */
 }
 
-/* 既然离开了边缘，干脆把展开按钮升级为更圆润的“悬浮胶囊” */
+/* With edge spacing, use a more rounded floating pill expand button */
 .browser-toggle-handle, 
 .browser-toggle-handle--left {
-  border-radius: 12px !important; /* 变成全圆角 */
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important; /* 增加悬浮阴影 */
+  border-radius: 12px !important; /* Fully rounded corners */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important; /* Add floating shadow */
 }
 
 /* ============================================================
-   📱 移动端防滚动 (限制仅在手机端生效，绝对安全)
+   📱 Mobile scroll lock (mobile only)
    ============================================================ */
 @media (max-width: 768px) {
   html, body {
     height: 100% !important;
     height: 100dvh !important;
     width: 100vw !important;
-    position: fixed !important; /* 仅在手机端锁死屏幕，消灭橡皮筋拖拽 */
+    position: fixed !important; /* Lock screen only on phones to eliminate rubber-band dragging */
     overflow: hidden !important;
   }
   .el-main, .chat-wrapper {
@@ -12587,33 +12587,33 @@ pre.sp-content.sp-code {
   .messages-container, .side-panel-scroll, .history-list-container {
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch; /* 保持 iOS 丝滑滚动体验 */
+    -webkit-overflow-scrolling: touch; /* Preserve smooth iOS scrolling */
   }
 }
 
 
 .page {
   height: 100%;
-  overflow-y: auto;            /* 保持可滚动 */
-  scrollbar-width: none;       /* Firefox 隐藏滚动条 */
-  -ms-overflow-style: none;    /* IE/Edge 隐藏滚动条 */
+  overflow-y: auto;            /* Remain scrollable */
+  scrollbar-width: none;       /* Firefox: hide scrollbar */
+  -ms-overflow-style: none;    /* IE/Edge: hide scrollbar */
 }
 .page::-webkit-scrollbar {
-  display: none;               /* Chrome/Safari 隐藏滚动条 */
+  display: none;               /* Chrome/Safari: hide scrollbar */
 }
 
 .chat-area,
 .side-panel {
-  /* 将原本写死的 flex-shrink: 0 改为 1，允许 Flexbox 自动消化超出的那 28px */
+  /* Change fixed flex-shrink: 0 to 1 so Flexbox absorbs extra 28px */
   flex-shrink: 1 !important; 
 }
 
 
-/* 折叠的工具块：去掉内容，标题可点击，保持原块样式 */
+/* Collapsed tool block: remove content, make header clickable, retain original block styling */
 .sap-process-block.collapsed-tool-block {
     cursor: pointer;
     transition: all 0.2s ease;
-    padding: 0; /* 去除内边距，只靠 sp-header 撑起 */
+    padding: 0; /* Remove padding; let sp-header determine height */
 }
 .sap-process-block.collapsed-tool-block > .sp-header {
     padding: 8px 12px;
@@ -12623,7 +12623,7 @@ pre.sp-content.sp-code {
     border-color: var(--el-color-primary-light-5);
 }
 
-/* 确保侧边栏内的卡片有良好的显示 */
+/* Ensure cards display well inside sidebar */
 .tool-detail-view .extension-card {
     background-color: var(--el-bg-color) !important;
     border: 1px solid var(--el-border-color-lighter) !important;
@@ -12631,7 +12631,7 @@ pre.sp-content.sp-code {
 }
 
 
-/* 侧边栏工具详情容器 */
+/* Sidebar tool details container */
 .tool-detail-view {
     display: flex;
     flex-direction: column;

@@ -478,3 +478,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Main stylesheet English comment pass 6
 
 - Parent 81256823076caf95801fe30802681ab8d910bf03. Translate 250 comment lines covering PTT, model status, trees, media attachments, dashboard, motion and dialog styling. Non-comment CSS byte-identical; line count unchanged; 400 flagged lines remain. No runtime changes. CI and Windows visual validation pending; revert for rollback.
+
+## 2026-11-26 — Main stylesheet English comment pass 7
+
+- Parent 516a02e9a38ce68b03426f793302aebb8f6a5086. Translate 200 comment lines covering form motion, history, provider search, permission cards, bookmark tabs and mobile layout. Translate obsolete regional messaging comparison to generic instant-message style. Non-comment CSS byte-identical; line count unchanged; 200 flagged lines remain. CI and Windows visual validation pending; revert for rollback.
