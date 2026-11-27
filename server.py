@@ -477,6 +477,8 @@ from py.get_setting import EXT_DIR, IS_DOCKER, SKILLS_DIR, _copy_default_skills,
 from py.llm_tool import get_image_base64,get_image_media_type
 from py.local_context import (capture_text_history, direct_local_endpoint,
                               expand_local_text_history, local_context_window)
+from py.message_history import (ContextHistoryError, bounded_dialogue,
+                                normalize_tool_history, select_compressed_dialogue)
 timetamp = time.time()
 log_path = os.path.join(LOG_DIR, f"backend_{timetamp}.log")
 
@@ -1838,7 +1840,9 @@ def _build_group_memory_prompt(group: dict, memories: list[dict]) -> str:
 def _trim_request_messages(messages: List[Dict], recent_count: int = 12) -> List[Dict]:
     system_messages = [copy.deepcopy(m) for m in messages if m.get("role") == "system"]
     dialog_messages = [copy.deepcopy(m) for m in messages if m.get("role") != "system"]
-    retained = dialog_messages[-recent_count:]
+    retained = bounded_dialogue(dialog_messages, recent_count)
+    if not system_messages and not retained:
+        raise ContextHistoryError("No usable messages remain in the request.")
     if len(retained) < len(dialog_messages):
         # Counts and role flags only: never log the discarded conversation or tool output.
         logging.getLogger("app").info(
@@ -3078,94 +3082,9 @@ def ensure_thinking_fields(messages):
     return messages
 
 def sanitize_tool_calls(messages: list) -> list:
-    """
-    Final fallback: ensure each assistant message containing tool_calls
-    is followed by a matching number of tool messages with corresponding tool_call_id values.
-    
-    - If content is empty and a tool response is missing, remove the assistant message.
-    - If content is nonempty and a tool response is missing, remove tool_calls but keep the text.
-    - Remove orphaned tool messages without corresponding assistant tool_calls.
-    """
-    if not messages:
-        return messages
+    """Final request-only fallback for incomplete or orphaned tool batches."""
+    return normalize_tool_history(messages)
 
-    # Normalize to an easily processed format
-    msgs = []
-    for m in messages:
-        if isinstance(m, dict):
-            msgs.append(m.copy())
-        else:
-            # Convert to dictionaries if necessary
-            msgs.append(m)
-
-    i = 0
-    while i < len(msgs):
-        msg = msgs[i]
-        role = msg.get("role")
-        
-        if role == "assistant" and msg.get("tool_calls"):
-            # Collect expected tool_call_id values from this assistant message
-            expected_ids = {tc["id"] for tc in msg["tool_calls"]}
-            
-            # Find consecutive tool messages immediately following it
-            j = i + 1
-            tool_msgs = []
-            while j < len(msgs) and msgs[j].get("role") == "tool":
-                tool_msgs.append(msgs[j])
-                j += 1
-            
-            # Check for missing results
-            found_ids = {tm["tool_call_id"] for tm in tool_msgs if "tool_call_id" in tm}
-            missing_ids = expected_ids - found_ids
-            
-            if missing_ids:
-                # Check whether the assistant has actual text content
-                content = msg.get("content")
-                has_text = bool(content and str(content).strip())
-                
-                if has_text:
-                    # Keep text and remove tool_calls
-                    msgs[i]["tool_calls"] = None
-                    # Remove the now-orphaned tool messages found after this assistant message
-                    del msgs[i+1:j]  # Delete all tool messages from i+1 through j-1
-                    print(f"[Sanitizer] Removing assistant tool_calls and associated tool messages while retaining text. Missing IDs: {missing_ids}")
-                else:
-                    # Without substantive content, remove this assistant message and its invalid tool messages
-                    del msgs[i]        # Remove the assistant message itself
-                    # Deleting i shifts j back one position; recalculate
-                    # Remove the tool messages that originally followed it
-                    # i now points to the original i+1, so delete from i through j-1
-                    del msgs[i:j-1]    # Adjust the slice length because i now points to the original i+1
-                    print(f"[Sanitizer] Removing empty assistant tool-call message and subsequent orphaned tool messages. Missing IDs: {missing_ids}")
-                    # Since i was deleted, keep the pointer at the current position
-                    continue
-            else:
-                # All tool_call_id values were found
-                # Skip these tool messages and continue checking
-                i = j  # Advance past the tool messages
-                continue
-        
-        elif role == "tool":
-            # Check whether this tool message has preceding assistant tool_calls
-            # Find the nearest preceding assistant message
-            k = i - 1
-            found = False
-            while k >= 0:
-                if msgs[k].get("role") == "assistant" and msgs[k].get("tool_calls"):
-                    tids = {tc["id"] for tc in msgs[k]["tool_calls"]}
-                    if msg.get("tool_call_id") in tids:
-                        found = True
-                    break
-                k -= 1
-            if not found:
-                # Remove an orphaned tool message
-                del msgs[i]
-                print(f"[Sanitizer] Removing orphaned tool message: {msg.get('tool_call_id')}")
-                continue
-        
-        i += 1
-
-    return msgs
 
 async def heartbeat_wrapper(gen, interval=90):
     """Wraps an async generator to yield SSE heartbeat comments periodically,
@@ -3452,67 +3371,11 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     keep_indices.add(i)
                 
                 # Build the initial compressed list
-                compressed_dialog = [dialog_msgs[i] for i in sorted(list(keep_indices))]
+                compressed_dialog = select_compressed_dialogue(dialog_msgs, keep_indices)
                 chat_messages = sys_msgs + compressed_dialog
                 print(f"[Context] Compressed to {len(chat_messages)} msgs.")
 
-        final_messages = []
-        pending_tool_call_ids = set()
-
-        for msg in chat_messages:
-            role = get_role(msg)
-            
-            if role == "tool":
-                t_id = msg.get("tool_call_id") if isinstance(msg, dict) else getattr(msg, "tool_call_id", None)
-                # Discard tool messages not matching a pending response ID
-                if t_id and t_id in pending_tool_call_ids:
-                    final_messages.append(msg)
-                    pending_tool_call_ids.remove(t_id) # Remove the matched ID
-                else:
-                    print(f"[Sanitizer] Discarding orphaned tool message: {t_id}")
-                    continue
-            
-            elif role == "assistant":
-                tcs = get_tcs(msg)
-                if tcs:
-                    # This message initiates a tool call
-                    # Store it and record the expected response IDs
-                    current_tcs_ids = {tc.get("id") if isinstance(tc, dict) else tc.id for tc in tcs}
-                    final_messages.append(msg)
-                    for tid in current_tcs_ids: pending_tool_call_ids.add(tid)
-                else:
-                    # Ordinary assistant reply
-                    final_messages.append(msg)
-            
-            else:
-                # Pass user and system messages through
-                final_messages.append(msg)
-
-        # Final reverse check for assistant tool_calls without subsequent tool messages
-        # Remove those tool_calls or the entire message as appropriate
-        # Keep message text but remove tool_calls to prevent API errors
-        while final_messages:
-            last_msg = final_messages[-1]
-            tcs = get_tcs(last_msg)
-            # If the last assistant message requests tools without subsequent responses
-            if tcs and any( ( (tc.get("id") if isinstance(tc, dict) else tc.id) in pending_tool_call_ids ) for tc in tcs ):
-                # Remove tool_calls but keep text if present
-                # Otherwise remove the entire message
-                content = last_msg.get("content") if isinstance(last_msg, dict) else getattr(last_msg, "content", "")
-                if content:
-                    if isinstance(last_msg, dict):
-                        last_msg["tool_calls"] = None
-                    else:
-                        setattr(last_msg, "tool_calls", None)
-                    print("[Sanitizer] Removing incomplete trailing tool_calls")
-                    break # Finished
-                else:
-                    final_messages.pop()
-                    print("[Sanitizer] Removing empty trailing orphaned tool-call message")
-            else:
-                break
-
-        request.messages = final_messages
+        request.messages = sanitize_tool_calls(chat_messages)
         request.messages = ensure_thinking_fields(request.messages)
         # =========================================================================
         images = await images_in_messages(request.messages,fastapi_base_url)
@@ -5815,67 +5678,11 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     keep_indices.add(i)
                 
                 # Build the initial compressed list
-                compressed_dialog = [dialog_msgs[i] for i in sorted(list(keep_indices))]
+                compressed_dialog = select_compressed_dialogue(dialog_msgs, keep_indices)
                 chat_messages = sys_msgs + compressed_dialog
                 print(f"[Context] Compressed to {len(chat_messages)} msgs.")
 
-        final_messages = []
-        pending_tool_call_ids = set()
-
-        for msg in chat_messages:
-            role = get_role(msg)
-            
-            if role == "tool":
-                t_id = msg.get("tool_call_id") if isinstance(msg, dict) else getattr(msg, "tool_call_id", None)
-                # Discard tool messages not matching a pending response ID
-                if t_id and t_id in pending_tool_call_ids:
-                    final_messages.append(msg)
-                    pending_tool_call_ids.remove(t_id) # Remove the matched ID
-                else:
-                    print(f"[Sanitizer] Discarding orphaned tool message: {t_id}")
-                    continue
-            
-            elif role == "assistant":
-                tcs = get_tcs(msg)
-                if tcs:
-                    # This message initiates a tool call
-                    # Store it and record the expected response IDs
-                    current_tcs_ids = {tc.get("id") if isinstance(tc, dict) else tc.id for tc in tcs}
-                    final_messages.append(msg)
-                    for tid in current_tcs_ids: pending_tool_call_ids.add(tid)
-                else:
-                    # Ordinary assistant reply
-                    final_messages.append(msg)
-            
-            else:
-                # Pass user and system messages through
-                final_messages.append(msg)
-
-        # Final reverse check for assistant tool_calls without subsequent tool messages
-        # Remove those tool_calls or the entire message as appropriate
-        # Keep message text but remove tool_calls to prevent API errors
-        while final_messages:
-            last_msg = final_messages[-1]
-            tcs = get_tcs(last_msg)
-            # If the last assistant message requests tools without subsequent responses
-            if tcs and any( ( (tc.get("id") if isinstance(tc, dict) else tc.id) in pending_tool_call_ids ) for tc in tcs ):
-                # Remove tool_calls but keep text if present
-                # Otherwise remove the entire message
-                content = last_msg.get("content") if isinstance(last_msg, dict) else getattr(last_msg, "content", "")
-                if content:
-                    if isinstance(last_msg, dict):
-                        last_msg["tool_calls"] = None
-                    else:
-                        setattr(last_msg, "tool_calls", None)
-                    print("[Sanitizer] Removing incomplete trailing tool_calls")
-                    break # Finished
-                else:
-                    final_messages.pop()
-                    print("[Sanitizer] Removing empty trailing orphaned tool-call message")
-            else:
-                break
-
-        request.messages = final_messages
+        request.messages = sanitize_tool_calls(chat_messages)
         request.messages = ensure_thinking_fields(request.messages)
         # =========================================================================
 
@@ -7037,7 +6844,13 @@ async def chat_endpoint(request: ChatRequest, fastapi_request: Request):
         local_history = capture_text_history(
             request.messages, local_context_window(os.environ.get("SAP_LOCAL_CONTEXT_WINDOW"))
         )
-    await _apply_group_memory_context(request)
+    try:
+        await _apply_group_memory_context(request)
+    except ContextHistoryError as exc:
+        return JSONResponse(
+            status_code=400,
+            content={"error": {"message": str(exc), "type": "invalid_request_error", "code": 400}}
+        )
 
     if model == 'super-model':
         current_settings = await load_settings()

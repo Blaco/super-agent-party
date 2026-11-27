@@ -69,3 +69,7 @@ Chat streaming and persistence remain KEEP. The inherited 12-entry request cap i
 ## Initial local context expansion — 2026-11-26
 
 Chat remains KEEP. Opt-in local text history expansion now works at the initial main-model request boundary when the literal loopback endpoint, message shape and budget checks pass. No changes to saved conversations, character cards or cloud request scope. Existing tool/media/auxiliary paths retain their old behavior pending further work. Full CI and actual Windows/TabbyAPI tests pending.
+
+## Tool-chain request integrity — 2026-11-26
+
+Chat and tools remain KEEP. Both backend preparation paths now share contiguous call/result validation; active-turn preservation is limited to the existing disclosure window. Invalid historical tool metadata/results are removed from the outbound request, not saved history. Oversized or malformed active turns are explicitly rejected. Frontend resume compatibility and local larger tool windows require separate work.

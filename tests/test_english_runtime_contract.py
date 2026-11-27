@@ -18,12 +18,16 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         tree = ast.parse(source, filename="server.py")
         helper = next(node for node in tree.body
                       if isinstance(node, ast.FunctionDef) and node.name == "_trim_request_messages")
-        scope = {"copy": copy, "logging": logging, "List": List, "Dict": Dict}
+        import runpy
+        history = runpy.run_path(str(ROOT / "py/message_history.py"))
+        scope = {"copy": copy, "logging": logging, "List": List, "Dict": Dict,
+                 "bounded_dialogue": history["bounded_dialogue"],
+                 "ContextHistoryError": history["ContextHistoryError"]}
         exec(compile(ast.Module(body=[helper], type_ignores=[]), "server.py", "exec"), scope)
         trim = scope["_trim_request_messages"]
-        messages = [{"role": "system", "content": "private persona"},
-                    {"role": "user", "content": "private original question"}]
-        messages += [{"role": "tool", "content": "private tool result"} for _ in range(12)]
+        messages = [{"role": "system", "content": "private persona"}]
+        messages += [{"role": "user" if i % 2 == 0 else "assistant",
+                      "content": "private message " + str(i)} for i in range(13)]
         original = copy.deepcopy(messages)
         with self.assertLogs("app", level="INFO") as logs:
             result = trim(messages)
@@ -32,10 +36,14 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         self.assertIsNot(result[0], messages[0])
         line = " ".join(logs.output)
         self.assertIn("dialog=13 retained=12 dropped=1", line)
-        self.assertIn("user_retained=False starts_with_tool=True", line)
+        self.assertIn("user_retained=True starts_with_tool=False", line)
         self.assertNotIn("private", line)
         with self.assertNoLogs("app", level="INFO"):
             self.assertEqual(trim(messages[:2]), messages[:2])
+        oversized = [{"role": "user", "content": "current question"}] + [
+            {"role": "assistant", "content": "reply"} for _ in range(12)]
+        with self.assertRaises(history["ContextHistoryError"]):
+            trim(oversized)
 
     def test_opt_in_local_text_history_budget_and_boundaries(self):
         import copy

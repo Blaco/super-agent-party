@@ -64,6 +64,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_legacy_bot_removal.py' -v
       - name: English-only runtime contract
         run: python -m unittest discover -s tests -p 'test_english_runtime_contract.py' -v
+      - name: Conversation message-chain integrity tests
+        run: python -m unittest discover -s tests -p 'test_message_history.py' -v
       - name: English delegation, task and relationship modules
         run: python -m unittest discover -s tests -p 'test_english_delegation_modules.py' -v
       - name: Check Python syntax in edited modules

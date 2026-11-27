@@ -246,3 +246,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Experimental local context expansion checkpoint
 
 - Opt-in plain-text initial main-model context restoration implemented at the final request boundary. Actual and configured literal loopback endpoint must match; expanded request uses direct HTTP with no proxy or redirects. Budget includes prepared prompt and reserves output/headroom. Existing 12-entry behavior remains default and applies to cloud, tools, media and auxiliary paths. README documents the developer environment variable. Unit regression coverage added; live inference and full CI pending. Next: complete tool-chain integrity and provider-specific tokenizer/permissions before general context expansion or summaries.
+
+## Request history integrity checkpoint
+
+- Centralize request-only tool history validation and preserve the latest user turn during bounded trimming and configured round compression. Do not widen the inherited pre-provider 12-entry disclosure window. Historical invalid batches are pruned; oversized or malformed active requests fail explicitly (HTTP 400). Eight isolated regression tests passed; source CI and actual resume/approval/provider tests pending. Frontend fallback reconstruction, nonstreaming parallel execution, local tool budgets, compaction and cloud consent remain open. No build requested.
