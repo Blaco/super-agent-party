@@ -1,13 +1,13 @@
-// 在页面加载完成后添加 content-loaded 类
+// Add the content-loaded class after the page finishes loading
 document.addEventListener('DOMContentLoaded', function() {
-  // 设置一个短暂的延迟，确保所有资源都已加载
+  // Wait briefly to ensure all resources are loaded
   setTimeout(function() {
     document.body.classList.add('content-loaded');
   }, 100);
 });
 
 // ==========================================
-// 1. 定义 A2UI 渲染组件 (支持 Markdown 渲染)
+// 1. Define the A2UI rendering component (supports Markdown)
 // ==========================================
 const A2UIRendererComponent = {
   name: 'A2UIRenderer',
@@ -15,11 +15,11 @@ const A2UIRendererComponent = {
   template: `
     <div :class="['a2ui-root', isSelfContained ? 'a2ui-root-clean' : 'a2ui-root-boxed']">
       
-      <!-- 根标题 -->
+      <!-- Root title -->
       <div v-if="uiConfig.props && uiConfig.props.title && !isSelfContained" class="a2ui-title">
         {{ uiConfig.props.title }}
       </div>
-      <!-- 根描述 (也支持 MD) -->
+      <!-- Root description (also supports Markdown) -->
       <div 
         v-if="uiConfig.props && uiConfig.props.description && !isSelfContained" 
         class="a2ui-text-content markdown-body" 
@@ -73,8 +73,8 @@ const A2UIRendererComponent = {
               </el-select>
             </el-form-item>
 
-            <!-- 3. Text (★ 修复点：使用 v-html + Markdown) -->
-            <!-- 添加 markdown-body 类以复用你的全局 MD 样式 -->
+            <!-- 3. Text (render with v-html and Markdown) -->
+            <!-- Add markdown-body to reuse global Markdown styling -->
             <div 
               v-if="item.type === 'Text'" 
               class="a2ui-text-content markdown-body"
@@ -92,7 +92,7 @@ const A2UIRendererComponent = {
                <div v-if="item.props && item.props.title" style="width: 100%; font-weight: bold; margin-bottom: 8px; font-size: 14px;">
                   {{ item.props.title }}
                </div>
-              <!-- ★ 修改点：添加 :shared-form-data="formData" -->
+              <!-- Pass shared form data with :shared-form-data="formData" -->
               <a2-u-i-renderer 
                 v-for="(child, cIdx) in item.children" 
                 :key="cIdx" 
@@ -133,8 +133,8 @@ const A2UIRendererComponent = {
                 </div>
               </template>
               
-              <!-- ★ 修复点 1：独立渲染 Card 的 content，不再使用 v-else -->
-              <!-- 这样，无论有没有 children，只要 content 存在就会显示 -->
+              <!-- Render Card content independently rather than with v-else -->
+              <!-- Display content whenever present, whether or not children exist -->
               <div 
                 v-if="item.props.content || item.props.description" 
                 class="a2ui-card-desc markdown-body"
@@ -147,9 +147,9 @@ const A2UIRendererComponent = {
                 <div v-else-if="item.props.description" v-html="renderMarkdown(item.props.description)"></div>
               </div>
 
-              <!-- ★ 修复点 2：独立渲染 Card 的 children -->
+              <!-- Render Card children independently -->
               <div v-if="item.children && item.children.length > 0">
-                 <!-- ★ 修改点：添加 :shared-form-data="formData" -->
+                 <!-- Pass shared form data with :shared-form-data="formData" -->
                  <a2-u-i-renderer 
                     v-for="(child, ccIdx) in item.children" 
                     :key="ccIdx" 
@@ -178,7 +178,7 @@ const A2UIRendererComponent = {
               </div>
             </el-card>
 
-            <!-- 8. Button (Description 也支持 Markdown) -->
+            <!-- 8. Button (description also supports Markdown) -->
             <div 
               v-if="item.type === 'Button'" 
               :style="buttonStyle"
@@ -207,7 +207,7 @@ const A2UIRendererComponent = {
               </el-button>
             </div>
 
-            <!-- 9. Slider (滑块) -->
+            <!-- 9. Slider -->
             <el-form-item 
               v-if="item.type === 'Slider'" 
               :label="item.props.label"
@@ -227,7 +227,7 @@ const A2UIRendererComponent = {
               </div>
             </el-form-item>
 
-            <!-- 10. Switch (开关) -->
+            <!-- 10. Switch -->
             <el-form-item 
               v-if="item.type === 'Switch'" 
               :label="item.props.label"
@@ -240,7 +240,7 @@ const A2UIRendererComponent = {
               />
             </el-form-item>
 
-            <!-- 11. Radio (单选组) -->
+            <!-- 11. Radio group -->
             <el-form-item 
               v-if="item.type === 'Radio'" 
               :label="item.props.label"
@@ -258,7 +258,7 @@ const A2UIRendererComponent = {
               </el-radio-group>
             </el-form-item>
 
-            <!-- 12. Checkbox (多选组) -->
+            <!-- 12. Checkbox group -->
             <el-form-item 
               v-if="item.type === 'Checkbox'" 
               :label="item.props.label"
@@ -275,7 +275,7 @@ const A2UIRendererComponent = {
               </el-checkbox-group>
             </el-form-item>
 
-            <!-- 13. DatePicker (日期选择) -->
+            <!-- 13. Date picker -->
             <el-form-item 
               v-if="item.type === 'DatePicker'" 
               :label="item.props.label"
@@ -290,7 +290,7 @@ const A2UIRendererComponent = {
               />
             </el-form-item>
             
-            <!-- 14. Rate (评分) -->
+            <!-- 14. Rating -->
             <el-form-item 
               v-if="item.type === 'Rate'" 
               :label="item.props.label"
@@ -304,7 +304,7 @@ const A2UIRendererComponent = {
               />
             </el-form-item>
 
-             <!-- 15. Alert (提示条) -->
+             <!-- 15. Alert -->
              <div v-if="item.type === 'Alert'" style="margin-bottom: 15px; width: 100%;">
                 <el-alert
                     :title="item.props.title"
@@ -318,7 +318,7 @@ const A2UIRendererComponent = {
                 </el-alert>
              </div>
 
-            <!-- 16. Code (代码块 - 独立渲染，无额外 wrapper) -->
+            <!-- 16. Code block (render independently without an extra wrapper) -->
             <div 
               v-if="item.type === 'Code'" 
               class="a2ui-code-block"
@@ -335,7 +335,7 @@ const A2UIRendererComponent = {
               </div>
             </div>
 
-            <!-- 17. Table (表格组件) -->
+            <!-- 17. Table -->
             <div 
               v-if="item.type === 'Table'" 
               class="a2ui-table-wrapper"
@@ -351,7 +351,7 @@ const A2UIRendererComponent = {
                   </thead>
                   <tbody>
                     <tr v-for="(row, rIdx) in item.props.rows" :key="rIdx">
-                      <!-- 支持简单 HTML 或纯文本 -->
+                      <!-- Supports simple HTML or plain text -->
                       <td v-for="(cell, cIdx) in row" :key="cIdx" v-html="renderMarkdown(String(cell))"></td>
                     </tr>
                   </tbody>
@@ -359,7 +359,7 @@ const A2UIRendererComponent = {
               </div>
             </div>
 
-            <!-- 18. 朗读文本块 -->
+            <!-- 18. Read-aloud text block -->
             <div 
               v-if="item.type === 'TTSBlock'" 
               class="a2ui-tts-block"
@@ -445,22 +445,22 @@ const A2UIRendererComponent = {
   },
   created() {
     this.normalizedChildren.forEach((child, idx) => {
-      // 需要绑定数据的组件列表
+      // Components that require data binding
       const formComponents = ['Input', 'Select', 'Slider', 'Switch', 'Radio', 'Checkbox', 'DatePicker', 'Rate'];
       
       if (formComponents.includes(child.type)) {
          const key = (child.props && child.props.key) || (child.type.toLowerCase() + '_' + idx);
          
          if (this.formData[key] === undefined) {
-            // 根据组件类型初始化默认值
+            // Initialize defaults according to component type
             if (child.type === 'Checkbox') {
-                this.formData[key] = []; // 多选必须初始化为数组
+                this.formData[key] = []; // Multiple selections must start as an array
             } else if (child.type === 'Slider' || child.type === 'Rate') {
-                this.formData[key] = child.props.min || 0; // 数字类型
+                this.formData[key] = child.props.min || 0; // Numeric value
             } else if (child.type === 'Switch') {
-                this.formData[key] = child.props.defaultValue || false; // 布尔类型
+                this.formData[key] = child.props.defaultValue || false; // Boolean value
             } else {
-                this.formData[key] = ''; // 字符串类型
+                this.formData[key] = ''; // String value
             }
          }
       }
@@ -468,51 +468,51 @@ const A2UIRendererComponent = {
   },
   methods: {
     resetForm() {
-      // 定义递归函数：遍历所有层级寻找表单项
+      // Recursively traverse every level to find form fields
       const traverseAndReset = (items) => {
         if (!Array.isArray(items)) return;
 
         items.forEach(item => {
-          // 递归：如果是容器组件 (Group, Card 等)，继续深入查找
+          // Recurse into container components (Group, Card, etc.)
           if (item.children && Array.isArray(item.children)) {
             traverseAndReset(item.children);
           }
 
-          // 处理：如果是表单组件，执行重置
+          // Reset form components
           const formComponents = ['Input', 'Select', 'Slider', 'Switch', 'Radio', 'Checkbox', 'DatePicker', 'Rate'];
           
           if (formComponents.includes(item.type)) {
-             // 获取绑定的 key
+             // Get the bound key
              const key = (item.props && item.props.key);
-             if (!key) return; // 忽略无 key 的组件
+             if (!key) return; // Ignore components without a key
              
-             // 根据组件类型恢复默认值
+             // Restore defaults according to component type
              if (item.type === 'Checkbox') {
-                 this.formData[key] = []; // 多选 -> 空数组
+                 this.formData[key] = []; // Multiple selection -> empty array
              } else if (item.type === 'Slider' || item.type === 'Rate') {
-                 this.formData[key] = item.props.min || 0; // 数字 -> 0
+                 this.formData[key] = item.props.min || 0; // Numeric value -> 0
              } else if (item.type === 'Switch') {
-                 this.formData[key] = item.props.defaultValue || false; // 开关 -> false
+                 this.formData[key] = item.props.defaultValue || false; // Switch -> false
              } else {
-                 this.formData[key] = ''; // 其他文本类 -> 空字符串
+                 this.formData[key] = ''; // Other text fields -> empty string
              }
           }
         });
       };
 
-      // 从当前组件的根子节点开始递归
+      // Start recursion at the current component's root children
       traverseAndReset(this.normalizedChildren);
 
-      // 重置提交状态
+      // Reset submission state
       this.isSubmitted = false;
       
-      // 界面反馈
+      // Provide UI feedback
       if (typeof showNotification === 'function') {
           showNotification('All options reset', 'success');
       }
     },
     handleTTS(text, voice) {
-      // 尝试调用根组件的 ClickToListen 方法
+      // Try invoking ClickToListen on the root component
       if (this.$root && typeof this.$root.ClickToListen === 'function') {
         this.$root.ClickToListen(text, voice);
       } else {
@@ -526,7 +526,7 @@ const A2UIRendererComponent = {
       try {
         await navigator.clipboard.writeText(text);
         
-        // 简单的交互反馈：修改按钮文字
+        // Provide simple interaction feedback by changing the button text
         const btn = event.currentTarget;
         const originalHtml = btn.innerHTML;
         const span = btn.querySelector('span');
@@ -536,21 +536,21 @@ const A2UIRendererComponent = {
           btn.innerHTML = originalHtml;
         }, 2000);
         
-        // 如果你有全局提示组件，也可以用：
-        // showNotification('代码已复制', 'success');
+        // Alternatively, use the global notification component:
+        // showNotification('Code copied', 'success');
       } catch (err) {
         console.error('Copy failed:', err);
       }
     },
 
-    // 渲染 Markdown 的核心方法
+    // Core Markdown rendering method
     renderMarkdown(text) {
         if (!text) return '';
-        // 尝试使用全局定义的 md 对象
+        // Try the globally defined md object
         if (typeof md !== 'undefined' && md.render) {
             return md.render(text);
         }
-        // 兜底：如果没有 md，简单的换行处理
+        // Fallback: handle line breaks if md is unavailable
         return text.replace(/\n/g, '<br>');
     },
     isObj(val) {
@@ -562,7 +562,7 @@ const A2UIRendererComponent = {
         return props.type || 'default';
     },
 handleAction(item, extraValue) {
-      // ... (保留之前的 Clear/Reset 拦截逻辑) ...
+      // ... (retain the existing Clear/Reset interception logic) ...
       if (item.props.action === 'clear' || item.props.action === 'reset') {
           if (this.sharedFormData) {
               this.$emit('action', '_A2UI_RESET_ALL_'); 
@@ -573,7 +573,7 @@ handleAction(item, extraValue) {
       }
 
       // ---------------------------------------------------------
-      // ★ 常规业务逻辑 (Submit / Search)
+      // Normal action handling (Submit / Search)
       // ---------------------------------------------------------
       this.isSubmitted = true;
       let payload = item.props.label;
@@ -584,12 +584,12 @@ handleAction(item, extraValue) {
       else if (item.props.action === 'submit') {
         const formDataKeys = Object.keys(this.formData);
         
-        // 场景A: 单字段表单，直接发送 "标签：值"
+        // Case A: single-field form, send "Label: value" directly
         if (formDataKeys.length === 1 && this.formData[formDataKeys[0]]) {
             const singleValue = this.formData[formDataKeys[0]];
             payload = `${item.props.label}：${singleValue}`;
         } 
-        // 场景B: 多字段表单，发送汇总详情
+        // Case B: multi-field form, send the combined details
         else {
             let details = [];
             const findFieldLabel = (nodes, targetKey) => {
@@ -613,13 +613,13 @@ handleAction(item, extraValue) {
             
             if (details.length > 0) {
                 // ============================================================
-                // ★ 修复重点在此处 ★
-                // 原代码：payload = `表单提交：\n${details.join('\n')}`;
-                // 修改为：将按钮名称 (item.props.label) 明确拼接到消息头部
+                // Key payload construction fix
+                // Previous approach: send a generic form submission header followed by details.
+                // Instead, explicitly prepend the button name (item.props.label) to the message
                 // ============================================================
                 payload = `Submit action: ${item.props.label}\nForm data:\n${details.join('\n')}`;
             } else {
-                // 如果表单全是空的，保留按钮名称
+                // Retain the button name if every field is empty
                 payload = `${item.props.label} (empty form submission)`;
             }
         }
@@ -628,7 +628,7 @@ handleAction(item, extraValue) {
           payload = `Select action: ${item.props.label} (ID:${item.props.data})`;
       }
       
-      // 发送最终 payload 给父级
+      // Send the final payload to the parent
       this.$emit('action', payload);
     },
 
@@ -636,34 +636,34 @@ handleAction(item, extraValue) {
         this.$emit('action', `Selected: ${title} - ${actionName}`);
     },
     relayAction(payload) {
-        // ★ 拦截特殊信号：_A2UI_RESET_ALL_
+        // Intercept the special _A2UI_RESET_ALL_ signal
         if (payload === '_A2UI_RESET_ALL_') {
             if (this.sharedFormData) {
-                // 我还是子组件，继续像接力棒一样往上传
+                // Child component: continue propagating the signal upward
                 this.$emit('action', '_A2UI_RESET_ALL_');
             } else {
-                // 我是根组件！终于传到我这了，执行清空
+                // Root component: clear the form
                 this.resetForm();
             }
-            return; // ★ 拦截结束，不触发 sendMessage
+            return; // Finish interception without calling sendMessage
         }
 
-        // 普通消息：直接透传给上一层，最终触发 handleA2UIAction
+        // Forward normal messages to the parent, ultimately calling handleA2UIAction
         this.$emit('action', payload);
     }
   }
 };
 
-const MAX_DISPLAY_LENGTH = 50000;   // 工具结果/错误信息前端显示截断长度
+const MAX_DISPLAY_LENGTH = 50000;   // Frontend truncation limit for tool results and errors
 const MAX_RENDERED_BLOCKS = 10;
 // ==========================================
-// 2. 创建 Vue 应用
+// 2. Create the Vue application
 // ==========================================
 const app = Vue.createApp({
   data() {
     return vue_data
   },
-  // 在组件销毁时清除定时器
+  // Clear timers when the component is destroyed
   beforeDestroy() {
     this.stopEdgeScroll();
     if (this.behaviorTimeTimer)   clearInterval(this.behaviorTimeTimer)
@@ -679,40 +679,40 @@ const app = Vue.createApp({
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
     window.removeEventListener('resize', this.checkMobile);
-    this.shouldReconnectWs = false; // 设置标志位
-    this.stopDanmuProcessor(); // 停止弹幕处理器
+    this.shouldReconnectWs = false; // Set the reconnect flag
+    this.stopDanmuProcessor(); // Stop the livestream message processor
     this.disconnectWebSocket();
   },
   async mounted() {
     try {
-      // 只在 Electron 环境中注册全局快捷键
+      // Register global shortcuts only in Electron
       if (isElectron && window.electronAPI?.onGlobalShortcutTriggered) {
           window.electronAPI.onGlobalShortcutTriggered(async () => {
-            // 只有启用了 ASR 且模式为全局快捷键时才生效
+            // Only active when ASR and global shortcut mode are enabled
             if (this.asrSettings.interactionMethod !== 'globalKeyTriggered') return;
 
             if (!this.isGlobalRecording) {
-              // 第 1 次按下组合键：开始录音
+              // First shortcut press: begin recording
               this.isGlobalRecording = true;
               await this.handlePttPress(); 
-              // 可选：给个提示，让用户知道在后台录音开始了
+              // Optional notification that background recording has started
               showNotification(this.t('globalRecordingStarted'), 'success')
             } else {
-              // 第 2 次按下组合键：结束录音
+              // Second shortcut press: stop recording
               this.isGlobalRecording = false;
               await this.handlePttRelease(); 
             }
           });
         }
 
-      // 只在 Electron 环境中注册 IPC 监听
+      // Register IPC listeners only in Electron
       if (isElectron && window.electron && window.electron.ipcRenderer) {
           window.electron.ipcRenderer.on('trigger-search', (text) => {
-              // 1. 将选中的文本填入地址栏变量
+              // 1. Put the selected text into the address bar variable
               this.urlInput = text;
               
-              // 2. 直接调用你现有的回车处理逻辑
-              // 这样就会完全复用你的正则判断、Google/Bing/Party 引擎选择逻辑
+              // 2. Invoke the existing Enter-key handler directly
+              // This reuses the existing regex checks and Google/Bing/Party search selection
               this.handleUrlEnter();
           });
       }
@@ -722,18 +722,18 @@ const app = Vue.createApp({
       });
       this.audioStartTime = this.audioCtx.currentTime;
       
-      // 只在 Electron 环境中获取 app 路径
+      // Get the app path only in Electron
       let fileUrl = '';
       if (isElectron && window.electronAPI) {
         const appPath = await window.electronAPI.getAppPath();
-        // 拼接路径： App根目录 + static/js/webview-preload.js
+        // Join the app root with static/js/webview-preload.js
         const fullPath = await window.electronAPI.pathJoin(appPath, 'static', 'js', 'webview-preload.js');
         
-        // 2. 转换为 file:// 协议 URL
-        // 注意：Windows 下路径是反斜杠 \，需要替换为正斜杠 / 才能用于 URL
+        // 2. Convert to a file:// URL
+        // On Windows, replace backslashes with forward slashes for the URL
         fileUrl = 'file://' + (this.isWindows ? '/' : '') + fullPath.replace(/\\/g, '/');
         
-        console.log('Webview Preload URL:', fileUrl); // 调试用
+        console.log('Webview Preload URL:', fileUrl); // Debug logging
       }
       
       this.webviewPreloadPath = fileUrl;
@@ -743,11 +743,11 @@ const app = Vue.createApp({
     }
 
     window.handleToolApproval = (toolCallId, action) => {
-        console.log('Global approval triggered:', toolCallId, action); // 调试日志
+        console.log('Global approval triggered:', toolCallId, action); // Debug logging
         this.processToolApproval(toolCallId, action);
     };
     
-    // ★ 监听主进程发来的“开新标签”指令（仅 Electron）
+    // Listen for new-tab requests from the main process (Electron only)
     if (isElectron && window.electronAPI && window.electronAPI.onNewTab) {
         window.electronAPI.onNewTab((url) => {
             console.log('Received new tab request:', url);
@@ -755,25 +755,25 @@ const app = Vue.createApp({
         });
     }
     
-    // 监听下载事件（仅 Electron）
+    // Listen for download events (Electron only)
     if (isElectron && window.downloadAPI) {
         window.downloadAPI.onDownloadStarted((data) => {
             console.log('Frontend received download task:', data);
-            // 新增下载项放到最前面
+            // Insert new downloads at the beginning
             this.downloads.unshift({
                 ...data,
                 state: 'progressing',
                 receivedBytes: 0,
                 progress: 0
             });
-            // 自动打开下拉框提示用户 (可选)
+            // Optionally open the dropdown to notify the user
             // this.showDownloadDropdown = true; 
         });
 
         window.downloadAPI.onDownloadUpdated((data) => {
             const item = this.downloads.find(d => d.id === data.id);
             if (item) {
-                Object.assign(item, data); // 更新状态和进度
+                Object.assign(item, data); // Update status and progress
             }
         });
 
@@ -810,7 +810,7 @@ const app = Vue.createApp({
     window.addEventListener('keydown', this.handleKeyDown)
     window.addEventListener('keyup', this.handleKeyUp)
     window.addEventListener('resize', this.checkMobile);
-    this.pollVRMStatus()   // 启动轮询
+    this.pollVRMStatus()   // Start polling
     
     if (isElectron) {
       this.isMac = window.electron.isMac;
@@ -826,15 +826,15 @@ const app = Vue.createApp({
     this.initDownloadButtons();
     
     if (isElectron) {
-      // 监听极简窗口关闭事件（同步状态）
+      // Listen for compact-window close events and synchronize state
       if (window.electronAPI.onMinimalWindowClosed) {
         window.electronAPI.onMinimalWindowClosed(() => {
           this.isMinimalMode = false;
         });
       }
-      // 检查更新
+      // Check for updates
       this.checkForUpdates();
-      // 监听更新事件
+      // Listen for update events
       window.electronAPI.onUpdateAvailable((_, info) => {
         this.updateAvailable = true;
         this.updateInfo = info;
@@ -860,11 +860,11 @@ const app = Vue.createApp({
     this.$nextTick(() => {
       this.initPreviewButtons();
     });
-    this.$nextTick(() => {               // 保证 DOM 已渲染
+    this.$nextTick(() => {               // Ensure the DOM has rendered
       document.addEventListener('click', this._toggleHighlight, false);
     });
     document.documentElement.setAttribute('data-theme', this.systemSettings.theme);
-    // 启动时同步全局缩放与代码块缩放的初始值
+    // Synchronize initial global and code-block zoom values at startup
     {
       const scale = Number(this.systemSettings.fontScale) || 1;
       if (this.isElectron && window.electronAPI?.setZoomFactor) {
@@ -890,18 +890,18 @@ const app = Vue.createApp({
     if (isElectron) {
       window.aiBrowser = this;
       this.$nextTick(() => {
-        this.generateQRCode(); // 生成二维码
+        this.generateQRCode(); // Generate the QR code
       });
     }
     
-    // 1. 时间触发器
+    // 1. Time trigger
     this.behaviorTimeTimer = setInterval(() => {
       if (!this.behaviorSettings.enabled) return
       const now = new Date()
       const hm = now.toLocaleTimeString('en-GB', { hour12: false }) 
       const d  = now.getDay() 
       this.behaviorSettings.behaviorList.forEach(b => {
-        // 关键改动：使用 isTargetPlatform 检查是否属于当前网页端(chat)任务
+        // Use isTargetPlatform to check whether the task targets the current web chat
         if (!b.enabled || b.trigger.type !== 'time' || !this.isTargetPlatform(b, 'chat')) return
         const tv = b.trigger.time.timeValue
         const ds = b.trigger.time.days
@@ -914,12 +914,12 @@ const app = Vue.createApp({
       })
     }, 1000)
 
-    // 2. 无输入触发器
+    // 2. No-input trigger
     this.noInputSec = 0 
     this.behaviorNoInputTimer = setInterval(() => {
       if (!this.behaviorSettings.enabled) return
       this.behaviorSettings.behaviorList.forEach(b => {
-        // 关键改动：检查平台
+        // Check the target platform
         if (!b.enabled || b.trigger.type !== 'noInput' || !this.isTargetPlatform(b, 'chat')) return
         const need = b.trigger.noInput.latency
         if (this.noInputFlag) {
@@ -934,24 +934,24 @@ const app = Vue.createApp({
       })
     }, 1000)
 
-    // 3. 周期触发器
+    // 3. Periodic trigger
     this.behaviorCycleTimer = setInterval(() => {
-      // 核心防御：层层判断
+      // Guard against missing objects at each level
       if (!this.behaviorSettings) return;
       if (this.behaviorSettings.enabled !== true) return;
       if (!Array.isArray(this.behaviorSettings.behaviorList)) return;
 
       this.behaviorSettings.behaviorList.forEach((b, index) => {
-        // 检查 b 及其 trigger 是否存在，防止读取 b.trigger.type 报错
+        // Check that b and its trigger exist before accessing b.trigger.type
         if (!b || !b.enabled || !b.trigger) return;
         
-        // 只处理周期类型的任务
+        // Handle periodic tasks only
         if (b.trigger.type !== 'cycle') return;
 
-        // 检查平台 (这里会调用上面的安全函数)
+        // Check the platform using the helper above
         if (!this.isTargetPlatform(b, 'chat')) return;
 
-        // 确保存储定时器的数组存在
+        // Ensure the timer array exists
         if (!this.cycleTimers) this.cycleTimers = [];
 
         if (!this.cycleTimers[index]) {
@@ -960,7 +960,7 @@ const app = Vue.createApp({
       });
     }, 1000);
 
-    this.scanExtensions(); // 扫描扩展
+    this.scanExtensions(); // Scan extensions
     if (this.ttsSettings && this.ttsSettings.engine === 'systemtts') {
       this.fetchSystemVoices();
     }
@@ -973,7 +973,7 @@ const app = Vue.createApp({
     this.loadFavorites();
 
     const handleRemoteInstall = (data) => {
-      // 1. 根据 type 自动切换菜单和子菜单
+      // 1. Select the menu and submenu based on type
       if (data.type === 'mcp') {
           this.handleRemoteMCPInstall(data);
           return;
@@ -981,8 +981,8 @@ const app = Vue.createApp({
       const { repo, type } = data;
       if (!repo) return;
       if (type === 'skill') {
-        this.activeMenu = 'toolkit'; // 假设 Skills 在这个组
-        this.subMenu = 'CLI';      // 切换到 Skills 子菜单
+        this.activeMenu = 'toolkit'; // Skills are expected in this group
+        this.subMenu = 'CLI';      // Switch to the Skills submenu
         this.activeCLITab = 'skills';
         this.newSkillUrl = repo;      
       } else {
@@ -991,7 +991,7 @@ const app = Vue.createApp({
         this.newExtensionUrl = repo;
       }
 
-      // 2. 确认弹窗
+      // 2. Confirmation dialog
       const confirmMsg = type === 'skill' 
         ? `${this.t('confirmInstallSkillFrom')}：\n${repo}`
         : `${this.t('confirmInstallExtensionFrom')}：\n${repo}`;
@@ -1005,26 +1005,26 @@ const app = Vue.createApp({
           type: 'info' 
         }
       ).then(() => {
-        // 3. 执行对应的安装方法
+        // 3. Invoke the corresponding installation method
         if (type === 'skill') {
           this.installSkillFromGithub();
         } else {
-          this.addExtension(); // 执行安装 Extension 的方法
+          this.addExtension(); // Run the extension installation method
         }
       }).catch(() => {
         console.log('User cancelled installation');
       });
     };
 
-    // --- 挂载监听（仅 Electron）---
+    // --- Mount listeners (Electron only) ---
     if (isElectron && window.electronAPI) {
-      // 软件运行中触发
+      // Triggered while the application is running
       window.electronAPI.onRemoteInstall((payload) => {
-        // 这里的 payload 包含 { repo, type }
+        // The payload contains { repo, type }
         handleRemoteInstall(payload);
       });
 
-      // 软件启动时检查
+      // Check on application startup
       setTimeout(async () => {
         const pendingData = await window.electronAPI.checkPendingInstall();
         if (pendingData) {
@@ -1038,7 +1038,7 @@ const app = Vue.createApp({
         if (isElectron) {
           this.updateGlobalShortcut();
         }
-      }, 1000); // 延迟 500ms 确保主进程完全 Ready
+      }, 1000); // Delay to allow the main process to become ready
     });
 
     if (this.localAppControlSettings?.enabled) {
@@ -1071,29 +1071,29 @@ const app = Vue.createApp({
   },
   watch: {
 
-    // 监听输入框内容，驱动快捷指令弹出菜单
+    // Watch input text to drive the shortcut popup
     userInput() {
       this.refreshShortcutMenu();
     },
 
-    // 监听背景图变化，全局提升至 body 层
+    // Watch background image changes and apply them to the body
     'systemSettings.backgroundURL': {
       handler(newUrl) {
         if (newUrl) {
           document.body.style.backgroundImage = `url(${newUrl})`;
           document.body.style.backgroundSize = 'cover';
           document.body.style.backgroundPosition = 'center center';
-          document.body.style.backgroundAttachment = 'fixed'; // 固定背景，滚动时不跟着跑
-          document.body.classList.add('has-custom-bg'); // 给 body 打上标签，激活毛玻璃 CSS
+          document.body.style.backgroundAttachment = 'fixed'; // Keep the background fixed during scrolling
+          document.body.classList.add('has-custom-bg'); // Mark the body to activate frosted-glass CSS
         } else {
           document.body.style.backgroundImage = '';
           document.body.classList.remove('has-custom-bg');
         }
       },
-      immediate: true // 组件加载时立刻执行一次
+      immediate: true // Run once immediately when the component loads
     },
 
-    // 监听自定义 CSS 注入
+    // Watch custom CSS injection
     'systemSettings.customCSS': {
       handler(css) {
         let styleEl = document.getElementById('custom-css-injection');
@@ -1125,7 +1125,7 @@ const app = Vue.createApp({
 
     showHistorySidebar() {
       this.$nextTick(() => {
-        // 如果侧边栏消失/出现，聊天区和侧边栏应该保持原有比例填满剩下空间
+        // When the sidebar is shown or hidden, preserve the layout proportions within the available space
         this.updatePanelWidths();
       });
     },
@@ -1154,12 +1154,12 @@ const app = Vue.createApp({
       this.handleExtensionsPolling(newVal, this.subMenu);
       this.handleSkillsPolling(newVal, this.subMenu, this.activeCLITab);
     },
-    // 监听子菜单
+    // Watch the submenu
     subMenu(newVal) {
       this.handleExtensionsPolling(this.activeMenu, newVal);
       this.handleSkillsPolling(this.activeMenu,newVal, this.activeCLITab);
     },
-    // 监听 CLI 内部的 Tab
+    // Watch the internal CLI tab
     activeCLITab(newVal) {
       this.handleSkillsPolling(this.activeMenu,this.subMenu, newVal);
     },
@@ -1178,19 +1178,19 @@ const app = Vue.createApp({
     },
     currentTheme: {
       handler(newVal) {
-        // 等待 DOM 更新，确保 CSS 变量已变更
+        // Wait for DOM updates so CSS variables have changed
         this.$nextTick(() => {
-          // 遍历所有标签页，更新样式
+          // Update styles in every tab
           this.browserTabs.forEach(tab => {
             this.updateWebviewTheme(tab.id);
           });
         });
       },
-      immediate: false // 初始化时不需要立即执行，因为 dom-ready 会处理
+      immediate: false // Do not run immediately; dom-ready handles initialization
     },
     'ttsSettings.engine': function(newVal) {
       if (newVal === 'systemtts') {
-        // 如果列表为空，则去获取
+        // Fetch the list if empty
         if (this.systemVoices.length === 0) {
           this.fetchSystemVoices();
         }
@@ -1198,8 +1198,8 @@ const app = Vue.createApp({
     },
     'readConfig.longText': {
       immediate: true,
-      async handler(val) {          // ← 加 async
-        await this.$nextTick();     // ← 保证组件完成上一轮渲染
+      async handler(val) {          // Asynchronous watcher
+        await this.$nextTick();     // Wait for the previous render to complete
         if (!val?.trim()) {
           this.clearSegments();
           return;
@@ -1214,14 +1214,14 @@ const app = Vue.createApp({
       deep: true,
       handler(newProviders) {
         const existingIds = new Set(newProviders.map(p => p.id));
-        // 自动清理无效的 selectedProvider
+        // Automatically clear an invalid selectedProvider
         [this.settings, this.reasonerSettings,this.visionSettings,
           this.KBSettings,this.text2imgSettings,this.ccSettings,
           this.qcSettings,this.fastSettings
         ].forEach(config => {
           if (config.selectedProvider && !existingIds.has(config.selectedProvider)) {
             config.selectedProvider = null;
-            // 可选项：同时重置相关字段
+            // Optionally reset related fields as well
             config.model = '';
             config.base_url = '';
             config.api_key = '';
@@ -1242,7 +1242,7 @@ const app = Vue.createApp({
       handler(newVal) {
         document.documentElement.setAttribute('data-theme', newVal);
         
-        // 更新 mermaid 主题
+        // Update the Mermaid theme
         if (window.mermaid) {
           mermaid.initialize({
             startOnLoad: false,
@@ -1251,9 +1251,9 @@ const app = Vue.createApp({
           });
         }
 
-        // Element Plus 在 element-plus.css 中以 :root 定义了 --el-color-primary: #409eff，
-        // 且加载在 styles.css 之后，先前的主题色将因此被覆盖（特异度相同则后载入优先）
-        // 所以 JS 必须以 inline style 设置主色和补全变体，色值与 CSS [data-theme] 块一致
+        // Element Plus defines --el-color-primary: #409eff in :root in element-plus.css,
+        // which loads after styles.css and overrides earlier colors at equal specificity.
+        // Set the primary color and variants inline to match the CSS [data-theme] blocks.
         const cssPrimary = {
           light: '#17827a',
           dark: '#c8815a',
@@ -1282,7 +1282,7 @@ const app = Vue.createApp({
           root.style.setProperty('--el-color-primary-dark-2', this.colorBlend(cssPrimary, '#000000', 0.2));
           root.style.setProperty('--el-color-primary-dark-3', this.colorBlend(cssPrimary, '#000000', 0.1));
 
-          // 强制刷新 Element Plus 主题
+          // Force an Element Plus theme refresh
           if (window.__ELEMENT_PLUS_INSTANCE__) {
             window.__ELEMENT_PLUS_INSTANCE__.config.globalProperties.$ELEMENT.reload();
           }
@@ -1349,32 +1349,32 @@ const app = Vue.createApp({
       }));
     },
 
-    // 当前主模型的供应商名称
+    // Provider name for the current main model
     mainVendorName() {
       if (!this.settings.selectedProvider) return null;
       const provider = this.modelProviders.find(p => p.id === this.settings.selectedProvider);
       return provider ? provider.vendor : null;
     },
-    // 当前快速应答模型的供应商名称
+    // Provider name for the current quick-response model
     fastVendorName() {
       if (!this.fastSettings.selectedProvider) return null;
       const provider = this.modelProviders.find(p => p.id === this.fastSettings.selectedProvider);
       return provider ? provider.vendor : null;
     },
-    // 主模型推荐参数
+    // Recommended parameters for the main model
     mainSuggestedParams() {
       const vendor = this.mainVendorName;
       if (!vendor || !this.vendorSuggestedParams[vendor]) return [];
       return this.vendorSuggestedParams[vendor].filter(p => !this.paramExistsInMain(p.name));
     },
-    // 快速应答模型推荐参数
+    // Recommended parameters for the quick-response model
     fastSuggestedParams() {
       const vendor = this.fastVendorName;
       if (!vendor || !this.vendorSuggestedParams[vendor]) return [];
       return this.vendorSuggestedParams[vendor].filter(p => !this.paramExistsInFast(p.name));
     },
 
-    // ✨ 新增：主页面扩展列表过滤逻辑 ✨
+    // Main-page extension list filtering
     filteredManageExtensions() {
       if (!this.searchManageExtensionQuery) {
         return this.extensions;
@@ -1384,11 +1384,11 @@ const app = Vue.createApp({
         const matchName = ext.name && ext.name.toLowerCase().includes(query);
         const matchDesc = ext.description && ext.description.toLowerCase().includes(query);
         const matchAuthor = ext.author && ext.author.toLowerCase().includes(query);
-        return matchName || matchDesc || matchAuthor; // 增加作者匹配
+        return matchName || matchDesc || matchAuthor; // Include author matches
       });
     },
 
-    // ✨ 新增：弹窗远程插件列表过滤逻辑 ✨
+    // Remote plugin dialog filtering
     filteredRemotePlugins() {
       if (!this.searchRemotePluginQuery) {
         return this.remotePlugins;
@@ -1401,16 +1401,16 @@ const app = Vue.createApp({
       });
     },
 
-    // 动态返回过滤后的扩展列表
+    // Return the dynamically filtered extension list
     filteredExtensions() {
-      // 如果搜索框为空，直接返回原有的扩展列表
+      // Return the original list if the search box is empty
       if (!this.searchExtensionQuery) {
         return this.extensions; 
       }
       
       const query = this.searchExtensionQuery.toLowerCase();
       
-      // 根据扩展的名称或描述进行模糊匹配
+      // Match extension names or descriptions approximately
       return this.extensions.filter(ext => {
         const matchName = ext.name && ext.name.toLowerCase().includes(query);
         const matchDesc = ext.description && ext.description.toLowerCase().includes(query);
@@ -1430,26 +1430,26 @@ const app = Vue.createApp({
     return this.dockerExamples2;
   },
 
-    // 动态过滤表格数据
+    // Dynamically filter table data
     filteredAffectionData() {
       console.log("Computed property updated; current data length:", this.affectionDataList.length);
-      // 检查基础数据是否存在
+      // Check that the underlying data exists
       if (!this.affectionDataList || this.affectionDataList.length === 0) {
         return [];
       }
       
-      // 如果没有搜索词，直接返回全量数组
+      // Return the complete array if there is no search term
       if (!this.affectionSearchQuery) {
         return this.affectionDataList;
       }
       
       const query = this.affectionSearchQuery.toLowerCase();
       return this.affectionDataList.filter(item => {
-        // 确保 userName 存在再进行过滤
+        // Ensure userName exists before filtering
         return item.userName && item.userName.toLowerCase().includes(query);
       });
     },
-    // 日记本：按时间倒序 + 搜索过滤
+    // Diary: reverse chronological order and search filtering
     filteredDiaryEntries() {
       let list = Array.isArray(this.diaryEntries) ? this.diaryEntries.slice() : [];
       list.sort((a, b) => new Date(b.time) - new Date(a.time));
@@ -1463,7 +1463,7 @@ const app = Vue.createApp({
       }
       return list;
     },
-    // 日记触发间隔范围（供 el-slider range 双向绑定）
+    // Diary trigger interval range (two-way binding for el-slider range)
     diaryIntervalRange: {
       get() {
         return [this.diarySettings.minMinutes, this.diarySettings.maxMinutes];
@@ -1478,7 +1478,7 @@ const app = Vue.createApp({
     computedSkillsList() {
       const skillMap = new Map();
       
-      // 1. 灌入全局技能
+      // 1. Populate global skills
       this.skillsList.forEach(skill => {
         skillMap.set(skill.id, {
           ...skill,
@@ -1487,7 +1487,7 @@ const app = Vue.createApp({
         });
       });
 
-      // 2. 灌入项目技能 (补充全局没有的，或者标记项目存在的)
+      // 2. Add project-only skills or mark skills present in the project
       this.projectSkillsDetails.forEach(skill => {
         if (skillMap.has(skill.id)) {
           skillMap.get(skill.id).isProject = true;
@@ -1502,13 +1502,13 @@ const app = Vue.createApp({
 
       return Array.from(skillMap.values());
     },
-    // 快捷指令弹出菜单：当前 / 后输入的指令片段（无匹配返回 null）
+    // Shortcut popup: fragment typed after / (null if no match)
     shortcutMenuToken() {
       if (!this.systemSettings || !this.systemSettings.enableShortcuts) return null;
       const m = /^\/(\S*)$/.exec(this.userInput || '');
       return m ? m[1].toLowerCase() : null;
     },
-    // 快捷指令弹出菜单：过滤后的候选项列表
+    // Shortcut popup: filtered candidate list
     shortcutMenuItems() {
       const token = this.shortcutMenuToken;
       if (token === null) return [];
@@ -1519,7 +1519,7 @@ const app = Vue.createApp({
       const items = [];
       (this.shortcutCommands || []).forEach(c => {
         if (!runIds.includes(c.id) && !fillIds.includes(c.id) && !modeIds.includes(c.id)) return;
-        if (c.requiresCli && !cliEnabled) return; // 需开启电脑命令行控制
+        if (c.requiresCli && !cliEnabled) return; // Requires computer CLI control
         const word = (c.syntax || '').split(/\s+/)[0];
         const names = [word, ...(c.aliases || [])];
         const match = !token || names.some(n => n.toLowerCase().startsWith('/' + token));
@@ -1559,56 +1559,56 @@ const app = Vue.createApp({
                this.CLISettings.cc_path.trim() !== '';
     },
     dynamicUserAgent() {
-      // 1. 定义一个较新的 Chrome 版本号 (定期更新这个版本号可以保持最佳兼容性)
-      // 目前 Chrome 124+ 是比较通用的
+      // 1. Define a recent Chrome version; update periodically for compatibility
+      // Chrome 124+ is the inherited compatibility baseline
       const chromeVersion = '124.0.0.0'; 
       
-      // 2. 基础模板
+      // 2. Base template
       const baseUA = `Mozilla/5.0 ({os_info}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
       
-      // 3. 获取当前平台
-      // 在 Electron Renderer 中，通常可以通过 global.process 或 navigator 判断
+      // 3. Determine the current platform
+      // Electron Renderer can generally use global.process or navigator
       let platform = '';
       
-      // 尝试使用 node 的 process.platform (最准确)
+      // Prefer Node's process.platform
       if (typeof window.process !== 'undefined' && window.process.platform) {
         platform = window.process.platform;
       } else {
-        // 降级方案：分析 navigator.userAgent
+        // Fallback: inspect navigator.userAgent
         const navUA = navigator.userAgent.toLowerCase();
         if (navUA.indexOf('mac') > -1) platform = 'darwin';
         else if (navUA.indexOf('win') > -1) platform = 'win32';
         else platform = 'linux';
       }
 
-      // 4. 根据平台设置对应的 OS 信息
+      // 4. Set OS information according to platform
       let osInfo = '';
       switch (platform) {
         case 'darwin': // macOS
-          // 模拟 macOS Intel/M1 通用标识
+          // Generic macOS Intel/M1 identifier
           osInfo = 'Macintosh; Intel Mac OS X 10_15_7';
           break;
         case 'win32': // Windows
-          // 模拟 Windows 10/11 64位
+          // Windows 10/11 64-bit identifier
           osInfo = 'Windows NT 10.0; Win64; x64';
           break;
         case 'linux': // Linux
-          // 模拟标准 Linux x64
+          // Standard Linux x64 identifier
           osInfo = 'X11; Linux x86_64';
           break;
         default:
-          // 默认回退到 Windows
+          // Default to Windows
           osInfo = 'Windows NT 10.0; Win64; x64';
       }
 
-      // 5. 返回替换后的完整字符串
+      // 5. Return the complete substituted string
       return baseUA.replace('{os_info}', osInfo);
     },
 
     isCurrentTabFavorite() {
-        // 如果没有当前标签或当前标签没有URL（比如是新标签页），返回 false
+        // Return false if there is no current tab or URL (such as a new tab)
         if (!this.currentTab || !this.currentTab.url) return false;
-        // 检查当前 URL 是否存在于收藏列表中
+        // Check whether the current URL is bookmarked
         return this.favorites.some(f => f.url === this.currentTab.url);
     },
 
@@ -1617,27 +1617,27 @@ const app = Vue.createApp({
         return '';
       }
       
-      // 过滤出所有助手消息并按时间倒序排列
+      // Filter assistant messages and sort in reverse chronological order
       const assistantMessages = this.messages
         .filter(msg => msg.role === 'assistant')
         .reverse();
       
-      // 找到第一个非空消息
+      // Find the first nonempty message
       for (const msg of assistantMessages) {
         if (msg.pure_content && msg.pure_content.trim() !== '') {
           return msg.pure_content;
         }
       }
       
-      // 如果没有找到符合条件的消息
+      // No matching message was found
       return '';
     },
     currentViewName() {
       return this.currentExtension ? this.currentExtension.name : this.t('defaultView');
     },
-    /* 计算属性：默认模板 */
+    /* Computed property: default template */
     defaultSidePanelHTML() {
-      // 如果用户已给出自定义模板，就直接用
+      // Use the custom template if the user supplied one
       if (this.sidePanelHTML) return this.sidePanelHTML;
 
       return `
@@ -1654,20 +1654,20 @@ const app = Vue.createApp({
              !this.isTyping &&
              !this.isOmniPlaying
     },
-    // 计算处理百分比
+    // Calculate completion percentage
     processingPercentage() {
       if (this.totalChunksCount === 0) return 0;
       return Math.round((this.audioChunksCount / this.totalChunksCount) * 100);
     },
     
-    // 生成进度文本
+    // Generate progress text
     processingProgressText() {
       if (this.totalChunksCount === 0) return this.t('waiting');
       
       return `${this.audioChunksCount} / ${this.totalChunksCount} (${this.processingPercentage}%)`;
     },
     
-    // 根据状态设置进度条颜色
+    // Set the progress bar color according to status
     progressStatus() {
       if (this.isReadRunning || this.isConvertingAudio) {
         if (this.processingPercentage >= 90) return 'success';
@@ -1691,7 +1691,7 @@ const app = Vue.createApp({
         this.selectedFiles.length < this.textFiles.length
       );
     },
-    // 图片全选状态
+    // All images selected
     allImagesChecked: {
       get() {
         return this.imageFiles.length > 0 && 
@@ -1704,7 +1704,7 @@ const app = Vue.createApp({
       }
     },
     
-    // 图片半选状态：选中数量大于0且小于总数
+    // Indeterminate image selection: some but not all selected
     indeterminateImages() {
       return (
         this.selectedImages.length > 0 &&
@@ -1712,7 +1712,7 @@ const app = Vue.createApp({
       );
     },
 
-    // 视频全选状态
+    // All videos selected
     allVideosChecked: {
       get() {
         return this.videoFiles.length > 0 && 
@@ -1724,7 +1724,7 @@ const app = Vue.createApp({
           : []
       }
     },
-    // 全选框的半选状态
+    // Indeterminate select-all state
     indeterminateVideos() {
       return (
         this.selectedVideos.length > 0 &&
@@ -1751,11 +1751,11 @@ const app = Vue.createApp({
     },
     filteredClaudeModelProviders() {
       let vendors = ["Anthropic", "Deepseek", "siliconflow", "ZhipuAI", "moonshot", "aliyun", "modelscope","302.AI","MiMo","newapi","Ollama"];
-      // this.modelProviders中，vendor在vendors中的，添加到filteredClaudeModelProviders
+      // Add modelProviders whose vendor appears in vendors to filteredClaudeModelProviders
       return this.modelProviders.filter((item) => vendors.includes(item.vendor));
     },
 
-    // 计算属性，判断配置是否有效
+    // Computed property: validate configuration
     isTelegramBotConfigValid() {
       return this.telegramBotConfig.bot_token;
     },
@@ -1785,7 +1785,7 @@ const app = Vue.createApp({
       return [...this.defaultSeparators, ...custom];
     },
     isSlackBotConfigValid() {
-      // Slack 需要同时拥有这两个 token 才能运行
+      // Slack requires both tokens
       return !!this.slackBotConfig.bot_token && !!this.slackBotConfig.app_token;
     },
     filteredSlackSeparators() {
@@ -1823,16 +1823,16 @@ const app = Vue.createApp({
     },
     filteredConversations() {
         const keyword = (this.searchKeyword || '').toLowerCase();
-        // 1. 确保 conversations 存在且是数组
+        // 1. Ensure conversations exists and is an array
         if (!Array.isArray(this.conversations)) return [];
 
         return [...this.conversations]
             .filter(conv => {
                 if (!conv) return false;
-                // 2. 安全检查 title
+                // 2. Safely check the title
                 const titleMatch = (conv.title || '').toLowerCase().includes(keyword);
                 
-                // 3. 【核心修复】安全检查 messages 数组及其内容
+                // 3. Safely check the messages array and its contents
                 const contentMatch = (conv.messages || []).some(msg => 
                     msg && msg.content && String(msg.content).toLowerCase().includes(keyword)
                 );
@@ -1869,7 +1869,7 @@ const app = Vue.createApp({
       return this.knowledgeBases.some(kb => kb.enabled)
     },
     hasEnabledMCPServers() {
-      // 检查this.mcpServers中的sever中是否有disable为false的
+      // Check for an enabled server in this.mcpServers
       return Object.values(this.mcpServers).some(server => !server.disabled);
     },
     hasEnabledHttpTools() {
@@ -1922,20 +1922,20 @@ const app = Vue.createApp({
     },
     vendorOptions() {
       return this.vendorValues.map(value => ({
-        label: this.t(`vendor.${value}`), // 使用统一的翻译键
+        label: this.t(`vendor.${value}`), // Use the shared translation key
         value
       }));
     },
-  // 新增：根据搜索词和分类过滤后的供应商列表
+  // Filter providers by search term and category
   filteredVendorOptions() {
     return this.vendorOptions.filter(item => {
-      // 1. 搜索过滤 (不区分大小写匹配 value 或 翻译后的 label)
+      // 1. Search filter (case-insensitive value or translated label)
       const keyword = this.searchQuery.toLowerCase();
       const matchSearch = 
         item.value.toLowerCase().includes(keyword) || 
         item.label.toLowerCase().includes(keyword);
 
-      // 2. 分类过滤
+      // 2. Category filter
       const isLocal = this.localVendors.includes(item.value);
       let matchCategory = true;
       
@@ -1945,44 +1945,44 @@ const app = Vue.createApp({
         matchCategory = !isLocal;
       }
 
-      // 同时满足搜索和分类条件
+      // Require both search and category matches
       return matchSearch && matchCategory;
     });
   },
 
     MCPvendorOptions() {
       return this.MCPvendorValues.map(value => ({
-        label: this.t(`MCPvendor.${value}`), // 使用统一的翻译键
+        label: this.t(`MCPvendor.${value}`), // Use the shared translation key
         value
       }));
     },
     PromptOptions() {
       return this.promptValues.map(value => ({
-        label: this.t(`prompt.${value}`), // 使用统一的翻译键
+        label: this.t(`prompt.${value}`), // Use the shared translation key
         value
       }));
     },
     CardOptions() {
       return this.cardValues.map(value => ({
-        label: this.t(`card.${value}`), // 使用统一的翻译键
+        label: this.t(`card.${value}`), // Use the shared translation key
         value
       }));
     },
     themeOptions() {
       return this.themeValues.map(value => ({
         label: this.t(`theme.${value}`),
-        value // 保持原始值（推荐）
+        value // Retain the original value
       }));
     },
-    // 全局字体基准 14px
+    // Global font baseline: 14px
     currentFontPx() {
       return Math.round((Number(this.systemSettings.fontScale) || 1) * 14);
     },
-    // 代码块基准 12px（与 github-markdown.css 中 .markdown-body pre 一致）
+    // Code-block baseline: 12px (matches .markdown-body pre in github-markdown.css)
     currentCodeFontPx() {
       return Math.round((Number(this.systemSettings.codeFontScale) || 1) * 12);
     },
-    // 下拉框对外暴露 px、对内存 zoom 比例
+    // Expose pixels in the dropdown; store the zoom ratio internally
     fontPxModel: {
       get() { return this.currentFontPx; },
       set(px) { this.handleFontScaleChange(px / 14); }
@@ -1997,8 +1997,8 @@ const app = Vue.createApp({
     codeFontSizeOptions() {
       return [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
     },
-    // 外观设置页的代码块预览。DOM 结构必须与 vue_methods.js 中 highlight() 输出一致，
-    // 才能继承 .code-block 上的 zoom / 主题 / 高亮样式。
+    // Appearance settings code-block preview: match the DOM structure generated by highlight() in vue_methods.js
+    // so it inherits .code-block zoom, theme and syntax highlighting styles.
     codeBlockPreviewHtml() {
       const sample =
 `function greet(name) {
@@ -2022,13 +2022,13 @@ greet('Super Agent Party');`;
       return this.mainAgent !== 'super-model' || 
         Object.values(this.agents).some(a => a.enabled)
     },
-    // 获取所有唯一的语言
+    // Get all distinct languages
     uniqueLanguages() {
       const languages = [...new Set(this.edgettsvoices.map(voice => voice.language))];
       return languages.sort();
     },
     
-    // 根据选择的语言获取可用的性别
+    // Get available genders for the selected language
     uniqueGenders() {
       const voicesForLanguage = this.edgettsvoices.filter(voice => 
         voice.language === this.edgettsLanguage
@@ -2037,7 +2037,7 @@ greet('Super Agent Party');`;
       return genders.sort();
     },
     
-    // 根据选择的语言和性别过滤语音
+    // Filter voices by language and gender
     filteredVoices() {
       return this.edgettsvoices.filter(voice => 
         voice.language === this.edgettsLanguage && 
@@ -2070,13 +2070,13 @@ greet('Super Agent Party');`;
         return this.browserTabs.find(t => t.id === this.currentTabId);
     },
     allItems() {
-      // 1. 文档类
+      // 1. Documents
       const filesWithType = (this.files || []).map(f => ({
         ...f,
-        uiCategory: 'file' // 改个名字，避免跟 file.type 冲突
+        uiCategory: 'file' // Use a distinct name to avoid a collision with file.type
       }));
 
-      // 2. 视觉类（包含图片和视频）
+      // 2. Visual media (images and videos)
       const visualsWithType = (this.images || []).map(img => ({
         ...img,
         uiCategory: 'image' 
@@ -2107,12 +2107,12 @@ directives: {
       mounted(el, binding, vnode) {
         const vm = binding.instance; 
         el._update = (content) => {
-           // 1. 解析 Markdown
+           // 1. Parse Markdown
           const html = vm.formatMessage(content, -1);
           const wrapper = document.createElement('div');
           wrapper.innerHTML = html;
            
-           // 2. 更新真实 DOM
+           // 2. Update the actual DOM
            morphdom(el, wrapper, { 
                childrenOnly: true,
                onBeforeElUpdated: (fromEl, toEl) => {
@@ -2123,7 +2123,7 @@ directives: {
                }
            });
            
-            // 🌟 【核心修复点】直接调用，不加 requestAnimationFrame，让 scrollToBottom 自带的 setTimeout 去处理时序
+            // Call directly without requestAnimationFrame; scrollToBottom handles timing with its own setTimeout
             if (vm && typeof vm.scrollToBottom === 'function') {
                 vm.scrollToBottom();
             }
@@ -2145,7 +2145,7 @@ directives: {
   },
 });
 
-// FontAwesome 图标映射
+// FontAwesome icon mapping
 const NOTIFICATION_ICONS = {
     success: 'fa-solid fa-circle-check',
     error: 'fa-solid fa-circle-xmark',
@@ -2155,7 +2155,7 @@ const NOTIFICATION_ICONS = {
 
 let notificationTimeout;
 
-// 在全局作用域声明，用于保存当前活跃的所有通知实例
+// Global collection of active notification instances
 const activeNotifications = [];
 
 function showNotification(message, type = 'success', title = '') {
@@ -2178,23 +2178,23 @@ function showNotification(message, type = 'success', title = '') {
 
     document.body.appendChild(notification);
     
-    // 动态判断基础 Top 距离（适配你的 CSS 移动端 16px，桌面端 24px）
+    // Determine the base top offset (CSS: 16px mobile, 24px desktop)
     const isMobile = window.innerWidth <= 768;
     const BASE_TOP = isMobile ? 16 : 24;
-    const GAP = 16; // 每个通知之间的间距
+    const GAP = 16; // Spacing between notifications
     
-    // 强制重绘，确保此时能获取到元素真实渲染的高度
+    // Force layout so the actual rendered height is available
     void notification.offsetWidth;
     
-    // 1. 计算当前这条通知应该在的位置 (之前所有通知高度累加)
+    // 1. Calculate this notification's position from the previous notification heights
     let currentTop = BASE_TOP;
     activeNotifications.forEach(n => {
         currentTop += n.offsetHeight + GAP;
     });
     
-    // 设置 inline style
+    // Set inline styles
     notification.style.top = currentTop + 'px';
-    // 加入到活跃队列中
+    // Add to the active queue
     activeNotifications.push(notification);
 
     requestAnimationFrame(() => {
@@ -2203,77 +2203,77 @@ function showNotification(message, type = 'success', title = '') {
 
     let timer = null;
 
-    // 封装关闭逻辑
+    // Encapsulate close handling
     const closeNotification = () => {
         const index = activeNotifications.indexOf(notification);
-        if (index === -1) return; // 防止重复触发
+        if (index === -1) return; // Prevent duplicate close events
 
-        // 1. 从队列中移除当前通知
+        // 1. Remove the current notification from the queue
         activeNotifications.splice(index, 1);
         
-        // 2. 触发离场动画
+        // 2. Trigger the exit animation
         notification.classList.remove('show');
         notification.classList.add('hide');
         
-        // 3. 核心：重新计算剩余通知的位置，触发丝滑上移接替
+        // 3. Recalculate remaining positions so notifications slide upward
         let newTop = BASE_TOP;
         activeNotifications.forEach(n => {
             n.style.top = newTop + 'px';
             newTop += n.offsetHeight + GAP;
         });
 
-        // 4. 动画结束后移除 DOM
+        // 4. Remove the DOM element after animation
         setTimeout(() => {
             if (notification.parentNode) notification.remove();
         }, 400); 
     };
 
-    // 附加功能：允许用户直接点击弹窗提前关闭它
+    // Allow users to dismiss a notification by clicking it
     notification.addEventListener('click', () => {
         clearTimeout(timer);
         closeNotification();
     });
 
-    // 设定定时器自动关闭
+    // Set the auto-dismiss timer
     timer = setTimeout(closeNotification, duration);
 }
 
-// 兼容旧代码调用方式 (如果你的代码里只传了 message)
-// showNotification("保存成功"); -> 默认为 success
-// showNotification("保存失败", "error");
+// Compatible with older calls that provide only a message
+// showNotification("Saved successfully"); -> defaults to success
+// showNotification("Save failed", "error");
 function removeNonAsciiTags(html) {
-  // 匹配所有标签（包括开始标签和结束标签）
-  // 例如：<旁白> 和 </旁白>
+  // Match all opening and closing tags
+  // For example, a tag with a non-ASCII name and its closing tag
   const regex = /<\/?([^\s>]+)[^>]*>/g;
   
   return html.replace(regex, (match, tagName) => {
-    // 检查标签名是否包含非 ASCII 字符
+    // Check whether the tag name contains non-ASCII characters
     const hasNonAscii = [...tagName].some(char => char.charCodeAt(0) > 127);
     
-    // 如果标签名包含非 ASCII 字符，删除标签（但保留内容）
+    // Remove tags with non-ASCII names but preserve their contents
     if (hasNonAscii) {
       return '';
     }
     
-    // 否则，保留标签
+    // Otherwise retain the tag
     return match;
   });
 }
 
-// 修改图标注册方式（完整示例）
+// Icon registration (complete example)
 app.use(ElementPlus);
 
 // ==========================================
-// ★ 修改点：注册 A2UI 组件
+// Register the A2UI component
 // ==========================================
 app.component('a2-u-i-renderer', A2UIRendererComponent);
 
-// 正确注册所有图标（一次性循环注册）
+// Register all icons in a single loop
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-// 快捷指令弹出菜单组件（输入框 / 开头时的抽屉式菜单）
+// Shortcut popup component (drawer menu when input starts with /)
 app.component('shortcut-menu', {
   props: {
     items: { type: Array, default: () => [] },
@@ -2294,5 +2294,5 @@ app.component('shortcut-menu', {
   `
 });
 
-// 挂载应用
+// Mount the application
 app.mount('#app');

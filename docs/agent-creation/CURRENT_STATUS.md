@@ -63,3 +63,8 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — avatar and optional livestream text
 
 - SoulX avatar status/controls, Electron preload diagnostics and the YouTube/Twitch listener modules are now English; renderer A2UI fallback and additional diagnostics were localized. Shared message IDs, external protocol fields and audio/video processing are unchanged. Source CI and runtime validation remain pending. No new package requested.
+
+## Follow-up source checkpoint — renderer comments
+
+- Source CI for `a1981fb20b4a4b702196b8f9ae89b907b243d06f` passed at https://github.com/Blaco/super-agent-party/actions/runs/45917021932.
+- The main renderer now has no detected Han characters, including A2UI template and developer comments. The broader Vue methods, backend and other source inventories remain incomplete. New CI pending; no package produced.
