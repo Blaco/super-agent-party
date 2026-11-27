@@ -1,0 +1,5 @@
+# Keep upstream browser bundles byte-for-byte across checkout platforms.
+static/libs/katex.min.css -text
+static/libs/katex.min.js -text
+static/libs/markdown-it.min.js -text
+static/libs/mermaid.min.js -text
