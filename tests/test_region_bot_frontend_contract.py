@@ -16,9 +16,23 @@ class FrontendContract(unittest.TestCase):
                     self.assertNotIn(key, content)
 
     def test_no_regional_shutdown_hook(self):
-        source = (ROOT / "main.js").read_text(encoding="utf-8")
-        for key in ("request-stop-qqbot", "request-stop-feishubot", "request-stop-wechatbot", "request-stop-wecombot", "request-stop-dingtalk"):
-            self.assertNotIn(key, source)
+        for path in ("main.js", "static/js/preload.js"):
+            source = (ROOT / path).read_text(encoding="utf-8")
+            for key in ("request-stop-qqbot", "request-stop-feishubot", "request-stop-wechatbot", "request-stop-wecombot", "request-stop-dingtalk"):
+                self.assertNotIn(key, source)
+        preload = (ROOT / "static/js/preload.js").read_text(encoding="utf-8")
+        for key in ("request-stop-discordbot", "request-stop-telegrambot", "request-stop-slackbot"):
+            self.assertIn(key, preload)
+
+    def test_residual_styles_and_about(self):
+        css = (ROOT / "static/css/styles.css").read_text(encoding="utf-8")
+        for key in (".qq-group", ".wechat-guide", "qq-typing-dots"):
+            self.assertNotIn(key, css)
+        self.assertIn("animation: entertainment-typing-dots", css)
+        self.assertIn("@keyframes entertainment-typing-dots", css)
+        html = (ROOT / "static/chat.html").read_text(encoding="utf-8")
+        self.assertIn("Agent Creation source repository", html)
+        self.assertNotIn("mailto:hst97@qq.com", html)
 
     def test_saved_template_excludes_old_adapters(self):
         config = json.loads((ROOT / "config/settings_template.json").read_text(encoding="utf-8"))

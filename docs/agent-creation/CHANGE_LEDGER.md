@@ -494,3 +494,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Translate inherited Responses API design records
 
 - Parent a62a36fe005bbb32d8ce9c9b5a4e5bff7a0fed1c. Translate remaining 170 flagged lines across the historical Responses provider implementation plan and design spec. Preserve API contracts, provider IDs, code examples, upstream design rationale and historical dependency references; annotate superseded Chinese locale/comment/commit conventions and mark documents historical. Zero literal Han in both. Documentation only; no runtime change. Revert for rollback.
+
+## 2026-11-26 — Residual regional runtime cleanup
+
+- Parent d4a4bf41b0c0b3c7b76b9a5b778a2a5f91edfda3. Remove five dead preload IPC hooks for already-removed messaging adapters; retain Discord, Telegram and Slack. Restrict the Claude-compatible selector to Anthropic/customAnthropic and retained local/generic gateways; remove the retired vendor-specific image size default, preserving generic image provider selection. Replace obsolete ComfyUI remote messaging example. Delete two unused platform selectors and rename the entertainment typing animation consistently without changing its keyframes. Align browser-chat About dialog with the fork desktop attribution, preserving AGPL and upstream copyright links. Extend existing regression tests. The source references in all 25 top-level frontend HTML/JS files were checked; no remaining callers to the removed IPC/selector names found. No dependency or user data migration. CI pending; revert for rollback.

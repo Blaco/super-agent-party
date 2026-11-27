@@ -29,6 +29,20 @@ class VendorPresetTests(unittest.TestCase):
         self.assertEqual(json.loads(body[body.index("{"):])["type"], "object")
         self.assertIn("vendorParamDesc_ollama_top_k", locale)
 
+    def test_residual_provider_filters_and_help(self):
+        source = (ROOT / "static/js/renderer.js").read_text(encoding="utf-8")
+        section = source.split("filteredClaudeModelProviders() {", 1)[1].split("},", 1)[0]
+        for name in ("Deepseek", "siliconflow", "ZhipuAI", "moonshot", "aliyun", "modelscope", "302.AI", "MiMo"):
+            self.assertNotIn(name, section)
+        for name in ("Anthropic", "customAnthropic", "Ollama", "newapi"):
+            self.assertIn('"' + name + '"', section)
+        methods = (ROOT / "static/js/vue_methods.js").read_text(encoding="utf-8")
+        section = methods.split("async selectText2imgProvider(", 1)[1].split("async selectAsrProvider(", 1)[0]
+        self.assertNotIn("siliconflow", section)
+        self.assertIn("this.text2imgSettings.size = 'auto';", section)
+        locale = (ROOT / "static/js/locales/en-US.js").read_text(encoding="utf-8")
+        self.assertNotIn("QQ robots", locale)
+
     def test_no_region_vendor_default_endpoints(self):
         source = (ROOT / "static/js/vue_methods.js").read_text(encoding="utf-8")
         for hostname in ("api-inference.modelscope.cn", "api.siliconflow.cn", "dashscope.aliyuncs.com", "ai.gitee.com", "api.hunyuan.cloud.tencent.com"):

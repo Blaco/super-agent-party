@@ -200,3 +200,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up checkpoint — inherited Responses API documentation
 
 - Translated all 170 flagged lines in the historical provider plan and design spec. Together with the calendar documentation this addresses the final 288 project-source Han lines reported outside the main stylesheet. Current full inventory and regional/asset review remain pending. No build.
+
+## Follow-up checkpoint — residual runtime references
+
+- Removed five dead preload hooks, retired vendor filter entries and image-size special case, obsolete messaging help text and CSS selectors; generic APIs and Western optional bots preserved. Browser chat About now matches fork attribution and source links. Added targeted regression tests. Full audit and asset review pending; no build.

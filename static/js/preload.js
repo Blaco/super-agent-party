@@ -37,14 +37,9 @@ contextBridge.exposeInMainWorld('electron', {
   },
   // Get server information (host/port) synchronously
   getServerInfo: () => ipcRenderer.invoke('get-server-info'),
-  requestStopQQBot: () => ipcRenderer.invoke('request-stop-qqbot'),
-  requestStopFeishuBot : () => ipcRenderer.invoke('request-stop-feishubot'),
-  requestStopWechatBot : () => ipcRenderer.invoke('request-stop-wechatbot'),
-  requestStopDingtalkBot : () => ipcRenderer.invoke('request-stop-dingtalk'),
   requestStopDiscordBot : () => ipcRenderer.invoke('request-stop-discordbot'),
   requestStopTelegramBot : () => ipcRenderer.invoke('request-stop-telegrambot'),
   requestStopSlackBot : () => ipcRenderer.invoke('request-stop-slackbot'), 
-  requestStopWeComBot : () => ipcRenderer.invoke('request-stop-wecombot'),
 });
 
 // Expose safe interfaces

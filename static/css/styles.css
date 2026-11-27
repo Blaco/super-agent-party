@@ -2593,12 +2593,6 @@ body {
   text-decoration: none;
 }
 
-.qq-group {
-  color: var(--el-color-primary-light-3);
-  font-weight: 500;
-  margin-left: 0.5rem;
-}
-
 .agreement-section {
   margin-top: 2rem;
   padding-top: 2rem;
@@ -10252,9 +10246,6 @@ hr.footnotes-sep {
   border-color: var(--el-color-primary) !important;
 }
 
-.wechat-guide {
-  padding: 10px 5px;
-}
 .guide-step {
   display: flex;
   gap: 15px;
@@ -13150,11 +13141,11 @@ pre.code-block {
     border-radius: 50%;
     /* Leave horizontal margin for dots created by box-shadow */
     margin: 0 12px; 
-    animation: qq-typing-dots 1.4s infinite ease-in-out both;
+    animation: entertainment-typing-dots 1.4s infinite ease-in-out both;
 }
 
 /* Three-dot wave bounce animation */
-@keyframes qq-typing-dots {
+@keyframes entertainment-typing-dots {
     0%, 80%, 100% {
         box-shadow: -12px 0 0 -1px rgba(128,128,128,0.4), 
                      0 0 0 -1px rgba(128,128,128,0.4), 
