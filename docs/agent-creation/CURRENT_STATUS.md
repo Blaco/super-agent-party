@@ -68,3 +68,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 
 - Source CI for `a1981fb20b4a4b702196b8f9ae89b907b243d06f` passed at https://github.com/Blaco/super-agent-party/actions/runs/45917021932.
 - The main renderer now has no detected Han characters, including A2UI template and developer comments. The broader Vue methods, backend and other source inventories remain incomplete. New CI pending; no package produced.
+
+## Follow-up source checkpoint — Vue state definitions
+
+- static/js/vue_data.js now contains zero detected Han characters, including developer comments. Executable state and settings defaults remain unchanged. The broader Vue methods and backend inventory still requires work; CI pending and no new package requested.

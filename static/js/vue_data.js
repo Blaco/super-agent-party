@@ -1,6 +1,6 @@
 const isElectron = window.electronAPI ? true : false;
 const isSteamBuild = window.__IS_STEAM_BUILD__ || false;
-// 事件监听改造
+// Event listener setup
 if (isElectron) {
     document.addEventListener('contextmenu', (e) => {
       const imgTarget = e.target.closest('img');
@@ -32,7 +32,7 @@ if (isElectron) {
             url.pathname.startsWith('/uploaded_files/')) {
           event.preventDefault();
           
-          // 使用预加载接口处理路径
+          // Use the preload interface to handle paths
           const filename = url.pathname.split('/uploaded_files/')[1];
           const filePath = window.electronAPI.pathJoin(
             window.electronAPI.getAppPath(), 
@@ -45,7 +45,7 @@ if (isElectron) {
         }
         if (['http:', 'https:'].includes(url.protocol)) {
           event.preventDefault();
-          await window.electronAPI.openExternal(href); // 确保调用electronAPI
+          await window.electronAPI.openExternal(href); // Call electronAPI
           return;
         }
         
@@ -59,7 +59,7 @@ if (isElectron) {
     HOST = window.location.hostname
     PORT = window.location.port
   }
-  // 判断协议
+  // Check the protocol
   const protocol = window.location.protocol;
   const backendURL = `${window.location.protocol}//${window.location.host}`;
 let vue_data = {
@@ -72,17 +72,17 @@ let vue_data = {
     updateInfo: null,
     updateIcon: 'fa-solid fa-download',
     system_prompt: ' ',
-    SystemPromptsList: [],          // 系统提示词数组
-    extensionsSystemPromptsDict: {}, // 扩展提示词字典
-    showPromptDialog: false,        // 对话框显隐
-    promptForm: {                   // 对话框绑定
+    SystemPromptsList: [],          // System prompt array
+    extensionsSystemPromptsDict: {}, // Extension prompt dictionary
+    showPromptDialog: false,        // Dialog visibility
+    promptForm: {                   // Dialog form binding
       id: null,
       name: '',
       content: ''
     },
-    selectSystemPromptId: null,    // 选择的系统提示词id
-    wakeWindowTimer: null,   // 计时器
-    withinWakeWindow: false, // 是否处于“免唤醒”30s 窗口
+    selectSystemPromptId: null,    // Selected system prompt ID
+    wakeWindowTimer: null,   // Timer
+    withinWakeWindow: false, // Whether the 30-second wake-word-free window is active
     isdocker: false,
     isExpanded: true,
     isElectron: isElectron,
@@ -97,54 +97,54 @@ let vue_data = {
     isMaximized: false,
     hasUpdate: false,
     updateSuccess: false,
-    audioCtx: null,          // WebAudio 上下文
+    audioCtx: null,          // Web Audio context
     activeSources: [], 
-    audioStartTime: 0,       // 下一帧应该开始的时间
+    audioStartTime: 0,       // Scheduled start time for the next frame
     omniQueue: [],        // [{idx, text, expressions, voice, pcmBase64}, ...]
-    omniIdx: 0,           // 当前正在播的索引
-    isOmniPlaying: false, // 是否正在播放
+    omniIdx: 0,           // Index currently playing
+    isOmniPlaying: false, // Playback state
     settings: {
       model: '',
       base_url: '',
       api_key: '',
-      temperature: 1,  // 默认温度值
-      max_tokens: 8192,    // 默认最大输出长度
-      max_rounds: 0,    // 默认最大轮数
+      temperature: 1,  // Default temperature
+      max_tokens: 8192,    // Default maximum output length
+      max_rounds: 0,    // Default maximum rounds
       selectedProvider: null,
       top_p: 1,
       reasoning_effort: null,
-      enableOmniTTS: false,// 是否启用omniTTS
-      omniVoice: 'Cherry', // omniTTS的语音
-      extra_params: [], // 额外参数
+      enableOmniTTS: false,// Enable Omni TTS
+      omniVoice: 'Cherry', // Omni TTS voice
+      extra_params: [], // Additional parameters
     },
     fastSettings: {
-      enabled: false, // 默认不启用
-      triggerMode: 'conditional', // 默认触发模式条件触发
+      enabled: false, // Disabled by default
+      triggerMode: 'conditional', // Conditional triggering by default
       model: '',
       base_url: '',
       api_key: '',
-      temperature: 1,  // 默认温度值
-      max_tokens: 8192,    // 默认最大输出长度
-      max_rounds: 0,    // 默认最大轮数
+      temperature: 1,  // Default temperature
+      max_tokens: 8192,    // Default maximum output length
+      max_rounds: 0,    // Default maximum rounds
       selectedProvider: null,
       top_p: 1,
       reasoning_effort: null,
-      enableOmniTTS: false,// 是否启用omniTTS
-      omniVoice: 'Cherry', // omniTTS的语音
-      extra_params: [], // 额外参数
-      conditionMaxLen: 200,       // 默认字数限制，小于此字数才触发
-      conditionNoNewline: true,   // 是否要求不能有换行才触发
-      conditionNoFiles: true,     // 是否要求无图片/文件才触发
+      enableOmniTTS: false,// Enable Omni TTS
+      omniVoice: 'Cherry', // Omni TTS voice
+      extra_params: [], // Additional parameters
+      conditionMaxLen: 200,       // Trigger only below this character limit
+      conditionNoNewline: true,   // Require text without line breaks
+      conditionNoFiles: true,     // Require no images or files
     },
     reasonerSettings: {
-      enabled: false, // 默认不启用
+      enabled: false, // Disabled by default
       model: '',
       base_url: '',
       api_key: '',
       selectedProvider: null,
-      temperature: 1,  // 默认温度值
-      max_tokens: 4096,  // 默认最大输出长度
-      stop_words: [',', '.', '，', '。'], // 停止词列表
+      temperature: 1,  // Default temperature
+      max_tokens: 4096,  // Default maximum output length
+      stop_words: [',', '.', '，', '。'], // Stop-word list
       reasoning_effort: null,
     },
     target_lang: 'en-US',
@@ -159,12 +159,12 @@ let vue_data = {
       { value: 'none', label: 'reason-none' },
     ],
     visionSettings: {
-      enabled: false, // 默认不启用
+      enabled: false, // Disabled by default
       model: '',
       base_url: '',
       api_key: '',
       selectedProvider: null,
-      temperature: 1,  // 默认温度值
+      temperature: 1,  // Default temperature
       desktopVision: false,
       wakeWord: 'see\nlook\ndesktop',
       enableWakeWord: false,
@@ -174,7 +174,7 @@ let vue_data = {
       { value: 'integer', label: 'integer' },
       { value: 'float', label: 'float' },
       { value: 'boolean', label: 'boolean' },
-      { value: 'json', label: 'JSON' } // 合并为一个
+      { value: 'json', label: 'JSON' } // Consolidated JSON option
     ],
     ws: null,
     messages: [],
@@ -182,8 +182,8 @@ let vue_data = {
     userInput: '',
     isTyping: false,
     currentMessage: '',
-    conversationId: null, // 当前对话ID
-    conversations: [], // 对话历史记录
+    conversationId: null, // Current conversation ID
+    conversations: [], // Conversation history
     conversationGroups: [],
     collapsedConversationGroups: {},
     chatHistoryPanelOpen: true,
@@ -222,7 +222,7 @@ let vue_data = {
     showGsvRefAudioPathDialog: false,
     showModelDialog: false,
     showLogoDialog: false,
-    deletingConversationId: null, // 正在被删除的对话ID
+    deletingConversationId: null, // Conversation ID being deleted
     jsonFile: null,
     models: [],
     modelsLoading: false,
@@ -230,7 +230,7 @@ let vue_data = {
     isThinkOpen: false,
     showEditDialog: false,
     editContent: '',
-    editType: 'system', // 或 'message'
+    editType: 'system', // Or 'message'
     editIndex: null,
     asyncToolsID : [],
     TTSrunning:false,
@@ -263,15 +263,15 @@ let vue_data = {
         enabled: false,
       },
       language: {
-        enabled: false, // 默认不启用
+        enabled: false, // Disabled by default
         language: 'en-US',
         tone: 'normal',
       },
       inference: {
-        enabled: false, // 默认不启用
+        enabled: false, // Disabled by default
       },
       deepsearch: {
-        enabled: false, // 默认不启用
+        enabled: false, // Disabled by default
       },
       formula: {
         enabled: true
@@ -295,8 +295,8 @@ let vue_data = {
       url: '',
       apiKey: '',
     },
-    newMCPType: 'stdio', // 新增类型字段
-    mcpInputType: 'form', // 默认为JSON，还可以是 'form'
+    newMCPType: 'stdio', // Type field
+    mcpInputType: 'form', // Default input mode; also supports 'form'
     currentMCPExample: '',
     mcpURLDict: {
       stdio: 'http://127.0.0.1:8000/mcp',
@@ -349,27 +349,27 @@ let vue_data = {
   }
 }`
     },
-    activeKbTab: 'settings', // 默认激活的标签页
-    activeReadTab: 'full', // 默认激活的标签页
+    activeKbTab: 'settings', // Initially active tab
+    activeReadTab: 'full', // Initially active tab
     webSearchSettings: {
       enabled: false,
       engine: 'tavily',
       crawler: 'mdnew',
       when: 'after_thinking',
-      duckduckgo_max_results: 10, // 默认值
+      duckduckgo_max_results: 10, // Default result limit
       searxng_url: `http://127.0.0.1:8080`,
       searxng_engines: "bing,duckduckgo,google",
       searxng_is_select:false,
-      searxng_max_results: 10, // 默认值
-      tavily_max_results: 10, // 默认值
+      searxng_max_results: 10, // Default result limit
+      tavily_max_results: 10, // Default result limit
       tavily_api_key: '',
       jina_api_key: '',
       Crawl4Ai_url: 'http://127.0.0.1:11235',
       Crawl4Ai_api_key: 'test_api_code',
-      google_max_results: 10, // 默认值
+      google_max_results: 10, // Default result limit
       google_api_key: '',
       google_cse_id: '',
-      brave_max_results: 10, // 默认值
+      brave_max_results: 10, // Default result limit
       brave_api_key: '',
       exa_max_results:10,
       exa_api_key: '',
@@ -378,7 +378,7 @@ let vue_data = {
       youcom_max_results: 10,
       youcom_api_key: '',
       youcom_tier: 'free',
-      firecrawl_url: 'https://api.firecrawl.dev/v2', // 官方API或自部署地址
+      firecrawl_url: 'https://api.firecrawl.dev/v2', // Official API or self-hosted endpoint
       firecrawl_api_key: '',
       firecrawl_mode: 'scrape', 
     },
@@ -403,9 +403,9 @@ let vue_data = {
       keyboard:true,
       desktopVision: true,
       onlyNewScreen: true,
-      isEnableGrid: true, // 是否启用网格
-      isFullScreen: true, // 是否全屏
-      ScreenSize : [0,0,1280,720], // 非全屏时，截取x1 y1 x2 y2
+      isEnableGrid: true, // Enable grid
+      isFullScreen: true, // Full-screen capture
+      ScreenSize : [0,0,1280,720], // Capture rectangle x1 y1 x2 y2 when not full-screen
     },
     ccSettings: {
       enabled: false,
@@ -576,11 +576,11 @@ let vue_data = {
       reasonerAdvanced: true,
       knowledgeAdvanced: false,
     },
-    abortController: null, // 用于中断请求的控制器
-    isSending: false, // 是否正在发送
+    abortController: null, // Controller for cancelling requests
+    isSending: false, // Sending state
     showAddDialog: false,
     modelProviders: [],
-    // 更新相关
+    // Update state
     updateAvailable: false,
     updateInfo: null,
     updateDownloaded: false,
@@ -597,20 +597,20 @@ let vue_data = {
     currentTranscriptionId: null,
     speechStartTime: null,
     recognition: null,
-    sherpaModelExists: false,             // 模型是否已存在
-    sherpaDownloading: false,             // 是否正在下载
-    sherpaPercent: 0,                     // 实时进度 0-100
-    sherpaEventSource: null,               // 当前 SSE 实例
-    sherpaModelName: '',                 // 模型名称
-    minilmModelExists: false,       // 模型是否已存在
-    minilmDownloading: false,       // 是否正在下载
-    minilmPercent: 0,               // 实时进度 0-100
-    minilmEventSource: null,        // 当前 SSE 实例
+    sherpaModelExists: false,             // Whether the model is already installed
+    sherpaDownloading: false,             // Download state
+    sherpaPercent: 0,                     // Live progress, 0-100
+    sherpaEventSource: null,               // Current SSE instance
+    sherpaModelName: '',                 // Model name
+    minilmModelExists: false,       // Whether the model is already installed
+    minilmDownloading: false,       // Download state
+    minilmPercent: 0,               // Live progress, 0-100
+    minilmEventSource: null,        // Current SSE instance
     mossModelExists: false,
     mossDownloading: false,
     mossDownloadSource: '',
     mossPollInterval: null,
-    mossPercent: 0, // 新增：真实进度条百分比
+    mossPercent: 0, // Actual progress percentage
 
     asrSettings: {
       enabled: false,
@@ -641,21 +641,21 @@ let vue_data = {
     userInputBuffer: '',
     sidePanelOpen: false,
     sidePanelHTML: '',
-    chatAreaOpen: true,        // 对话区域是否展开
-    chatAreaWidth: 50,         // 对话区域宽度百分比
-    sidePanelWidth: 50,        // 侧边栏宽度百分比
-    savedSidePanelWidth: null, // 记住上次面板宽度
-    isResizing: false,         // 是否正在调整大小
+    chatAreaOpen: true,        // Whether the chat area is expanded
+    chatAreaWidth: 50,         // Chat area width percentage
+    sidePanelWidth: 50,        // Side panel width percentage
+    savedSidePanelWidth: null, // Remember the previous panel width
+    isResizing: false,         // Resizing state
     isHistoryPanelResizing: false,
-    minPanelWidth: 25,         // 最小面板宽度百分比
-    extensions: [],              // 所有发现的扩展
-    currentExtension: null,      // 当前加载的扩展
-    sidePanelURL: '',            // 侧边栏中显示的扩展URL
-    showExtensionsDialog: false, // 控制扩展选择对话框的显示
-    showExtensionForm: false, // 控制扩展表单的显示
-    newExtensionUrl: '',   // 绑定输入框
-    remotePlugins: [], // 远程插件列表
-    installedPlugins: [], // 本地已安装
+    minPanelWidth: 25,         // Minimum panel width percentage
+    extensions: [],              // All discovered extensions
+    currentExtension: null,      // Currently loaded extension
+    sidePanelURL: '',            // Extension URL displayed in the side panel
+    showExtensionsDialog: false, // Extension picker dialog visibility
+    showExtensionForm: false, // Extension form visibility
+    newExtensionUrl: '',   // Input binding
+    remotePlugins: [], // Remote plugin list
+    installedPlugins: [], // Locally installed plugins
     installLoading: false,
     refreshing: false,
     refreshButtonText: "",
@@ -697,7 +697,7 @@ let vue_data = {
       customTTSKeySpeed: 'speed',
       systemVoiceName: null,
       systemRate: 200,
-      // Tetos 通用音色列表缓存 (当切换引擎时刷新)
+      // Tetos shared voice-list cache (refresh when the engine changes)
       tetosVoices: [],
       isFetchingVoices: false,
 
@@ -711,7 +711,7 @@ let vue_data = {
       fishVoice: '',
 
       // Google
-      googleServiceAccount: '', // JSON 字符串
+      googleServiceAccount: '', // JSON string
       googleVoice: '',
       newtts:{},
 
@@ -727,8 +727,8 @@ let vue_data = {
       mossVoice: 'Ava',
       mossSpeed: 1.0,
     },
-    activeTTSTab: 'default', // 控制 TTS 标签页切换
-    showAddTTSDialog: false, // 控制添加 TTS 的对话框显示
+    activeTTSTab: 'default', // Active TTS tab
+    showAddTTSDialog: false, // Add TTS dialog visibility
     newTTSConfig: {
       name: '',
       enabled: false,
@@ -758,7 +758,7 @@ let vue_data = {
       customTTSspeed: 1.0,
       systemVoiceName: null,
       systemRate: 200,
-      // Tetos 通用音色列表缓存 (当切换引擎时刷新)
+      // Tetos shared voice-list cache (refresh when the engine changes)
       tetosVoices: [],
       isFetchingVoices: false,
 
@@ -772,7 +772,7 @@ let vue_data = {
       fishVoice: '',
 
       // Google
-      googleServiceAccount: '', // JSON 字符串
+      googleServiceAccount: '', // JSON string
       googleVoice: '',
 
       mossVoice: 'Ava',
@@ -899,8 +899,8 @@ let vue_data = {
       {"name": "groupChatBotton", "enabled": false},
     ],
     showVrmModelDialog: false,
-    vrmOnline: false,   // 新增
-    vrmPollTimer: null, // 新增
+    vrmOnline: false,   // VRM connection state
+    vrmPollTimer: null, // VRM polling timer
     newVrmModel: {
       name: '',
       displayName: '',
@@ -912,13 +912,13 @@ let vue_data = {
       name: 'default',
       enabledExpressions: false,
       enabledMotions: false,
-      selectedModelId: 'alice', // 默认选择Alice模型
+      selectedModelId: 'alice', // Select the Alice model by default
       windowWidth: 540,
       windowHeight: 960,
-      defaultModels: [], // 存储默认模型
-      userModels: [],     // 存储用户上传的模型
-      defaultMotions: [], // 存储默认动作
-      userMotions: [],     // 存储用户上传的动作
+      defaultModels: [], // Default models
+      userModels: [],     // User-uploaded models
+      defaultMotions: [], // Default motions
+      userMotions: [],     // User-uploaded motions
       selectedMotionIds: [],
       selectedNewModelId: 'alice',
       selectedNewMotionIds: [],
@@ -965,7 +965,7 @@ let vue_data = {
       name: '',
       windowWidth: 540,
       windowHeight: 960,
-      selectedModelId: 'alice', // 默认选择Alice模型
+      selectedModelId: 'alice', // Select the Alice model by default
       selectedMotionIds: [],
     },
     showAddAppearanceDialog: false,
@@ -1378,7 +1378,7 @@ let vue_data = {
       { id: 'shortcuts', icon: 'fa-solid fa-terminal', title: 'shortcutSettings' },
       { id: 'accounts', icon: 'fa-solid fa-users', title: 'accountManagement' },
     ],
-    // 账户管理
+    // Account management
     showAddAccountDialog: false,
     newAccountName: '',
     newAccountDataPath: '',
@@ -1434,7 +1434,7 @@ let vue_data = {
       { label: ':', value: ':' },
       { label: '"', value: '"' },
       { label: '\'', value: '\'' },
-      // 其他
+      // Other separators
       { label: '*', value: '*' },
       { label: '`', value: '`' },
       { label: '·', value: '·' },
@@ -1445,7 +1445,7 @@ let vue_data = {
     behaviorSettings:{
       enabled: false,
       behaviorList:[]
-    }, // 行为设置
+    }, // Behavior settings
     behaviorNameDict:{
       noInput: "noInputName",
       time: "timeName",
@@ -1456,21 +1456,21 @@ let vue_data = {
       trigger: {
         type: "noInput",
         time:{
-          timeValue: "00:00:00", // 时间值，例如：12:00:00
-          days: [] // 星期几的列表，例如：[1, 2, 3] 表示周一、周二、周三，为空表示不重复
+          timeValue: "00:00:00", // Time value, for example 12:00:00
+          days: [] // Weekday list: [1, 2, 3] means Monday through Wednesday; empty means no repetition
         },
         noInput:{
-          latency: 30, // 无输入时等待的秒数
+          latency: 30, // Seconds to wait without input
         },
         cycle:{
-          cycleValue: "00:00:30", // 时间值，例如：00:00:30
-          repeatNumber: 1, // 周期次数，例如：3次
-          isInfiniteLoop: false, // 是否无限循环
+          cycleValue: "00:00:30", // Interval value, for example 00:00:30
+          repeatNumber: 1, // Number of repetitions, for example 3
+          isInfiniteLoop: false, // Whether to repeat indefinitely
         }
       },
       action: {
         type: "prompt",
-        prompt: "", // Prompt会向模型发送一条命令
+        prompt: "", // Prompt sends an instruction to the model
         random:{
           events:[""],
           type:"random",
@@ -1512,11 +1512,11 @@ let vue_data = {
     isDiscordStarting: false,
     isDiscordStopping: false,
     isDiscordReloading: false,
-    isAudioSynthesizing: false, // 音频合成状态
-    audioChunksCount: 0,        // 已生成的音频片段数
-    totalChunksCount: 0,        // 总音频片段数
-    isConvertingAudio: false,    // 音频转换状态
-    isConvertStopping: false, // 新增状态
+    isAudioSynthesizing: false, // Audio synthesis state
+    audioChunksCount: 0,        // Number of generated audio chunks
+    totalChunksCount: 0,        // Total audio chunks
+    isConvertingAudio: false,    // Audio conversion state
+    isConvertStopping: false, // Conversion stopping state
     ttsWebSocket: null,
     wsConnected: false,
     isVRMRunning: false,
@@ -1555,7 +1555,7 @@ let vue_data = {
     sourceText: '',
     translatedText: '',
     isTranslating: false,
-    targetLangSelected: 'system',   //“系统默认”
+    targetLangSelected: 'system',   // System default
     readConfig: {
       longText: "",
       longTextList: [],
@@ -1573,10 +1573,10 @@ let vue_data = {
       currentChunk: 0,
       isPlaying: false
     },
-    segmentEditBuffer: '',  // 单个段落临时编辑区
-    segmentVoiceEditBuffer: [],  // 单个段落临时编辑区
-    activeSegmentIdx: -1,    // 当前手动编辑的段落索引
-    _curAudio: null,        // 当前 Audio 实例
+    segmentEditBuffer: '',  // Temporary segment text editor
+    segmentVoiceEditBuffer: [],  // Temporary segment voice editor
+    activeSegmentIdx: -1,    // Index of the segment being edited manually
+    _curAudio: null,        // Current Audio instance
     isReadingOnetext: false,
     liveConfig: {
       filterMode: 'danmaku_only',
@@ -1597,10 +1597,10 @@ let vue_data = {
     isSlackStopping: false,
     isSlackReloading: false,
 
-    // Slack 配置对象
+    // Slack configuration object
     slackBotConfig: {
-      bot_token: '',      // Slack 的 xoxb token
-      app_token: '',      // Slack 的 xapp token (Socket Mode)
+      bot_token: '',      // Slack xoxb token
+      app_token: '',      // Slack xapp token (Socket Mode)
       llm_model: 'super-model',
       memory_limit: 30,
       separators: ['。', '\n', '？', '！'],
@@ -1611,10 +1611,10 @@ let vue_data = {
       behaviorTargetChatIds: [],
     },
 
-    danmu: [], // 弹幕列表
+    danmu: [], // Livestream chat message list
     liveWs: null, // Livestream websocket connection
-    danmuProcessTimer: null, // 弹幕处理定时器
-    isProcessingDanmu: false, // 是否正在处理弹幕
+    danmuProcessTimer: null, // Livestream message processing timer
+    isProcessingDanmu: false, // Whether a livestream message is being processed
     shouldReconnectWs :false,
     isLiveRunning: false,
     isLiveStarting: false,
@@ -1629,20 +1629,20 @@ let vue_data = {
     },
     dialogVisible: false,
     imageUrl: '',
-    uploadedStickers: [], // 格式: { uid: string, url: string, tags: string[] }
-    isStarting: false,      // 启动中状态
-    isStopping: false,      // 停止中状态
-    isReloading: false,     // 重载中状态
+    uploadedStickers: [], // Format: { uid: string, url: string, tags: string[] }
+    isStarting: false,      // Starting state
+    isStopping: false,      // Stopping state
+    isReloading: false,     // Reloading state
     activeMemoryTab: 'config',
     activeBehaviorTab: 'config',
     activeMemoryTabName: 'autoUpdateSetting',
     activeMCPTab: 'config',
     activeCLITab: 'config',
     quickCreatePrompt: '',
-    isGenerating: false, // 是否正在生成
+    isGenerating: false, // Generation state
     quickCreateSystemPrompt: '',
-    isSystemPromptGenerating: false, // 是否正在生成
-    isQuickGenerating: false, // 是否正在生成
+    isSystemPromptGenerating: false, // System prompt generation state
+    isQuickGenerating: false, // Quick response generation state
     memories: [],
     newMemory: {
       id: null,
@@ -1676,14 +1676,14 @@ let vue_data = {
     textFiles: [],
     imageFiles: [],
     videoFiles: [],
-    selectedFiles: [],      // 存 unique_filename
+    selectedFiles: [],      // Store unique_filename values
     selectedImages: [],
     allImagesChecked: false,
     indeterminateImages: false,
     selectedVideos: [],
     allVideosChecked: false,
     indeterminateVideos: false,
-    subMenu: '', // 新增子菜单状态
+    subMenu: '', // Submenu state
     isWorldviewSettingsExpanded: true,
     isRandomSettingsExpanded: true,
     isBasicCharacterExpanded: true,
@@ -1732,15 +1732,15 @@ let vue_data = {
         icon: 'fa-solid fa-palette'
       },
     ],
-    comfyuiServers: ['http://127.0.0.1:8188'], // 默认服务器
+    comfyuiServers: ['http://127.0.0.1:8188'], // Default server
     comfyuiAPIkey: '',
     workflowDescription: "",
     activeComfyUIUrl: '',
     isConnecting: false,
-    customHttpTools: [],  // 用于存储自定义HTTP工具的数组
+    customHttpTools: [],  // Array of custom HTTP tools
     showCustomHttpToolForm: false,
     isInputExpanded: false,
-    isChatInputActive: false, // 聊天输入框是否处于活跃（聚焦展开）状态，false 时仅显示 1 行并把模型/视图等 pill 折叠到发送按钮左侧
+    isChatInputActive: false, // Active (focused and expanded) chat input; when false, show one line and collapse model/view pills beside Send
     sidebarVisible: false,
     isMobile: false,
     searchKeyword: '',
@@ -1755,16 +1755,16 @@ let vue_data = {
     },
     editingCustomHttpTool: false,
 
-    searchQuery: '', // 搜索框的值
-    activeCategory: 'all', // 当前选中的分类：'all' | 'local' | 'cloud'
+    searchQuery: '', // Search input value
+    activeCategory: 'all', // Selected category: 'all' | 'local' | 'cloud'
     
-    // 定义属于本地/自建的供应商列表
+    // Local and self-hosted provider list
     localVendors:[
       'llama.cpp','Ollama', 'Vllm', 'LMstudio','SGLang', 'xinference', 
       'LocalAI', 'ttswebui', 'Dify', 'newapi'
     ],
 
-    // 供应商推荐参数（从 vendor_params.js 加载，供 UI 建议使用）
+    // Recommended provider parameters loaded from vendor_params.js for UI suggestions
     vendorSuggestedParams: window.vendorSuggestedParams || {},
     vendorValues: [
       'custom','customAnthropic','OpenAIResponses', 'OpenAI', 'Anthropic', 'Gemini','Grok',
@@ -1920,29 +1920,29 @@ main();`,
     modelOptions: [],
     previewVisible: false,
     previewImageUrl: '',
-    workflows: [], // 保存工作流文件列表
-    showWorkflowUploadDialog: false, // 控制上传对话框的显示
-    workflowFile: null, // 当前选中的工作流文件
+    workflows: [], // Workflow file list
+    showWorkflowUploadDialog: false, // Upload dialog visibility
+    workflowFile: null, // Selected workflow file
     selectedTextInput: null,
     selectedImageInput: null,
     selectedTextInput2: null,
     selectedImageInput2: null,
     selectedSeedInput: null,
     selectedSeedInput2: null,
-    textInputOptions: [], // 确保这里是一个空数组
-    imageInputOptions: [], // 确保这里是一个空数组
-    seedInputOptions: [], // 确保这里是一个空数组
-    inAutoMode: false, // 内存变量，不在设置中保存
+    textInputOptions: [], // Initialize as an empty array
+    imageInputOptions: [], // Initialize as an empty array
+    seedInputOptions: [], // Initialize as an empty array
+    inAutoMode: false, // In-memory state, not persisted to settings
     vectorDialogVisible: false,
     vectorDialogMemoryId: '',
     vectorDialogMemoryName: '',
     vectorLoading: false,
     vectorTable: [],       // { idx, uuid, text, created_at, timetamp }
-    editRowUuid: null,     // 当前编辑行的 uuid
-    editRowText: "",        // 当前编辑的文本
+    editRowUuid: null,     // UUID of the row being edited
+    editRowText: "",        // Text being edited
     editRowVisible: false,
-    newVectorText: "",      // 新增记忆条目的输入文本
-    nodeInstalled: false,   // 探针结果
+    newVectorText: "",      // Text for a new memory entry
+    nodeInstalled: false,   // Probe result
     nodeInstalling: false,
     nodeProgress: 0,
     nodeTimer: null,
@@ -1959,50 +1959,50 @@ main();`,
     isReadPaused: false, 
     currentReadAudio: null,
     showLogDialog: false,
-    logContent: '', // 日志内容
-    systemVoices: [],        // 存储从后端获取的音色列表
-    isLoadingSystemVoices: false, // 加载状态
-    renderTimers: {}, // 用于存储每个消息的防抖定时器
-    // --- AI 浏览器数据 ---
+    logContent: '', // Log content
+    systemVoices: [],        // Voice list retrieved from the backend
+    isLoadingSystemVoices: false, // Loading state
+    renderTimers: {}, // Per-message debounce timers
+    // --- AI browser state ---
     browserTabs: [
-        // 默认初始化一个新标签页
+        // Initialize one new tab by default
         { 
             id: Date.now(), 
             title: 'New Tab', 
-            url: '', // 空 URL 表示显示欢迎页
+            url: '', // An empty URL displays the welcome page
             favicon: '', 
             isLoading: false,
             canGoBack: false,
             canGoForward: false 
         }
     ],
-    currentTabId: null, // 将在 created 或 mounted 中初始化
+    currentTabId: null, // Initialized in created or mounted
     urlInput: '',
-    showEngineDropdown: false, // 控制下拉菜单显示
-    dropdownTimer: null, // 新增定时器变量
-    isSearchFocused: false,    // 控制搜索框聚焦样式
+    showEngineDropdown: false, // Dropdown visibility
+    dropdownTimer: null, // Dropdown timer
+    isSearchFocused: false,    // Search input focus styling
     searchEngine: 'bing', // 'bing' or 'google' or 'party'
     welcomeSearchQuery: '',
     showDownloadDropdown: false,
-    downloads: [], // 存储所有下载记录 { id, filename, totalBytes, receivedBytes, state, path, progress }
+    downloads: [], // Download records { id, filename, totalBytes, receivedBytes, state, path, progress }
     dropdownTimer: null, 
     showBrowserChat: false,
-    favorites: [],       // 存储收藏项列表
-    showFavorites: true, // 控制欢迎页收藏夹的显示/隐藏状态
+    favorites: [],       // Bookmarks list
+    showFavorites: true, // Welcome-page bookmark visibility
     searchEngineplaceholder:'',
     webviewPreloadPath: '', 
-    isGroupMode: false,           // 是否开启群聊模式
+    isGroupMode: false,           // Whether group chat mode is active
     selectedGroupAgents: [], 
     showGroupSettingsDialog: false,
-    voiceStack : ['default'], // 存储语音播放队列
+    voiceStack : ['default'], // Voice playback queue
     receivedMsgIds: new Set(), 
     lastProcessedContent: '', 
     approvalMap: {},
-    isSubmitting: false,      // 控制弹窗内的加载状态
-    isEditMode: false,        // 控制弹窗是添加还是编辑模式
-    currentEditingMCPId: null, // 当前正在编辑/添加的 MCP ID
+    isSubmitting: false,      // Dialog loading state
+    isEditMode: false,        // Whether the dialog is in add or edit mode
+    currentEditingMCPId: null, // MCP ID currently being added or edited
     activeDialogTab: 'config', 
-    activeCLITab: 'config', // 确保这个已存在
+    activeCLITab: 'config', // Existing active CLI tab
     skillsList: [],
     showAddSkillDialog: false,
     addSkillTab: 'github',
@@ -2015,9 +2015,9 @@ main();`,
     extensionsPollingTimer: null,
     skillsInProject: [], 
     projectSkillsDetails: [],
-    showBehaviorDialog: false,     // 控制弹窗显示
-    currentBehaviorIndex: -1,      // 当前编辑的索引，-1 表示新增
-    tempBehavior: null,            // 临时编辑对象，避免直接修改原数据
+    showBehaviorDialog: false,     // Dialog visibility
+    currentBehaviorIndex: -1,      // Index being edited; -1 means new entry
+    tempBehavior: null,            // Temporary editing object to avoid modifying original data
     minLimit: { h: 0, m: 1, s: 0 },
     activeSideView: 'list', // 'list' | 'tasks' | 'workspace' | 'toolDetail'
     taskList: [],
@@ -2028,17 +2028,17 @@ main();`,
     selectedTaskResult: '',
     selectedTaskTitle: '',
     viewingTaskDetail: null,
-    isDragging: false, // 新增状态
-    isPttMode: false,      // 控制输入框是否在【按住说话】模式
-    isPttRecording: false, // 控制是否正在录制
+    isDragging: false, // Dragging state
+    isPttMode: false,      // Whether input uses push-to-talk mode
+    isPttRecording: false, // Recording state
     isGlobalRecording: false, 
-    workspaceTreeKey: 0, // 用于强制刷新整个树组件
-    expandedNodeKeys: [], // 用于保存刷新前展开的文件夹状态
+    workspaceTreeKey: 0, // Force the entire tree component to refresh
+    expandedNodeKeys: [], // Preserve expanded folders across refreshes
     workspaceRefreshTimer: null, 
     workspaceTreeProps: {
       label: 'name',
       children: 'children',
-      isLeaf: (data) => !data.isDirectory // 告诉 el-tree 如果不是文件夹就是叶子节点（不可展开）
+      isLeaf: (data) => !data.isDirectory // Tell el-tree that non-directory entries are leaf nodes and cannot be expanded
     },
     loveSettings: {
       enabled: false,
@@ -2048,17 +2048,17 @@ main();`,
       ],
       prompt: "Assess the user's tone, emotional context, and established character persona when updating relationship attributes.\n1. love: affection and closeness toward the user. Increase by 1 to 5 after kind, caring, or enjoyable interactions; decrease by 1 to 5 after cold, insulting, or upsetting interactions. Range: -50 to 50.\n2. familiarity: how well the character and user know each other. Increase gradually by 1 or 2 as they talk and exchange information; normally do not decrease. Range: 0 to 100.\nIf no current attribute values are provided, this is the first interaction. Choose reasonable initial values (for example, 0 to 10) based on the user's first message. Output only the requested attribute tags. Keep dialogue style consistent with relationship values and the character card."
     },
-    // 羁绊系统 UI 状态
-    activeAffectionTab: 'config', // 控制当前在哪个 Tab
-    affectionRawData: {},         // 存放后端返回的原始 JSON ( {"小包": {love:1}, "张三": {love:5}} )
-    affectionDataList: [],        // 转化为数组用于表格显示
-    affectionSearchQuery: '',     // 搜索栏绑定的值
+    // Relationship system UI state
+    activeAffectionTab: 'config', // Active tab
+    affectionRawData: {},         // Raw JSON returned by the backend, e.g. {"Alex": {love:1}, "Sam": {love:5}}
+    affectionDataList: [],        // Convert to an array for table display
+    affectionSearchQuery: '',     // Search field binding
     
-    // 羁绊系统对话框状态
+    // Relationship system dialog state
     showAffectionDataDialog: false,
     isEditingAffection: false,
     currentAffectionForm: { userName: '' },
-    // 日记系统配置
+    // Diary system configuration
     diarySettings: {
       enabled: false,
       minMinutes: 10,
@@ -2085,7 +2085,7 @@ main();`,
         idleMinutes: 15,
       },
     },
-    // 日记系统 UI 状态
+    // Diary system UI state
     activeDiaryTab: 'config',
     diaryEntries: [],
     diarySearchQuery: '',
@@ -2098,10 +2098,10 @@ main();`,
       smartHome:  { icon: 'fa-solid fa-house-laptop',    type: 'success' },
       chatSummary: { icon: 'fa-solid fa-file-pen',       type: 'info' },
     },
-    // 多日记本（每个角色一本 + default 兜底本）
+    // Multiple diaries (one per character plus the default fallback)
     diaryBooks: [],
     diaryCurrentBook: 'default',
-    // 日记详情抽屉
+    // Diary details drawer
     diaryDetailVisible: false,
     diaryDetailEntry: null,
     isForceScrollToBottom: false,
@@ -2135,11 +2135,11 @@ main();`,
     activeLogPanels: ['logs'],
     selectedTaskHistory: [],
     currentResultIdx: 0,
-    extButtonVisible: false,  // 控制按钮是否显示
-    extMouseTimer: null,      // 鼠标静止定时器
+    extButtonVisible: false,  // Button visibility
+    extMouseTimer: null,      // Mouse idle timer
     isVTSConnecting: false,
     
-    isVTSStarting: false, // 按钮的加载状态
+    isVTSStarting: false, // Button loading state
     vtsOnline: false, 
     VTSConfig: {
       enabled: false,
@@ -2148,24 +2148,24 @@ main();`,
       enabledMotions: true
     },
     acpSettings: {
-      agent: 'claude',            // 默认 CLI 智能体
-      permissionMode: 'default',  // 默认权限模式
-      model: '',                  // 模型覆盖（可选）
-      extraEnv: '',              // 额外环境变量
+      agent: 'claude',            // Default CLI agent
+      permissionMode: 'default',  // Default permission mode
+      model: '',                  // Optional model override
+      extraEnv: '',              // Additional environment variables
     },
     
-    // ★ ACPX 状态
+    // ACPX state
     acpxStatus: null,            // null | 'available' | 'unavailable'
-    checkingAcpx: false,         // 检查中
+    checkingAcpx: false,         // Check in progress
     openedExtensions:[], 
     searchExtensionQuery: '',
-    searchManageExtensionQuery: '', // 用于主页面的扩展搜索
-    searchRemotePluginQuery: '',    // 用于弹窗内的远程插件搜索
-    scrollPending: false,              // 滚动节流标记
-    _streamUpdateTimer: null,          // 流式文本批量更新定时器
-    _streamTextBuffer: '',             // 流式文本缓冲区
-    _streamTargetMsg: null,            // 当前正在流式更新的消息对象
-    activeToolBlock: null,        // 当前查看的块对象 { messageIndex, blockIndex, block }
-    activeToolBlockMessage: null, // 所属消息引用
+    searchManageExtensionQuery: '', // Main-page extension search
+    searchRemotePluginQuery: '',    // Remote plugin search in the dialog
+    scrollPending: false,              // Scroll throttling flag
+    _streamUpdateTimer: null,          // Batched streaming-text update timer
+    _streamTextBuffer: '',             // Streaming text buffer
+    _streamTargetMsg: null,            // Message currently being updated by the stream
+    activeToolBlock: null,        // Currently inspected block { messageIndex, blockIndex, block }
+    activeToolBlockMessage: null, // Reference to the containing message
     customDataPath: "",
 };

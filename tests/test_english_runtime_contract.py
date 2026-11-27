@@ -125,9 +125,10 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         renderer = (ROOT / "static/js/renderer.js").read_text(encoding="utf-8")
         self.assertIn('TTS playback request:', renderer)
 
-    def test_renderer_source_is_english(self):
-        source = (ROOT / "static/js/renderer.js").read_text(encoding="utf-8")
-        self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
+    def test_renderer_and_vue_state_source_are_english(self):
+        for relative in ("static/js/renderer.js", "static/js/vue_data.js"):
+            source = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
 
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
