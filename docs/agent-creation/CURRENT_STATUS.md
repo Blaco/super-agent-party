@@ -216,3 +216,5 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Expanded source gate follow-up
 
 - The expanded audit identified two legacy launcher ignore patterns that the older scanner did not inspect. Both have been replaced with equivalent-length wildcard prefixes (slightly broader matching). Source gate and development packaging are retriggered; check the resulting run before claiming completion.
+
+- Corrected legacy launcher patterns to twelve UTF-8 byte wildcards after a local git check-ignore test; both original names are ignored. Source gate and Windows packaging run against the corrected commit.

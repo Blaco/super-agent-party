@@ -511,3 +511,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## Expanded source gate follow-up — 2026-11-26
 
 - Prior commit: `2c103e9861fec7f5463c8b3194a8f2d2aee09877`. Audit 45928659712 found two legacy generated launcher filenames in the newly scanned .gitignore; all regression checks passed before the inventory gate rejected those literals. Replace each four-character localized prefix with four single-character wildcards, retaining ignore behavior for those legacy launchers and slightly broadening it to other four-character prefixes with the same suffix. Trigger packaging when the source gate, its tests, or ignore rules change. No application runtime change. Repeat CI and Windows package check.
+
+## Legacy ignore wildcard correction — 2026-11-26
+
+- Prior commit: `15a76f1f705feeabf28a03f37a0c996ffd8eabe2`. Git's wildcard matcher consumes UTF-8 bytes, not Unicode code points. Local git check-ignore confirmed the four-wildcard patterns did not match the original four-Han-character filenames. Use twelve single-byte wildcards instead; both original names match in the local Git test, while a four-letter English prefix does not. This still intentionally matches other twelve-byte prefixes with the same suffix. No application runtime change.
