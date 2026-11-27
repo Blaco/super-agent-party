@@ -229,6 +229,23 @@ class EnglishRuntimeContractTests(unittest.TestCase):
                      "ext_evaluate_script", "ext_click_by_text"):
             self.assertIn('"name": "' + name + '"', external)
 
+    def test_skill_and_extension_managers_are_english(self):
+        for relative in ("py/skills.py", "py/extensions.py"):
+            path = ROOT / relative
+            source = path.read_text(encoding="utf-8")
+            ast.parse(source, filename=str(path))
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
+        ext = (ROOT / "py/extensions.py").read_text(encoding="utf-8")
+        self.assertNotIn("gitee.com", ext)
+        self.assertNotIn("super-agent-party.github.io", ext)
+        self.assertIn('@router.get("/remote-list"', ext)
+        self.assertIn("parse_repo_urls", ext)
+        self.assertIn("extension_catalog.json", ext)
+        catalog = json.loads((ROOT / "config/extension_catalog.json").read_text(encoding="utf-8"))
+        self.assertIsInstance(catalog, list)
+        html = (ROOT / "static/index.html").read_text(encoding="utf-8")
+        self.assertIn("Blaco/super-agent-party/blob/agent-creation/config/extension_catalog.json", html)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)
