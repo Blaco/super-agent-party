@@ -99,8 +99,10 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         source = (ROOT / "static/js/vue_methods.js").read_text(encoding="utf-8")
         handler = source.split("    handleShortcutCommand(raw) {", 1)[1].split("    async sendMessage(", 1)[0]
         self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in handler))
-        for mode, value in commands["MODE_COMMAND_MAP"].items():
-            self.assertIn(f"'{mode}':'{value}'", handler)
+        import re
+        mode_map = re.search(r"const modeMap = (\{[^\n]+\});", handler)
+        self.assertIsNotNone(mode_map)
+        self.assertEqual(json.loads(mode_map.group(1).replace("'", '"')), commands["MODE_COMMAND_MAP"])
 
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")

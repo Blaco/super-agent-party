@@ -2705,7 +2705,7 @@ formatMessage(content, index) {
             if (inAny(['/model'])) { this.shortcutSwitchModel(arg); return true; }
             if (inAny(['/personality', '/persona'])) { this.shortcutSwitchPersonality(arg); return true; }
             if (inAny(['/skills'])) { this.shortcutShowSkills(); return true; }
-            const modeMap = {'/plan':'plan':'plan','/read':'default':'default','/edit':'auto-approve':'auto-approve','/yolo':'yolo','/cowork':'cowork':'cowork','/goal':'goal':'goal'};
+            const modeMap = {'/plan':'plan','/read':'default','/edit':'auto-approve','/yolo':'yolo','/cowork':'cowork','/goal':'goal'};
             if (modeMap[cmd]) { this.shortcutSwitchMode(modeMap[cmd]); return true; }
         } catch (e) {
             console.error('Shortcut command failed:', e);

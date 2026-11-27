@@ -55,3 +55,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 
 - Source audit for `c7f64e8a708eb95fde36d37ddcba14aa83277b59` passed: https://github.com/Blaco/super-agent-party/actions/runs/45916332308.
 - Shortcut help, command aliases and retained Western messaging adapters now use English system text; removed stale platform mappings. User-authored text and English command behavior remain intact. New CI and live service checks pending. No new Windows package requested.
+
+## Follow-up source checkpoint — shortcut correction
+
+- Source audit for `28d17755ad2f7d3f79d2822f2500991f49806c16` failed on JS syntax in the shortcut permission-mode map (run 45916727019). Corrected the map and strengthened its regression test. No permission semantics changed. New CI pending.
