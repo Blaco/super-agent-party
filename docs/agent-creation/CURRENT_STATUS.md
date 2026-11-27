@@ -212,3 +212,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Localization-phase Windows packaging checkpoint
 
 - The development packaging workflow now checks the English source gate, obsolete artwork references and Python lock before creating a Windows x64 snapshot. A package build is requested by this commit; its outcome and actual GUI/voice/model/agent integration are not yet established. No public release is requested.
+
+## Expanded source gate follow-up
+
+- The expanded audit identified two legacy launcher ignore patterns that the older scanner did not inspect. Both have been replaced with equivalent-length wildcard prefixes (slightly broader matching). Source gate and development packaging are retriggered; check the resulting run before claiming completion.

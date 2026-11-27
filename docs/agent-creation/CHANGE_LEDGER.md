@@ -507,3 +507,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## Localization-phase Windows development build — 2026-11-26
 
 - Prior commit: `abf03b453b0cc22a7a2e3f3bcbe60b1cf7fb8817`. Strengthen the existing read-only Windows x64 development workflow: run tracked first-party English acceptance checks and asset reference tests before dependency installation, verify the resolved Python lock and source policy, and use locked dependency installation/execution. The workflow change requests a new development snapshot build. No release/tag publishing, installer signing or auto-update changes. Build and live Windows integration remain unverified until observed.
+
+## Expanded source gate follow-up — 2026-11-26
+
+- Prior commit: `2c103e9861fec7f5463c8b3194a8f2d2aee09877`. Audit 45928659712 found two legacy generated launcher filenames in the newly scanned .gitignore; all regression checks passed before the inventory gate rejected those literals. Replace each four-character localized prefix with four single-character wildcards, retaining ignore behavior for those legacy launchers and slightly broadening it to other four-character prefixes with the same suffix. Trigger packaging when the source gate, its tests, or ignore rules change. No application runtime change. Repeat CI and Windows package check.

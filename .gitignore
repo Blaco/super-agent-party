@@ -196,8 +196,9 @@ vrm/asr/
 /dist/
 runtime/
 
-一键启动(start).sh
-一键更新(update).sh
+# Legacy generated launcher scripts (including localized names)
+????(start).sh
+????(update).sh
 
 nodejs/
 

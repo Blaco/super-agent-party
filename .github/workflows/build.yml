@@ -7,6 +7,9 @@ on:
       - agent-creation
     paths:
       - .github/workflows/build.yml
+      - .gitignore
+      - scripts/audit_english_surface.py
+      - tests/test_english_surface_inventory.py
 
 permissions:
   contents: read
