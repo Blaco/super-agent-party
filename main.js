@@ -1215,6 +1215,44 @@ app.commandLine.appendSwitch('disable-features', 'CrossOriginOpenerPolicy,SameSi
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 // Multi-account startup initialization
 app.whenReady().then(async () => {
+  let currentGlobalKey = null;
+
+  ipcMain.handle('unregister-global-shortcut', () => {
+    if (currentGlobalKey) {
+      globalShortcut.unregister(currentGlobalKey);
+      currentGlobalKey = null;
+    }
+    return true;
+  });
+
+  ipcMain.handle('register-global-shortcut', (event, key) => {
+    // Unregister existing shortcut first
+    if (currentGlobalKey) {
+      globalShortcut.unregister(currentGlobalKey);
+      currentGlobalKey = null;
+    }
+    try {
+      // Register new shortcut
+      const success = globalShortcut.register(key, () => {
+        // Notify main window when global shortcut is pressed
+        BrowserWindow.getAllWindows().forEach(w => {
+          if (!w.isDestroyed()) w.webContents.send('global-shortcut-triggered');
+        });
+      });
+
+      if (success) {
+        currentGlobalKey = key;
+        console.log("[ASR] Global shortcut " + key + " registered");
+        return true;
+      } else {
+        console.warn("[ASR] Failed to register global shortcut " + key + "; it may be in use");
+        return false;
+      }
+    } catch (e) {
+      console.error('[ASR] Global shortcut error:', e);
+      return false;
+    }
+  });
   try {
 
     // Keep cache in development by default to speed startup
@@ -2862,43 +2900,6 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
   }
 
 
-  let currentGlobalKey = null;
-
-  ipcMain.handle('unregister-global-shortcut', () => {
-    if (currentGlobalKey) {
-      globalShortcut.unregister(currentGlobalKey);
-      currentGlobalKey = null;
-    }
-    return true;
-  });
-
-  ipcMain.handle('register-global-shortcut', (event, key) => {
-    // Unregister existing shortcut first
-    if (currentGlobalKey) {
-      globalShortcut.unregister(currentGlobalKey);
-    }
-    try {
-      // Register new shortcut
-      const success = globalShortcut.register(key, () => {
-        // Notify main window when global shortcut is pressed
-        BrowserWindow.getAllWindows().forEach(w => {
-          if (!w.isDestroyed()) w.webContents.send('global-shortcut-triggered');
-        });
-      });
-      
-      if (success) {
-        currentGlobalKey = key;
-        console.log("[ASR] Global shortcut " + key + " registered");
-        return true;
-      } else {
-        console.warn("[ASR] Failed to register global shortcut " + key + "; it may be in use");
-        return false;
-      }
-    } catch (e) {
-      console.error('[ASR] Global shortcut error:', e);
-      return false;
-    }
-  });
 // ================= Workspace file tree backend =================
     // 1. Read directory contents lazily
     ipcMain.handle('read-directory', async (event, dirPath) => {

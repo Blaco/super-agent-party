@@ -18,7 +18,7 @@ from py.cli_tool import read_file_tool_local
 from py.task_tools import query_task_progress
 from py.companion_defaults import resolve_generic_system_prompt
 from py.ws_manager import ws_manager
-from py.session_permissions import DESKTOP_SESSION_TOKEN, PendingToolApprovals, SessionPermissions
+from py.session_permissions import API_KEY, BROWSER_KEY, DESKTOP_SESSION_TOKEN, PUBLIC_ORIGIN, PendingToolApprovals, SessionPermissions, machine_session
 
 # === Pre-load heavy tool modules at startup to avoid blocking first request ===
 from py.web_search import (
@@ -1456,6 +1456,9 @@ async def dispatch_tool(tool_name: str, tool_params: dict, settings: dict,is_sub
         "send_process_input_tool",
     ]
     
+    if machine_session.get() and tool_name in SENSITIVE_TOOLS:
+        return "Permission denied. This tool requires an interactive SAP session."
+
     # Intercept only calls to sensitive tools
     if tool_name in SENSITIVE_TOOLS and not force_allow: # Check permissions unless explicitly force-allowed
         
@@ -11704,7 +11707,8 @@ app.mount("/ext", StaticFiles(directory=EXT_DIR), name="ext")
 app.mount("/", StaticFiles(directory=os.path.join(base_path, "static"), html=True), name="static")
 
 # Main entry point
-app.add_middleware(SessionPermissions, token=DESKTOP_SESSION_TOKEN)
+app.add_middleware(SessionPermissions, token=DESKTOP_SESSION_TOKEN,
+                   browser_key=BROWSER_KEY, api_key=API_KEY, public_origin=PUBLIC_ORIGIN)
 
 if __name__ == "__main__":
     import uvicorn
@@ -11722,5 +11726,6 @@ if __name__ == "__main__":
         app,
         host=HOST,
         port=PORT,
-        log_level="warning"
+        log_level="warning",
+        forwarded_allow_ips="127.0.0.1,::1",
     )
