@@ -3693,7 +3693,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         "\n\n[Character diary - recent memories]\nRecent entries from the character diary, provided as context for mood and experiences:\n" + diary_text + "\n")
                     print(f"📔 [Diary Integration] Injected {len(recent)} diary entries into conversation context")
             except Exception as e:
-                print(f"[Diary Integration] Failed to retrieve diary entries: {e}")
+                print(f"[Diary Integration] Failed to retrieve diary entries: {type(e).__name__}")
 
         # ========== Dynamic context collection (append to user message) ==========
         dynamic_user_context = ""
@@ -3755,7 +3755,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 if last_msg and last_msg.get("role") == "user":
                     append_to_chat_buffer(buffer_key, "user", _extract_text_content(last_msg.get("content", "")))
         except Exception as e:
-            print(f"[DiaryBuffer] Failed to record conversation buffer: {e}")
+            print(f"[DiaryBuffer] Failed to record conversation buffer: {type(e).__name__}")
         # Replace empty or whitespace-only system prompts with "you are a helpful assistant."
         if request.messages[0]['role'] == 'system' and not request.messages[0]['content'].strip():
             request.messages[0]['content'] = "you are a helpful assistant."
@@ -5558,7 +5558,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         # full_content is the complete AI response for this turn
                         await extract_and_update_affection(full_content)
                     except Exception as e:
-                        print(f"Failed to parse relationship tags: {e}")
+                        print(f"Failed to parse relationship tags: {type(e).__name__}")
                 # ========== Conversation buffer: record assistant replies for idle-time summaries ==========
                 try:
                     diary_settings_inner = (settings.get("diarySettings", {}) or {})
@@ -5568,7 +5568,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         if full_content:
                             append_to_chat_buffer(buffer_key, "assistant", full_content)
                 except Exception as e:
-                    print(f"[DiaryBuffer] Failed to record assistant reply: {e}")
+                    print(f"[DiaryBuffer] Failed to record assistant reply: {type(e).__name__}")
                 if m0 and not request.is_sub_agent:
                     print("Submitting memory update task")
                     messages = f"User said: {user_prompt}\n\n---\n\nYou said: {full_content}"
@@ -5598,8 +5598,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             # No running event loop
                             asyncio.run(add())
                         except Exception as e:
-                            print(f"run_task exception: {e}")
-                            traceback.print_exc()
+                            print(f"run_task exception: {type(e).__name__}")
                     
                     import threading
                     thread = threading.Thread(target=run_task, daemon=True)
@@ -5634,7 +5633,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
             }
         )
     except Exception as e:
-        logger.error(f"Error occurred: {e}")
+        logger.error("Chat stream failed (%s)", type(e).__name__)
         # Use e.status_code when available; otherwise use 500
         return JSONResponse(
             status_code=getattr(e, "status_code", 500),
@@ -6606,7 +6605,7 @@ async def execute_tool_manually(request: Request):
         return {"result": str(result)}
 
     except Exception as e:
-        traceback.print_exc()
+        logger.warning("Approved tool failed (%s)", type(e).__name__)
         return {"result": f"Backend System Error: {str(e)}\n{traceback.format_exc()}"}
 
 
