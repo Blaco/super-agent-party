@@ -1,4 +1,6 @@
-# 灵动岛日历面板 Implementation Plan
+# Dynamic Island Calendar Panel Implementation Plan
+
+> Historical upstream design record, translated for the fork. Its code excerpts, paths, defaults and implementation steps are not current instructions; use the Agent Creation work protocol and live source instead.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -158,9 +160,9 @@ git commit -m "feat: extend panel navigation to support 4 panels"
 After the tasks-panel div (after line ~170 `</div>` that closes `.tasks-panel`), add:
 
 ```html
-<!-- 面板4: 日历 -->
+<!-- Panel 4: Calendar -->
 <div class="panel calendar-panel" :style="panelStyles.p3">
-  <!-- 周选择器 -->
+  <!-- Week selector -->
   <div class="cal-week-nav">
     <button class="cal-nav-btn" @click.stop="prevWeek">
       <i class="fa-solid fa-chevron-left"></i>
@@ -174,7 +176,7 @@ After the tasks-panel div (after line ~170 `</div>` that closes `.tasks-panel`),
     </button>
   </div>
 
-  <!-- 星期标头 + 日期行 -->
+  <!-- Weekday headers and date row -->
   <div class="cal-week-header">
     <span class="cal-day-label" v-for="d in weekDayLabels">{{ d }}</span>
   </div>
@@ -187,7 +189,7 @@ After the tasks-panel div (after line ~170 `</div>` that closes `.tasks-panel`),
     </div>
   </div>
 
-  <!-- 当日任务列表 -->
+  <!-- Tasks for selected day -->
   <div class="cal-day-header">
     <i class="fa-solid fa-calendar-check"></i>
     <span>{{ selectedDateLabel }}</span>
@@ -195,7 +197,7 @@ After the tasks-panel div (after line ~170 `</div>` that closes `.tasks-panel`),
   <div class="cal-tasks-list" ref="calTasksList">
     <div v-if="!dayTasks.length" class="cal-tasks-empty">
       <i class="fa-regular fa-calendar"></i>
-      <span>当天没有日程</span>
+      <span>No events for this day</span>
     </div>
     <div v-for="task in dayTasks" :key="task.id" class="cal-task-row" :class="{ done: task.done }">
       <label class="cal-task-check" @click.stop="toggleTask(task.id)">
@@ -207,7 +209,7 @@ After the tasks-panel div (after line ~170 `</div>` that closes `.tasks-panel`),
           <i class="fa-regular fa-clock"></i> {{ formatTaskTime(task.due_time) }}
         </div>
         <div class="cal-task-time" v-else>
-          <i class="fa-regular fa-calendar"></i> 全天
+          <i class="fa-regular fa-calendar"></i> All day
         </div>
       </div>
       <button class="cal-task-done-btn" @click.stop="toggleTask(task.id)">
@@ -219,15 +221,15 @@ After the tasks-panel div (after line ~170 `</div>` that closes `.tasks-panel`),
     </div>
   </div>
 
-  <!-- 添加日程 -->
+  <!-- Add event -->
   <div class="cal-add">
     <input type="text" class="cal-add-input" v-model="calendarNewTaskText"
-           placeholder="新增日程..."
+           placeholder="Add event..."
            @keydown.enter.stop="addCalendarTask"
            @click.stop />
     <button class="cal-add-all-day" :class="{ active: calendarNewTaskAllDay }"
             @click.stop="calendarNewTaskAllDay = !calendarNewTaskAllDay"
-            title="全天">
+            title="All day">
       <i class="fa-regular fa-calendar"></i>
     </button>
     <button class="cal-add-btn" @click.stop="addCalendarTask" :disabled="!calendarNewTaskText.trim()">
@@ -235,7 +237,7 @@ After the tasks-panel div (after line ~170 `</div>` that closes `.tasks-panel`),
     </button>
   </div>
 
-  <!-- 月历浮层 -->
+  <!-- Month calendar popup -->
   <div class="cal-month-picker" v-if="showMonthPicker" @click.stop>
     <div class="cal-month-picker-nav">
       <button class="cal-nav-btn" @click.stop="prevMonth"><i class="fa-solid fa-chevron-left"></i></button>
@@ -290,7 +292,7 @@ After `albumStyle` computed (after line ~149), add:
 ```js
 // Calendar computed
 weekDayLabels() {
-  return ['一', '二', '三', '四', '五', '六', '日'];
+  return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 },
 weekRange() {
   const d = new Date(this.calendarSelectedDate + 'T00:00:00');
@@ -299,7 +301,7 @@ weekRange() {
   monday.setDate(d.getDate() - day + 1);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
-  return `${monday.getMonth()+1}月${monday.getDate()}日 - ${sunday.getMonth()+1}月${sunday.getDate()}日`;
+  return `${monday.getMonth()+1}/${monday.getDate()} - ${sunday.getMonth()+1}/${sunday.getDate()}`;
 },
 weekDates() {
   const d = new Date(this.calendarSelectedDate + 'T00:00:00');
@@ -323,7 +325,7 @@ weekDates() {
 },
 selectedDateLabel() {
   const d = new Date(this.calendarSelectedDate + 'T00:00:00');
-  return `${d.getMonth()+1}月${d.getDate()}日 周${this.weekDayLabels[d.getDay() === 0 ? 6 : d.getDay() - 1]}`;
+  return `${d.getMonth()+1}/${d.getDate()} ${this.weekDayLabels[d.getDay() === 0 ? 6 : d.getDay() - 1]}`;
 },
 dayTasks() {
   return this.tasks.filter(t => t.due_time && t.due_time.slice(0, 10) === this.calendarSelectedDate);
@@ -334,7 +336,7 @@ allCalendarTasks() {
 monthPickerLabel() {
   const now = new Date();
   const m = new Date(now.getFullYear(), now.getMonth() + this.calendarMonthOffset, 1);
-  return `${m.getFullYear()}年${m.getMonth()+1}月`;
+  return `${m.getMonth()+1}/${m.getFullYear()}`;
 },
 monthCalendarDays() {
   const now = new Date();
@@ -422,10 +424,10 @@ addCalendarTask() {
 The calendar add HTML in task 3 only has text + all-day toggle. We need a time input too. Update the calendar add HTML area to include a time selector. In the add area after `@click.stop`, add a time input:
 
 ```html
-<!-- 添加日程 -->
+<!-- Add event -->
 <div class="cal-add">
   <input type="text" class="cal-add-input" v-model="calendarNewTaskText"
-         placeholder="新增日程..."
+         placeholder="Add event..."
          @keydown.enter.stop="addCalendarTask"
          @click.stop />
   <input type="time" class="cal-add-time" v-model="calendarNewTaskTime"
@@ -433,7 +435,7 @@ The calendar add HTML in task 3 only has text + all-day toggle. We need a time i
          @click.stop />
   <button class="cal-add-all-day" :class="{ active: calendarNewTaskAllDay }"
           @click.stop="calendarNewTaskAllDay = !calendarNewTaskAllDay"
-          title="全天">
+          title="All day">
     <i class="fa-regular fa-calendar"></i>
   </button>
   <button class="cal-add-btn" @click.stop="addCalendarTask" :disabled="!calendarNewTaskText.trim()">
@@ -447,7 +449,7 @@ The calendar add HTML in task 3 only has text + all-day toggle. We need a time i
 In `created()` hook, update the init:
 ```js
 created() {
-  this.weatherCity = localStorage.getItem('island_weather_city') || '北京';
+  this.weatherCity = localStorage.getItem('island_weather_city') || 'Beijing'; // Historical upstream default; superseded by the fork's configured-city policy.
   this.loadTasks();
   const today = new Date();
   this.calendarSelectedDate = today.toISOString().slice(0, 7) + '-' + String(today.getDate()).padStart(2, '0');
@@ -498,14 +500,14 @@ git commit -m "feat: add calendar panel Vue logic - week nav, day list, mini mon
 Append to `island.css`:
 
 ```css
-/* === 面板4: 日历 === */
+/* === Panel 4: Calendar === */
 .calendar-panel {
   gap: 4px;
   justify-content: flex-start !important;
   padding-top: 4px;
 }
 
-/* 周导航 */
+/* Week navigation */
 .cal-week-nav {
   display: flex; align-items: center; gap: 6px;
   width: 100%; padding: 0 8px;
@@ -535,7 +537,7 @@ Append to `island.css`:
 }
 .cal-month-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
 
-/* 星期标头 */
+/* Weekday headers */
 .cal-week-header {
   display: flex; width: 100%; padding: 0 8px;
 }
@@ -545,7 +547,7 @@ Append to `island.css`:
   font-weight: 500;
 }
 
-/* 日期行 */
+/* Date row */
 .cal-week-days {
   display: flex; width: 100%; padding: 2px 8px;
   margin-bottom: 4px;
@@ -570,7 +572,7 @@ Append to `island.css`:
   background: #6fff7b; margin-top: 3px;
 }
 
-/* 当日标题 */
+/* Selected-day heading */
 .cal-day-header {
   display: flex; align-items: center; gap: 6px;
   width: 100%; padding: 0 12px 4px;
@@ -580,7 +582,7 @@ Append to `island.css`:
 }
 .cal-day-header i { font-size: 11px; }
 
-/* 当日任务列表 */
+/* Tasks for selected day */
 .cal-tasks-list {
   flex: 1; width: 100%;
   overflow-y: auto; overflow-x: hidden;
@@ -656,7 +658,7 @@ Append to `island.css`:
 .cal-task-done-btn:hover { color: #6fff7b; background: rgba(111,255,123,0.15); }
 .cal-task-row.done .cal-task-done-btn:hover { color: #ffcc80; background: rgba(255,204,128,0.15); }
 
-/* 添加日程 */
+/* Add event */
 .cal-add {
   display: flex; align-items: center; gap: 4px;
   width: 100%; padding: 4px 8px 4px;
@@ -710,7 +712,7 @@ Append to `island.css`:
 .cal-add-btn:hover:not(:disabled) { background: rgba(255,255,255,0.18); transform: scale(1.05); }
 .cal-add-btn:disabled { opacity: 0.35; cursor: default; }
 
-/* 月历浮层 */
+/* Month calendar popup */
 .cal-month-picker {
   position: absolute; top: 0; left: 0;
   width: 100%; height: 100%;
@@ -865,18 +867,18 @@ dismissReminderNote() {
 
 - [ ] **Step 5: Add reminder template to HTML**
 
-In `island.html`, after the `<!-- 提醒态（最高优先级） -->` block (which starts at line ~37), replace the entire still/quick view section to include the persistent reminder. The new still/quick view section should be:
+In `island.html`, after the reminder-state (highest priority) block (which starts at line ~37), replace the entire still/quick view section to include the persistent reminder. The new still/quick view section should be:
 
 Since this is a significant change, I'll show only the diff. Before the existing `alert-content` div (line ~37), add a new block. Actually, the reminder should be rendered instead of alert-content. Let's keep both — the existing transient alert still works for AI reply notifications, and the persistent reminder shows for calendar tasks.
 
 After the existing `alert-content` div (line ~41), add:
 ```html
-<!-- 持久任务提醒（日历触发） -->
+<!-- Persistent task reminder (calendar-triggered) -->
 <div class="reminder-content" v-if="showReminderInQuick && !alertActive" @click.stop>
   <i class="fa-solid fa-clock reminder-icon"></i>
   <span class="reminder-text">{{ activeReminderTask.text }}</span>
   <button class="reminder-done-btn" @click.stop="completeReminderTask">
-    <i class="fa-solid fa-check"></i> 完成
+    <i class="fa-solid fa-check"></i> Done
   </button>
 </div>
 ```
@@ -903,7 +905,7 @@ to:
 
 Append to `island.css`:
 ```css
-/* === 持久任务提醒（日历触发） === */
+/* === Persistent task reminder (calendar-triggered) === */
 .reminder-content {
   display: flex; align-items: center; gap: 8px;
   width: 100%; height: 100%;
@@ -971,8 +973,8 @@ this.activeReminderTask = null;
 
 Create a task with a due_time 1 minute in the future. Wait for it. Verify:
 - Island expands to 310px wide
-- Shows task text + "完成" button
-- Clicking "完成" marks task done and shrinks island
+- Shows task text + "Done" button
+- Clicking "Done" marks task done and shrinks island
 - Task text in the list gets strikethrough
 - If end_time passes, reminder disappears
 
@@ -998,15 +1000,15 @@ git commit -m "feat: add persistent quick-mode task reminder with complete butto
 
 In `registerMcpTools()`, change the `island_task_create` tool definition (line ~419) to:
 ```js
-{ name: 'island_task_create', description: '在灵动岛上创建一条待办事项，可关联到日历', parameters: { type: 'object', properties: { text: { type: 'string', description: '待办内容' }, due_time: { type: 'string', description: '开始时间 ISO 格式, 可选' }, end_time: { type: 'string', description: '结束/过期时间 ISO 格式, 可选, 默认 due_time+1h' }, all_day: { type: 'boolean', description: '是否全天事件, 可选' } }, required: ['text'] } },
+{ name: 'island_task_create', description: 'Create a task on Dynamic Island, optionally linked to the calendar', parameters: { type: 'object', properties: { text: { type: 'string', description: 'Task text' }, due_time: { type: 'string', description: 'Start time in ISO format, optional' }, end_time: { type: 'string', description: 'End or expiration time in ISO format, optional, defaults to due_time+1h' }, all_day: { type: 'boolean', description: 'Whether this is an all-day event, optional' } }, required: ['text'] } },
 ```
 
 - [ ] **Step 2: Add calendar_list and calendar_month tools**
 
 After `island_task_delete` line ~422, inside the `tools:` array, add:
 ```js
-{ name: 'island_calendar_list', description: '列出指定日期的所有待办事项', parameters: { type: 'object', properties: { date: { type: 'string', description: '日期, YYYY-MM-DD 格式, 默认今天' } }, required: [] } },
-{ name: 'island_calendar_month', description: '列出指定月份每天的任务数量', parameters: { type: 'object', properties: { year: { type: 'integer', description: '年份, 如 2025' }, month: { type: 'integer', description: '月份 1-12' } }, required: ['year', 'month'] } }
+{ name: 'island_calendar_list', description: 'List all tasks for a specified date', parameters: { type: 'object', properties: { date: { type: 'string', description: 'Date in YYYY-MM-DD format, defaults to today' } }, required: [] } },
+{ name: 'island_calendar_month', description: 'List task counts for each day of a specified month', parameters: { type: 'object', properties: { year: { type: 'integer', description: 'Year, e.g. 2025' }, month: { type: 'integer', description: 'Month 1-12' } }, required: ['year', 'month'] } }
 ```
 
 - [ ] **Step 3: Update handleMcpCall for island_task_create**
@@ -1015,7 +1017,7 @@ Replace lines 518-521 (the `island_task_create` case):
 ```js
 case 'island_task_create':
   this.addTask(tp.text, tp.due_time, tp.end_time, tp.all_day, 'ai');
-  sendResult('已创建待办: ' + tp.text);
+  sendResult('Task created: ' + tp.text);
   return;
 ```
 
@@ -1026,9 +1028,9 @@ After the `island_task_delete` case (after line ~541), add:
 case 'island_calendar_list':
   const listDate = (tp && tp.date) ? tp.date : new Date().toISOString().slice(0, 10);
   const dayItems = this.tasks.filter(t => t.due_time && t.due_time.slice(0, 10) === listDate);
-  if (!dayItems.length) { sendResult(`${listDate} 暂无待办事项`); return; }
-  r = dayItems.map(t => (t.done ? '✅' : '⬜') + ' ' + t.text + (t.all_day ? ' (全天)' : '') + (!t.all_day && t.due_time ? ' ' + this.formatTaskTime(t.due_time) : '')).join('\n');
-  sendResult(`${listDate} 的待办:\n` + r);
+  if (!dayItems.length) { sendResult(`${listDate}: No tasks`); return; }
+  r = dayItems.map(t => (t.done ? '✅' : '⬜') + ' ' + t.text + (t.all_day ? ' (all day)' : '') + (!t.all_day && t.due_time ? ' ' + this.formatTaskTime(t.due_time) : '')).join('\n');
+  sendResult(`Tasks for ${listDate}:\n` + r);
   return;
 case 'island_calendar_month':
   const y = tp.year, m = tp.month;
@@ -1037,9 +1039,9 @@ case 'island_calendar_month':
   for (let d = 1; d <= daysInMonth; d++) {
     const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const n = this.tasks.filter(t => t.due_time && t.due_time.slice(0, 10) === ds).length;
-    if (n > 0) counts.push(`${ds}: ${n}个待办`);
+    if (n > 0) counts.push(`${ds}: ${n} tasks`);
   }
-  sendResult(counts.length ? `${y}年${m}月: ` + counts.join('; ') : `${y}年${m}月暂无待办`);
+  sendResult(counts.length ? `${y}-${m}: ` + counts.join('; ') : `${y}-${m}: No tasks`);
   return;
 ```
 
@@ -1134,7 +1136,7 @@ toggleTask(id) {
 
 1. Create a task from Calendar panel with time "3 minutes from now"
 2. Wait for the island to show persistent reminder
-3. Click "完成" — task marked done, island shrinks
+3. Click "Done" — task marked done, island shrinks
 4. Create a task from Tasks panel with due_time
 5. Open Calendar panel, verify it appears on the correct date
 6. Open mini month picker, verify task dots appear

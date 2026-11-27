@@ -486,3 +486,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Complete main stylesheet English comment translation
 
 - Parent 7cb693338d09df7e5dc9cfe4aac10ec785a2d55e. Translate final 200 Han-flagged comments covering navigation, code zoom, work/entertainment modes, typing indicators, image/code bubbles, glass backgrounds, shortcuts, diary and account management. Replace obsolete regional style comparisons with generic descriptions. All 1,779 initially flagged lines are addressed across eight passes; compare executable CSS and line count to original pre-pass commit cc1b28c417a895c7f9b2ec0428381d7d67d2b0eb. Non-comment CSS byte-identical, 14,497 lines retained, zero literal Han. No UI behavior, permissions, selectors or declarations changed. CI and visual testing pending; revert for rollback.
+
+## 2026-11-26 — Translate inherited calendar design records
+
+- Parent 0138d0774f343de79dc2642f3ab8d2a0a6cf6b94. Translate 118 Han-flagged lines across docs/superpowers/plans/2025-07-09-calendar-panel.md and docs/superpowers/specs/2025-07-09-calendar-panel-design.md. Preserve original historical design and tool schema names; translate sample UI strings/date formats and explicitly label historical weather default as superseded. Mark both records historical rather than current instructions. No runtime source or settings changed. Zero literal Han in both files; no runtime test required for docs-only change. Revert for rollback.
