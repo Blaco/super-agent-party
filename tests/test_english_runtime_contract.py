@@ -328,6 +328,21 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         self.assertIn("Unsupported ASR engine:", http)
         self.assertNotIn("websockets.connect", socket + http)
 
+    def test_moss_source_localization_and_normalizer_contract(self):
+        import runpy
+        for relative in ("py/moss/tts_robust_normalizer_single_script.py",
+                         "py/moss/tts_runtime.py"):
+            path = ROOT / relative
+            source = path.read_text(encoding="utf-8")
+            ast.parse(source, filename=str(path))
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
+        module = runpy.run_path(str(ROOT / "py/moss/tts_robust_normalizer_single_script.py"))
+        self.assertTrue(any(any(0x3400 <= ord(c) <= 0x9FFF for c in sample)
+                            for _, sample, _ in module["TEST_CASES"]))
+        normalize = module["normalize_tts_text"]
+        self.assertEqual(normalize("This   is   a   test."), "This is a test.")
+        self.assertEqual(normalize("A->B"), "A\uFF0CB\u3002")
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

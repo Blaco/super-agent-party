@@ -450,3 +450,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — English bundled extension creator and starter templates
 
 - Parent eaf00e7f92b4ab99a29c83a830480b3b2e6286d4. Translate all 30 flagged lines in the four bundled extension-creator files; remove Chinese locale table/default and toggle from both templates, replace the obsolete Gitee example values with empty legacy metadata, correct documentation about update behavior, and refer to maintained bundled templates instead of unreviewed upstream extensions. Preserve existing protocol names, theme, user text and static/Node integration. Inline scripts parse; live installation and MCP integration remain unverified. Revert for rollback.
+
+## 2026-11-26 — Localize MOSS speech normalization and runtime internals
+
+- Parent 7e39091160cea13c4eae3299e5ffc628d054ecc6. Address 119 Han-flagged lines in py/moss/tts_robust_normalizer_single_script.py and 73 in py/moss/tts_runtime.py. Preserve multilingual test fixtures via equivalent Python Unicode escapes, retain normalization regexes and punctuation including ideographic output punctuation, audio processing and model execution. Translate comments/docstrings and diagnostics only. Add regression tests for AST, English source and representative normalization. Static coverage checked; CI and actual MOSS inference pending. Revert for rollback.

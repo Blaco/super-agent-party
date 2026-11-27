@@ -285,64 +285,64 @@ class TTSRuntime(OrtCpuRuntime):
 
     def _load_reference_audio(self, reference_audio_path: str | Path) -> np.ndarray:
         """
-        加载参考音频并进行预处理：
-        1. 自动切除首尾静音 2. 响度归一化 3. 智能截断 4. 重采样与声道转换
+        Load and preprocess reference audio:
+        1. Trim leading and trailing silence. 2. Normalize peak level. 3. Trim intelligently. 4. Resample and convert channels.
         """
         import numpy as np
         from pathlib import Path
         import soundfile as sf
         import logging
 
-        # 1. 读取音频文件
+        # 1. Read audio file
         abs_path = str(Path(reference_audio_path).expanduser().resolve())
         
         if not Path(abs_path).exists():
-            raise FileNotFoundError(f"参考音频文件不存在: {abs_path}")
+            raise FileNotFoundError(f"Reference audio file not found: {abs_path}")
         
         try:
             waveform, sample_rate = sf.read(abs_path, always_2d=True)
         except Exception as e:
-            raise ValueError(f"无法读取音频文件 {abs_path}: {e}")
+            raise ValueError(f"Unable to read audio file {abs_path}: {e}")
         
         waveform = waveform.astype(np.float32)
         
-        # 检查音频是否有效
+        # Check audio validity
         if waveform.size == 0:
-            raise ValueError(f"音频文件为空: {abs_path}")
+            raise ValueError(f"Audio file is empty: {abs_path}")
         
-        # 2. 改进的静音裁剪 (防止开头结尾的噪音/空白干扰模型)
+        # 2. Improved silence trimming to reduce interference from noise or silence at the boundaries
         def trim_silence(wav, threshold_percentile=5, min_duration_seconds=0.1):
             """
-            使用百分位数阈值裁剪静音，比固定阈值更鲁棒
+            Trim silence using a percentile threshold rather than a fixed threshold.
             
-            参数:
+            Parameters:
                 wav: shape (samples, channels)
-                threshold_percentile: 能量低于此百分位的帧被视为静音
-                min_duration_seconds: 最小音频长度
+                threshold_percentile: Frames below this energy percentile are considered silent.
+                min_duration_seconds: Minimum audio duration.
             """
             if wav.shape[0] == 0:
                 return wav
             
-            # 计算每一帧的平均能量
+            # Calculate mean energy for each frame
             energy = np.mean(np.abs(wav), axis=1)
             
-            # 使用百分位数作为动态阈值
+            # Use the percentile as an adaptive threshold
             threshold = np.percentile(energy[energy > 0] if np.any(energy > 0) else energy, threshold_percentile)
-            threshold = max(threshold, 0.001)  # 绝对最小值
+            threshold = max(threshold, 0.001)  # Absolute minimum
             
-            # 找到能量高于阈值的区域
+            # Locate regions above the energy threshold
             mask = energy > threshold
             
             if not np.any(mask):
-                # 所有帧都是静音，返回原音频
-                logging.warning("整个音频被判定为静音，保留原始音频")
+                # All frames are silent; return the original audio
+                logging.warning("The entire audio was classified as silence; retaining original audio")
                 return wav
             
-            # 找到起始和结束位置
+            # Find the start and end positions
             start_idx = np.where(mask)[0][0]
             end_idx = np.where(mask)[0][-1] + 1
             
-            # 确保最小长度
+            # Enforce the minimum duration
             min_samples = int(sample_rate * min_duration_seconds)
             if end_idx - start_idx < min_samples:
                 center = (start_idx + end_idx) // 2
@@ -350,7 +350,7 @@ class TTSRuntime(OrtCpuRuntime):
                 start_idx = max(0, center - half_min)
                 end_idx = min(wav.shape[0], center + half_min)
             
-            # 添加小的缓冲区域（10ms）避免切掉有用信号
+            # Add a small 10 ms buffer to avoid cutting useful signals
             buffer_samples = int(sample_rate * 0.01)
             start_idx = max(0, start_idx - buffer_samples)
             end_idx = min(wav.shape[0], end_idx + buffer_samples)
@@ -359,39 +359,39 @@ class TTSRuntime(OrtCpuRuntime):
 
         waveform = trim_silence(waveform)
 
-        # 3. 响度归一化 (Peak Normalization)
-        # 确保参考音频音量标准，避免因为声音太小导致模型产生幻觉
+        # 3. Peak normalization
+        # Normalize the reference level to reduce instability from very quiet audio
         peak = np.max(np.abs(waveform))
         if peak < 1e-5:
-            logging.warning("参考音频能量极低，可能影响音色提取质量")
-            # 不进行归一化，避免放大噪声
+            logging.warning("Reference audio energy is very low; voice extraction quality may suffer")
+            # Skip normalization to avoid amplifying noise
         else:
             waveform = (waveform / peak) * 0.9
 
-        # 4. 核心优化：智能截断参考音频
-        # MOSS 提取音色通常只需 3~5 秒。过长会导致 GPT 上下文压力过大出现胡言乱语。
+        # 4. Intelligently truncate the reference audio
+        # MOSS typically needs 3-5 seconds of reference audio; overly long references may degrade generation.
         max_duration = 5.0
         max_samples = int(sample_rate * max_duration)
         
         if waveform.shape[0] > max_samples:
-            # 在截断点附近寻找低能量区作为自然断点
-            search_window = int(sample_rate * 0.5)  # 0.5秒搜索窗口
+            # Find a low-energy region near the target cutoff for a natural boundary
+            search_window = int(sample_rate * 0.5)  # 0.5-second search window
             search_start = max_samples - search_window
             search_end = min(max_samples + search_window, waveform.shape[0])
             
-            # 在搜索窗口内寻找能量最小的帧
+            # Find the lowest-energy frame in the search window
             search_energy = np.mean(np.abs(waveform[search_start:search_end, :]), axis=1)
             if len(search_energy) > 0:
-                # 使用滑动窗口平滑能量
-                smooth_size = int(sample_rate * 0.05)  # 50ms平滑窗口
+                # Smooth energy with a sliding window
+                smooth_size = int(sample_rate * 0.05)  # 50 ms smoothing window
                 if smooth_size > 1 and len(search_energy) > smooth_size:
                     kernel = np.ones(smooth_size) / smooth_size
                     search_energy = np.convolve(search_energy, kernel, mode='same')
                 
-                # 找到能量最小的位置作为截断点
+                # Use the lowest-energy position as the cutoff
                 min_energy_idx = search_start + np.argmin(search_energy)
                 
-                # 但如果最小能量位置离目标太远（>1秒），就使用硬截断
+                # Use a hard cutoff if the minimum-energy position is more than one second from the target
                 if abs(min_energy_idx - max_samples) < sample_rate:
                     waveform = waveform[:min_energy_idx, :]
                 else:
@@ -399,10 +399,10 @@ class TTSRuntime(OrtCpuRuntime):
             else:
                 waveform = waveform[:max_samples, :]
 
-        # 转置为 (channels, samples)
+        # Transpose to (channels, samples)
         waveform = waveform.T
 
-        # 5. 重采样逻辑
+        # 5. Resampling
         target_sample_rate = int(self.codec_meta["codec_config"]["sample_rate"])
         target_channels = int(self.codec_meta["codec_config"]["channels"])
         
@@ -411,21 +411,21 @@ class TTSRuntime(OrtCpuRuntime):
                 from scipy import signal
                 num_samples = int(waveform.shape[1] * target_sample_rate / sample_rate)
                 
-                # 检查重采样比例是否合理
+                # Check whether the resampling ratio is reasonable
                 ratio = target_sample_rate / sample_rate
                 if ratio < 0.5 or ratio > 2.0:
-                    logging.warning(f"重采样比例过大: {ratio:.2f}，可能导致音质下降")
+                    logging.warning(f"Large resampling ratio: {ratio:.2f}; audio quality may degrade")
                 
                 resampled = []
                 for channel in waveform:
-                    # 使用 scipy 进行高质量重采样
+                    # Use SciPy for high-quality resampling
                     resampled_channel = signal.resample(channel, num_samples)
                     resampled.append(resampled_channel)
                 waveform = np.array(resampled, dtype=np.float32)
                 
             except ImportError:
                 logging.error("scipy not available, skipping resampling. This may cause pitch issues.")
-                # 如果scipy不可用，使用numpy的简单插值作为后备
+                # Fall back to NumPy interpolation if SciPy is unavailable
                 try:
                     num_samples = int(waveform.shape[1] * target_sample_rate / sample_rate)
                     resampled = []
@@ -436,44 +436,44 @@ class TTSRuntime(OrtCpuRuntime):
                         resampled.append(resampled_channel)
                     waveform = np.array(resampled, dtype=np.float32)
                 except Exception as e:
-                    logging.error(f"后备重采样也失败: {e}")
-                    # 最后手段：不重采样，让后续处理可能出错
+                    logging.error(f"Fallback resampling also failed: {e}")
+                    # Last resort: leave audio unresampled; subsequent processing may fail
             except Exception as e:
-                logging.error(f"重采样失败: {e}")
-                raise RuntimeError(f"音频重采样失败: {e}")
+                logging.error(f"Resampling failed: {e}")
+                raise RuntimeError(f"Audio resampling failed: {e}")
         
-        # 6. 声道转换
+        # 6. Channel conversion
         current_channels = waveform.shape[0]
         if current_channels == target_channels:
             pass
         elif current_channels == 1 and target_channels > 1:
-            # 单声道转多声道
+            # Convert mono to multiple channels
             waveform = np.tile(waveform, (target_channels, 1))
         elif current_channels > 1 and target_channels == 1:
-            # 多声道转单声道（取平均值）
+            # Convert multiple channels to mono by averaging
             waveform = np.mean(waveform, axis=0, keepdims=True)
         else:
             raise ValueError(f"Unsupported channel conversion: {current_channels} -> {target_channels}")
         
-        # 最终检查
+        # Final validation
         if waveform.size == 0:
-            raise RuntimeError("预处理后音频为空")
+            raise RuntimeError("Audio is empty after preprocessing")
         
         if np.any(np.isnan(waveform)) or np.any(np.isinf(waveform)):
-            raise RuntimeError("预处理后音频包含异常值")
+            raise RuntimeError("Audio contains invalid values after preprocessing")
         
-        # 返回符合 ONNX 要求的形状 [1, channels, samples]
+        # Return the ONNX-compatible shape [1, channels, samples]
         return waveform[np.newaxis, ...].astype(np.float32)
 
     def encode_reference_audio(self, reference_audio_path: str | Path) -> list[list[int]]:
         abs_path = str(Path(reference_audio_path).expanduser().resolve())
         
-        # ================== 核心优化 2：内存缓存层 ==================
-        # 如果之前已经编码过这段音频，直接返回结果，跳过所有计算！
+        # ================== Optimization 2: in-memory cache ==================
+        # Return a previous encoding directly to avoid redundant computation
         if not hasattr(self, '_audio_codes_cache'):
             self._audio_codes_cache = {}
         
-        # 使用文件路径和修改时间作为缓存键，确保文件更新后重新编码
+        # Use path and modification time as the cache key to re-encode modified files
         cache_key = abs_path
         try:
             file_mtime = Path(abs_path).stat().st_mtime
@@ -488,12 +488,12 @@ class TTSRuntime(OrtCpuRuntime):
         try:
             waveform = self._load_reference_audio(reference_audio_path)
         except Exception as e:
-            raise RuntimeError(f"加载参考音频失败: {e}")
+            raise RuntimeError(f"Failed to load reference audio: {e}")
         
         waveform_length = int(waveform.shape[-1])
         
         if waveform_length == 0:
-            raise RuntimeError("预处理后的音频长度为0")
+            raise RuntimeError("Preprocessed audio has zero length")
         
         try:
             outputs = self.sessions["codec_encode"].run(
@@ -504,7 +504,7 @@ class TTSRuntime(OrtCpuRuntime):
                 },
             )
         except Exception as e:
-            raise RuntimeError(f"音频编码失败: {e}")
+            raise RuntimeError(f"Audio encoding failed: {e}")
         
         output_names = [output.name for output in self.sessions["codec_encode"].get_outputs()]
         named_outputs = dict(zip(output_names, outputs, strict=True))
@@ -513,7 +513,7 @@ class TTSRuntime(OrtCpuRuntime):
         code_length = int(audio_code_lengths.reshape(-1)[0])
         
         if code_length == 0:
-            raise RuntimeError("编码产生的帧数为0")
+            raise RuntimeError("Encoding produced zero frames")
         
         num_quantizers = int(self.codec_meta["codec_config"]["num_quantizers"])
         
@@ -525,18 +525,18 @@ class TTSRuntime(OrtCpuRuntime):
                 frame_tokens.append(token)
             prompt_audio_codes.append(frame_tokens)
         
-        # 验证编码结果
+        # Validate encoding results
         audio_codebook_size = int(self.tts_meta["model_config"]["audio_codebook_sizes"][0])
         for frame_idx, frame in enumerate(prompt_audio_codes):
             for token_idx, token in enumerate(frame):
                 if token < 0 or token >= audio_codebook_size:
-                    raise RuntimeError(f"编码产生的token不合法: frame={frame_idx}, token={token_idx}, value={token}")
+                    raise RuntimeError(f"Encoding produced an invalid token: frame={frame_idx}, token={token_idx}, value={token}")
         
-        # ================== 保存到缓存 ==================
-        # 限制缓存大小，避免内存泄漏
+        # ================== Store in cache ==================
+        # Limit cache size to prevent unbounded memory growth
         max_cache_size = 10
         if len(self._audio_codes_cache) >= max_cache_size:
-            # 删除最早的缓存项
+            # Remove the oldest cached entry
             oldest_key = next(iter(self._audio_codes_cache))
             del self._audio_codes_cache[oldest_key]
         
@@ -562,7 +562,7 @@ class TTSRuntime(OrtCpuRuntime):
         if not generated_frames:
             raise ValueError("No frames to decode")
         
-        # 验证帧的合法性
+        # Validate frames
         audio_codebook_size = int(self.tts_meta["model_config"]["audio_codebook_sizes"][0])
         num_quantizers = int(self.codec_meta["codec_config"]["num_quantizers"])
         
@@ -573,7 +573,7 @@ class TTSRuntime(OrtCpuRuntime):
                 if token < 0 or token >= audio_codebook_size:
                     raise ValueError(f"Invalid token {token} at frame {frame_idx}, position {token_idx}")
         
-        # 尝试正常解码
+        # Attempt normal decoding
         try:
             channel_arrays, _audio_length = self.decode_full_audio(generated_frames)
             
@@ -582,7 +582,7 @@ class TTSRuntime(OrtCpuRuntime):
             
             waveform = _merge_audio_channels(channel_arrays)
             
-            # 质量检查
+            # Quality check
             if np.any(np.isnan(waveform)) or np.any(np.isinf(waveform)):
                 raise ValueError("Full decode produced invalid values")
             
@@ -591,7 +591,7 @@ class TTSRuntime(OrtCpuRuntime):
         except Exception as exc:
             logging.warning("full codec decode failed, falling back to incremental decode: %s", exc)
             
-            # 重置流式解码器状态
+            # Reset streaming decoder state
             self.codec_streaming_session.reset()
             
             merged_by_channel: list[list[np.ndarray]] = [
@@ -599,7 +599,7 @@ class TTSRuntime(OrtCpuRuntime):
             ]
             
             try:
-                # 增量解码，每次处理8帧
+                # Incremental decoding in batches of eight frames
                 chunk_size = 8
                 for start_index in range(0, len(generated_frames), chunk_size):
                     frame_chunk = generated_frames[start_index : start_index + chunk_size]
@@ -608,7 +608,7 @@ class TTSRuntime(OrtCpuRuntime):
                         decoded = self.codec_streaming_session.run_frames(frame_chunk)
                     except Exception as chunk_exc:
                         logging.error(f"Incremental decode failed at chunk {start_index}: {chunk_exc}")
-                        # 尝试重置并继续
+                        # Attempt to reset and continue
                         self.codec_streaming_session.reset()
                         continue
                     
@@ -620,7 +620,7 @@ class TTSRuntime(OrtCpuRuntime):
                     if audio_length <= 0:
                         continue
                     
-                    # 验证解码结果
+                    # Validate decoded output
                     if np.any(np.isnan(audio)) or np.any(np.isinf(audio)):
                         logging.warning(f"Chunk {start_index} produced invalid values, skipping")
                         continue
@@ -629,7 +629,7 @@ class TTSRuntime(OrtCpuRuntime):
                         channel_data = np.asarray(channel, dtype=np.float32)
                         merged_by_channel[channel_index].append(channel_data)
                 
-                # 合并所有通道
+                # Merge all channels
                 channel_arrays = [
                     np.concatenate(chunks) if chunks else np.zeros((0,), dtype=np.float32) 
                     for chunks in merged_by_channel
@@ -640,7 +640,7 @@ class TTSRuntime(OrtCpuRuntime):
                 if waveform.size == 0:
                     raise RuntimeError("Incremental decode produced empty audio")
                 
-                # 记录fallback信息
+                # Log fallback information
                 logging.info(f"Incremental decode succeeded with {len(waveform)} samples")
                 
                 return waveform
@@ -650,7 +650,7 @@ class TTSRuntime(OrtCpuRuntime):
                 raise RuntimeError(f"Both full and incremental decode failed: {exc} | {fallback_exc}")
                 
             finally:
-                # 确保重置解码器状态
+                # Ensure decoder state is reset
                 self.codec_streaming_session.reset()
 
     def synthesize_single_chunk(

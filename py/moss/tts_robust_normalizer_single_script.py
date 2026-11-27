@@ -2,47 +2,47 @@
 # -*- coding: utf-8 -*-
 
 """
-TTS 输入鲁棒性正则化器（非语义 TN）
+TTS input robustness normalizer (not semantic text normalization)
 
-目标
+Goals
 ----
-1. 只做“鲁棒性清洗”，不做数字/单位/日期/金额等语义展开。
-2. 优先保护高风险 token，避免把 `.map`、`app.js.map`、`v2.3.1`、URL、Email、@mention、#hashtag 清坏。
-3. `[]` / `{}` / `【】` / `〖〗` / `『』` / `「」` 统一转成双引号包裹内容。
-4. 对结构性符号做“替换而非删除”：
-   - `【】 / 〖〗 / 『』 / 「」` 转成双引号包裹内容。
-   - `《》` 只在“独立标题/栏目名”场景拆开；嵌入式标题保持不变。
-   - `—— / -- / ——...` 转成句边界。
-5. 对社交平台常见噪声做弱归一化：
+1. Perform robustness cleanup only; do not expand numbers, units, dates or currencies semantically.
+2. Protect high-risk tokens such as .map, app.js.map, v2.3.1, URLs, email addresses, mentions and hashtags.
+3. Convert square brackets, braces and equivalent East Asian quotation brackets into double-quoted content.
+4. Replace structural punctuation rather than deleting it:
+   - Convert East Asian quotation brackets into double-quoted content.
+   - Remove title brackets only for standalone headings; retain embedded titles.
+   - Convert long dashes and repeated hyphens into sentence boundaries.
+5. Apply gentle normalization to common social-media punctuation noise:
    - `...... / ……` -> `。`
    - `？？？！！！` -> `？！`
    - `！！！` -> `！`
-6. 空格按脚本类型处理：
-   - 西文片段内部：连续空格压缩为 1 个。
-   - 汉字 / 日文假名片段内部：删除空格。
-   - 汉字 / 日文假名 与“拉丁字母类 token / 受保护 token”相邻：保留或补 1 个空格。
-   - 汉字 / 日文假名 与纯数字相邻：不强行补空格。
-   - 普通文本中的 `_` 转成空格；已被保护的 URL / Email / mention / hashtag / 文件名中的 `_` 保留。
-7. 轻量处理 Markdown 与换行：
+6. Handle spaces according to writing system:
+   - Collapse consecutive spaces inside Latin-script text.
+   - Remove spaces inside Han and Japanese kana spans.
+   - Preserve or insert one space between Han/kana and Latin or protected tokens.
+   - Do not force spaces between Han/kana and numeric tokens.
+   - Replace ordinary underscores with spaces; preserve underscores inside protected URLs, email, mentions, hashtags and filenames.
+7. Handle Markdown and line breaks lightly:
    - `[text](url)` -> `text url`
-   - 去掉标题 `#`、引用 `>`、列表前缀
-   - 换行转句边界 `。`
-8. 与 WeTextProcessing 联动时，中文分支会在进入 WeText 前额外处理单个 ASCII 连字符 `-`，
-   以避免被中文 TN 误读成“减”。这部分逻辑实现于 `text_normalization_pipeline.py`，约定如下：
-   - `数字-数字` 保留：`10-3`、`2024-05-01`
-   - 明显负号保留：`-2`、`为-2`、`为 -2`、`x=-2`、`(-2)`、`计算-2的绝对值`
-   - `中文-中文` 转成停顿边界：`请求接入-身份判定` -> `请求接入，身份判定`
-   - 其余非数字连字符转成空格：`A-B`、`A-100`、`GPU-A100`、`TTS-demo`、
-     `中文-ABC`、`ABC-中文`
-   - 连字符两侧是否带空格不影响判断：`A-B` / `A - B`、`为-2` / `为 -2`
-   - 当前仅对中文 WeText 分支生效；若文本被判定为英文分支，则仍按英文 WeText 原生行为处理，
-     例如 `is -2` 当前会归一化为 `is negative two`
+   - Strip heading, blockquote and list prefixes.
+   - Convert line breaks to sentence boundaries using the ideographic full stop.
+8. In the shared WeTextProcessing pipeline, the Chinese branch additionally processes individual ASCII hyphens
+   to prevent semantic normalization from reading them as subtraction. The upstream text_normalization_pipeline.py convention is:
+   - Preserve digit-hyphen-digit sequences such as 10-3 and 2024-05-01.
+   - Preserve explicit negative signs, including -2, x=-2 and (-2).
+   - Replace hyphens between Chinese text spans with a pause boundary.
+   - Replace other nonnumeric hyphens with spaces: A-B, A-100, GPU-A100, TTS-demo,
+     and mixed Han/Latin spans.
+   - Spaces surrounding a hyphen do not change the classification.
+   - This rule applies only to the Chinese WeText branch; English uses native WeText behavior,
+     for example, is -2 becomes is negative two.
 
-非目标
+Non-goals
 ------
-1. 不决定“应该怎么读”。
-2. 不在本脚本内直接实现 WeText 的语义 TN，相关联动仅在共享 pipeline 中做最小预处理。
-3. 不做 HTML/SSML/语义标签解释。
+1. Do not determine pronunciation.
+2. Do not implement semantic WeText normalization directly in this script; shared pipeline preprocessing is separate.
+3. Do not interpret HTML, SSML or semantic tags.
 """
 
 from __future__ import annotations
@@ -52,17 +52,17 @@ import unicodedata
 
 
 # ---------------------------
-# 基础常量与正则
+# Constants and regular expressions
 # ---------------------------
 
-# 不依赖空格分词的脚本：汉字 + 日文假名
+# Scripts that do not require whitespace word segmentation: Han and Japanese kana
 _CJK_CHARS = r"\u3400-\u4dbf\u4e00-\u9fff\u3040-\u30ff"
 _CJK = f"[{_CJK_CHARS}]"
 
-# 保护占位符
+# Protected-span placeholder
 _PROT = r"___PROT\d+___"
 
-# 需要保护的高风险 token
+# High-risk tokens to protect
 _URL_RE = re.compile(r"https?://[^\s\u3000，。！？；、）】》〉」』]+")
 _EMAIL_RE = re.compile(r"(?<![\w.+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![\w.-])")
 _MENTION_RE = re.compile(r"(?<![A-Za-z0-9_])@[A-Za-z0-9_]{1,32}")
@@ -72,9 +72,9 @@ _HASHTAG_RE = re.compile(r"(?<![A-Za-z0-9_])#(?!\s)[^\s#]+")
 # `.map` / `.env` / `.gitignore`
 _DOT_TOKEN_RE = re.compile(r"(?<![A-Za-z0-9_])\.(?=[A-Za-z0-9._-]*[A-Za-z0-9])[A-Za-z0-9._-]+")
 
-# `app.js.map` / `index.d.ts` / `v2.3.1` / `foo/bar-baz.py` 等
-# 这里不把“仅含下划线的 snake_case 普通文本”视为高风险 token，
-# 以便后续 `_` -> 空格 规则能生效；真正的文件名/路径通常仍会因为含 `.` `/` `-` `:` `+` 被保护。
+# Examples: app.js.map, index.d.ts, v2.3.1 and foo/bar-baz.py
+# Plain snake_case text containing only underscores is not a high-risk token,
+# so underscore-to-space conversion can apply; actual paths typically contain punctuation that protects them.
 _FILELIKE_RE = re.compile(
     r"(?<![A-Za-z0-9_])"
     r"(?=[A-Za-z0-9._/+:-]*[A-Za-z])"
@@ -83,20 +83,20 @@ _FILELIKE_RE = re.compile(
     r"(?![A-Za-z0-9_])"
 )
 
-# 参与“中英混排边界补空格”的 token：必须至少含 1 个拉丁字母，或本身就是受保护 token
+# Mixed-script boundary tokens must contain a Latin letter or be a protected token
 _LATINISH = rf"(?:{_PROT}|(?=[A-Za-z0-9._/+:-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9._/+:-]*)"
 
-# 零宽字符
+# Zero-width characters
 _ZERO_WIDTH_RE = re.compile(r"[\u200b-\u200d\ufeff]")
 _TRAILING_CLOSERS = set('"\')]}）】》〉」』”’')
 
 
 # ---------------------------
-# 主函数
+# Main function
 # ---------------------------
 
 def normalize_tts_text(text: str) -> str:
-    """对 TTS 输入做鲁棒性正则化。"""
+    """Normalize TTS input for robustness."""
     text = _base_cleanup(text)
     text = _normalize_markdown_and_lines(text)
     text = _normalize_flow_arrows(text)
@@ -114,7 +114,7 @@ def normalize_tts_text(text: str) -> str:
 
 
 # ---------------------------
-# 具体规则
+# Normalization rules
 # ---------------------------
 
 def _base_cleanup(text: str) -> str:
@@ -130,7 +130,7 @@ def _base_cleanup(text: str) -> str:
 
 
 def _normalize_markdown_and_lines(text: str) -> str:
-    # Markdown 链接：[text](url) -> text url
+    # Markdown links: [text](url) -> text url
     text = re.sub(r"\[([^\[\]]+?)\]\((https?://[^)\s]+)\)", r"\1 \2", text)
 
     lines = []
@@ -139,10 +139,10 @@ def _normalize_markdown_and_lines(text: str) -> str:
         if not line:
             continue
 
-        line = re.sub(r"^#{1,6}\s+", "", line)   # 标题
-        line = re.sub(r"^>\s+", "", line)        # 引用
-        line = re.sub(r"^[-*+]\s+", "", line)    # 无序列表
-        line = re.sub(r"^\d+[.)]\s+", "", line)  # 有序列表
+        line = re.sub(r"^#{1,6}\s+", "", line)   # Heading
+        line = re.sub(r"^>\s+", "", line)        # Blockquote
+        line = re.sub(r"^[-*+]\s+", "", line)    # Unordered list
+        line = re.sub(r"^\d+[.)]\s+", "", line)  # Ordered list
         lines.append(line)
 
     if not lines:
@@ -201,68 +201,68 @@ def _normalize_flow_arrows(text: str) -> str:
 
 
 def _normalize_spaces(text: str) -> str:
-    # 统一空白
+    # Normalize whitespace
     text = re.sub(r"[ \t\r\f\v]+", " ", text)
 
-    # 汉字 / 日文片段内部：删除空格
+    # Remove spaces within Han and Japanese spans
     text = re.sub(rf"({_CJK})\s+(?={_CJK})", r"\1", text)
 
-    # 汉字 / 日文 与纯数字之间：删除空格（不强行保留）
+    # Remove spaces between Han/kana and numbers
     text = re.sub(rf"({_CJK})\s+(?=\d)", r"\1", text)
     text = re.sub(rf"(\d)\s+(?={_CJK})", r"\1", text)
 
-    # 汉字 / 日文 与拉丁字母类 token / protected token 相邻：保留或补 1 个空格
+    # Preserve or insert a space at Han/kana boundaries with Latin or protected tokens
     text = re.sub(rf"({_CJK})(?=({_LATINISH}))", r"\1 ", text)
     text = re.sub(rf"(({_LATINISH}))(?={_CJK})", r"\1 ", text)
 
-    # 再压一遍连续空格
+    # Collapse repeated spaces again
     text = re.sub(r" {2,}", " ", text)
 
-    # 中文标点前后不保留空格
+    # Remove spaces around East Asian punctuation
     text = re.sub(r"\s+([，。！？；：、”’」』】）》])", r"\1", text)
     text = re.sub(r"([（【「『《“‘])\s+", r"\1", text)
     text = re.sub(r"([，。！？；：、])\s*", r"\1", text)
 
-    # ASCII 标点前不留空格；后面的英文空格不强改
+    # Remove spaces before ASCII punctuation; preserve following English spaces
     text = re.sub(r"\s+([,.;!?])", r"\1", text)
 
     return re.sub(r" {2,}", " ", text).strip()
 
 
 def _normalize_structural_punctuation(text: str) -> str:
-    # 各类结构性括号：统一转成双引号包裹内容
+    # Convert structural brackets to double-quoted content
     text = re.sub(r"\[\s*([^\[\]]+?)\s*\]", r'"\1"', text)
     text = re.sub(r"\{\s*([^{}]+?)\s*\}", r'"\1"', text)
     text = re.sub(r"[【〖『「]\s*([^】〗』」]+?)\s*[】〗』」]", r'"\1"', text)
 
-    # 《》只处理独立标题，不处理嵌入式标题
-    # 例：重磅。《新品发布》——现在开始！ -> 重磅。新品发布。现在开始！
+    # Handle title brackets only for standalone titles
+    # Example: a standalone title followed by a long dash becomes separate sentences
     text = re.sub(
         r"(^|[。！？!?；;]\s*)《([^》]+)》(?=\s*(?:___PROT\d+___|[—–―-]{2,}|$|[。！？!?；;，,]))",
         r"\1\2",
         text,
     )
 
-    # 流程 / 映射箭头：转成中文逗号，避免把 `->` 之类原样喂给 TTS。
+    # Convert flow and mapping arrows to an ideographic comma for speech
     text = _normalize_flow_arrows(text)
 
-    # 长破折号 / 多连字符：转句边界
+    # Convert long dashes and repeated hyphens to sentence boundaries
     text = re.sub(r"\s*(?:—|–|―|-){2,}\s*", "。", text)
 
     return text
 
 
 def _normalize_repeated_punctuation(text: str) -> str:
-    # 省略号 / 连续句点
+    # Ellipses and consecutive full stops
     text = re.sub(r"(?:\.{3,}|…{2,}|……+)", "。", text)
 
-    # 同类重复标点
+    # Repeated punctuation of the same type
     text = re.sub(r"[。．]{2,}", "。", text)
     text = re.sub(r"[，,]{2,}", "，", text)
     text = re.sub(r"[!！]{2,}", "！", text)
     text = re.sub(r"[?？]{2,}", "？", text)
 
-    # 混合问叹号：收敛到 ？！
+    # Reduce mixed question and exclamation marks to the corresponding pair
     def _mixed_qe(match: re.Match[str]) -> str:
         s = match.group(0)
         has_q = any(ch in s for ch in "?？")
@@ -299,79 +299,79 @@ def _ensure_terminal_punctuation_by_line(text: str) -> str:
 
 
 # ---------------------------
-# 测试
+# Tests
 # ---------------------------
 
 TEST_CASES = [
-    # 1) .map / dot-leading token / 文件名 / 版本号
+    # 1) Dot-leading tokens, filenames and version numbers
     (
         "dot_map_sentence",
-        "2026 年 3 月 31 日，安全研究员 Chaofan Shou (@Fried_rice) 发现 Anthropic 的 npm 包中暴露了 .map 文件，",
-        "2026年3月31日，安全研究员 Chaofan Shou (@Fried_rice) 发现 Anthropic 的 npm 包中暴露了 .map 文件，",
+        "2026 \u5e74 3 \u6708 31 \u65e5，\u5b89\u5168\u7814\u7a76\u5458 Chaofan Shou (@Fried_rice) \u53d1\u73b0 Anthropic \u7684 npm \u5305\u4e2d\u66b4\u9732\u4e86 .map \u6587\u4ef6，",
+        "2026\u5e743\u670831\u65e5，\u5b89\u5168\u7814\u7a76\u5458 Chaofan Shou (@Fried_rice) \u53d1\u73b0 Anthropic \u7684 npm \u5305\u4e2d\u66b4\u9732\u4e86 .map \u6587\u4ef6，",
     ),
-    ("dot_tokens", "别把 .env、.npmrc、.gitignore 提交上去。", "别把 .env、.npmrc、.gitignore 提交上去。"),
-    ("file_names", "请检查 bundle.min.js、package.json 和 processing_moss_tts.py。", "请检查 bundle.min.js、package.json 和 processing_moss_tts.py。"),
-    ("index_d_ts", "index.d.ts 里也有同样的问题。", "index.d.ts 里也有同样的问题。"),
-    ("version_build", "Bug 的讨论可以精确到 v2.3.1 (Build 15)。", "Bug 的讨论可以精确到 v2.3.1 (Build 15)。"),
-    ("version_rc", "3.0.0-rc.1 还不能上生产。", "3.0.0-rc.1 还不能上生产。"),
-    ("jar_name", "fabric-api-0.91.3+1.20.2.jar 需要单独下载。", "fabric-api-0.91.3+1.20.2.jar 需要单独下载。"),
+    ("dot_tokens", "\u522b\u628a .env、.npmrc、.gitignore \u63d0\u4ea4\u4e0a\u53bb。", "\u522b\u628a .env、.npmrc、.gitignore \u63d0\u4ea4\u4e0a\u53bb。"),
+    ("file_names", "\u8bf7\u68c0\u67e5 bundle.min.js、package.json \u548c processing_moss_tts.py。", "\u8bf7\u68c0\u67e5 bundle.min.js、package.json \u548c processing_moss_tts.py。"),
+    ("index_d_ts", "index.d.ts \u91cc\u4e5f\u6709\u540c\u6837\u7684\u95ee\u9898。", "index.d.ts \u91cc\u4e5f\u6709\u540c\u6837\u7684\u95ee\u9898。"),
+    ("version_build", "Bug \u7684\u8ba8\u8bba\u53ef\u4ee5\u7cbe\u786e\u5230 v2.3.1 (Build 15)。", "Bug \u7684\u8ba8\u8bba\u53ef\u4ee5\u7cbe\u786e\u5230 v2.3.1 (Build 15)。"),
+    ("version_rc", "3.0.0-rc.1 \u8fd8\u4e0d\u80fd\u4e0a\u751f\u4ea7。", "3.0.0-rc.1 \u8fd8\u4e0d\u80fd\u4e0a\u751f\u4ea7。"),
+    ("jar_name", "fabric-api-0.91.3+1.20.2.jar \u9700\u8981\u5355\u72ec\u4e0b\u8f7d。", "fabric-api-0.91.3+1.20.2.jar \u9700\u8981\u5355\u72ec\u4e0b\u8f7d。"),
 
     # 2) URL / Email / mention / hashtag / Reddit
-    ("url", "仓库地址是 https://github.com/instructkr/claude-code", "仓库地址是 https://github.com/instructkr/claude-code。"),
-    ("email", "联系邮箱：ops+tts@example.ai", "联系邮箱：ops+tts@example.ai。"),
-    ("mention", "@Fried_rice 说这是 source map 暴露。", "@Fried_rice 说这是 source map 暴露。"),
-    ("reddit", "去 r/singularity 看讨论。", "去 r/singularity 看讨论。"),
-    ("hashtag_chain", "#张雪峰#张雪峰[话题]#张雪峰事件", "#张雪峰#张雪峰[话题]#张雪峰事件。"),
-    ("mention_hashtag_boundary", "关注@biscuit0228_并转发#thetime_tbs", "关注 @biscuit0228_ 并转发 #thetime_tbs。"),
+    ("url", "\u4ed3\u5e93\u5730\u5740\u662f https://github.com/instructkr/claude-code", "\u4ed3\u5e93\u5730\u5740\u662f https://github.com/instructkr/claude-code。"),
+    ("email", "\u8054\u7cfb\u90ae\u7bb1：ops+tts@example.ai", "\u8054\u7cfb\u90ae\u7bb1：ops+tts@example.ai。"),
+    ("mention", "@Fried_rice \u8bf4\u8fd9\u662f source map \u66b4\u9732。", "@Fried_rice \u8bf4\u8fd9\u662f source map \u66b4\u9732。"),
+    ("reddit", "\u53bb r/singularity \u770b\u8ba8\u8bba。", "\u53bb r/singularity \u770b\u8ba8\u8bba。"),
+    ("hashtag_chain", "#\u5f20\u96ea\u5cf0#\u5f20\u96ea\u5cf0[\u8bdd\u9898]#\u5f20\u96ea\u5cf0\u4e8b\u4ef6", "#\u5f20\u96ea\u5cf0#\u5f20\u96ea\u5cf0[\u8bdd\u9898]#\u5f20\u96ea\u5cf0\u4e8b\u4ef6。"),
+    ("mention_hashtag_boundary", "\u5173\u6ce8@biscuit0228_\u5e76\u8f6c\u53d1#thetime_tbs", "\u5173\u6ce8 @biscuit0228_ \u5e76\u8f6c\u53d1 #thetime_tbs。"),
 
-    # 3) bracket / 控制 token：统一转成双引号
-    ("speaker_bracket", "[S1]你好。[S2]收到。", '"S1"你好。"S2"收到。'),
-    ("event_bracket", "请模仿 {whisper} 的语气说“别出声”。", '请模仿 "whisper" 的语气说“别出声”。'),
-    ("order_bracket", "订单号：[AB-1234-XYZ]", '订单号："AB-1234-XYZ"。'),
+    # 3) Brackets and control tokens: convert to double quotes
+    ("speaker_bracket", "[S1]\u4f60\u597d。[S2]\u6536\u5230。", '"S1"\u4f60\u597d。"S2"\u6536\u5230。'),
+    ("event_bracket", "\u8bf7\u6a21\u4eff {whisper} \u7684\u8bed\u6c14\u8bf4“\u522b\u51fa\u58f0”。", '\u8bf7\u6a21\u4eff "whisper" \u7684\u8bed\u6c14\u8bf4“\u522b\u51fa\u58f0”。'),
+    ("order_bracket", "\u8ba2\u5355\u53f7：[AB-1234-XYZ]", '\u8ba2\u5355\u53f7："AB-1234-XYZ"。'),
 
-    # 4) 结构性符号：转成双引号或句边界，而不是直接删除
-    ("struct_headline", "〖重磅〗《新品发布》——现在开始！", '"重磅"《新品发布》。现在开始！'),
-    ("struct_notice", "【公告】今天 20:00 维护——预计 30 分钟。", '"公告"今天20:00维护。预计30分钟。'),
-    ("struct_quote_chain", "『特别提醒』「不要外传」", '"特别提醒""不要外传"。'),
-    ("struct_embedded_quote", "他说【重要通知】明天发布。", '他说"重要通知"明天发布。'),
-    ("flow_arrow_chain", "请求接入 -> 身份与策略判定 -> 域服务处理", "请求接入，身份与策略判定，域服务处理。"),
+    # 4) Structural punctuation: convert to quotes or sentence boundaries
+    ("struct_headline", "〖\u91cd\u78c5〗《\u65b0\u54c1\u53d1\u5e03》——\u73b0\u5728\u5f00\u59cb！", '"\u91cd\u78c5"《\u65b0\u54c1\u53d1\u5e03》。\u73b0\u5728\u5f00\u59cb！'),
+    ("struct_notice", "【\u516c\u544a】\u4eca\u5929 20:00 \u7ef4\u62a4——\u9884\u8ba1 30 \u5206\u949f。", '"\u516c\u544a"\u4eca\u592920:00\u7ef4\u62a4。\u9884\u8ba130\u5206\u949f。'),
+    ("struct_quote_chain", "『\u7279\u522b\u63d0\u9192』「\u4e0d\u8981\u5916\u4f20」", '"\u7279\u522b\u63d0\u9192""\u4e0d\u8981\u5916\u4f20"。'),
+    ("struct_embedded_quote", "\u4ed6\u8bf4【\u91cd\u8981\u901a\u77e5】\u660e\u5929\u53d1\u5e03。", '\u4ed6\u8bf4"\u91cd\u8981\u901a\u77e5"\u660e\u5929\u53d1\u5e03。'),
+    ("flow_arrow_chain", "\u8bf7\u6c42\u63a5\u5165 -> \u8eab\u4efd\u4e0e\u7b56\u7565\u5224\u5b9a -> \u57df\u670d\u52a1\u5904\u7406", "\u8bf7\u6c42\u63a5\u5165，\u8eab\u4efd\u4e0e\u7b56\u7565\u5224\u5b9a，\u57df\u670d\u52a1\u5904\u7406。"),
     ("flow_arrow_no_space", "A->B", "A，B。"),
-    ("flow_arrow_unicode", "配置中心→推理编排→运行时执行", "配置中心，推理编排，运行时执行。"),
+    ("flow_arrow_unicode", "\u914d\u7f6e\u4e2d\u5fc3→\u63a8\u7406\u7f16\u6392→\u8fd0\u884c\u65f6\u6267\u884c", "\u914d\u7f6e\u4e2d\u5fc3，\u63a8\u7406\u7f16\u6392，\u8fd0\u884c\u65f6\u6267\u884c。"),
 
-    # 5) 嵌入式标题：保留
-    ("embedded_title", "我喜欢《哈姆雷特》这本书。", "我喜欢《哈姆雷特》这本书。"),
+    # 5) Preserve embedded titles
+    ("embedded_title", "\u6211\u559c\u6b22《\u54c8\u59c6\u96f7\u7279》\u8fd9\u672c\u4e66。", "\u6211\u559c\u6b22《\u54c8\u59c6\u96f7\u7279》\u8fd9\u672c\u4e66。"),
 
-    # 6) 重复标点 / 社交噪声
-    ("noise_qe", "真的假的？？？！！！", "真的假的？！"),
-    ("noise_ellipsis", "这个包把 app.js.map 也发上去了......太离谱了！！！", "这个包把 app.js.map 也发上去了。太离谱了！"),
-    ("noise_ellipsis_cn", "【系统提示】请模仿{sad}低沉语气，说“今天下雨了……”", '"系统提示"请模仿"sad"低沉语气，说“今天下雨了。”'),
+    # 6) Repeated punctuation and social-media noise
+    ("noise_qe", "\u771f\u7684\u5047\u7684？？？！！！", "\u771f\u7684\u5047\u7684？！"),
+    ("noise_ellipsis", "\u8fd9\u4e2a\u5305\u628a app.js.map \u4e5f\u53d1\u4e0a\u53bb\u4e86......\u592a\u79bb\u8c31\u4e86！！！", "\u8fd9\u4e2a\u5305\u628a app.js.map \u4e5f\u53d1\u4e0a\u53bb\u4e86。\u592a\u79bb\u8c31\u4e86！"),
+    ("noise_ellipsis_cn", "【\u7cfb\u7edf\u63d0\u793a】\u8bf7\u6a21\u4eff{sad}\u4f4e\u6c89\u8bed\u6c14，\u8bf4“\u4eca\u5929\u4e0b\u96e8\u4e86……”", '"\u7cfb\u7edf\u63d0\u793a"\u8bf7\u6a21\u4eff"sad"\u4f4e\u6c89\u8bed\u6c14，\u8bf4“\u4eca\u5929\u4e0b\u96e8\u4e86。”'),
 
-    # 7) 空格规则：英文压缩、中文删除、中英混排保留边界
+    # 7) Whitespace: collapse Latin spaces, remove Han spaces and retain mixed-script boundaries
     ("english_spaces", "This   is   a   test.", "This is a test."),
-    ("chinese_spaces", "这 是　一 段  含有多种空白的文本。", "这是一段含有多种空白的文本。"),
-    ("mixed_spaces_1", "这是Anthropic的npm包", "这是 Anthropic 的 npm 包。"),
-    ("mixed_spaces_2", "今天update到v2.3.1了", "今天 update 到 v2.3.1 了。"),
-    ("mixed_spaces_3", "处理app.js.map文件", "处理 app.js.map 文件。"),
+    ("chinese_spaces", "\u8fd9 \u662f　\u4e00 \u6bb5  \u542b\u6709\u591a\u79cd\u7a7a\u767d\u7684\u6587\u672c。", "\u8fd9\u662f\u4e00\u6bb5\u542b\u6709\u591a\u79cd\u7a7a\u767d\u7684\u6587\u672c。"),
+    ("mixed_spaces_1", "\u8fd9\u662fAnthropic\u7684npm\u5305", "\u8fd9\u662f Anthropic \u7684 npm \u5305。"),
+    ("mixed_spaces_2", "\u4eca\u5929update\u5230v2.3.1\u4e86", "\u4eca\u5929 update \u5230 v2.3.1 \u4e86。"),
+    ("mixed_spaces_3", "\u5904\u7406app.js.map\u6587\u4ef6", "\u5904\u7406 app.js.map \u6587\u4ef6。"),
     ("underscore_plain_1", "foo_bar", "foo bar。"),
-    ("underscore_plain_2", "中文_ABC", "中文 ABC。"),
-    ("underscore_protected_mention", "关注@foo_bar", "关注 @foo_bar。"),
+    ("underscore_plain_2", "\u4e2d\u6587_ABC", "\u4e2d\u6587 ABC。"),
+    ("underscore_protected_mention", "\u5173\u6ce8@foo_bar", "\u5173\u6ce8 @foo_bar。"),
 
-    # 8) Markdown / 列表 / 换行
-    ("markdown_link", "详情见 [release note](https://github.com/example/release)", "详情见 release note https://github.com/example/release。"),
+    # 8) Markdown, lists and line breaks
+    ("markdown_link", "\u8be6\u60c5\u89c1 [release note](https://github.com/example/release)", "\u8be6\u60c5\u89c1 release note https://github.com/example/release。"),
     ("markdown_heading", "# I made a free open source app to help with markdown files", "I made a free open source app to help with markdown files。"),
-    ("list_lines", "- 修复 .map 泄露\n- 发布 v2.3.1", "修复 .map 泄露。发布 v2.3.1。"),
-    ("numbered_lines", "1. 安装依赖\n2. 运行测试\n3. 发布 v2.3.1", "安装依赖。运行测试。发布 v2.3.1。"),
-    ("newlines", "第一行\n第二行\n第三行", "第一行。第二行。第三行。"),
+    ("list_lines", "- \u4fee\u590d .map \u6cc4\u9732\n- \u53d1\u5e03 v2.3.1", "\u4fee\u590d .map \u6cc4\u9732。\u53d1\u5e03 v2.3.1。"),
+    ("numbered_lines", "1. \u5b89\u88c5\u4f9d\u8d56\n2. \u8fd0\u884c\u6d4b\u8bd5\n3. \u53d1\u5e03 v2.3.1", "\u5b89\u88c5\u4f9d\u8d56。\u8fd0\u884c\u6d4b\u8bd5。\u53d1\u5e03 v2.3.1。"),
+    ("newlines", "\u7b2c\u4e00\u884c\n\u7b2c\u4e8c\u884c\n\u7b2c\u4e09\u884c", "\u7b2c\u4e00\u884c。\u7b2c\u4e8c\u884c。\u7b2c\u4e09\u884c。"),
 
-    # 9) 句末补标点
-    ("terminal_punct_plain", "今天发布", "今天发布。"),
-    ("terminal_punct_quoted", '他说"你好"', '他说"你好"。'),
-    ("terminal_punct_existing", "今天发布。", "今天发布。"),
-    ("terminal_punct_newlines", "第一行\n第二行。", "第一行。第二行。"),
-    ("terminal_punct_blank_lines", "第一行\n\n第二行", "第一行。第二行。"),
+    # 9) Add terminal punctuation
+    ("terminal_punct_plain", "\u4eca\u5929\u53d1\u5e03", "\u4eca\u5929\u53d1\u5e03。"),
+    ("terminal_punct_quoted", '\u4ed6\u8bf4"\u4f60\u597d"', '\u4ed6\u8bf4"\u4f60\u597d"。'),
+    ("terminal_punct_existing", "\u4eca\u5929\u53d1\u5e03。", "\u4eca\u5929\u53d1\u5e03。"),
+    ("terminal_punct_newlines", "\u7b2c\u4e00\u884c\n\u7b2c\u4e8c\u884c。", "\u7b2c\u4e00\u884c。\u7b2c\u4e8c\u884c。"),
+    ("terminal_punct_blank_lines", "\u7b2c\u4e00\u884c\n\n\u7b2c\u4e8c\u884c", "\u7b2c\u4e00\u884c。\u7b2c\u4e8c\u884c。"),
 
-    # 10) 零宽字符 / 幂等性
-    ("zero_width_url", "详见 https://x.com/\u200bSafety", "详见 https://x.com/Safety。"),
+    # 10) Zero-width characters and idempotence
+    ("zero_width_url", "\u8be6\u89c1 https://x.com/\u200bSafety", "\u8be6\u89c1 https://x.com/Safety。"),
 ]
 
 
@@ -384,7 +384,7 @@ def run_tests(verbose: bool = True) -> None:
             failed.append((name, text, expected, actual))
             continue
 
-        # 幂等性：第二次归一化不应继续改动结果
+        # A second normalization pass should not change the result
         second = normalize_tts_text(actual)
         if second != actual:
             failed.append((name + "_idempotence", actual, actual, second))

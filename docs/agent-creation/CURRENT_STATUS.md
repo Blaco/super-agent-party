@@ -156,3 +156,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — bundled extension creator
 
 - Localized all 30 Han-flagged lines across the bundled extension-creator skill, package spec and static/Node starter templates. New templates ship English only, with no bilingual toggle or regional repository fallback example. Retain MCP registration, theme, extension lifecycle, API and user content support. Both template scripts parsed; actual generated extension runtime is unverified. Main stylesheet, MOSS text normalization, inherited planning documentation and binary asset review remain open.
+
+## Follow-up source checkpoint — MOSS speech internals
+
+- Localized all 192 remaining Han-flagged lines in the MOSS robustness normalizer and runtime. Translate developer documentation and runtime diagnostics; encode the existing multilingual test fixtures using equivalent Unicode escapes rather than changing their inputs/expected results. Preserve all punctuation rules, regexes, audio preprocessing, caching, resampling and ONNX execution. Added AST and representative normalization regression checks. No change to speech model, English default, voice selection or permissions. CI and live speech remain to be verified. No package built.
