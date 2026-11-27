@@ -5,44 +5,44 @@ import json
 import re
 import os
 
-# 强行激活本机 Qt 和 GTK 框架的无障碍树
+# Activate accessibility support in native Qt and GTK frameworks
 os.environ["QT_ACCESSIBILITY"] = "1"
 os.environ["GTK_A11Y"] = "1"
 
 # ==========================================
-# 🌟 全局句柄映射缓存池 🌟
+# Global cache mapping IDs to native handles
 # ==========================================
 UI_ELEMENT_CACHE = {}
 _id_counter = 0
 
 def reset_ui_cache():
-    """每次截图重构 UI 树前，清空旧缓存以防止内存泄露和句柄失效"""
+    """Clear the previous cache before rebuilding the UI tree to prevent leaks and stale handles."""
     global _id_counter, UI_ELEMENT_CACHE
     UI_ELEMENT_CACHE.clear()
     _id_counter = 0
 
 def cache_element(system_str: str, native_handle) -> int:
-    """向本地缓存注入一个原生的无障碍句柄，并返回给 AI 一个整型标识符 ID"""
+    """Store a native accessibility handle in the local cache and return an integer ID to the agent."""
     global _id_counter, UI_ELEMENT_CACHE
     _id_counter += 1
     UI_ELEMENT_CACHE[_id_counter] = (system_str, native_handle)
     return _id_counter
 
 def get_cached_element(id_int: int):
-    """根据 AI 传入的逻辑 ID，从本地字典中查出底层物理句柄"""
+    """Resolve an agent-supplied logical ID to its native handle in the local dictionary."""
     global UI_ELEMENT_CACHE
     return UI_ELEMENT_CACHE.get(id_int)
 
 
 # ==========================================
-# 核心入口与辅助定位
+# Core entry point and positioning helpers
 # ==========================================
 async def get_desktop_ui_tree(logical_width: int, logical_height: int, offset_x: int = 0, offset_y: int = 0) -> str:
     """
-    异步跨平台获取当前前台窗口的精简 UI 树。
-    所有节点的中心点坐标均会被转化为与截图视口完全对齐的 0-1000 千分比相对坐标。
+    Asynchronously retrieve a compact UI tree for the foreground window across platforms.
+    Node centers are converted to relative coordinates from 0 to 1000 aligned with the screenshot viewport.
     """
-    # 强制在第一步重置缓存，保证该步骤产生的 ID 从 1 开始，且不留存旧会话脏数据
+    # Reset the cache first so IDs start at 1 and no stale session data remains
     reset_ui_cache()
     
     system = platform.system()
@@ -74,7 +74,7 @@ def _normalize_coords(absolute_x: float, absolute_y: float, logical_width: int, 
 
 
 # ==========================================
-# Windows 平台实现 (包含 UIA-Chromium 强力激活)
+# Windows implementation (including UIA accessibility activation for Chromium)
 # ==========================================
 def _get_windows_ui_tree(logical_width: int, logical_height: int, offset_x: int, offset_y: int) -> str:
     try:
@@ -83,7 +83,7 @@ def _get_windows_ui_tree(logical_width: int, logical_height: int, offset_x: int,
     except ImportError:
         return "[]"
     
-    # 强制开启系统的 DPI 感知 (防止 150% 缩放导致截图和点击不一致)
+    # Enable DPI awareness to keep screenshot and click coordinates consistent under display scaling
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
     except Exception:
@@ -96,7 +96,7 @@ def _get_windows_ui_tree(logical_width: int, logical_height: int, offset_x: int,
     if not foreground_window:
         return "[]"
         
-    # 主动唤醒 Windows 下的 Chromium 引擎
+    # Activate the Windows Chromium accessibility engine
     try:
         doc = foreground_window.DocumentControl(searchDepth=4)
         if doc.Exists(0.1):
@@ -133,7 +133,7 @@ def _get_windows_ui_tree(logical_width: int, logical_height: int, offset_x: int,
         abs_y = rect.top + height // 2
         grid_x, grid_y = _normalize_coords(abs_x, abs_y, logical_width, logical_height, offset_x, offset_y)
         
-        # 缓存当前元素并获得本地唯一 ID
+        # Cache the current element and obtain its unique local ID
         node_id = cache_element("Windows", control)
         
         clean_type = ctrl_type.replace("Control", "")
@@ -156,18 +156,18 @@ def _get_windows_ui_tree(logical_width: int, logical_height: int, offset_x: int,
 
 
 # ==========================================
-# macOS 平台实现 (终极修复：CoreFoundation 强类型布尔、双重注入、多属性文本)
+# macOS implementation (native CoreFoundation booleans, multiple activation paths and text attributes)
 # ==========================================
 def _get_mac_ui_tree(logical_width: int, logical_height: int, offset_x: int, offset_y: int) -> str:
     try:
         import AppKit
         import ApplicationServices as AX
         import time
-        # 🌟 1. 核心修复：直接从 Mac 官方 CoreFoundation 导入原生的 CFBooleanRef 🌟
-        # 这能确保传递给 C 语言 API 的是绝对纯净的 kCFBooleanTrue，彻底解决 NSNumber 类型不匹配被 Chromium 拒绝的 Bug
+        # 1. Import native CFBooleanRef directly from CoreFoundation
+        # Pass native kCFBooleanTrue to the C API to avoid NSNumber type mismatches rejected by Chromium
         from CoreFoundation import kCFBooleanTrue
     except ImportError:
-        # 兼容性回退
+        # Compatibility fallback
         try:
             import objc
             kCFBooleanTrue = objc.YES
@@ -182,26 +182,26 @@ def _get_mac_ui_tree(logical_width: int, logical_height: int, offset_x: int, off
     pid = active_app.processIdentifier()
     app_element = AX.AXUIElementCreateApplication(pid)
     
-    # 🌟 2. 系统级强力唤醒广播 (利用原生 kCFBooleanTrue) 🌟
+    # 2. System-level accessibility activation using native kCFBooleanTrue
     try:
         system_wide = AX.AXUIElementCreateSystemWide()
         AX.AXUIElementSetAttributeValue(system_wide, "AXEnhancedUserInterface", kCFBooleanTrue)
     except Exception as e:
         print(f"[Warning] System-wide accessibility wake-up failed: {e}")
     
-    # 🌟 3. 应用级双通道唤醒 🌟
+    # 3. Application-level activation through two paths
     AX.AXUIElementSetAttributeValue(app_element, "AXEnhancedUserInterface", kCFBooleanTrue)
     AX.AXUIElementSetAttributeValue(app_element, "AXManualAccessibility", kCFBooleanTrue)
     
-    # 🌟 4. 窗口级双向唤醒 (遍历所有活跃窗口深度注入) 🌟
+    # 4. Window-level activation across all active windows
     err, windows = AX.AXUIElementCopyAttributeValue(app_element, "AXWindows", None)
     if err == 0 and windows:
         for window in windows:
             AX.AXUIElementSetAttributeValue(window, "AXEnhancedUserInterface", kCFBooleanTrue)
             AX.AXUIElementSetAttributeValue(window, "AXManualAccessibility", kCFBooleanTrue)
     
-    # 🌟 5. 稍微增加等待延时至 400ms 🌟
-    # Chromium 收到正确的 kCFBooleanTrue 后，会开始编译整个网页 DOM 树，给它 0.4 秒时间确保稳定生成
+    # 5. Allow 400 ms for initialization
+    # Allow Chromium time to construct the accessibility tree after receiving kCFBooleanTrue
     time.sleep(0.4)
     
     elements = []
@@ -216,7 +216,7 @@ def _get_mac_ui_tree(logical_width: int, logical_height: int, offset_x: int, off
 
     def get_element_name(element) -> str:
         """
-        多属性降级提取算法：确保网页中 StaticText 的文本、输入框的 Value 和占位符都能被抓出来
+        Extract text, input values and placeholders using multiple fallback attributes.
         """
         err, title = AX.AXUIElementCopyAttributeValue(element, "AXTitle", None)
         if err == 0 and title and str(title).strip():
@@ -316,7 +316,7 @@ def _get_mac_ui_tree(logical_width: int, logical_height: int, offset_x: int, off
 
 
 # ==========================================
-# Linux 平台实现
+# Linux implementation
 # ==========================================
 def _get_linux_ui_tree(logical_width: int, logical_height: int, offset_x: int, offset_y: int) -> str:
     try:
@@ -350,7 +350,7 @@ def _get_linux_ui_tree(logical_width: int, logical_height: int, offset_x: int, o
                             abs_y = y + h / 2
                             grid_x, grid_y = _normalize_coords(abs_x, abs_y, logical_width, logical_height, offset_x, offset_y)
                             
-                            # 缓存当前元素并获得本地唯一 ID
+                            # Cache the current element and obtain its unique local ID
                             node_id = cache_element("Linux", obj)
                             
                             elements.append({

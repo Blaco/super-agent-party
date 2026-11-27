@@ -266,6 +266,17 @@ class EnglishRuntimeContractTests(unittest.TestCase):
             ast.parse(source, filename=str(path))
             self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
 
+    def test_startup_capture_and_accessibility_are_english(self):
+        for relative in ("static/shotOverlay.html", "static/skeleton.html",
+                         "py/ui_tree_helper.py", "start.js"):
+            path = ROOT / relative
+            source = path.read_text(encoding="utf-8")
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
+            if path.suffix == ".py":
+                ast.parse(source, filename=str(path))
+        for relative in ("static/shotOverlay.html", "static/skeleton.html"):
+            self.assertNotIn("zh-CN", (ROOT / relative).read_text(encoding="utf-8"))
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

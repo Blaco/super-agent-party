@@ -2,14 +2,14 @@
 <html style="margin:0;padding:0;width:100%;height:100%;overflow:hidden;">
 <head>
   <meta charset="utf-8"/>
-  <title>截图选区</title>
+  <title>Screenshot Selection</title>
   <style>
     html,body{margin:0;width:100vw;height:100vh;overflow:hidden; user-select: none;}
     
-    /* 背景蒙层画布 */
+    /* Background mask canvas */
     #canvas{position:fixed;left:0;top:0;width:100%;height:100%;z-index:2;cursor:crosshair;}
     
-    /* 选区框体 */
+    /* Selection box */
     #box{
       position:absolute;
       border:2px solid #00a1ff;
@@ -20,7 +20,7 @@
       cursor: move;
     }
 
-    /* 控制点样式 */
+    /* Resize handle styles */
     .handle {
       position: absolute;
       width: 10px;
@@ -40,7 +40,7 @@
     .handle.sw { top: 100%; left: 0; cursor: nesw-resize; }
     .handle.w  { top: 50%; left: 0; cursor: ew-resize; }
 
-    /* --- 工具栏样式（提取到外层，绝对定位） --- */
+    /* Toolbar styles (separate, absolutely positioned) */
     #toolbar {
       position: absolute;
       background: #fff;
@@ -49,7 +49,7 @@
       padding: 4px;
       gap: 4px;
       z-index: 10;
-      display: none; /* js 中会设置为 flex */
+      display: none; /* JavaScript sets this to flex */
       cursor: default;
     }
     .tool-btn {
@@ -69,7 +69,7 @@
     .tool-btn.cancel { color: #ff4d4f; }
     .tool-btn.confirm { color: #52c41a; }
 
-    /* 提示弹窗样式 */
+    /* Hint popup styles */
     #lang-tip {
       position: fixed;
       bottom: 15%;
@@ -96,15 +96,15 @@
   </style>
 </head>
 <body>
-  <!-- 提示容器 -->
+  <!-- Hint container -->
   <div id="lang-tip"></div>
 
-  <!-- 蒙版画布 -->
+  <!-- Mask canvas -->
   <canvas id="canvas"></canvas>
 
-  <!-- 选区框及内部元素 -->
+  <!-- Selection box and its contents -->
   <div id="box">
-    <!-- 八个方向的拉伸控制点 -->
+    <!-- Eight directional resize handles -->
     <div class="handle nw" data-dir="nw"></div>
     <div class="handle n" data-dir="n"></div>
     <div class="handle ne" data-dir="ne"></div>
@@ -115,10 +115,10 @@
     <div class="handle w" data-dir="w"></div>
   </div>
 
-  <!-- 工具栏（与box解绑，避免被遮挡） -->
+  <!-- Toolbar (separate from the box to avoid clipping) -->
   <div id="toolbar">
-    <button class="tool-btn cancel" id="btn-cancel" title="取消 (Esc)">✖</button>
-    <button class="tool-btn confirm" id="btn-confirm" title="完成 (Enter)">✔</button>
+    <button class="tool-btn cancel" id="btn-cancel" title="Cancel (Esc)">✖</button>
+    <button class="tool-btn confirm" id="btn-confirm" title="Done (Enter)">✔</button>
   </div>
 
   <script>
@@ -128,9 +128,9 @@
     const tip = document.getElementById('lang-tip');
     const toolbar = document.getElementById('toolbar');
 
-    // 语言文案
+    // Interface text
     const locales = {
-      'zh-CN': '💡 按住左键拖动框选可见范围，拖拽边缘可调整，右键取消',
+
       'en-US': '💡 Drag to select visible area, drag edges to resize, right-click to cancel',
     }
 
@@ -138,13 +138,13 @@
 
     if (window.electronAPI && window.electronAPI.onSetLanguage) {
       window.electronAPI.onSetLanguage((lang) => {
-        tip.innerText = locales[lang] || locales['zh-CN'];
+        tip.innerText = locales[lang] || locales['en-US'];
         tip.style.display = 'block';
         requestAnimationFrame(() => tip.classList.add('show'));
         hideTimer = setTimeout(fadeOutTip, 5000);
       });
     } else {
-      tip.innerText = locales['zh-CN'];
+      tip.innerText = locales['en-US'];
       tip.style.display = 'block';
       requestAnimationFrame(() => tip.classList.add('show'));
     }
@@ -190,7 +190,7 @@
 
     drawMask();
 
-    // 核心状态管理
+    // Core state management
     let action = 'none'; 
     let resizeDir = '';
     let rect = { x: 0, y: 0, w: 0, h: 0 };
@@ -204,14 +204,14 @@
       drawMask();
     }
 
-    // --- 重点：智能定位工具栏 ---
+    // --- Position the toolbar intelligently ---
     function positionToolbar() {
-      // 预估工具栏的宽高
+      // Estimate toolbar width and height
       const tbWidth = 80;  
       const tbHeight = 44; 
-      const gap = 8; // 选框与工具栏的间距
+      const gap = 8; // Gap between selection box and toolbar
       
-      // 安全边距：防止被底部的Dock或侧边的Dock遮挡
+      // Safe margins to avoid bottom or side docks
       const SAFE_BOTTOM = 80; 
       const SAFE_SIDES = 60; 
       const SAFE_TOP = 10;
@@ -219,28 +219,28 @@
       const usableHeight = canvas.height - SAFE_BOTTOM;
       const usableWidth = canvas.width - SAFE_SIDES;
 
-      // 默认目标位置：选框的右下角外部
+      // Default position: outside the lower-right corner of the selection
       let tx = rect.x + rect.w - tbWidth;
       let ty = rect.y + rect.h + gap; 
 
-      // 1. 如果下方超出安全区域（会碰到底部 Dock）
+      // 1. If the space below exceeds the safe area
       if (ty + tbHeight > usableHeight) {
-        // 尝试放到选框上方
+        // Try placing the toolbar above the selection
         ty = rect.y - tbHeight - gap;
         
-        // 2. 如果上方也越界了（说明选区非常大，纵向占满了屏幕）
+        // 2. If the space above is also outside the bounds (a very tall selection)
         if (ty < SAFE_TOP) {
-          // 强制放入选区内部靠下的位置，且严格保证不越过底部的 Dock 安全线
+          // Place it inside the lower part of the selection without crossing the bottom safe margin
           ty = Math.min(rect.y + rect.h - tbHeight - gap, usableHeight - tbHeight);
-          // 极限兜底：确保一定不会超顶
+          // Final fallback: keep it below the top edge
           ty = Math.max(SAFE_TOP, ty);
         }
       }
 
-      // 3. 横向 X 坐标的安全区限制（防止被左右两侧的 Dock 遮挡）
+      // 3. Constrain the horizontal position to avoid side docks
       tx = Math.max(SAFE_SIDES, Math.min(tx, usableWidth - tbWidth));
 
-      // 应用位置
+      // Apply the position
       toolbar.style.left = tx + 'px';
       toolbar.style.top = ty + 'px';
     }
@@ -248,11 +248,11 @@
     window.addEventListener('mousedown', e => {
       if (e.button === 2) { cancelAction(); return; }
 
-      // 点击工具栏自身时不拦截逻辑
+      // Do not intercept clicks on the toolbar itself
       if (e.target.closest('#toolbar')) return;
 
       hideTipImmediately();
-      toolbar.style.display = 'none'; // 操作时先隐藏工具栏
+      toolbar.style.display = 'none'; // Hide the toolbar while adjusting the selection
 
       startPos = { 
         x: e.clientX, 
@@ -322,7 +322,7 @@
         return;
       }
 
-      // 操作完成后，计算工具栏位置并展示
+      // Calculate and show the toolbar after adjustment
       positionToolbar();
       toolbar.style.display = 'flex';
     });

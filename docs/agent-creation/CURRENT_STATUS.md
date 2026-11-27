@@ -116,3 +116,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — model management and Dify adapter
 
 - Completed the remaining English conversion of py/dify_openai.py, py/sherpa_model_manager.py, py/moss_model_manager.py, py/ebd_model_manager.py and py/minilm_router.py (89 flagged lines). Only documentation, comments and a missing-model error message changed; original download sources, progress contracts, paths, acceleration provider order and fallback behavior remain intact. Added AST and zero-Han regression coverage. Static line coverage verified; full Python CI, model downloads and inference still require validation. No package requested.
+
+## Follow-up source checkpoint — startup, screenshot and accessibility
+
+- Completed English source conversion of static/shotOverlay.html, static/skeleton.html, py/ui_tree_helper.py and start.js (81 Han-flagged lines). Screenshot hints now default to English even when a legacy locale is supplied; the startup document declares English. Retain screenshot geometry, IPC, startup sequencing and accessibility logic. Inline JavaScript and launcher syntax checks passed; added AST/source regression coverage. Full CI and live desktop validation remain outstanding. No package requested.

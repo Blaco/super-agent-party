@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en-US">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,7 +21,7 @@
       user-select: none;
     }
 
-    /* --- 动态流体背景 --- */
+    /* --- Animated fluid background --- */
     .fluid-background {
       position: absolute;
       top: 0;
@@ -67,7 +67,7 @@
       animation-delay: -2s;
     }
 
-    /* --- 内容层 --- */
+    /* --- Content layer --- */
     #app {
       position: relative;
       z-index: 10;
@@ -86,7 +86,7 @@
       filter: blur(5px);
     }
 
-    /* --- Logo 与 标题 --- */
+    /* --- Logo and title --- */
     .center-visual {
       display: flex;
       flex-direction: column;
@@ -95,11 +95,11 @@
     }
 
     .logo-img {
-      /* 已放大到 200px */
+      /* Enlarged to 200px */
       width: 200px;
       height: 200px;
       object-fit: contain;
-      margin-bottom: 10px; /* 间距也相应调大，避免拥挤 */
+      margin-bottom: 10px; /* Increase spacing to avoid crowding */
       filter: drop-shadow(0 15px 30px rgba(0,0,0,0.08)); 
       animation: breathe 5s ease-in-out infinite;
     }
@@ -121,14 +121,14 @@
       text-transform: uppercase;
     }
 
-    /* --- 数字加载器 --- */
+    /* --- Numeric loading indicator --- */
     .loader-container {
       position: absolute;
       bottom: 80px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100px; /* 固定高度，防止内容变化时跳动 */
+      min-height: 100px; /* Fixed height prevents layout shifts */
       transition: opacity 0.3s ease;
     }
 
@@ -138,13 +138,13 @@
       color: var(--text-color);
       font-variant-numeric: tabular-nums;
       line-height: 1;
-      display: flex; /* 确保 % 符号对齐 */
+      display: flex; /* Keep the percent sign aligned */
       align-items: flex-start;
     }
     
     .percent-symbol {
       font-size: 24px;
-      margin-top: 10px; /* 微调百分号位置 */
+      margin-top: 10px; /* Fine-tune the percent sign position */
       margin-left: 4px;
       opacity: 0.4;
     }
@@ -214,18 +214,18 @@
     let targetNum = 0;
     let animationFrameId;
     
-    // 1. 模拟加载进度的逻辑
+    // 1. Simulated loading progress
     const simulateLoad = setInterval(() => {
-      // 只要没加载完，就随机跑到 90% 左右停住等待
+      // Advance randomly to about 90% and wait until loading finishes
       if (targetNum < 90) {
         targetNum += Math.floor(Math.random() * 5) + 1;
       }
     }, 200);
 
-    // 2. 渲染循环：负责让数字平滑滚动
+    // 2. Render loop for smooth number transitions
     const renderLoop = () => {
       if (currentNum < targetNum) {
-        // 加快跳动速度，看起来更灵敏
+        // Update faster for more responsive feedback
         const step = Math.ceil((targetNum - currentNum) * 0.1) || 1;
         currentNum += step;
         counterEl.innerText = currentNum;
@@ -234,7 +234,7 @@
     };
     renderLoop();
 
-    // 状态文字轮播
+    // Cycle through status messages
     let textIdx = 0;
     const texts = ['Initializing', 'Connecting...', 'Syncing Data...'];
     const textInterval = setInterval(() => {
@@ -242,23 +242,23 @@
       statusText.innerText = texts[textIdx];
     }, 1500);
 
-    // 3. 监听后端准备就绪信号
+    // 3. Listen for the backend-ready signal
     if (ipcRenderer) {
       ipcRenderer.on('backend-ready', (payload) => {
         const { host, port } = payload;
 
-        // [关键修复]：清理所有定时器和动画循环
+        // Clear all timers and animation loops
         clearInterval(simulateLoad);
         clearInterval(textInterval);
         cancelAnimationFrame(animationFrameId);
 
-        // [关键修复]：强制设定为最终状态
+        // Set the final state
         counterEl.innerText = "100";
         statusText.innerText = "Ready";
         statusText.style.color = "#000";
 
-        // 预取关键 CSS 到 HTTP 缓存，让 loadURL 时 CSS 命中缓存即时加载
-        // 仅 fetch CSS，不加载整页 JS，避免 iframe 重复执行 Vue 等重型库
+        // Prefetch key CSS into the HTTP cache for immediate loading during loadURL
+        // Fetch only CSS to avoid executing Vue and other large scripts twice in an iframe
         const base = `http://${host}:${port}`;
         const warmUrls = [
           '/css/styles.css',
@@ -274,7 +274,7 @@
           fetch(base + url, { cache: 'force-cache' }).catch(() => {});
         });
 
-        // 播放 fade-out 动画覆盖 loadURL 过程中的短暂闪烁
+        // Fade out to cover brief flicker during loadURL
         setTimeout(() => {
           document.getElementById('app').classList.add('fade-out');
         }, 400);

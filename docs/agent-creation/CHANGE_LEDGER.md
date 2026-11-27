@@ -410,3 +410,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — English model management and Dify adapter source
 
 - Parent `17dd825844a51286c124e28addd5494ead31a170`. Translate 8 lines in py/dify_openai.py, 40 in py/sherpa_model_manager.py, 5 in py/moss_model_manager.py, 14 in py/ebd_model_manager.py and 22 in py/minilm_router.py. Preserve executable behavior, API endpoints, progress records, dependencies, acceleration provider ordering, paths, and default configuration. Only comments/docstrings and the MiniLM missing-model diagnostic changed. Retain exact line counts; no literal Han characters remain in the five files. Added AST/full-file regression tests. Python CI and live model downloads/inference unverified. Revert for rollback. No build requested.
+
+## 2026-11-26 — English screenshot, startup and accessibility source
+
+- Parent `4428f2aea574757d781b2f143312a0ca6e0829b1`. Translate 32 flagged lines in static/shotOverlay.html, 20 in static/skeleton.html, 25 in py/ui_tree_helper.py and 4 in start.js. Remove the Chinese screenshot hint and replace its fallback with en-US; set startup HTML language to English. Other changes are comments, docstrings, screenshot title and control tooltips. Preserve IPC, screenshot selection behavior, native handles, DPI mapping and startup logic. All four files retain original line counts and contain zero literal Han characters. Inline JavaScript and launcher parsing passed; added regression tests. Python CI and live Electron validation pending. Revert for rollback.
