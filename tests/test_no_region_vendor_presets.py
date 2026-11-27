@@ -25,7 +25,7 @@ class VendorPresetTests(unittest.TestCase):
         headers = locale.split("'headersPlaceholder': `", 1)[1].split("`", 1)[0]
         body = locale.split("'bodyPlaceholder': `", 1)[1].split("`", 1)[0]
         self.assertNotIn("vendorParamDesc_", headers + body)
-        self.assertEqual(json.loads(headers.replace("'", '"'))["Content-Type"], "application/json")
+        self.assertEqual(json.loads(headers)["Content-Type"], "application/json")
         self.assertEqual(json.loads(body[body.index("{"):])["type"], "object")
         self.assertIn("vendorParamDesc_ollama_top_k", locale)
 

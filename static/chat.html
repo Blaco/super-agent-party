@@ -131,7 +131,6 @@ function updateElement(el, rawMarkdown, formatFn) {
   <script src="libs/markdown-it-container.min.js"></script>
   <script src="libs/morphdom-umd.min.js"></script>
   <script src="libs/highlight.min.js"></script>
-  <script src="js/locales/zh-CN.js"></script>
   <script src="js/locales/en-US.js"></script>
   <script src="js/locales.js"></script>
   <script src="libs/mermaid.min.js"></script>
@@ -2431,7 +2430,7 @@ function updateElement(el, rawMarkdown, formatFn) {
               <!-- 任务配置 Dialog -->
               <el-dialog append-to-body
                 v-model="showCreateTaskDialog"
-                :title="isEditing ? t('editTask') || '编辑任务' : t('createNewTask')"
+                :title="isEditing ? t('editTask') || 'Edit task' : t('createNewTask')"
                 width="80%"
                 class="mcp-dialog"
                 destroy-on-close
@@ -2448,7 +2447,7 @@ function updateElement(el, rawMarkdown, formatFn) {
 
                     <el-divider></el-divider>
 
-                    <!-- 推送平台选择：仅显示第三方机器人，网页对话由后台强制静默推送 -->
+                    <!-- External delivery channels; the backend also sends results to chat -->
                     <h2>{{ t('behaviorPlatform') }}</h2>
                     <el-form-item>
                       <el-select 
@@ -2457,14 +2456,10 @@ function updateElement(el, rawMarkdown, formatFn) {
                         class="full-width-input"
                         :placeholder="t('selectPlatform')"
                       >
-                        <!-- 这里不放 chat 选项，JS 逻辑会自动处理它 -->
-                        <el-option :label="t('wechatBot')" value="wechat"></el-option>
-                        <el-option :label="t('feishuBot')" value="feishu"></el-option>
-                        <el-option :label="t('dingtalkBot')" value="dingtalk"></el-option>
+                        <!-- Chat delivery is handled automatically -->
                         <el-option :label="t('telegramBot')" value="telegram"></el-option>
                         <el-option :label="t('discordBot')" value="discord"></el-option>
                         <el-option :label="t('slackBot')" value="slack"></el-option>
-                        <el-option :label="t('weComBot')" value="wecom"></el-option>
                       </el-select>
                     </el-form-item>
 
@@ -3026,22 +3021,18 @@ function updateElement(el, rawMarkdown, formatFn) {
         v-model="showLogoDialog"
         :title="t('logoPage')"
         width="90%"> 
-        <!-- logo页面 -->
+        <!-- License and upstream attribution -->
           <div class="license-notice">
             <h1>Super Agent Party v0.4.3</h1>
-            <h3>开源协议声明 / Open Source License</h3>
+            <h3>Open Source License</h3>
             <div class="notice-section">
-              <p>❗ 注意！本项目是基于AGPL协议开源的，请遵守AGPL协议，以避免不必要的法律问题！</p>
               <p>❗ Attention! This project is open source based on the AGPL agreement, please abide by the AGPL agreement to avoid unnecessary legal problems!</p>
             </div>
 
             <div class="contact-section">
-              <h3>联系我们 / Contact</h3>
+              <h3>Upstream Licensing Contact</h3>
               <div class="contact-card">
-                <p>商业授权咨询：
-                  <a href="mailto:hst97@qq.com" class="contact-link">hst97@qq.com</a>
-                </p>
-                <p>Commercial License：
+                <p>Commercial License:
                   <a href="mailto:hst97@qq.com" class="contact-link">hst97@qq.com</a>
                 </p>
               </div>
@@ -3066,23 +3057,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                 </a>
               </div>
               
-              <div class="link-item">
-                <span>Gitee：</span>
-                <a href="https://gitee.com/heshengtao/super-agent-party" 
-                  target="_blank" 
-                  class="social-link">
-                  heshengtao/super-agent-party
-                </a>
-              </div>
 
-              <div class="link-item">
-                <span>Bilibili：</span>
-                <a href="https://space.bilibili.com/26978344" 
-                  target="_blank" 
-                  class="social-link">
-                  @派酱llm-party
-                </a>
-              </div>
 
               <div class="link-item">
                 <span>Youtube：</span>
@@ -3102,19 +3077,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                 </a>
               </div>
 
-              <div class="link-item">
-                <span>QQ交流群：</span>
-                <span class="qq-group">931057213</span>
-              </div>
 
-              <div class="link-item">
-                <span>中文使用指南：</span>
-                <a href="https://gcnij7egmcww.feishu.cn/wiki/DPRKwdetCiYBhPkPpXWcugujnRc" 
-                  target="_blank" 
-                  class="social-link">
-                  点击访问
-                </a>
-              </div>
 
               <div class="link-item">
                 <span>English Usage Guide：</span>

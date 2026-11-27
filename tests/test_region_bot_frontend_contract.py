@@ -25,6 +25,18 @@ class FrontendContract(unittest.TestCase):
         for key in REMOVED:
             self.assertNotIn(key, config)
 
+    def test_browser_chat_excludes_retired_adapters(self):
+        html = (ROOT / "static/chat.html").read_text(encoding="utf-8")
+        for name in ("wechat", "feishu", "dingtalk", "wecom"):
+            self.assertNotIn('value="' + name + '"', html)
+        for name in ("telegram", "discord", "slack"):
+            self.assertIn('value="' + name + '"', html)
+        self.assertNotIn("js/locales/zh-CN.js", html)
+        for host in ("gitee.com", "space.bilibili.com", "feishu.cn"):
+            self.assertNotIn(host, html)
+        self.assertIn("GNU Affero General Public License v3.0", html)
+        self.assertIn("heshengtao/super-agent-party", html)
+
     def test_tts_controls_use_tts_settings(self):
         source = (ROOT / "static/js/vue_methods.js").read_text(encoding="utf-8")
         self.assertIn("this.ttsSettings.separators = val.map", source)
