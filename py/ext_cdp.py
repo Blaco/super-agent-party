@@ -1,4 +1,4 @@
-"""外部应用 CDP 工具——完全独立，不污染内置浏览器工具"""
+"""External application CDP tools, independent of the built-in browser tools."""
 import json
 import asyncio
 
@@ -18,7 +18,7 @@ async def _ext_cmd(method, params=None):
         if ports:
             EXTERNAL_CDP_PORT = ports[0]
         else:
-            return {"error": "没有已连接的外部应用，请先用 ext_list_apps 查看并 ext_select_app 选择", "success": False}
+            return {"error": "No external application is connected. Use ext_list_apps to list applications and ext_select_app to select one.", "success": False}
     result = await execute_external_cdp(EXTERNAL_CDP_PORT, method, params)
     return result
 
@@ -37,13 +37,13 @@ async def ext_click(uid, dblClick=False):
     """
     r = await _ext_cmd("Runtime.evaluate", {"expression": script, "returnByValue": True})
     if "error" in r:
-        return f"点击失败: {r['error']}"
+        return f"Click failed: {r['error']}"
     raw = r.get("result", {}).get("value", "")
     if isinstance(raw, str) and raw.startswith("{"):
         d = json.loads(raw)
         if "error" in d:
             if "not clickable" in d["error"]:
-                return f"元素 {d.get('role') or d.get('tag')} 可能不可交互，请用 click_by_text 重试"
+                return f"Element {d.get('role') or d.get('tag')} may not be interactive. Retry with ext_click_by_text."
             return d["error"]
     else:
         return f"Click error: {raw}"
@@ -77,7 +77,7 @@ async def ext_fill(uid, value):
     """
     r = await _ext_cmd("Runtime.evaluate", {"expression": script, "returnByValue": True})
     if "error" in r:
-        return f"填充失败: {r['error']}"
+        return f"Fill failed: {r['error']}"
     v = r.get("result", {}).get("value", str(r))
     return v
 
@@ -85,10 +85,10 @@ async def ext_fill(uid, value):
 async def ext_screenshot():
     r = await _ext_cmd("Page.captureScreenshot", {"format": "png"})
     if not r.get("success", True):
-        return f"截图失败: {r.get('error', '未知错误')}"
+        return f"Screenshot failed: {r.get('error', 'Unknown error')}"
     data = r.get("data", "")
     if not data:
-        return f"截图失败: CDP 返回空数据 (可能该应用不支持截图)"
+        return f"Screenshot failed: CDP returned no data (the application may not support screenshots)"
     import base64, os, time
     from py.get_setting import UPLOAD_FILES_DIR, get_port
     img_bytes = base64.b64decode(data)
@@ -146,7 +146,7 @@ async def ext_snapshot():
 """
     r = await _ext_cmd("Runtime.evaluate", {"expression": script, "returnByValue": True})
     if "error" in r:
-        return f"快照失败: {r['error']}"
+        return f"Snapshot failed: {r['error']}"
     v = r.get("result", {}).get("value", str(r))
     return v
 
@@ -159,7 +159,7 @@ async def ext_evaluate_script(script_code, args=None):
         code = f"({code})()"
     r = await _ext_cmd("Runtime.evaluate", {"expression": code, "returnByValue": True, "awaitPromise": True})
     if "error" in r:
-        return f"执行失败: {r['error']}"
+        return f"Execution failed: {r['error']}"
     if r.get("result", {}).get("type") == "string":
         return r["result"]["value"]
     if "value" in r.get("result", {}):
@@ -203,20 +203,20 @@ async def ext_select_app(port=0, target_id=""):
     if port == 0:
         EXTERNAL_CDP_PORT = 0
         EXTERNAL_CDP_WS_URL = None
-        return "已切换回内置浏览器"
+        return "Switched back to the built-in browser"
     from py.local_app_control import get_connection_info, switch_external_target
     info = get_connection_info(port)
     if not info:
-        return f"端口 {port} 未连接"
+        return f"Port {port} is not connected"
     if target_id:
         r = await switch_external_target(port, target_id)
         if not r.get("success"):
-            return f"切换失败: {r.get('error')}"
+            return f"Switch failed: {r.get('error')}"
         t = r.get("target", {})
         EXTERNAL_CDP_PORT = port
-        return f"已切换到 {info.get('appName')} target: {t.get('title')} (type={t.get('type')})"
+        return f"Switched to {info.get('appName')} target: {t.get('title')} (type={t.get('type')})"
     EXTERNAL_CDP_PORT = port
-    return f"已切换到 {info.get('appName')} (port={port})"
+    return f"Switched to {info.get('appName')} (port={port})"
 
 
 async def ext_refresh_targets(port=0):
@@ -261,21 +261,21 @@ async def ext_click_by_text(text):
         d = json.loads(raw)
         if "error" in d:
             return d["error"]
-        return f"已点击 {d.get('tag','?')} '{d.get('ariaLabel') or d.get('text','')}' (score: {d.get('score',0)})"
+        return f"Clicked {d.get('tag','?')} '{d.get('ariaLabel') or d.get('text','')}' (score: {d.get('score',0)})"
     return f"click_by_text: {raw}"
 
 
 ext_app_tools = [
-    {"type": "function", "function": {"name": "ext_list_apps", "description": "列出已连接的外部 Electron 应用的 CDP 端口和 targets（page/webview）。", "parameters": {"type": "object", "properties": {}, "required": []}}},
-    {"type": "function", "function": {"name": "ext_select_app", "description": "选择外部 Electron 应用到当前操作目标。port=0 切回内置浏览器。可指定 target_id 跳转到某个 webview。", "parameters": {"type": "object", "properties": {"port": {"type": "integer"}, "target_id": {"type": "string"}, }, "required": ["port"]}}},
-    {"type": "function", "function": {"name": "ext_refresh_targets", "description": "刷新外部应用 target 列表（打开新 webview 后使用）。", "parameters": {"type": "object", "properties": {"port": {"type": "integer"}, }, "required": ["port"]}}},
-    {"type": "function", "function": {"name": "ext_click", "description": "点击外部应用中的元素（通过 snapshot 获取的 UID）。如果不是 button 会提示改用 ext_click_by_text。", "parameters": {"type": "object", "properties": {"uid": {"type": "string"}, "dblClick": {"type": "boolean"}}, "required": ["uid"]}}},
-    {"type": "function", "function": {"name": "ext_fill", "description": "在外部应用的输入框中填入文字。", "parameters": {"type": "object", "properties": {"uid": {"type": "string"}, "value": {"type": "string"}}, "required": ["uid", "value"]}}},
-    {"type": "function", "function": {"name": "ext_screenshot", "description": "截取当前选中的外部应用页面。", "parameters": {"type": "object", "properties": {}, "required": []}}},
-    {"type": "function", "function": {"name": "ext_snapshot", "description": "获取外部应用当前页面的可交互元素快照（含 UID）。", "parameters": {"type": "object", "properties": {}, "required": []}}},
-    {"type": "function", "function": {"name": "ext_evaluate_script", "description": "在外部应用中执行 JS 代码。", "parameters": {"type": "object", "properties": {"script_code": {"type": "string"}}, "required": ["script_code"]}}},
-    {"type": "function", "function": {"name": "ext_hover", "description": "悬停在外部应用元素上。", "parameters": {"type": "object", "properties": {"uid": {"type": "string"}}, "required": ["uid"]}}},
-    {"type": "function", "function": {"name": "ext_press_key", "description": "在外部应用中按键。", "parameters": {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}}},
-    {"type": "function", "function": {"name": "ext_wait_for", "description": "等待外部应用页面出现指定文字。", "parameters": {"type": "object", "properties": {"text": {"type": "string"}, "timeout": {"type": "integer"}}, "required": ["text"]}}},
-    {"type": "function", "function": {"name": "ext_click_by_text", "description": "在外部应用中对包含指定关键词（aria-label / 文本）的元素进行点击。", "parameters": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}}},
+    {"type": "function", "function": {"name": "ext_list_apps", "description": "List CDP ports and page/webview targets for connected external Electron applications.", "parameters": {"type": "object", "properties": {}, "required": []}}},
+    {"type": "function", "function": {"name": "ext_select_app", "description": "Select an external Electron application as the current target. Set port=0 to return to the built-in browser. Optionally specify target_id to select a webview.", "parameters": {"type": "object", "properties": {"port": {"type": "integer"}, "target_id": {"type": "string"}, }, "required": ["port"]}}},
+    {"type": "function", "function": {"name": "ext_refresh_targets", "description": "Refresh external application targets after opening a new webview.", "parameters": {"type": "object", "properties": {"port": {"type": "integer"}, }, "required": ["port"]}}},
+    {"type": "function", "function": {"name": "ext_click", "description": "Click an external application element by its snapshot UID. Non-interactive elements may require ext_click_by_text.", "parameters": {"type": "object", "properties": {"uid": {"type": "string"}, "dblClick": {"type": "boolean"}}, "required": ["uid"]}}},
+    {"type": "function", "function": {"name": "ext_fill", "description": "Fill an external application input field with text.", "parameters": {"type": "object", "properties": {"uid": {"type": "string"}, "value": {"type": "string"}}, "required": ["uid", "value"]}}},
+    {"type": "function", "function": {"name": "ext_screenshot", "description": "Capture a screenshot of the currently selected external application page.", "parameters": {"type": "object", "properties": {}, "required": []}}},
+    {"type": "function", "function": {"name": "ext_snapshot", "description": "Get a snapshot of interactive elements on the external application page, including their UIDs.", "parameters": {"type": "object", "properties": {}, "required": []}}},
+    {"type": "function", "function": {"name": "ext_evaluate_script", "description": "Execute JavaScript in the external application.", "parameters": {"type": "object", "properties": {"script_code": {"type": "string"}}, "required": ["script_code"]}}},
+    {"type": "function", "function": {"name": "ext_hover", "description": "Hover over an external application element.", "parameters": {"type": "object", "properties": {"uid": {"type": "string"}}, "required": ["uid"]}}},
+    {"type": "function", "function": {"name": "ext_press_key", "description": "Press a key in the external application.", "parameters": {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}}},
+    {"type": "function", "function": {"name": "ext_wait_for", "description": "Wait for specified text to appear on the external application page.", "parameters": {"type": "object", "properties": {"text": {"type": "string"}, "timeout": {"type": "integer"}}, "required": ["text"]}}},
+    {"type": "function", "function": {"name": "ext_click_by_text", "description": "Click an external application element containing the specified keyword in its aria-label or text.", "parameters": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}}},
 ]

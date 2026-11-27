@@ -100,3 +100,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — CLI tool localization complete
 
 - Translated all 255 remaining Han-flagged lines in py/cli_tool.py (comments and docstrings only). Corrected stale explanatory comments to reflect actual ZeroBox workspace read/write and network configuration. No command execution logic, sandbox settings, permission checks, schemas, process management, redaction behavior or task data changed. Zero literal Han characters remain. Added AST and full-file English regression coverage; Python execution and CI are not verified in this editing environment. Next: local application modules, skills/extensions and full inventory. No package requested.
+
+## Follow-up source checkpoint — local application and Dynamic Island backend
+
+- Local application scanning/CDP tools, Dynamic Island backend and uv API source now contain zero detected literal Han characters (207 flagged lines addressed). Rename the private connection registry consistently to _external_connections and translate model-facing descriptions, diagnostics and developer comments. Preserve localized installer/launcher detection via equivalent Unicode escapes for installed applications; no removal of multilingual user content. Tool names, protocol fields and platform behavior retained. Added AST and English regression coverage; static inventory passed, Python tests/CI and live application control are pending. Next: skills and extensions. No package requested.

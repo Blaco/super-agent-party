@@ -5,11 +5,11 @@ import websockets
 import requests
 from typing import Dict, Optional, List, Optional
 
-_外部连接: Dict[int, dict] = {}
+_external_connections: Dict[int, dict] = {}
 
 
 def _ws_alive(ws) -> bool:
-    """websockets 16+ 没有 .closed 属性，改用 close_code"""
+    """websockets 16+ uses close_code rather than the removed .closed attribute."""
     try:
         return ws.close_code is None
     except Exception:
@@ -17,11 +17,11 @@ def _ws_alive(ws) -> bool:
 
 
 def get_connected_ports() -> List[int]:
-    return list(_外部连接.keys())
+    return list(_external_connections.keys())
 
 
 def get_connection_info(port: int) -> Optional[dict]:
-    conn = _外部连接.get(port)
+    conn = _external_connections.get(port)
     if conn:
         return {
             "port": port,
@@ -35,7 +35,7 @@ def get_connection_info(port: int) -> Optional[dict]:
 
 
 def get_all_connection_info() -> List[dict]:
-    ports = list(_外部连接.keys())
+    ports = list(_external_connections.keys())
     print(f"[LocalAppControl] get_all_connection_info: ports={ports}, total={len(ports)}")
     return [get_connection_info(p) for p in ports]
 
@@ -45,7 +45,7 @@ async def get_external_cdp_targets(port: int) -> List[dict]:
         resp = requests.get(f"http://127.0.0.1:{port}/json/list", timeout=3)
         return resp.json()
     except Exception as e:
-        print(f"[LocalAppControl] 获取 CDP targets 失败 (port {port}): {e}")
+        print(f"[LocalAppControl] Failed to get CDP targets (port {port}): {e}")
         return []
 
 
@@ -67,18 +67,18 @@ def _pick_best_target(targets, preferred_id=None):
 
 
 async def connect_to_external_app(port: int, app_id: str = "", app_name: str = "") -> dict:
-    if port in _外部连接:
-        conn = _外部连接[port]
+    if port in _external_connections:
+        conn = _external_connections[port]
         if conn.get("ws") and _ws_alive(conn["ws"]):
-            print(f"[LocalAppControl] 端口 {port} 已有连接，复用")
-            return {"success": True, "message": "已连接", "targets": conn.get("targets", [])}
+            print(f"[LocalAppControl] Reusing existing connection on port {port}")
+            return {"success": True, "message": "Already connected", "targets": conn.get("targets", [])}
 
-    print(f"[LocalAppControl] 正在连接端口 {port} (app: {app_name})...")
+    print(f"[LocalAppControl] Connecting to port {port} (app: {app_name})...")
     try:
         resp = requests.get(f"http://127.0.0.1:{port}/json/list", timeout=3)
         targets = resp.json()
     except Exception as e:
-        print(f"[LocalAppControl] 连接 fail (port {port}): {e}")
+        print(f"[LocalAppControl] Connection failed (port {port}): {e}")
         return {"success": False, "error": str(e), "targets": []}
 
     ws_url = _pick_best_target(targets)
@@ -93,7 +93,7 @@ async def connect_to_external_app(port: int, app_id: str = "", app_name: str = "
                 first_target = t
                 break
 
-    _外部连接[port] = {
+    _external_connections[port] = {
         "targets": targets,
         "ws": None,
         "active_ws_url": ws_url,
@@ -106,21 +106,21 @@ async def connect_to_external_app(port: int, app_id: str = "", app_name: str = "
     if ws_url:
         try:
             ws = await websockets.connect(ws_url, max_size=10 * 1024 * 1024, ping_interval=20, close_timeout=1)
-            _外部连接[port]["ws"] = ws
-            print(f"[LocalAppControl] 端口 {port} WebSocket 连接成功")
+            _external_connections[port]["ws"] = ws
+            print(f"[LocalAppControl] WebSocket connected on port {port}")
         except Exception as e:
-            print(f"[LocalAppControl] WebSocket 连接失败 (port {port}): {e}")
+            print(f"[LocalAppControl] WebSocket connection failed (port {port}): {e}")
 
     page_count = len([t for t in targets if t.get("type") == "page"])
     webview_count = len([t for t in targets if t.get("type") == "webview"])
     usable_count = len([t for t in targets if t.get("webSocketDebuggerUrl") and t.get("type") not in ("worker","service_worker","shared_worker")])
-    print(f"[LocalAppControl] 端口 {port}: {len(targets)} targets (page={page_count}, webview={webview_count}, usable={usable_count})")
-    return {"success": True, "message": "连接成功", "targets": targets, "activeWsUrl": ws_url, "usableCount": usable_count}
+    print(f"[LocalAppControl] Port {port}: {len(targets)} targets (page={page_count}, webview={webview_count}, usable={usable_count})")
+    return {"success": True, "message": "Connected successfully", "targets": targets, "activeWsUrl": ws_url, "usableCount": usable_count}
 
 
 async def disconnect_from_external_app(port: int) -> dict:
-    print(f"[LocalAppControl] 断开端口 {port}")
-    conn = _外部连接.pop(port, None)
+    print(f"[LocalAppControl] Disconnecting port {port}")
+    conn = _external_connections.pop(port, None)
     if conn:
         ws = conn.get("ws")
         if ws:
@@ -128,20 +128,20 @@ async def disconnect_from_external_app(port: int) -> dict:
                 if _ws_alive(ws):
                     await asyncio.wait_for(ws.close(), timeout=3)
             except (asyncio.TimeoutError, Exception) as e:
-                print(f"[LocalAppControl] 端口 {port} WS 关闭异常: {e}")
-    print(f"[LocalAppControl] 端口 {port} 已移除，剩余: {list(_外部连接.keys())}")
+                print(f"[LocalAppControl] WebSocket close error on port {port}: {e}")
+    print(f"[LocalAppControl] Port {port} removed; remaining: {list(_external_connections.keys())}")
     return {"success": True}
 
 
 async def switch_external_target(port: int, target_id: str = "") -> dict:
-    conn = _外部连接.get(port)
+    conn = _external_connections.get(port)
     if not conn:
-        return {"error": f"端口 {port} 未连接", "success": False}
+        return {"error": f"Port {port} is not connected", "success": False}
 
     targets = conn.get("targets", [])
     if not targets:
         targets = await get_external_cdp_targets(port)
-        _外部连接[port]["targets"] = targets
+        _external_connections[port]["targets"] = targets
 
     target = None
     for t in targets:
@@ -165,11 +165,11 @@ async def switch_external_target(port: int, target_id: str = "") -> dict:
                 break
 
     if not target:
-        return {"error": "找不到可用的 target", "success": False}
+        return {"error": "No usable target found", "success": False}
 
     ws_url = target.get("webSocketDebuggerUrl")
     if not ws_url:
-        return {"error": "目标没有 webSocketDebuggerUrl", "success": False}
+        return {"error": "Target has no webSocketDebuggerUrl", "success": False}
 
     old_ws = conn.get("ws")
     if old_ws and _ws_alive(old_ws):
@@ -180,10 +180,10 @@ async def switch_external_target(port: int, target_id: str = "") -> dict:
 
     try:
         ws = await websockets.connect(ws_url, max_size=10 * 1024 * 1024, ping_interval=20, close_timeout=1)
-        _外部连接[port]["ws"] = ws
-        _外部连接[port]["active_ws_url"] = ws_url
-        _外部连接[port]["active_target_id"] = target.get("id", "")
-        print(f"[LocalAppControl] 端口 {port} 切换到 target: {target.get('title','')} (type={target.get('type')}, id={target.get('id')})")
+        _external_connections[port]["ws"] = ws
+        _external_connections[port]["active_ws_url"] = ws_url
+        _external_connections[port]["active_target_id"] = target.get("id", "")
+        print(f"[LocalAppControl] Port {port} switched to target: {target.get('title','')} (type={target.get('type')}, id={target.get('id')})")
         return {"success": True, "target": {"title": target.get("title"), "type": target.get("type"), "url": target.get("url"), "id": target.get("id")}}
     except Exception as e:
         return {"error": str(e), "success": False}
@@ -192,17 +192,17 @@ async def switch_external_target(port: int, target_id: str = "") -> dict:
 async def refresh_external_targets(port: int) -> dict:
     try:
         targets = await get_external_cdp_targets(port)
-        _外部连接[port]["targets"] = targets
-        print(f"[LocalAppControl] 端口 {port} targets 已刷新: {len(targets)}")
+        _external_connections[port]["targets"] = targets
+        print(f"[LocalAppControl] Port {port} targets refreshed: {len(targets)}")
         return {"success": True, "targets": targets}
     except Exception as e:
         return {"error": str(e), "success": False}
 
 
 async def execute_external_cdp(port: int, method: str, params: Optional[dict] = None) -> dict:
-    conn = _外部连接.get(port)
+    conn = _external_connections.get(port)
     if not conn:
-        return {"error": "未连接", "success": False}
+        return {"error": "Not connected", "success": False}
 
     ws = conn.get("ws")
     ws_url = conn.get("active_ws_url")
@@ -213,38 +213,38 @@ async def execute_external_cdp(port: int, method: str, params: Optional[dict] = 
     if ws_url:
         try:
             ws = await websockets.connect(ws_url, max_size=10 * 1024 * 1024, ping_interval=20, close_timeout=1)
-            _外部连接[port]["ws"] = ws
+            _external_connections[port]["ws"] = ws
             return await _send_cdp(ws, method, params or {})
         except Exception as e:
             return {"error": str(e), "success": False}
 
     targets = await get_external_cdp_targets(port)
-    _外部连接[port]["targets"] = targets
+    _external_connections[port]["targets"] = targets
     ws_url = _pick_best_target(targets)
     if ws_url:
         try:
             ws = await websockets.connect(ws_url, max_size=10 * 1024 * 1024, ping_interval=20, close_timeout=1)
-            _外部连接[port]["ws"] = ws
-            _外部连接[port]["active_ws_url"] = ws_url
+            _external_connections[port]["ws"] = ws
+            _external_connections[port]["active_ws_url"] = ws_url
             return await _send_cdp(ws, method, params or {})
         except Exception as e:
             return {"error": str(e), "success": False}
 
-    return {"error": "找不到可连接的 target", "success": False}
+    return {"error": "No connectable target found", "success": False}
 
 
 async def select_external_target(port: int, target_url: str) -> dict:
     try:
         ws = await websockets.connect(target_url, max_size=10 * 1024 * 1024, ping_interval=20, close_timeout=1)
-        if port in _外部连接:
-            old_ws = _外部连接[port].get("ws")
+        if port in _external_connections:
+            old_ws = _external_connections[port].get("ws")
             if old_ws and _ws_alive(old_ws):
                 try:
                     await old_ws.close()
                 except Exception:
                     pass
-        _外部连接[port]["ws"] = ws
-        _外部连接[port]["active_ws_url"] = target_url
+        _external_connections[port]["ws"] = ws
+        _external_connections[port]["active_ws_url"] = target_url
         return {"success": True}
     except Exception as e:
         return {"error": str(e), "success": False}
@@ -257,17 +257,17 @@ async def _send_cdp(ws, method: str, params: dict) -> dict:
     try:
         await ws.send(json.dumps(message))
     except websockets.exceptions.ConnectionClosed as e:
-        return {"error": f"WebSocket 连接已关闭: {e}", "success": False}
+        return {"error": f"WebSocket connection closed: {e}", "success": False}
     while True:
         try:
             response = await asyncio.wait_for(ws.recv(), timeout=30)
         except asyncio.TimeoutError:
-            return {"error": "CDP 响应超时 (30s)", "success": False}
+            return {"error": "CDP response timed out (30s)", "success": False}
         except websockets.exceptions.ConnectionClosed as e:
-            return {"error": f"WebSocket 连接已关闭: {e}", "success": False}
+            return {"error": f"WebSocket connection closed: {e}", "success": False}
         data = json.loads(response)
         if data.get("id") == cmd_id:
-            # CDP 协议错误：透传完整错误信息
+            # Pass through the complete CDP protocol error
             if "error" in data:
                 err = data["error"]
                 code = err.get("code", "")
@@ -277,7 +277,7 @@ async def _send_cdp(ws, method: str, params: dict) -> dict:
 
 
 async def cleanup_all():
-    for port in list(_外部连接.keys()):
+    for port in list(_external_connections.keys()):
         await disconnect_from_external_app(port)
 
 
@@ -289,39 +289,39 @@ _GENERIC_DIR_NAMES = {
 
 
 def _is_skip_directory(dir_path: str) -> bool:
-    """检查目录或exe是否应被跳过"""
+    """Check whether a directory or executable should be skipped."""
     name = os.path.basename(dir_path).lower()
-    # 通用子目录名
+    # Generic subdirectory names
     if name in _GENERIC_DIR_NAMES:
         return True
-    # shadowbot 版本目录
+    # Shadowbot version directories
     import re
     if re.match(r"^shadowbot-\d+\.\d+\.\d+$", name):
         return True
-    # 游戏数据目录
+    # Game data directories
     if name.endswith("_data"):
         return True
-    # 安装器 / VC Redist
+    # Installers and Visual C++ redistributables
     if "Visual C++" in name or "vc_redist" in name:
         return True
-    # Edge WebView2 是系统组件，不应作为独立应用扫描
+    # Edge WebView2 is a system component, not a standalone application
     if "webview2" in name:
         return True
     return False
 
 
 def _is_quality_ancestor(exe_path: str, ancestor_path: str, markers_dir: str) -> bool:
-    """检查祖先目录是否像一个真正的应用安装目录（排除临时目录/插件子目录）"""
+    """Check whether an ancestor resembles an actual installation directory rather than a temporary or plugin directory."""
     if _is_skip_directory(ancestor_path):
         return False
-    # 拒绝盘符根目录和系统目录
+    # Reject drive roots and system directories
     drive, tail = os.path.splitdrive(ancestor_path)
     if tail in ("\\", "/", ""):
         return False
     if os.path.normcase(ancestor_path) == os.path.normcase(os.environ.get("SystemRoot", "")):
         return False
     ancestor_name = os.path.basename(ancestor_path).lower()
-    # 排除随机 hash 名称 (UUID 之类)
+    # Exclude random hash or UUID-like names
     hex_chars = set("0123456789abcdef-")
     if len(ancestor_name) > 30 and all(c in hex_chars for c in ancestor_name):
         return False
@@ -335,7 +335,7 @@ def _is_quality_ancestor(exe_path: str, ancestor_path: str, markers_dir: str) ->
 
 
 def _classify_chromium_app(exe_path: str, markers_dir: str) -> str:
-    """根据运行时标记分类 Chromium 应用类型（跨平台）"""
+    """Classify Chromium applications by runtime markers across platforms."""
     import re
     import platform
     files = set()
@@ -368,12 +368,12 @@ def _classify_chromium_app(exe_path: str, markers_dir: str) -> str:
         if "Electron Framework.framework" in parent:
             return "electron"
 
-    # 目录名匹配 Electron 版本目录（如 app-11.99.0）
+    # Match Electron version directories such as app-11.99.0
     dir_basename = os.path.basename(markers_dir)
     if re.match(r"^app-?\d+\.", dir_basename):
         return "electron"
 
-    # 二进制检查：读取末尾 50MB（Electron 字符串通常在尾部）
+    # Inspect the final 50 MB of the binary, where Electron strings are typically found
     try:
         size = os.path.getsize(exe_path)
         with open(exe_path, "rb") as f:
@@ -389,10 +389,10 @@ def _classify_chromium_app(exe_path: str, markers_dir: str) -> str:
 
 
 def _is_chromium_dir(dir_files: set) -> bool:
-    """判断目录是否为 Chromium 运行时目录（跨平台：Windows/macOS/Linux）
+    """Determine whether a directory contains a Chromium runtime on Windows, macOS or Linux.
     
-    检测标志: icudtl.dat 是 Chromium 项目专用的 ICU 数据文件，
-    配合 chromium 的 .pak 资源包文件即可唯一标识 Chromium/Electron/CEF 应用。
+    The icudtl.dat file is the Chromium ICU data file.
+    Together with Chromium .pak resource files, it identifies Chromium, Electron and CEF applications.
     """
     if "icudtl.dat" not in dir_files:
         return False
@@ -401,7 +401,7 @@ def _is_chromium_dir(dir_files: set) -> bool:
 
 
 def _find_main_exe(directory: str) -> Optional[str]:
-    """在目录中找主可执行文件，排除安装器、更新器、服务等辅助程序（跨平台）"""
+    """Find the main executable, excluding installers, updaters, services and other helper programs across platforms."""
     from pathlib import Path
     import platform
     d = Path(directory)
@@ -410,7 +410,7 @@ def _find_main_exe(directory: str) -> Optional[str]:
         "uninst", "update", "setup", "crashpad", "minidump",
         "elevated", "elevation", "tracing", "notification", "helper",
         "pwa_launcher", "os_update", "service", "handler",
-        "卸载", "安装", "更新", "修复", "配置",
+        "\u5378\u8f7d", "\u5b89\u88c5", "\u66f4\u65b0", "\u4fee\u590d", "\u914d\u7f6e",
     )
     is_windows = platform.system() == "Windows"
 
@@ -440,7 +440,7 @@ def _find_main_exe(directory: str) -> Optional[str]:
 
 
 def _build_search_paths(default_paths: list) -> list:
-    """构建完整搜索路径：默认路径 + 非C盘 Program Files"""
+    """Build the complete search path from defaults and Program Files on other drives."""
     import string
     all_paths = list(default_paths)
     for drive in string.ascii_uppercase:
@@ -457,7 +457,7 @@ def _build_search_paths(default_paths: list) -> list:
 
 
 def _scan_start_menu(seen_paths: set) -> list:
-    """通过 Windows 开始菜单快捷方式发现已安装应用"""
+    """Discover installed applications through Windows Start menu shortcuts."""
     import subprocess
     results = []
     start_dirs = [
@@ -467,7 +467,7 @@ def _scan_start_menu(seen_paths: set) -> list:
         "C:\\Users\\Public\\Desktop",
     ]
 
-    # 收集所有 .lnk 路径，一次性用 PowerShell 解析
+    # Collect all .lnk paths for batch PowerShell resolution
     all_lnks = []
     for start_dir in start_dirs:
         if not os.path.exists(start_dir):
@@ -480,7 +480,7 @@ def _scan_start_menu(seen_paths: set) -> list:
     if not all_lnks:
         return results
 
-    # 批量 PowerShell 解析（最多 200 个一次分批，避免命令行过长）
+    # Resolve shortcuts in batches of up to 200 to avoid excessive command length
     batch_size = 200
     for batch_start in range(0, len(all_lnks), batch_size):
         batch = all_lnks[batch_start:batch_start + batch_size]
@@ -502,13 +502,13 @@ def _scan_start_menu(seen_paths: set) -> list:
                     continue
                 target = os.path.normpath(target)
                 base = os.path.basename(target).lower()
-                # 跳过卸载器、安装器、更新器
+                # Skip uninstallers, installers and updaters
                 skip_keywords = ("uninst", "update", "setup", "crashpad", "repair",
-                                 "卸载", "安装", "修复", "更新", "配置")
+                                 "\u5378\u8f7d", "\u5b89\u88c5", "\u4fee\u590d", "\u66f4\u65b0", "\u914d\u7f6e")
                 is_skip = any(k in base for k in skip_keywords)
                 if is_skip:
                     continue
-                # 在同目录及常见子目录中找更大的 exe（启动器通常比真 exe 小）
+                # Look for a larger executable in the same or common subdirectories, since launchers are usually smaller
                 parent = os.path.dirname(target)
                 best_path = target
                 try:
@@ -545,7 +545,7 @@ def _scan_start_menu(seen_paths: set) -> list:
 
 
 def _scan_chromium_apps(search_paths: list) -> list:
-    """统一扫描所有基于 Chromium 的应用：Electron + CEF + 浏览器 + 定制变种"""
+    """Scan Chromium-based applications, including Electron, CEF, browsers and custom variants."""
     from pathlib import Path
     results = []
 
@@ -565,13 +565,13 @@ def _scan_chromium_apps(search_paths: list) -> list:
                 if not _is_chromium_dir(file_set):
                     continue
 
-                # 找到了 Chromium 运行时目录
+                # Found a Chromium runtime directory
                 root_path = Path(root)
 
-                # 找主 exe：收集同级和祖先目录的候选（最多向上 3 级），选最大的
+                # Collect main executable candidates from this directory and up to three ancestors; choose the largest
                 is_generic = _is_skip_directory(root)
                 candidates = []
-                max_depth = min(4, len(list(root_path.parents)) + 1)  # 同级 + 最多3级祖先
+                max_depth = min(4, len(list(root_path.parents)) + 1)  # Current directory plus up to three ancestors
                 ancestors = [root_path] + list(root_path.parents)[:3]
                 for ancestor_idx, ancestor in enumerate(ancestors):
                     if ancestor_idx == 0:
@@ -583,7 +583,7 @@ def _scan_chromium_apps(search_paths: list) -> list:
                     if exe:
                         candidates.append((os.path.getsize(exe), exe))
                         if ancestor_idx == 0 and not is_generic:
-                            break  # 非通用目录的同级 exe 可信，直接用
+                            break  # Trust an executable in the same non-generic directory
                 if not candidates:
                     dirs.clear()
                     continue
@@ -602,10 +602,10 @@ def _scan_chromium_apps(search_paths: list) -> list:
 
 
 def _scan_linux_desktop_entries(known_paths: set, search_paths: list) -> list:
-    """Linux 专用：通过 .desktop 文件发现已安装的 Chromium/Electron 应用
+    """Linux: discover installed Chromium and Electron applications using .desktop files.
 
-    解析 /usr/share/applications/、~/.local/share/applications/ 中的 .desktop 文件，
-    从 Exec= 行提取可执行文件路径，检测其是否为 Chromium/Electron 应用。
+    Parse .desktop files in /usr/share/applications/ and ~/.local/share/applications/.
+    Extract executable paths from Exec= entries and check for Chromium or Electron.
     """
     import re
     import subprocess
@@ -640,9 +640,9 @@ def _scan_linux_desktop_entries(known_paths: set, search_paths: list) -> list:
                 if not exec_match:
                     continue
                 exec_line = exec_match.group(1).strip()
-                # 去除桌面条目占位符
+                # Remove desktop-entry placeholders
                 exec_line = re.sub(r"\s*%[fFuUdDnNickvm]\s*", " ", exec_line).strip()
-                # 提取可执行文件路径（支持引号包裹）
+                # Extract executable paths, including quoted paths
                 exec_path = None
                 if exec_line.startswith('"'):
                     end = exec_line.find('"', 1)
@@ -660,11 +660,11 @@ def _scan_linux_desktop_entries(known_paths: set, search_paths: list) -> list:
                 if not exec_path or not exec_path.startswith("/"):
                     continue
 
-                # 展开 env 变量
+                # Expand environment variables
                 exec_path = os.path.expandvars(exec_path)
                 exec_path = os.path.expanduser(exec_path)
 
-                # 如果是符号链接，解析到真实路径
+                # Resolve symbolic links to their real paths
                 if os.path.islink(exec_path):
                     exec_path = os.path.realpath(exec_path)
 
@@ -676,7 +676,7 @@ def _scan_linux_desktop_entries(known_paths: set, search_paths: list) -> list:
                     continue
                 known_paths.add(norm)
 
-                # 向上搜索 Chromium 标记目录（最多 3 级）
+                # Search up to three ancestor levels for Chromium runtime markers
                 parent = os.path.dirname(exec_path)
                 for _ in range(3):
                     if os.path.isdir(parent):
@@ -701,11 +701,11 @@ def _scan_linux_desktop_entries(known_paths: set, search_paths: list) -> list:
 
 
 def _scan_macos_portable_apps(search_paths: list) -> list:
-    """macOS 专用：扫描 .app bundle 中的 Chromium/Electron 应用
+    """macOS: scan .app bundles for Chromium and Electron applications.
     
-    遍历 .app bundle 而非深层目录，避免 os.walk 深度限制 (>6) 导致
-    跳过 Versions/A/Resources/ 下的 Chromium 标记文件。
-    同时处理嵌套 .app（如 Docker.app/Docker Desktop.app）。
+    Traverse application bundles rather than deep generic directories to avoid the os.walk depth limit (>6).
+    This ensures markers under Versions/A/Resources/ are not missed.
+    Also handle nested application bundles, such as Docker.app/Docker Desktop.app.
     """
     from pathlib import Path
     import glob
@@ -720,11 +720,11 @@ def _scan_macos_portable_apps(search_paths: list) -> list:
                 if not entry.is_dir():
                     continue
 
-                # 处理顶层的 .app bundle
+                # Handle top-level application bundles
                 if entry.name.endswith(".app"):
                     _scan_single_app_bundle(Path(entry.path), results, seen_bundles)
                 else:
-                    # 处理非 .app 子目录（如 /Applications/Hearthstone/）
+                    # Handle subdirectories that are not application bundles (e.g. /Applications/Hearthstone/)
                     try:
                         for sub_entry in os.scandir(entry.path):
                             if sub_entry.is_dir() and sub_entry.name.endswith(".app"):
@@ -738,7 +738,7 @@ def _scan_macos_portable_apps(search_paths: list) -> list:
 
 
 def _scan_single_app_bundle(app_path, results: list, seen_bundles: set):
-    """扫描单个 .app bundle 及其嵌套 .app，检测 Chromium/Electron 框架"""
+    """Scan a single .app bundle and nested bundles for Chromium or Electron frameworks."""
     from pathlib import Path
     import glob
 
@@ -755,9 +755,9 @@ def _scan_single_app_bundle(app_path, results: list, seen_bundles: set):
     markers_dir = str(Path(icudtl_files[0]).parent)
     framework_exec = None
 
-    # 在框架 Versions 目录中找真正的 Chromium/Electron 二进制（用于分类）
+    # Find the actual Chromium or Electron binary in the framework Versions directory for classification
     for icu_path in icudtl_files:
-        p = Path(icu_path).parent.parent  # Versions/X/ 目录
+        p = Path(icu_path).parent.parent  # Versions/X/ directory
         for f in sorted(p.iterdir(), key=lambda x: x.stat().st_size if x.is_file() and os.access(str(x), os.X_OK) else 0, reverse=True):
             if f.is_file() and os.access(str(f), os.X_OK) and f.stat().st_size > 500000:
                 framework_exec = str(f.resolve())
@@ -769,7 +769,7 @@ def _scan_single_app_bundle(app_path, results: list, seen_bundles: set):
     if not framework_exec:
         return
 
-    # 检查嵌套 .app（如 WeChat → WeChatAppEx.app, Docker → Docker Desktop.app）
+    # Check nested application bundles (e.g. Docker.app containing Docker Desktop.app)
     try:
         macos_dir = app_path / "Contents" / "MacOS"
         if macos_dir.exists():
@@ -791,7 +791,7 @@ def _scan_single_app_bundle(app_path, results: list, seen_bundles: set):
 
 
 def _has_electron_markers(app_path, markers_dir: str) -> bool:
-    """检测是否为 Electron 应用（通过 app bundle 级别的标记文件）"""
+    """Detect Electron applications using markers at the application-bundle level."""
     from pathlib import Path
     resources = app_path / "Contents" / "Resources"
     if resources.exists():
@@ -819,7 +819,7 @@ def _has_electron_markers(app_path, markers_dir: str) -> bool:
 
 
 def _parse_version(v: str) -> tuple:
-    """解析版本号为可比较的元组"""
+    """Parse a version into a comparable tuple."""
     if not v:
         return (0,)
     import re
@@ -829,13 +829,13 @@ def _parse_version(v: str) -> tuple:
         try:
             result.append(int(p.strip()))
         except ValueError:
-            # 非数字段当作 0，保证版本号可比较
+            # Treat non-numeric components as zero for version comparison
             pass
     return tuple(result) if result else (0,)
 
 
 def _dedup_by_name(apps: List[dict]) -> List[dict]:
-    """同名应用去重：相同名称（忽略大小写）只保留版本号最高的"""
+    """Deduplicate case-insensitive application names, keeping only the highest version."""
     groups: Dict[str, list] = {}
     for a in apps:
         key = a["name"].strip().lower()
@@ -846,14 +846,14 @@ def _dedup_by_name(apps: List[dict]) -> List[dict]:
         if len(group) == 1:
             result.append(group[0])
         else:
-            # 按版本号降序，取最高版本
+            # Sort versions in descending order and keep the highest
             group.sort(key=lambda a: _parse_version(a.get("version", "")), reverse=True)
             best = group[0]
             result.append(best)
             others = len(group) - 1
             if others > 0:
                 names = [a["version"] or "?" for a in group[1:]]
-                print(f"[LocalAppControl] 去重: '{best['name']}' 保留 v{best['version']}, 丢弃 {others} 个旧版本 ({', '.join(names)})")
+                print(f"[LocalAppControl] Deduplication: '{best['name']}' keeping v{best['version']}, discarding {others} older versions ({', '.join(names)})")
 
     return result
 
@@ -882,25 +882,25 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
                 "/snap",
                 os.path.expanduser("~/Apps"),
             ]
-            # /usr/lib 和 ~/.local/share 由 .desktop 扫描覆盖，避免 os.walk 遍历数千个共享库目录
+            # Desktop-entry scanning covers /usr/lib and ~/.local/share without walking thousands of shared-library directories
         else:
             raise NotImplementedError(f"Platform {mapped} not supported")
 
     search_paths = [p for p in search_paths if p and os.path.exists(p)]
 
-    # 统一扫描所有 Chromium 应用
+    # Scan all Chromium applications together
     if mapped == "darwin":
         all_found = _scan_macos_portable_apps(search_paths)
     else:
         all_found = _scan_chromium_apps(search_paths)
 
-    # 补充：通过开始菜单快捷方式发现漏掉的应用（如 lx-music）
+    # Supplement the scan with applications discovered through Start menu shortcuts
     if mapped == "win32":
         before_count = len(all_found)
         known_exes = {i["path"].lower().replace("\\", "/") for i in all_found}
         start_menu_paths = _scan_start_menu(known_exes)
         for sm_path in start_menu_paths:
-            # 排除系统组件
+            # Exclude system components
             if "edgewebview" in sm_path.lower() or "msedgewebview2" in sm_path.lower():
                 continue
             try:
@@ -920,9 +920,9 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
                 continue
         start_count = len(all_found) - before_count
         if start_count > 0:
-            print(f"[LocalAppControl] 开始菜单补充发现 {start_count} 个应用")
+            print(f"[LocalAppControl] Start menu discovery found {start_count} additional applications")
 
-    # 补充：Linux 通过 .desktop 文件发现漏掉的应用
+    # Supplement Linux discovery using .desktop files
     if mapped == "linux":
         before_count = len(all_found)
         known_paths = {Path(i["path"]).resolve().as_posix().lower() for i in all_found}
@@ -930,7 +930,7 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
         all_found.extend(desktop_results)
         desktop_count = len(all_found) - before_count
         if desktop_count > 0:
-            print(f"[LocalAppControl] .desktop 文件补充发现 {desktop_count} 个应用")
+            print(f"[LocalAppControl] Desktop entry discovery found {desktop_count} additional applications")
 
     type_names = {
         "electron": "electron",
@@ -951,10 +951,10 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
                 continue
             seen.add(norm)
 
-            # 过滤系统组件
+            # Filter system components
             if "edgewebview" in norm or "msedgewebview2" in norm:
                 continue
-            # 过滤 NVIDIA CEF（后台组件不支持调试）
+            # Exclude NVIDIA CEF background components that do not support debugging
             if "nvidia" in norm and ("cef" in norm or "overlay" in norm):
                 continue
 
@@ -1021,7 +1021,7 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
                         name = p.stem
             elif mapped == "linux":
                 try:
-                    # 尝试从 Electron 应用的 package.json 获取名称和版本
+                    # Try reading the application name and version from Electron package.json
                     app_dir = p.parent
                     pkg_candidates = [
                         app_dir / "resources" / "app" / "package.json",
@@ -1046,12 +1046,12 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
                 except Exception:
                     pass
 
-            # 清洗 ProductName 中的 Launcher/启动器 后缀（飞书的 ProductName 是 "Feishu Launcher"）
+            # Normalize ProductName by removing a launcher suffix when the parent directory confirms the application name
             nl = name.lower()
             dir_lower = p.parent.name.lower()
             if nl.endswith(" launcher") and nl[:-9].strip() == dir_lower:
                 name = p.parent.name
-            elif name.endswith("启动器") and len(name) > 3 and name[:-3].strip() == p.parent.name:
+            elif name.endswith("\u542f\u52a8\u5668") and len(name) > 3 and name[:-3].strip() == p.parent.name:
                 name = p.parent.name
 
             is_running = False
@@ -1085,13 +1085,13 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
                 continue
             if any(k in name_lower for k in ("genshin", "yuanshen", "honkai", "star rail")):
                 continue
-            # 后台组件/服务，非用户交互应用
+            # Background components and services are not interactive applications
             if any(k in name_lower for k in ("nvidia app", "nvidia overlay", "webview2")):
                 continue
-            # 过滤开始菜单带来的卸载程序/安装器/启动器
-            if any(k in name_lower for k in ("卸载", "uninstall", "installer", "setup wizard")):
+            # Filter uninstallers, installers and launchers discovered through Start menu entries
+            if any(k in name_lower for k in ("\u5378\u8f7d", "uninstall", "installer", "setup wizard")):
                 continue
-            # 过滤 WebView2
+            # Filter WebView2
             if "webview2" in name_lower:
                 continue
 
@@ -1106,28 +1106,28 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
                 "pid": pid,
             })
         except Exception as e:
-            print(f"[LocalAppControl] 跳过 {info.get('path', '?')}: {e}")
+            print(f"[LocalAppControl] Skipping {info.get('path', '?')}: {e}")
             continue
 
-    # 同名应用去重：相同名称只保留最高版本
+    # Deduplicate identical application names, keeping the highest version
     apps = _dedup_by_name(apps)
 
-    # "XXX Launcher" 去重: 如果 "XXX" 已存在，去掉 "XXX Launcher"
+    # Remove an XXX Launcher entry if XXX already exists
     app_names = {a["name"].lower().strip() for a in apps}
     def _is_launcher_of(name):
         n = name.lower().strip()
-        # "XXX Launcher" / "XXX启动器"
+        # Match launcher suffixes in installed application names
         if n.endswith(" launcher"):
             return n[:-9].strip() in app_names
-        if n.endswith("启动器") and len(n) > 3:
+        if n.endswith("\u542f\u52a8\u5668") and len(n) > 3:
             return n[:-3].strip() in app_names
-        # 纯 "launcher" 或 "启动器" 无意义
-        if n in ("launcher", "启动器"):
+        # A bare launcher name is not useful
+        if n in ("launcher", "\u542f\u52a8\u5668"):
             return True
         return False
     apps = [a for a in apps if not _is_launcher_of(a["name"])]
 
-    # 路径去重: 同一目录下的不同入口只留一个
+    # Deduplicate paths so only one entry per directory remains
     dir_map = {}
     for a in apps:
         path = a["path"]
@@ -1141,16 +1141,16 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
             existing = dir_map[parent]
             def _name_score(n):
                 s = n.lower()
-                if any(k in s for k in ("uninst", "update", "setup", "repair", "卸载", "安装", "修复", "crashpad")):
+                if any(k in s for k in ("uninst", "update", "setup", "repair", "\u5378\u8f7d", "\u5b89\u88c5", "\u4fee\u590d", "crashpad")):
                     return -1
-                if any(k in s for k in ("launcher", "启动器")):
+                if any(k in s for k in ("launcher", "\u542f\u52a8\u5668")):
                     return 0
                 return 1
             if _name_score(a["name"]) > _name_score(existing["name"]):
                 dir_map[parent] = a
     apps = list(dir_map.values())
 
-    # 按 CDP 兼容性排序：electron > browser > cef > chromium
+    # Sort by CDP compatibility: electron > browser > cef > chromium
     _type_order = {"electron": 0, "browser": 1, "cef": 2, "chromium": 3}
     apps.sort(key=lambda a: (_type_order.get(a["appType"], 99), a["name"].lower()))
 
@@ -1159,5 +1159,5 @@ def scan_local_apps(search_paths: Optional[List[str]] = None) -> List[dict]:
         type_counts[a["appType"]] = type_counts.get(a["appType"], 0) + 1
 
     summary = ", ".join(f"{v} {type_names.get(k, k)}" for k, v in type_counts.items())
-    print(f"[LocalAppControl] 扫描完成: {len(apps)} 个应用 ({summary})")
+    print(f"[LocalAppControl] Scan complete: {len(apps)} applications ({summary})")
     return apps

@@ -213,6 +213,22 @@ class EnglishRuntimeContractTests(unittest.TestCase):
                          '"allow_net": True'):
             self.assertIn(contract, source)
 
+    def test_local_application_and_island_backend_are_english(self):
+        for relative in ("py/local_app_control.py", "py/ext_cdp.py",
+                         "py/dynamic_island.py", "py/uv_api.py"):
+            path = ROOT / relative
+            source = path.read_text(encoding="utf-8")
+            ast.parse(source, filename=str(path))
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
+        local = (ROOT / "py/local_app_control.py").read_text(encoding="utf-8")
+        self.assertIn("_external_connections", local)
+        self.assertIn("webSocketDebuggerUrl", local)
+        self.assertIn(r"\u542f\u52a8\u5668", local)
+        external = (ROOT / "py/ext_cdp.py").read_text(encoding="utf-8")
+        for name in ("ext_list_apps", "ext_select_app", "ext_snapshot",
+                     "ext_evaluate_script", "ext_click_by_text"):
+            self.assertIn('"name": "' + name + '"', external)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

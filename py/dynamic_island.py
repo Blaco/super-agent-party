@@ -1,6 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 """
-灵动岛 (Dynamic Island) 后端模块
+Dynamic Island backend module
 """
 
 import asyncio
@@ -13,38 +13,38 @@ _macos_active_player = None  # "Spotify" or "Music"
 ISLAND_TOOLS_SCHEMA = [
     {
         "name": "island_music_play",
-        "description": "播放/恢复当前音乐播放器",
+        "description": "Play or resume the current music player",
         "parameters": {"type": "object", "properties": {}, "required": []}
     },
     {
         "name": "island_music_pause",
-        "description": "暂停当前音乐播放器",
+        "description": "Pause the current music player",
         "parameters": {"type": "object", "properties": {}, "required": []}
     },
     {
         "name": "island_music_next",
-        "description": "切换到下一首歌",
+        "description": "Skip to the next track",
         "parameters": {"type": "object", "properties": {}, "required": []}
     },
     {
         "name": "island_music_prev",
-        "description": "切换到上一首歌",
+        "description": "Return to the previous track",
         "parameters": {"type": "object", "properties": {}, "required": []}
     },
     {
         "name": "island_music_get_info",
-        "description": "获取当前正在播放的音乐信息",
+        "description": "Get currently playing music information",
         "parameters": {"type": "object", "properties": {}, "required": []}
     },
     {
         "name": "island_music_set_volume",
-        "description": "调整系统媒体音量，level 为 0-100 的整数",
+        "description": "Set system media volume; level is an integer from 0 to 100",
         "parameters": {
             "type": "object",
             "properties": {
                 "level": {
                     "type": "integer",
-                    "description": "目标音量 0-100",
+                    "description": "Target volume from 0 to 100",
                     "minimum": 0,
                     "maximum": 100
                 }
@@ -54,39 +54,39 @@ ISLAND_TOOLS_SCHEMA = [
     },
     {
         "name": "island_task_create",
-        "description": "在灵动岛上创建一条待办事项，可指定截止时间",
+        "description": "Create a Dynamic Island task with an optional due time",
         "parameters": {
             "type": "object",
             "properties": {
-                "text": {"type": "string", "description": "待办内容"},
-                "due_time": {"type": "string", "description": "截止时间 ISO 格式或 HH:MM 格式, 可选"}
+                "text": {"type": "string", "description": "Task text"},
+                "due_time": {"type": "string", "description": "Optional due time in ISO or HH:MM format"}
             },
             "required": ["text"]
         }
     },
     {
         "name": "island_task_list",
-        "description": "列出灵动岛上所有待办事项",
+        "description": "List all Dynamic Island tasks",
         "parameters": {"type": "object", "properties": {}, "required": []}
     },
     {
         "name": "island_task_complete",
-        "description": "按文本关键词匹配并标记完成灵动岛上的一条待办事项",
+        "description": "Find a Dynamic Island task by keyword and mark it complete",
         "parameters": {
             "type": "object",
             "properties": {
-                "text": {"type": "string", "description": "待办内容关键词（模糊匹配）"}
+                "text": {"type": "string", "description": "Task text keyword (fuzzy match)"}
             },
             "required": ["text"]
         }
     },
     {
         "name": "island_task_delete",
-        "description": "按文本关键词匹配并删除灵动岛上的一条待办事项",
+        "description": "Find a Dynamic Island task by keyword and delete it",
         "parameters": {
             "type": "object",
             "properties": {
-                "text": {"type": "string", "description": "待办内容关键词（模糊匹配）"}
+                "text": {"type": "string", "description": "Task text keyword (fuzzy match)"}
             },
             "required": ["text"]
         }
@@ -176,7 +176,7 @@ def _mpris_get_metadata():
                     art_url = str(val[1])
 
             return {
-                "track": title if title else "播放中",
+                "track": title if title else "Playing",
                 "artist": artist,
                 "isPlaying": status == "Playing",
                 "artworkUrl": art_url,
@@ -232,13 +232,13 @@ def island_music_play():
     system = platform.system()
     if system == "Linux":
         if _mpris_call('PlayPause'):
-            return "已发送播放指令。"
-        return "未检测到 MPRIS 播放器。"
+            return "Play command sent."
+        return "No MPRIS player detected."
     if system == "Darwin":
         _macos_media_command("play")
-        return "已发送播放指令。"
+        return "Play command sent."
     _media_key('playpause')
-    return "已发送播放指令。"
+    return "Play command sent."
 
 
 def island_music_pause():
@@ -246,13 +246,13 @@ def island_music_pause():
     system = platform.system()
     if system == "Linux":
         if _mpris_call('PlayPause'):
-            return "已发送暂停指令。"
-        return "未检测到 MPRIS 播放器。"
+            return "Pause command sent."
+        return "No MPRIS player detected."
     if system == "Darwin":
         _macos_media_command("pause")
-        return "已发送暂停指令。"
+        return "Pause command sent."
     _media_key('playpause')
-    return "已发送暂停指令。"
+    return "Pause command sent."
 
 
 def island_music_next():
@@ -260,13 +260,13 @@ def island_music_next():
     system = platform.system()
     if system == "Linux":
         if _mpris_call('Next'):
-            return "已切换到下一首。"
-        return "未检测到 MPRIS 播放器。"
+            return "Next track command sent."
+        return "No MPRIS player detected."
     if system == "Darwin":
         _macos_media_command("next_track")
-        return "已切换到下一首。"
+        return "Next track command sent."
     _media_key('nexttrack')
-    return "已切换到下一首。"
+    return "Next track command sent."
 
 
 def island_music_prev():
@@ -274,19 +274,19 @@ def island_music_prev():
     system = platform.system()
     if system == "Linux":
         if _mpris_call('Previous'):
-            return "已切换到上一首。"
-        return "未检测到 MPRIS 播放器。"
+            return "Previous track command sent."
+        return "No MPRIS player detected."
     if system == "Darwin":
         _macos_media_command("previous_track")
-        return "已切换到上一首。"
+        return "Previous track command sent."
     _media_key('prevtrack')
-    return "已切换到上一首。"
+    return "Previous track command sent."
 
 
 def island_music_get_info():
     return (
-        "跨平台限制下无法直接读取播放器信息。"
-        "您可以通过告诉我当前播放的歌曲名称，我可以帮您显示在灵动岛上。"
+        "Player information cannot be read directly under cross-platform limitations. "
+        "Tell me the current track name to display it in Dynamic Island."
     )
 
 
@@ -296,29 +296,29 @@ def island_music_set_volume(level: int):
 
     system = platform.system()
 
-    # macOS: 直接设定系统音量
+    # macOS: set system volume directly
     if system == "Darwin":
         try:
             subprocess.run(
                 ["osascript", "-e", f"set volume output volume {level}"],
                 capture_output=True, timeout=3
             )
-            return f"音量已设置为 {level}%"
+            return f"Volume set to {level}%"
         except Exception as e:
             print(f"[DynamicIsland] macOS volume error: {e}")
 
-    # Linux: 使用 pactl 直接设定
+    # Linux: set volume directly using pactl
     if system == "Linux":
         try:
             subprocess.run(
                 ["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{level}%"],
                 capture_output=True, timeout=3
             )
-            return f"音量已设置为 {level}%"
+            return f"Volume set to {level}%"
         except Exception as e:
             print(f"[DynamicIsland] Linux volume error: {e}")
 
-    # Windows: 使用 pycaw 直接设定
+    # Windows: set volume directly using pycaw
     if system == "Windows":
         try:
             from pycaw.pycaw import AudioUtilities
@@ -326,15 +326,15 @@ def island_music_set_volume(level: int):
             devices = AudioUtilities.GetSpeakers()
             ep = devices.EndpointVolume
             ep.SetMasterVolumeLevelScalar(level / 100.0, None)
-            return f"音量已设置为 {level}%"
+            return f"Volume set to {level}%"
         except Exception as e:
             print(f"[DynamicIsland] pycaw volume error: {e}")
 
-    return f"无法调整音量。"
+    return f"Unable to adjust volume."
 
 
 async def island_track_set(ws_manager, data: dict):
-    """推送曲目信息到所有岛窗口"""
+    """Push track information to all island windows."""
     await ws_manager.broadcast({
         "type": "island_track_update",
         "data": data
@@ -342,7 +342,7 @@ async def island_track_set(ws_manager, data: dict):
 
 
 def island_enable() -> dict:
-    """启用灵动岛"""
+    """Enable Dynamic Island."""
     global _island_enabled
     _island_enabled = True
     from server import node_ext_mcp_tools
@@ -353,19 +353,19 @@ def island_enable() -> dict:
         for t in ISLAND_TOOLS_SCHEMA
     ]
     node_ext_mcp_tools[ext_id] = tools_simplified
-    print(f"[DynamicIsland] 已启用，注册 {len(tools_simplified)} 个工具")
+    print(f"[DynamicIsland] Enabled; registered {len(tools_simplified)} tools")
     return {"enabled": True, "tools": tools_simplified}
 
 
 def island_disable() -> dict:
-    """禁用灵动岛"""
+    """Disable Dynamic Island."""
     global _island_enabled
     _island_enabled = False
     from server import node_ext_mcp_tools
 
     ext_id = "dynamic_island"
     node_ext_mcp_tools.pop(ext_id, None)
-    print(f"[DynamicIsland] 已禁用")
+    print(f"[DynamicIsland] Disabled")
     return {"enabled": False}
 
 
@@ -381,7 +381,7 @@ def get_island_tools() -> List[dict]:
 
 
 def _query_smtc_windows():
-    """Windows SMTC 查询 (winrt 原生调用)"""
+    """Query Windows SMTC through native winrt calls."""
     try:
         from winrt.windows.media.control import (
             GlobalSystemMediaTransportControlsSessionManager as SMTCManager,
@@ -457,7 +457,7 @@ def _run_async_in_thread(coro):
 
 
 async def poll_music_state():
-    """轮询当前音乐播放状态，返回 { track?, artist?, isPlaying }"""
+    """Poll current music playback status; return { track?, artist?, isPlaying }."""
     import platform, asyncio
 
     result = {"isPlaying": False}
