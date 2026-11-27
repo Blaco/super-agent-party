@@ -414,3 +414,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — English screenshot, startup and accessibility source
 
 - Parent `4428f2aea574757d781b2f143312a0ca6e0829b1`. Translate 32 flagged lines in static/shotOverlay.html, 20 in static/skeleton.html, 25 in py/ui_tree_helper.py and 4 in start.js. Remove the Chinese screenshot hint and replace its fallback with en-US; set startup HTML language to English. Other changes are comments, docstrings, screenshot title and control tooltips. Preserve IPC, screenshot selection behavior, native handles, DPI mapping and startup logic. All four files retain original line counts and contain zero literal Han characters. Inline JavaScript and launcher parsing passed; added regression tests. Python CI and live Electron validation pending. Revert for rollback.
+
+## 2026-11-26 — Complete English alternate chat interface
+
+- Parent `608aa1c37fb0f9aadf83e47ec4a580267b9f9734`. Translate all 255 remaining flagged lines in static/chat.html, including markup and JavaScript comments plus active fallback labels and tooltips. Preserve Vue bindings, DOM IDs, routes, event handlers, styling and line count. Zero literal Han characters remain; 2 inline classic scripts parsed. Added regression coverage. Full CI and live UI testing pending; revert for rollback.

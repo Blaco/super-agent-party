@@ -120,3 +120,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — startup, screenshot and accessibility
 
 - Completed English source conversion of static/shotOverlay.html, static/skeleton.html, py/ui_tree_helper.py and start.js (81 Han-flagged lines). Screenshot hints now default to English even when a legacy locale is supplied; the startup document declares English. Retain screenshot geometry, IPC, startup sequencing and accessibility logic. Inline JavaScript and launcher syntax checks passed; added AST/source regression coverage. Full CI and live desktop validation remain outstanding. No package requested.
+
+## Follow-up source checkpoint — alternate chat interface
+
+- Completed the remaining 255 Han-flagged lines in static/chat.html, including template comments and fallback labels. Preserved Vue directives, handlers, layout, display blocks, chat modes, extension controls and task functionality. Inline classic JavaScript parsing passed (2 scripts). Added source regression coverage. Browser/Electron runtime and full CI remain outstanding. No new build requested.

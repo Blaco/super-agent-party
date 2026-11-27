@@ -277,6 +277,14 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         for relative in ("static/shotOverlay.html", "static/skeleton.html"):
             self.assertNotIn("zh-CN", (ROOT / relative).read_text(encoding="utf-8"))
 
+    def test_alternate_chat_is_english(self):
+        source = (ROOT / "static/chat.html").read_text(encoding="utf-8")
+        self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
+        self.assertIn("groupedFilteredConversations", source)
+        self.assertIn("handleInputPaste", source)
+        self.assertIn("viewingTaskDetail.progress", source)
+        self.assertIn("systemSettings.chatMode", source)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

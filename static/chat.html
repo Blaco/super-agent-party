@@ -11,9 +11,9 @@
   <!-- Highlight.js CSS for code highlighting -->
   <link rel="stylesheet" href="css/github.min.css">
   <script src="libs/clipboard.min.js"></script>
-  <!--引入html2canvas-->
+  <!-- Load html2canvas -->
   <script src="libs/html2canvas.min.js"></script>
-  <!-- 引入Element Plus样式 -->
+  <!-- Load Element Plus styles -->
   <link rel="stylesheet" href="libs/element-plus.css">
   <link rel="stylesheet" href="fontawesome/css/all.min.css">
   <link rel="icon" href="source/icon.png" type="image/png">
@@ -51,12 +51,12 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-// 2. 注册 Vue 自定义指令 (在您的 app.mount 之前或者组件 mixin 中)
-// 如果您用的是 Options API，可以直接放在 directives: { ... } 里，或者全局注册
+// Register the Vue custom directive before mounting the app or in a component mixin
+// With the Options API, register in directives or globally
 const StreamDirective = {
   mounted(el, binding) {
     el._markdownContent = '';
-    updateElement(el, binding.value, binding.arg); // binding.arg 可以传 formatMessage 函数
+    updateElement(el, binding.value, binding.arg); // binding.arg can supply the formatMessage function
   },
   updated(el, binding) {
     if (binding.value !== el._markdownContent) {
@@ -65,22 +65,22 @@ const StreamDirective = {
   }
 };
 
-// 核心渲染逻辑
+// Core rendering logic
 function updateElement(el, rawMarkdown, formatFn) {
-  el._markdownContent = rawMarkdown; // 缓存内容
+  el._markdownContent = rawMarkdown; // Cache the content
 
-  // A. 表格补全逻辑 (防止解析抖动)
+  // A. Complete partial tables to avoid parsing jitter
   let contentToRender = rawMarkdown || '';
   const lines = contentToRender.split('\n');
   const lastLine = lines[lines.length - 1].trim();
-  // 如果最后一行看起来是未闭合的表格行，手动补全竖线
+  // If the final line appears to be an unfinished table row, complete its pipe delimiter
   if (lastLine.startsWith('|') && !lastLine.endsWith('|') && !/^[|\s-:]+$/.test(lastLine)) {
     contentToRender += ' |';
   }
 
-  // B. 生成 HTML 字符串 (调用您原有的 formatMessage)
-  // 注意：这里假设 formatFn 是您组件里的 formatMessage 方法
-  // 如果 formatFn 不存在，退化为简单的 md.render
+  // B. Generate HTML using the existing formatMessage function
+  // formatFn is expected to be the component's formatMessage method
+  // Fall back to md.render when formatFn is absent
   let newHtml = '';
   if (typeof formatFn === 'function') {
     newHtml = formatFn(contentToRender); 
@@ -88,29 +88,29 @@ function updateElement(el, rawMarkdown, formatFn) {
     newHtml = window.md.render(contentToRender);
   }
 
-  // C. 构造新 DOM 树容器
+  // C. Construct a new DOM tree container
   const wrapper = document.createElement('div');
   wrapper.innerHTML = newHtml;
   
-  // D. 使用 morphdom 进行增量更新
-  // 这就是"丝滑"的关键：它只修改变动的部分，保留旧 DOM 的动画状态
+  // D. Apply incremental updates with morphdom
+  // Only changed portions are modified, preserving existing DOM animation state
   morphdom(el, wrapper, {
-    childrenOnly: true, // 仅更新子节点
+    childrenOnly: true, // Update child nodes only
     
-    // 性能优化：跳过不需要更新的节点
+    // Skip nodes that do not need updating
     onBeforeElUpdated: (fromEl, toEl) => {
-      // 2. 保护代码块，如果内容没变就不动 (防止高亮丢失)
+      // Preserve unchanged code blocks and their highlighting
       if (fromEl.tagName === 'PRE' && fromEl.isEqualNode(toEl)) {
         return false;
       }
       return true;
     },
     
-    // 节点添加后的回调
+    // Callback after adding a node
     onNodeAdded: (node) => {
-      // 可以在这里触发 highlight.js 或 mathjax 对新节点的渲染
+      // New nodes can be rendered with highlight.js or MathJax here
       if (node.tagName === 'PRE' && window.hljs) {
-         // hljs.highlightElement(node); // 如果 formatMessage 里没做，可以在这做
+         // hljs.highlightElement(node); // Optionally highlight if formatMessage has not already done so
       }
     }
   });
@@ -118,13 +118,13 @@ function updateElement(el, rawMarkdown, formatFn) {
   </script>
   <!-- Include markdown-it and highlight.js scripts -->
   <script src="libs/markdown-it.min.js"></script>
-  <!-- 1. KaTeX 样式 -->
+  <!-- 1. KaTeX styles -->
   <link rel="stylesheet" href="libs/katex.min.css">
 
-  <!-- 2. KaTeX 核心脚本 -->
+  <!-- 2. KaTeX core script -->
   <script src="libs/katex.min.js"></script>
 
-  <!-- 3. markdown-it-texmath 插件（这个在浏览器环境非常稳） -->
+  <!-- 3. markdown-it-texmath browser plugin -->
   <script src="libs/texmath.min.js"></script>
   <script src="libs/markdown-it-task-lists.min.js"></script>
   <script src="libs/markdown-it-footnote.min.js"></script>
@@ -145,18 +145,18 @@ function updateElement(el, rawMarkdown, formatFn) {
 </head>
 <body>
   <div id="app">
-    <!-- 顶部栏 -->
+    <!-- Top bar -->
     <el-header v-if="isElectron || isMobile" class="top-bar" height="30px">
 
-      <!-- ★ 新增：集成式浏览器顶栏 -->
-      <!-- style="margin-left: 78px" 实现了左侧留白，且该区域可拖拽 -->
+      <!-- Integrated browser toolbar -->
+      <!-- The left margin reserves a draggable area -->
       <div 
         v-if="activeMenu === 'ai-browser' && !isMobile" 
         class="integrated-browser-bar"
         :style="{ 'margin-left': isCollapse ? '50px':'186px'}" 
       >
         
-        <!-- 2. 标签栏 (边缘滚动容器) -->
+        <!-- 2. Tab bar with edge scrolling -->
         <div 
             class="integrated-tabs-container" 
             ref="tabsContainerRef"
@@ -164,7 +164,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             @mouseleave="stopEdgeScroll"
         >
             <div class="tabs-scroll-wrapper" ref="tabsWrapperRef">
-                <!-- 现有的标签页循环 -->
+                <!-- Existing tab loop -->
                 <div 
                     v-for="tab in browserTabs" 
                     :key="tab.id"
@@ -184,13 +184,13 @@ function updateElement(el, rawMarkdown, formatFn) {
                     </span>
                 </div>
 
-                <!-- ★★★ 修改点：将新建按钮移到这里 ★★★ -->
+                <!-- New tab button -->
                 <button class="new-tab-inline" @click="addNewTab" :title="t('newTab')">
                     <i class="fa-solid fa-plus"></i>
                 </button>
             </div>
         </div>
-        <!-- 1. 地址栏 (现在排在最左边) -->
+        <!-- 1. Address bar on the left -->
         <div class="integrated-address-bar">
              <el-input 
                 v-model="urlInput" 
@@ -205,8 +205,8 @@ function updateElement(el, rawMarkdown, formatFn) {
                 </template>
             </el-input>
         </div>
-        <!-- 3. 右侧控制组：新建标签 + 导航按钮 -->
-        <!-- 放在一起 -->
+        <!-- 3. Right controls: new tab and navigation -->
+        <!-- Group the controls -->
         <div class="browser-controls-group">
             <button 
                 class="ib-btn" 
@@ -218,20 +218,20 @@ function updateElement(el, rawMarkdown, formatFn) {
                 <i :class="isCurrentTabFavorite ? 'fa-solid fa-star' : 'fa-regular fa-star'"></i>
             </button>
 
-            <!-- 下载管理按钮 & 下拉框 -->
+            <!-- Download manager button and dropdown -->
             <div 
                 class="download-manager-wrapper"
                 @mouseenter="handleDropdownEnter" 
                 @mouseleave="handleDropdownLeave"
             >
-                <!-- 触发按钮 -->
+                <!-- Trigger button -->
                 <button class="ib-btn" :class="{ 'active': showDownloadDropdown }" :title="t('downloads')">
                     <i class="fa-solid fa-cloud-arrow-down"></i>
-                    <!-- 进度小红点/进度条 (可选) -->
+                    <!-- Optional progress indicator -->
                     <span v-if="activeDownloadCount > 0" class="download-badge"></span>
                 </button>
 
-                <!-- iOS 风格下拉框 -->
+                <!-- iOS-style dropdown -->
                 <transition name="dropdown-fade">
                     <div class="ios-dropdown-panel" v-show="showDownloadDropdown">
                         <div class="dropdown-header">
@@ -239,31 +239,31 @@ function updateElement(el, rawMarkdown, formatFn) {
                             <span class="clear-btn" @click="clearFinishedDownloads" v-if="downloads.length > 0">{{ t('clear') || 'Clear' }}</span>
                         </div>
 
-                        <!-- 空状态 -->
+                        <!-- Empty state -->
                         <div v-if="downloads.length === 0" class="empty-state">
                             <i class="fa-solid fa-box-open"></i>
                             <p>{{ t('noDownloads') || 'No recent downloads' }}</p>
                         </div>
 
-                        <!-- 下载列表 -->
+                        <!-- Download list -->
                         <div v-else class="download-list">
                             <div v-for="item in downloads" :key="item.id" class="download-item">
                                 
-                                <!-- 图标 -->
+                                <!-- Icon -->
                                 <div class="file-icon">
                                     <i class="fa-solid fa-file"></i>
                                 </div>
 
-                                <!-- 信息区 -->
+                                <!-- Information area -->
                                 <div class="file-info">
                                     <div class="file-name" :title="item.filename">{{ item.filename }}</div>
                                     
-                                    <!-- 进度条 (仅在下载中显示) -->
+                                    <!-- Progress bar displayed during downloads -->
                                     <div class="progress-bar-bg" v-if="item.state === 'progressing' || item.state === 'paused'">
                                         <div class="progress-bar-fill" :style="{ width: (item.progress * 100) + '%' }"></div>
                                     </div>
 
-                                    <!-- 状态文本 -->
+                                    <!-- Status text -->
                                     <div class="file-meta">
                                         <span v-if="item.state === 'completed'" class="success-text">{{ t('completed') || 'Done' }}</span>
                                         <span v-else-if="item.state === 'cancelled'" class="error-text">{{ t('cancelled') || 'Cancelled' }}</span>
@@ -275,14 +275,14 @@ function updateElement(el, rawMarkdown, formatFn) {
                                     </div>
                                 </div>
 
-                                <!-- 操作按钮区 -->
+                                <!-- Action buttons -->
                                 <div class="item-actions">
-                                    <!-- 完成后：打开文件夹 -->
+                                    <!-- Open containing folder after completion -->
                                     <button v-if="item.state === 'completed'" class="action-btn folder" @click="openFileFolder(item.path)" :title="t('openFolder')">
                                         <i class="fa-regular fa-folder-open"></i>
                                     </button>
                                     
-                                    <!-- 下载中：暂停/开始 -->
+                                    <!-- Pause or resume an active download -->
                                     <button v-if="item.state === 'progressing'" class="action-btn" @click="controlDownload(item.id, 'pause')" :title="t('pause')">
                                         <i class="fa-solid fa-pause"></i>
                                     </button>
@@ -290,7 +290,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                         <i class="fa-solid fa-play"></i>
                                     </button>
 
-                                    <!-- 下载中：取消 / 完成后：移除记录 -->
+                                    <!-- Cancel a download or remove its completed record -->
                                     <button class="action-btn delete" @click="handleStopOrRemove(item)" :title="t('cancel')">
                                         <i class="fa-solid fa-xmark"></i>
                                     </button>
@@ -301,7 +301,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                 </transition>
             </div>
 
-            <!-- 导航按钮 -->
+            <!-- Navigation buttons -->
             <button class="ib-btn" @click="browserGoBack" :disabled="!currentTab?.canGoBack" :title="t('back')">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
@@ -338,7 +338,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             <i class="fa-solid fa-school"></i>
           </el-icon>
         </el-button>
-      <!-- 添加移动端菜单按钮 -->
+      <!-- Mobile menu button -->
       <el-button 
       class="top-bar-btn"
        v-if="isMobile" 
@@ -359,7 +359,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             <i class="fa-solid fa-terminal"></i>
           </el-icon>
         </el-button>
-        <!-- 新增展开/收起按钮 -->
+        <!-- Expand and collapse button -->
         <el-button 
           v-if="!isAssistantMode&&!isMobile"
           @click="isCollapse = !isCollapse"
@@ -384,7 +384,7 @@ function updateElement(el, rawMarkdown, formatFn) {
           @click="toggleDynamicIsland"
           class="top-bar-btn"
           text
-          :title="isDynamicIsland ? '关闭灵动岛' : '灵动岛'">
+          :title="isDynamicIsland ? 'Close Dynamic Island' : 'Dynamic Island'">
           <el-icon>
             <i class="fa-solid fa-jar"></i>
           </el-icon>
@@ -416,14 +416,14 @@ function updateElement(el, rawMarkdown, formatFn) {
       </div>
     </el-header>
 
-    <!-- 主容器 -->
+    <!-- Main container -->
     <el-container class="main-container">
       <div 
         class="sidebar-mask"
         v-show="isMobile && sidebarVisible"
         @click="sidebarVisible = false"></div>
 
-    <!-- 后端日志弹窗 -->
+    <!-- Backend log dialog -->
     <el-dialog append-to-body
       v-model="showLogDialog"
       :title="t('serverLogs') || 'Backend Logs'"
@@ -482,14 +482,14 @@ function updateElement(el, rawMarkdown, formatFn) {
           </div>
         </div>
       </el-dialog>  
-      <!-- 扩展选择对话框 -->
+      <!-- Extension selection dialog -->
       <el-dialog append-to-body
         :title="t('switchExtension')"
         v-model="showExtensionsDialog"
         width="80%"
         >
         <div class="extensions-list" :style="{ 'overflow-x': 'hidden'}">
-          <!-- 默认视图选项 -->
+          <!-- Default view options -->
           <el-card 
             class="extension-card default-view-card"
             :class="{ active: currentExtension === null }"
@@ -514,12 +514,12 @@ function updateElement(el, rawMarkdown, formatFn) {
             @click="openWorkspace()"
             v-show="isElectron">
             <div class="extension-info">
-              <h3>{{ t('workspace') || '工作区文件' }}</h3>
-              <p>{{ t('workspaceDescription') || '管理与查看本地工作区文件树' }}</p>
+              <h3>{{ t('workspace') || 'Workspace files' }}</h3>
+              <p>{{ t('workspaceDescription') || 'Manage and browse the local workspace file tree' }}</p>
             </div>
           </el-card>
           
-          <!-- 分隔线 -->
+          <!-- Divider -->
           <div class="extensions-divider" v-if="extensions.length > 0">
             <span>
               {{ t('availableExtensions') }}
@@ -535,7 +535,7 @@ function updateElement(el, rawMarkdown, formatFn) {
               </el-link>
             </span>
           </div>
-          <!-- 扩展列表 -->
+          <!-- Extension list -->
           <el-empty v-if="extensions.length === 0" :description="t('noExtensionsFound')" ></el-empty>
           <el-card
               v-for="ext in extensions"
@@ -544,10 +544,10 @@ function updateElement(el, rawMarkdown, formatFn) {
               :class="{ active: currentExtension && currentExtension.id === ext.id }"
               @click="switchExtension(ext)">
               
-              <!-- 右上角按钮组 (整合了收藏按钮) -->
+              <!-- Top-right controls including favorites -->
               <div class="btn-top-right">
                 
-                <!-- 1. 收藏按钮 -->
+                <!-- 1. Favorite button -->
                 <el-tooltip :content="favoriteExtensionIds.includes(ext.id) ? t('unfavorite') : t('favorite')" placement="top">
                   <el-button
                     type="default"
@@ -558,7 +558,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                   </el-button>
                 </el-tooltip>
 
-                <!-- 2. 浏览器打开按钮 -->
+                <!-- 2. Open in browser button -->
                 <el-tooltip :content="t('openExtensionInBrowser')" placement="top">
                   <el-button
                     type="default"
@@ -570,7 +570,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                   </el-button>
                 </el-tooltip>
 
-                <!-- 3. 独立窗口打开按钮（仅在Electron环境下显示） -->
+                <!-- 3. Open in separate window button (Electron only) -->
                 <el-tooltip :content="t('openExtensionInWindow')" placement="top">
                   <el-button
                     v-if="isElectron"
@@ -600,7 +600,7 @@ function updateElement(el, rawMarkdown, formatFn) {
           </div>
         </template>
       </el-dialog>
-      <!-- 内容区 -->
+      <!-- Content area -->
       <el-main class="content">
 
         <div 
@@ -608,15 +608,15 @@ function updateElement(el, rawMarkdown, formatFn) {
           class="desktop-recording-overlay"
         >
           <div class="desktop-recording-content">
-            <!-- 麦克风图标 (你可以换成自己的 el-icon) -->
+            <!-- Microphone icon -->
             <el-icon class="mic-icon"><Microphone /></el-icon>
             
-            <!-- 复用你的波纹动画 -->
+            <!-- Reuse the ripple animation -->
             <div class="recording-wave">
               <span></span><span></span><span></span><span></span><span></span>
             </div>
 
-            <!-- 文字提示 -->
+            <!-- Text hint -->
             <span class="ptt-text">{{ t('releaseToSend') }}</span>
           </div>
         </div>
@@ -625,17 +625,17 @@ function updateElement(el, rawMarkdown, formatFn) {
           <div class="dashboard-hero">
             <h1 class="dashboard-title">{{ t('whatToChatToday') }}</h1>
             
-            <!-- 中心大输入框容器 -->
+            <!-- Central large input container -->
             <div class="hero-input-wrapper" :class="{ 'is-focus': isHeroInputFocus }">
               <transition name="shortcut-menu">
                 <shortcut-menu v-if="shortcutMenuOpen" :items="shortcutMenuItems" :index="shortcutMenuIndex" @select="selectShortcutMenuItem" @hover="i => shortcutMenuIndex = i"></shortcut-menu>
               </transition>
               
-              <!-- ✨ 新增：附件预览区域 ✨ -->
+              <!-- Attachment preview area -->
               <div class="attachment-preview-list" v-show="allItems.length > 0">
                 <div v-for="(item, index) in allItems" :key="index" class="attachment-item">
                   
-                  <!-- 图片/视频类型 -->
+                  <!-- Image and video attachments -->
                   <div v-if="item.uiCategory === 'image'" class="preview-image-box">
                     <video v-if="item.detectedType === 'video'" 
                           :src="formatFileUrl(item.path)" 
@@ -654,7 +654,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                     </div>
                   </div>
 
-                  <!-- 文件类型 -->
+                  <!-- File attachments -->
                   <div v-else class="file-card-box">
                     <div class="file-icon">
                       <i class="fa-solid fa-file-lines"></i>
@@ -670,7 +670,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                 </div>
               </div>
 
-              <!-- ✨ 新增：拖拽外壳与输入框 ✨ -->
+              <!-- Drag-and-drop wrapper and input -->
               <div 
                 class="input-container-wrapper"
                 :class="{ 'is-dragging': isDragging }"
@@ -678,7 +678,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                 @dragleave.prevent="isDragging = false"
                 @drop.prevent="handleInputDrop"
               >
-                <!-- 注意加入了 @paste="handleInputPaste" 和 class="input-box-transparent" -->
+                <!-- The input includes handleInputPaste and input-box-transparent -->
                 <el-input
                   v-model="userInput"
                   type="textarea"
@@ -692,24 +692,24 @@ function updateElement(el, rawMarkdown, formatFn) {
                   class="input-box-transparent hero-textarea"
                 ></el-input>
 
-                <!-- 拖拽时的遮罩提示 -->
+                <!-- Drag-and-drop overlay hint -->
                 <div v-if="isDragging" class="drop-overlay">
                   <el-icon><Upload /></el-icon>
                   <span>{{ t('dropToUpload') }}</span>
                 </div>
               </div>
               
-              <!-- 底部工具栏 -->
+              <!-- Bottom toolbar -->
               <div class="hero-input-footer">
                 <div class="left-actions" style="display: flex; gap: 8px;">
-                  <!-- 附件上传按钮 -->
+                  <!-- Attachment upload button -->
                   <el-tooltip :content="t('uploadFileorImage')" placement="top">
                     <el-button @click="browseAllFiles">
                       <i class="fa-solid fa-paperclip"></i>
                     </el-button>
                   </el-tooltip>
 
-                  <!-- ✨ 迁移：语音合成 (TTS) 开关 ✨ -->
+                  <!-- Text-to-speech (TTS) toggle -->
                   <el-tooltip :content="t('tts')" placement="top">
                     <el-button
                       @click="ttsSettings.enabled=!ttsSettings.enabled;changeTTSstatus();"
@@ -724,21 +724,21 @@ function updateElement(el, rawMarkdown, formatFn) {
                 
                 <div class="right-actions" style="display: flex; gap: 8px; align-items: center;">
                  
-                  <!-- ✨ 移动端/桌面端 适配切换 ✨ -->
+                  <!-- Mobile and desktop layout -->
                   <el-tooltip :content="t('clickToSwitchModel')" placement="top" :show-after="500">
-                    <!-- 桌面端：显示胶囊 Pill -->
+                    <!-- Desktop: display a status pill -->
                     <div v-if="!isMobile" class="status-pill hero-model-pill" @click="showModelDialog = true">
                       <i class="fa-solid fa-microchip"></i>
                       <span class="pill-text">{{ settings?.model !== '' ? settings.model : t('noModelSelected') }}</span>
                     </div>
                     
-                    <!-- 移动端：显示图标按钮，与旁边按钮样式一致 -->
+                    <!-- Mobile: display a matching icon button -->
                     <el-button v-else @click="showModelDialog = true" class="icon-btn">
                       <i class="fa-solid fa-microchip"></i>
                     </el-button>
                   </el-tooltip>
                  
-                  <!-- 随机话题按钮 -->
+                  <!-- Random topic button -->
                   <el-tooltip :content="t('randomTopic')" placement="top">
                     <el-button @click="generateRandomTopic">
                       <i v-if="!isTopicGenerating" class="fa-solid fa-dice"></i>
@@ -746,7 +746,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                     </el-button>
                   </el-tooltip>
 
-                  <!-- ✨ 迁移与逻辑切换：语音识别 (ASR) / 发送按钮 ✨ -->
+                  <!-- Speech recognition (ASR) and send controls -->
                   <template v-if="!userInput">
                     <el-tooltip :content="t('asr')" placement="top">
                       <el-button
@@ -771,9 +771,9 @@ function updateElement(el, rawMarkdown, formatFn) {
             </div>
           </div>
 
-          <!-- 引导卡片矩阵 (瀑布流布局) -->
+          <!-- Welcome card grid (masonry layout) -->
           <div class="guide-grid">
-            <!-- 1. 开始对话 -->
+            <!-- 1. Start a conversation -->
             <div class="guide-card" @click="activeMenu = 'home'">
               <div class="card-icon blue"><i class="fa-solid fa-comment"></i></div>
               <div class="card-info">
@@ -781,7 +781,7 @@ function updateElement(el, rawMarkdown, formatFn) {
               </div>
             </div>
 
-            <!-- 2. 召唤3D桌面伴侣 -->
+            <!-- 2. Open the 3D desktop companion -->
             <div class="guide-card" @click="startVRM">
               <div class="card-icon pink"><i class="fa-solid fa-cube"></i></div>
               <div class="card-info">
@@ -789,7 +789,7 @@ function updateElement(el, rawMarkdown, formatFn) {
               </div>
             </div>
 
-            <!-- 3. 召唤2D桌面伴侣 -->
+            <!-- 3. Open the 2D desktop companion -->
             <div class="guide-card" @click="startTHA">
               <div class="card-icon blue"><i class="fa-solid fa-heart"></i></div>
               <div class="card-info">
@@ -797,15 +797,15 @@ function updateElement(el, rawMarkdown, formatFn) {
               </div>
             </div>
 
-            <!-- 5. 创建新任务 -->
+            <!-- 5. Create a new task -->
             <div class="guide-card" @click="createNewTask">
               <div class="card-icon cyan"><i class="fa-solid fa-list-check"></i></div>
               <div class="card-info">
-                <h3>{{ t('createNewTask') || '创建新任务' }}</h3>
+                <h3>{{ t('createNewTask') || 'Create new task' }}</h3>
               </div>
             </div>
 
-            <!-- 收藏的扩展卡片动态渲染 -->
+            <!-- Render favorited extension cards dynamically -->
             <div v-for="ext in favoriteExtensions" :key="ext.id" class="guide-card extension" @click="openExtensionInWindow(ext)">
               <div class="card-icon purple"><i class="fa-solid fa-puzzle-piece"></i></div>
               <div class="card-info">
@@ -819,7 +819,7 @@ function updateElement(el, rawMarkdown, formatFn) {
           </div>
         </div>
 
-        <!-- 聊天界面保持不变 -->
+        <!-- Existing chat interface -->
         <div 
           v-show="activeMenu === 'home'" 
           class="page chat-container"
@@ -831,7 +831,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             backgroundRepeat: 'no-repeat'
           } : {}"
         >
-          <!-- 最外层 wrapper，负责整体左右布局 -->
+          <!-- Outer wrapper manages the left and right layout -->
           <div class="chat-wrapper" 
               ref="chatWrapperRef"
               :class="{ 
@@ -840,24 +840,24 @@ function updateElement(el, rawMarkdown, formatFn) {
                 'resizing': isResizing
               }">
           
-          <!-- 对话历史二级侧边栏 (保持用户原有结构) -->
+          <!-- Secondary conversation history sidebar -->
           <div class="chat-history-sidebar" v-show="showHistorySidebar && !isMobile ">
-              <!-- A. 新建对话 -->
+              <!-- A. New conversation -->
               <div class="history-header">
                 <el-button class="new-chat-btn" @click="startConversationInGroup()">
                   {{ t('newChat') }}
                 </el-button>
               </div>
 
-              <!-- B. 搜索行：锁定间距 (将PR的新建分组按钮融合进快捷工具栏) -->
+              <!-- B. Search row and compact group controls -->
               <div class="history-search-row">
                 <el-input v-model="searchKeyword" :placeholder="t('search')" clearable size="small" class="history-search-input">
                   <template #prefix><i class="fa-solid fa-magnifying-glass"></i></template>
                 </el-input>
                 
-                <!-- 按钮并排且紧凑 -->
+                <!-- Compact side-by-side buttons -->
                 <div class="history-quick-tools">
-                  <!-- PR功能：新建分组按钮 -->
+                  <!-- New group button -->
                    <el-tooltip :content="t('newGroup')" placement="top">
                     <el-button @click="createConversationGroup()" circle size="small" class="quick-tool-btn" :title="t('newGroup')">
                       <i class="fa-solid fa-folder-plus"></i>
@@ -876,41 +876,41 @@ function updateElement(el, rawMarkdown, formatFn) {
                 </div>
               </div>
 
-              <!-- C. 列表区：复用原有样式，但引入 PR 的分组遍历逻辑 -->
+              <!-- C. Grouped list using the existing item styles -->
               <div class="history-list-container">
-                <!-- PR功能：按分组遍历 groupedFilteredConversations -->
+                <!-- Iterate groupedFilteredConversations by group -->
                 <div v-for="group in groupedFilteredConversations" :key="group.id" class="history-group-wrapper">
                   
-                  <!-- 分组头部 (复用历史项样式) -->
+                  <!-- Group header using history item styles -->
                   <div class="history-item-row group-header" 
                        :class="{ active: group.id === activeConversationGroupId }" 
                        @click="setActiveConversationGroup(group.id)"
                        style="background-color: var(--el-fill-color-light); margin-bottom: 2px;">
-                    <!-- 文件夹图标 -->
+                    <!-- Folder icon -->
                     <i class="fa-solid fa-folder-open item-icon" style="color: #E6A23C; font-size: 14px;"></i>
                     
-                    <!-- 【修改点1】：加 flex: 1 撑开，并加 padding-right 防止文字遮盖按钮 -->
+                    <!-- Use flex and right padding to prevent text from covering buttons -->
                     <span class="item-title" style="font-weight: bold; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 15px;">
                       {{ group.name }} ({{ group.conversations.length }})
                     </span>
-                    <!-- 【修改点2】：操作区强行横向排列，重置按钮原有的 absolute 定位 -->
+                    <!-- Arrange action controls horizontally and reset absolute positioning -->
                     <div class="group-actions" style="display: flex; align-items: center; flex-shrink: 0;" @click.stop>
                       <el-dropdown trigger="click" placement="bottom-end" @click.stop>
-                        <!-- 这个按钮现在对所有组（包括默认组）都可见 -->
+                        <!-- Display this button for every group, including the default group -->
                         <el-button class="item-delete-btn" circle style="position: relative; right: auto; top: auto; transform: none; margin-right: 4px; display: flex; align-items: center; justify-content: center;">
                           <i class="fa-solid fa-ellipsis"></i>
                         </el-button>
                         
                         <template #dropdown>
                           <el-dropdown-menu>
-                            <!-- 1. 重命名：仅限自定义分组 -->
+                            <!-- 1. Rename custom groups only -->
                             <el-dropdown-item 
                               v-if="group.id !== 'default'" 
                               @click="openRenameConversationGroupDialog(group)">
                               <i class="fa-solid fa-pen-to-square" style="margin-right: 8px;"></i>{{ t('rename') }}
                             </el-dropdown-item>
 
-                            <!-- 2. 清空组内对话：所有分组都适用 ✨ -->
+                            <!-- 2. Clear conversations in any group -->
                             <el-dropdown-item 
                               @click="clearConversationGroupChats(group.id)">
                               <span style="color: var(--el-color-warning);">
@@ -918,7 +918,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                               </span>
                             </el-dropdown-item>
 
-                            <!-- 3. 删除分组：仅限自定义分组 -->
+                            <!-- 3. Delete custom groups only -->
                             <el-dropdown-item 
                               v-if="group.id !== 'default'" 
                               divided 
@@ -936,18 +936,18 @@ function updateElement(el, rawMarkdown, formatFn) {
                     </div>
                   </div>
 
-                  <!-- 组内对话列表 -->
+                  <!-- Conversations within the group -->
                   <transition name="el-zoom-in-top">
                     <div v-show="!isConversationGroupCollapsed(group.id)" class="group-conversations-list">
                       <div v-for="conv in group.conversations" :key="conv.id" 
                           class="history-item-row" 
                           :class="{ active: currentConversationId === conv.id || conversationId === conv.id }" 
                           @click="loadConversation(conv.id)"
-                          style="padding-left: 24px;"> <!-- 缩进体现层级 -->
+                          style="padding-left: 24px;"> <!-- Indent to indicate hierarchy -->
                         
                         <i class="fa-regular fa-comment item-icon"></i>
                         
-                        <!-- 【修改点3】：右侧增加 padding-right: 35px 留出操作按钮的空间 -->
+                        <!-- Reserve right-side space for action buttons -->
                         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; justify-content: center; padding-right: 35px;">
                           <span class="item-title" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ conv.title || t('untitled') }}</span>
                           <span style="font-size: 10px; opacity: 0.6; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -956,7 +956,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           </span>
                         </div>
                         
-                        <!-- 【修改点4】：外层用绝对定位居中，内部取消按钮自带的绝对定位以修复高度塌陷 -->
+                        <!-- Center the outer wrapper absolutely and remove inner absolute positioning to prevent collapsed height -->
                         <div class="item-actions" @click.stop style="position: absolute; right: 8px; top: 0; bottom: 0; display: flex; align-items: center;">
                           <el-dropdown trigger="click" placement="bottom-end" @click.stop>
                             <el-button class="item-delete-btn" circle style="position: static; transform: none; display: flex; align-items: center; justify-content: center; margin: 0;">
@@ -965,7 +965,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                             <template #dropdown>
                               <el-dropdown-menu>
                                 <el-dropdown-item @click="openRenameConversationDialog(conv)">{{ t('rename') }}</el-dropdown-item>
-                                <!-- PR功能：移动到分组 -->
+                                <!-- Move to group -->
                                 <el-dropdown placement="right-start" trigger="hover">
                                   <div class="el-dropdown-menu__item" style="display: flex; justify-content: space-between; align-items: center;">
                                     <span>{{ t('moveToGroup') }}</span>
@@ -991,7 +991,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                   </transition>
                 </div>
                 
-                <!-- 空状态提示 -->
+                <!-- Empty state -->
                 <el-empty v-if="groupedFilteredConversations && groupedFilteredConversations.length === 0" 
                           :description="searchKeyword ? t('noResults') : t('noChatHistory')" 
                           :image-size="60"></el-empty>
@@ -999,9 +999,9 @@ function updateElement(el, rawMarkdown, formatFn) {
           </div>
 
           <div class="chat-main-body">
-            <!-- 添加拖拽遮罩层 -->
+            <!-- Drag-and-drop overlay -->
             <div v-if="isResizing" class="resize-overlay"></div>
-              <!-- 聊天消息列表 -->
+              <!-- Chat message list -->
               <div class="chat-area" 
                   ref="chatAreaRef"
                   :class="{ collapsed: !chatAreaOpen }" 
@@ -1009,25 +1009,25 @@ function updateElement(el, rawMarkdown, formatFn) {
                 <div class="messages-container" ref="messagesContainer" @click.capture="handleMessageLinkClick">
                 
                  
-                  <!-- 添加 is-group-mode 类 -->
+                  <!-- Apply the is-group-mode class -->
                   <div v-for="(message, index) in messages" :key="index" class="message" 
                     :class="[message.role, { 'is-group-mode': isGroupMode || systemSettings.chatMode === 'entertainment' }]"
                     v-show="!(message.role === 'system' && systemSettings.chatMode === 'entertainment')">
                     
-                    <!-- 群聊与娱乐模式 - AI 头像 (左侧) -->
+                    <!-- Group and entertainment modes: AI avatar on the left -->
                     <div v-if="(isGroupMode || systemSettings.chatMode === 'entertainment') && message.role === 'assistant' && getMessageAgentName(message)" class="im-avatar left">
                       <img :src="getRoleAvatar(getMessageAgentName(message))" draggable="false" />
                     </div>
                     
-                    <!-- 内容包裹层：负责纵向排列 名字、气泡、按钮 -->
+                    <!-- Stack the name, bubble and action buttons vertically -->
                     <div class="im-content-wrapper">
                       
-                      <!-- AI 名字 (仅群聊/娱乐模式显示) -->
+                      <!-- AI name displayed in group or entertainment mode -->
                       <div v-if="(isGroupMode || systemSettings.chatMode === 'entertainment') && getMessageAgentName(message) && message.role === 'assistant'" class="im-name-tag">
                           {{ getMessageAgentName(message) }}
                       </div>
 
-                      <!-- TTS 控制区 -->
+                      <!-- TTS controls -->
                       <div v-if="(ttsSettings.enabled || settings.enableOmniTTS || fastSettings.enableOmniTTS) && message.role === 'assistant' && systemSettings.chatMode !== 'entertainment'" class="tts-controls">
                         <el-tooltip :content="message.isPlaying ? t('pause') : t('play')">
                           <el-button @click="toggleTTS(message)" circle size="small">
@@ -1061,7 +1061,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                         </span>
                       </div>
 
-                      <!-- 消息气泡主体 -->
+                      <!-- Message bubble body -->
                       <div class="message-content" 
                           v-if="!allBriefly||message.role !== 'system'||index === 0" 
                           :class="{ 
@@ -1070,15 +1070,15 @@ function updateElement(el, rawMarkdown, formatFn) {
                               'mode-work': (message.role === 'assistant' || message.role === 'system') && systemSettings.chatMode === 'work'
                           }">
                         
-                        <!-- User 消息主体 (保持不变) -->
+                        <!-- User message body -->
                         <div v-if="message.role === 'user'" class="user-content" data-mjx-disabled="true">
                             <div v-html="message.content" class="user-msg"></div>
 
-                            <!-- 附件展示区：增加 user-msg-attachments 类名用于样式区分 -->
+                            <!-- Attachment area uses user-msg-attachments for styling -->
                             <div class="message-attachments-display user-msg-attachments" 
                                 v-if="message.fileLinks?.length || message.imageLinks?.length">
                               
-                                <!-- 1. 视频/图片附件 -->
+                                <!-- 1. Video and image attachments -->
                                 <div v-for="(img, imgIdx) in message.imageLinks" :key="'img-'+imgIdx" 
                                     :class="['attachment-item-display', img.type === 'video' ? 'video-item-wrapper' : 'image-item-wrapper']">
                                     <div class="preview-media-box">
@@ -1091,7 +1091,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                     </div>
                                 </div>
 
-                                <!-- 3. 文件附件 -->
+                                <!-- 3. File attachments -->
                                 <div v-for="(file, fileIdx) in message.fileLinks" :key="'file-'+fileIdx" class="attachment-item-display file-item">
                                     <div class="file-card-box">
                                         <div class="file-icon"><i class="fa-solid fa-file-lines"></i></div>
@@ -1103,27 +1103,27 @@ function updateElement(el, rawMarkdown, formatFn) {
                             </div>
                         </div>
 
-                        <!-- Assistant 消息主体 -->
+                        <!-- Assistant message body -->
                         <div v-else-if="message.role === 'assistant'" class="markdown-body">
                             <div v-if="message.briefly" v-html="formatMessage(message.pure_content??message.content, index)"></div>
                             
-                            <!-- === 新架构：基于结构化显示块 (Display Blocks) 的渲染 === -->
+                            <!-- Structured display-block rendering -->
                             <div v-else-if="message.displayBlocks && message.displayBlocks.length > 0" class="message-blocks-container">
                                 <template v-for="(block, bIndex) in getVisibleBlocks(message)" :key="'blk-'+bIndex">
                                     
-                                    <!-- 🚀 模式拦截器：娱乐模式下，仅放行 text 和 approval，彻底屏蔽思考与工具过程 -->
+                                    <!-- In entertainment mode, show only text and approval blocks, hiding reasoning and tool activity -->
                                     <template v-if="!(systemSettings.chatMode === 'entertainment' && block.type !== 'text' && block.type !== 'approval')">
                                         
-                                        <!-- 如果是最后一个块且消息未完成，或者不是工具类块，正常渲染 -->
+                                        <!-- Render unfinished final blocks and non-tool blocks normally -->
                                         <template v-if="shouldExpandBlock(message, block, bIndex)">
                                             
-                                            <!-- 1. 深度思考块 -->
+                                            <!-- 1. Reasoning block -->
                                             <div v-if="block.type === 'reasoning'" class="sap-process-block type-reasoning">
                                                 <div class="sp-header"><i class="fa-solid fa-brain"></i> {{ t('thinking') }}</div>
                                                 <div class="sp-content" v-morph:format="block.content"></div>
                                             </div>
 
-                                            <!-- 文本块 -->
+                                            <!-- Text block -->
                                             <div v-else-if="block.type === 'text'" class="a2ui-text-wrapper">
                                                 <template v-for="(segment, sIdx) in (block.segments || [{ type: 'text', content: block.content }])" :key="sIdx">
                                                     <div v-if="segment.type === 'text' && segment.content" 
@@ -1136,19 +1136,19 @@ function updateElement(el, rawMarkdown, formatFn) {
                                                 </template>
                                             </div>
 
-                                            <!-- 工具调用 -->
+                                            <!-- Tool call -->
                                             <div v-else-if="block.type === 'tool_call'" class="sap-process-block type-call" :id="'tool-call-'+block.id">
                                                 <div class="sp-header"><i class="fa-solid fa-wrench"></i> {{ t('call') }} <span>{{ block.name }}</span></div>
                                                 <pre class="sp-content sp-code">{{ block.args ? block.args.replace(/\\n/g, '\n').replace(/\\"/g, '"') : '' }}</pre>
                                             </div>
 
-                                            <!-- 工具结果 -->
+                                            <!-- Tool result -->
                                             <div v-else-if="block.type === 'tool_result'" class="sap-process-block type-result">
                                                 <div class="sp-header"><i class="fa-solid fa-check"></i> {{ block.name }}</div>
                                                 <pre class="sp-content sp-code">{{ block.content ? (typeof block.content === 'string' ? block.content.replace(/\\n/g, '\n').replace(/\\"/g, '"') : block.content) : '' }}</pre>
                                             </div>
 
-                                            <!-- 审批 -->
+                                            <!-- Approval -->
                                             <div v-else-if="block.type === 'approval'" class="sap-process-block type-approval" :id="'approval-'+block.id">
                                                 <div class="sp-header"><i class="fa-solid fa-lock"></i> {{ t('permissionRequest') }} · {{ block.data.permission_mode }}</div>
                                                 <div class="sp-content">
@@ -1162,14 +1162,14 @@ function updateElement(el, rawMarkdown, formatFn) {
                                                 </div>
                                             </div>
 
-                                            <!-- 错误 -->
+                                            <!-- Error -->
                                             <div v-else-if="block.type === 'error'" class="sap-process-block type-error" :id="'tool-error-'+block.id">
                                                 <div class="sp-header"><i class="fa-solid fa-xmark"></i> {{ block.name }}</div>
                                                 <pre class="sp-content sp-code">{{ block.content ? (typeof block.content === 'string' ? block.content.replace(/\\n/g, '\n').replace(/\\"/g, '"') : block.content) : '' }}</pre>
                                             </div>
                                         </template>
 
-                                        <!-- 否则（其他已完成工具块）折叠为占位行，只显示标题 -->
+                                        <!-- Collapse other completed tool blocks to title-only placeholder rows -->
                                         <div v-else class="sap-process-block collapsed-tool-block" @click="openToolBlockDetail(message, block)">
                                             <div class="sp-header">
                                                 <i v-if="block.type === 'tool_call'" class="fa-solid fa-wrench"></i>
@@ -1188,7 +1188,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                 </div>
                             </div>
 
-                            <!-- === 旧架构兼容 === -->
+                            <!-- Legacy rendering compatibility -->
                             <div v-else>
                                 <template v-for="(segment, segIndex) in (message.segments || [{ type: 'text', content: message.content }])" :key="segIndex">
                                     <div v-if="segment.type === 'text' && segment.content" 
@@ -1203,19 +1203,19 @@ function updateElement(el, rawMarkdown, formatFn) {
                             </div>
                         </div>
                         
-                        <!-- System 消息主体 (完全不变) -->
+                        <!-- System message body -->
                         <div v-else class="system-content" data-mjx-disabled="true">
                           <div v-html="index===0 ? (t('system_prompt') + message.content):message.content" class="scroll-on-hover" @click="openEditDialog(message.role, message.content,index)" :style="{ 'max-height': index===0 ? '200px' : 'none', 'overflow-y': index===0 ? 'auto' : 'hidden' }"></div>
                         </div>
 
                       </div>
 
-                      <!-- ✨ 娱乐模式专属：消息发送时间戳 -->
+                      <!-- Message timestamp in entertainment mode -->
                       <div v-if="systemSettings.chatMode === 'entertainment' && formatMessageTime(message.timestamp, message.id)" class="im-time-stamp" :class="message.role">
                         {{ formatMessageTime(message.timestamp, message.id) }}
                       </div>
 
-                      <!-- 操作按钮区 -->
+                      <!-- Action buttons -->
                       <div class="message-actions" v-if="(!allBriefly||message.role !== 'system'||index === 0) && systemSettings.chatMode !== 'entertainment'">
                         <el-tooltip v-if="message.role !== 'assistant'" :content="t('edit')" placement="bottom">
                           <el-button @click="openEditDialog(message.role, message.content,index)" circle size="small"><i class="fa-solid fa-pen-to-square"></i></el-button>
@@ -1254,7 +1254,7 @@ function updateElement(el, rawMarkdown, formatFn) {
 
                     </div>
 
-                    <!-- 群聊与娱乐模式 - 用户头像 (右侧) -->
+                    <!-- Group and entertainment modes: user avatar on the right -->
                     <div v-if="(isGroupMode || systemSettings.chatMode === 'entertainment') && message.role === 'user'" class="im-avatar right">
                       <img src="source/providers/logo.png" draggable="false" />
                     </div>
@@ -1263,8 +1263,8 @@ function updateElement(el, rawMarkdown, formatFn) {
                 </div>
                 <div class="input-container">
                   
-                  <!-- ✨✨✨ 新增：统一的外层包裹器 ✨✨✨ -->
-                  <!-- tabindex="-1" 是为了让 focus-within 生效更稳定 -->
+                  <!-- Unified outer wrapper -->
+                  <!-- tabindex="-1" improves focus-within behavior -->
                   <div class="unified-input-wrapper">
                     <transition name="shortcut-menu">
                       <shortcut-menu v-if="shortcutMenuOpen" :items="shortcutMenuItems" :index="shortcutMenuIndex" @select="selectShortcutMenuItem" @hover="i => shortcutMenuIndex = i"></shortcut-menu>
@@ -1658,7 +1658,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                         </el-button>
                       </el-tooltip>
 
-                      <!-- 1. 群聊模式开关 -->
+                      <!-- 1. Group chat mode toggle -->
                       <el-tooltip :content="t('groupChatSettings')" placement="top">
                         <el-button 
                           v-if="MoreButtonDict.find(b => b.name === 'groupChatBotton')?.enabled "
@@ -1669,14 +1669,14 @@ function updateElement(el, rawMarkdown, formatFn) {
                           <i class="fa-solid fa-users"></i>
                         </el-button>
                       </el-tooltip>
-                      <!--展开收起按钮-->
+                      <!-- Expand and collapse button -->
                       <el-tooltip :content="t('moreButton')" placement="top">
                         <el-button @click="showMoreButtonDialog = true" class="icon-btn collapse-btn" type="default" circle>
                           <i class="fa-solid fa-ellipsis"></i>
                         </el-button>
                       </el-tooltip>
 
-                      <!-- 折叠态：仅当"自动折叠输入框"开关打开且当前未聚焦时，把模型 / 视图 pill 收纳到发送按钮左侧 -->
+                      <!-- When automatic input collapse is enabled and focus is absent, move model and view pills next to Send -->
                       <template v-if="systemSettings.autoCollapseInput && !isChatInputActive  && !isAssistantMode && !isMobile">
                         <el-tooltip :content="t('clickToSwitchModel')" placement="top" :show-after="500">
                           <div class="status-pill compact-status-pill" @click.stop="showModelDialog = true">
@@ -1691,7 +1691,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           class="status-pill-dropdown"
                         >
                           <div class="status-pill">
-                            <el-tooltip :content="t('chatUIMode') || '聊天模式'" placement="top" :show-after="500">
+                            <el-tooltip :content="t('chatUIMode') || 'Chat mode'" placement="top" :show-after="500">
                               <span style="display: inline-flex; align-items: center; gap: 6px;">
                                 <i :class="{
                                   'fa-solid fa-bolt': systemSettings.chatMode === 'standard',
@@ -1700,9 +1700,9 @@ function updateElement(el, rawMarkdown, formatFn) {
                                 }"></i>
                                 <span class="pill-text">
                                   {{ 
-                                    systemSettings.chatMode === 'standard' ? (t('chatUIStandard') || '经典模式') : 
-                                    systemSettings.chatMode === 'entertainment' ? (t('chatUIEntertainment') || '娱乐模式') : 
-                                    (t('chatUIWork') || '办公模式') 
+                                    systemSettings.chatMode === 'standard' ? (t('chatUIStandard') || 'Classic mode') : 
+                                    systemSettings.chatMode === 'entertainment' ? (t('chatUIEntertainment') || 'Entertainment mode') : 
+                                    (t('chatUIWork') || 'Work mode') 
                                   }}
                                 </span>
                               </span>
@@ -1713,15 +1713,15 @@ function updateElement(el, rawMarkdown, formatFn) {
                             <el-dropdown-menu>
                               <el-dropdown-item @click="systemSettings.chatMode = 'standard'; autoSaveSettings()">
                                 <i class="fa-solid fa-bolt" style="margin-right: 6px;"></i>
-                                {{ t('chatUIStandard') || '经典模式' }}
+                                {{ t('chatUIStandard') || 'Classic mode' }}
                               </el-dropdown-item>
                               <el-dropdown-item @click="systemSettings.chatMode = 'entertainment'; autoSaveSettings()">
                                 <i class="fa-solid fa-face-smile" style="margin-right: 6px;"></i>
-                                {{ t('chatUIEntertainment') || '娱乐模式' }}
+                                {{ t('chatUIEntertainment') || 'Entertainment mode' }}
                               </el-dropdown-item>
                               <el-dropdown-item @click="systemSettings.chatMode = 'work'; autoSaveSettings()">
                                 <i class="fa-solid fa-gem" style="margin-right: 6px;"></i>
-                                {{ t('chatUIWork') || '办公模式' }}
+                                {{ t('chatUIWork') || 'Work mode' }}
                               </el-dropdown-item>
                             </el-dropdown-menu>
                           </template>
@@ -1751,11 +1751,11 @@ function updateElement(el, rawMarkdown, formatFn) {
                       </el-tooltip>
                     </div>
 
-                    <!-- 1. 附件预览区域 -->
+                    <!-- 1. Attachment preview area -->
                     <div class="attachment-preview-list" v-show="allItems.length > 0">
                       <div v-for="(item, index) in allItems" :key="index" class="attachment-item">
                         
-                        <!-- 图片类型 -->
+                        <!-- Image attachments -->
                         <div v-if="item.uiCategory === 'image'" class="preview-image-box">
                           <video v-if="item.detectedType === 'video'" 
                                 :src="formatFileUrl(item.path)" 
@@ -1775,7 +1775,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           </div>
                         </div>
 
-                        <!-- 文件类型 -->
+                        <!-- File attachments -->
                         <div v-else class="file-card-box">
                           <div class="file-icon">
                             <i class="fa-solid fa-file-lines"></i>
@@ -1791,7 +1791,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                       </div>
                     </div>
 
-                    <!-- 1. 外层套一个 wrapper，绑定拖拽事件 -->
+                    <!-- 1. Outer wrapper with drag handlers -->
                     <div 
                       class="input-container-wrapper"
                       :class="{ 'is-dragging': isDragging }"
@@ -1799,8 +1799,8 @@ function updateElement(el, rawMarkdown, formatFn) {
                       @dragleave.prevent="isDragging = false"
                       @drop.prevent="handleInputDrop"
                     >
-                      <!-- 模式切换：使用 v-show 切换键盘输入与按住说话 -->
-                      <!-- 键盘输入区 -->
+                      <!-- Switch between keyboard input and push-to-talk using v-show -->
+                      <!-- Keyboard input area -->
                       <el-input
                         v-show="!isPttMode"
                         v-model="userInput"
@@ -1816,7 +1816,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                         class="input-box-transparent">
                       </el-input>
 
-                      <!-- 按住说话区 (无缝融合版) -->
+                      <!-- Push-to-talk area -->
                         <div v-show="isPttMode" class="ptt-seamless-wrapper">
                           <div 
                             class="ptt-seamless-area" 
@@ -1829,12 +1829,12 @@ function updateElement(el, rawMarkdown, formatFn) {
                             @mouseleave="handlePttRelease($event)"
                             @contextmenu.prevent  
                           >
-                            <!-- 录音时的波纹动画图标 (可选) -->
+                            <!-- Optional recording ripple animation -->
                             <div v-if="isPttRecording" class="recording-wave">
                               <span></span><span></span><span></span><span></span><span></span>
                             </div>
                             
-                            <!-- 文字提示 (国际化) -->
+                            <!-- Localized text hint -->
                             <span class="ptt-text">
                               {{ isPttRecording ? t('releaseToSend') : (isProcessingPtt ? t('converting') : t('holdToTalk')) }}
                             </span>
@@ -1843,12 +1843,12 @@ function updateElement(el, rawMarkdown, formatFn) {
 
                       <div class="input-status-bar" v-show="!systemSettings.autoCollapseInput || isChatInputActive || isAssistantMode || isMobile">
                         
-                        <!-- ✨ 2. 语音/键盘切换按钮：始终显示（或者你可以加 v-if="isMobile" 只让手机显示） -->
+                        <!-- 2. Voice and keyboard toggle -->
                         <div class="voice-toggle-btn" @click="isPttMode = !isPttMode" v-if="isMobile">
                           <i :class="isPttMode ? 'fa-solid fa-keyboard' : 'fa-solid fa-microphone'"></i>
                         </div>
 
-                        <!-- 模型指示器 -->
+                        <!-- Model indicator -->
                         <el-tooltip :content="t('clickToSwitchModel')" placement="top" :show-after="500">
                           <div class="status-pill" @click="showModelDialog = true">
                             <i class="fa-solid fa-microchip"></i>
@@ -1856,14 +1856,14 @@ function updateElement(el, rawMarkdown, formatFn) {
                           </div>
                         </el-tooltip>
 
-                        <!-- 聊天模式切换下拉按钮 (Chat Mode Dropdown) -->
+                        <!-- Chat mode dropdown -->
                         <el-dropdown 
                           placement="top" 
                           trigger="click"
                           class="status-pill-dropdown"
                         >
                           <div class="status-pill">
-                            <el-tooltip :content="t('chatUIMode') || '聊天模式'" placement="top" :show-after="500">
+                            <el-tooltip :content="t('chatUIMode') || 'Chat mode'" placement="top" :show-after="500">
                               <span style="display: inline-flex; align-items: center; gap: 6px;">
                                 <i :class="{
                                   'fa-solid fa-bolt': systemSettings.chatMode === 'standard',
@@ -1872,9 +1872,9 @@ function updateElement(el, rawMarkdown, formatFn) {
                                 }"></i>
                                 <span class="pill-text">
                                   {{ 
-                                    systemSettings.chatMode === 'standard' ? (t('chatUIStandard') || '经典模式') : 
-                                    systemSettings.chatMode === 'entertainment' ? (t('chatUIEntertainment') || '娱乐模式') : 
-                                    (t('chatUIWork') || '办公模式') 
+                                    systemSettings.chatMode === 'standard' ? (t('chatUIStandard') || 'Classic mode') : 
+                                    systemSettings.chatMode === 'entertainment' ? (t('chatUIEntertainment') || 'Entertainment mode') : 
+                                    (t('chatUIWork') || 'Work mode') 
                                   }}
                                 </span>
                               </span>
@@ -1885,24 +1885,24 @@ function updateElement(el, rawMarkdown, formatFn) {
                             <el-dropdown-menu>
                               <el-dropdown-item @click="systemSettings.chatMode = 'standard'; autoSaveSettings()">
                                 <i class="fa-solid fa-bolt" style="margin-right: 6px;"></i>
-                                {{ t('chatUIStandard') || '经典模式' }}
+                                {{ t('chatUIStandard') || 'Classic mode' }}
                               </el-dropdown-item>
                               <el-dropdown-item @click="systemSettings.chatMode = 'entertainment'; autoSaveSettings()">
                                 <i class="fa-solid fa-face-smile" style="margin-right: 6px;"></i>
-                                {{ t('chatUIEntertainment') || '娱乐模式' }}
+                                {{ t('chatUIEntertainment') || 'Entertainment mode' }}
                               </el-dropdown-item>
                               <el-dropdown-item @click="systemSettings.chatMode = 'work'; autoSaveSettings()">
                                 <i class="fa-solid fa-gem" style="margin-right: 6px;"></i>
-                                {{ t('chatUIWork') || '办公模式' }}
+                                {{ t('chatUIWork') || 'Work mode' }}
                               </el-dropdown-item>
                             </el-dropdown-menu>
                           </template>
                         </el-dropdown>
 
-                        <!-- ✨ 3. 将原有的桌面端状态胶囊包裹在一个 template 中，并在这里加 !isMobile 限制 -->
+                        <!-- 3. Desktop status pills are limited to non-mobile layouts -->
                         <template  v-if="!isAssistantMode && !isMobile">
                             
-                            <!-- 扩展指示器 -->
+                            <!-- Extension indicator -->
                             <el-tooltip :content="t('clickToSwitchExtensions')" placement="top" :show-after="500">
                               <div class="status-pill" v-if="currentViewName" @click="openExtensionsDialog">
                                 <i class="fa-solid fa-puzzle-piece"></i>
@@ -1910,7 +1910,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                               </div>
                             </el-tooltip>
 
-                            <!-- 3. 工作区目录指示器 (仅 CLI 启用时显示) -->
+                            <!-- 3. Workspace directory indicator (CLI enabled only) -->
                             <el-tooltip :content="t('workspace')" placement="top" :show-after="500">
                               <div class="status-pill" v-if="CLISettings.enabled" @click="browseDirectory">
                                 <i class="fa-solid fa-folder-open"></i>
@@ -1918,17 +1918,17 @@ function updateElement(el, rawMarkdown, formatFn) {
                               </div>
                             </el-tooltip>
 
-                            <!-- 4. CLI 权限模式指示器 (仅 CLI 启用时显示) -->
+                            <!-- 4. CLI permission mode indicator (CLI enabled only) -->
                             <el-dropdown 
                               v-if="CLISettings.enabled" 
                               placement="top" 
                               trigger="click"
                               class="status-pill-dropdown"
                             >
-                              <!-- ⚠️ 关键修复：让 status-pill 直接作为下拉组件的触发器 -->
+                              <!-- Use the status pill directly as the dropdown trigger -->
                               <div class="status-pill">
                                 <el-tooltip :content="t('permissionMode')" placement="top" :show-after="500">
-                                  <!-- 将内容包裹在一个 span 中，使得 tooltip 正常工作 -->
+                                  <!-- Wrap content in a span so the tooltip works -->
                                   <span style="display: inline-flex; align-items: center; gap: 6px;">
                                     <i class="fa-solid fa-shield-halved"></i>
                                     <span class="pill-text">
@@ -1945,7 +1945,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                               
                               <template #dropdown>
                                 <el-dropdown-menu>
-                                  <!-- 本地环境 (Local) 选项 -->
+                                  <!-- Local environment option -->
                                   <template v-if="CLISettings.engine === 'local'">
                                     <el-dropdown-item @click="localEnvSettings.permissionMode='plan'; autoSaveSettings()">{{ t('planMode') }}</el-dropdown-item>
                                     <el-dropdown-item @click="localEnvSettings.permissionMode='default'; autoSaveSettings()">{{ t('defaultPermissionMode') }}</el-dropdown-item>
@@ -1954,7 +1954,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                     <el-dropdown-item @click="localEnvSettings.permissionMode='cowork'; autoSaveSettings()">{{ t('danger')+t('coworkPermissionMode') }}</el-dropdown-item>
                                     <el-dropdown-item @click="localEnvSettings.permissionMode='goal'; autoSaveSettings()">{{ t('danger')+t('goalPermissionMode') }}</el-dropdown-item>
                                   </template>
-                                  <!-- Docker Sandbox (DS) 选项 -->
+                                  <!-- Docker sandbox option -->
                                   <template v-else-if="CLISettings.engine === 'ds'">
                                     <el-dropdown-item @click="dsSettings.permissionMode='plan'; autoSaveSettings()">{{ t('planMode') }}</el-dropdown-item>
                                     <el-dropdown-item @click="dsSettings.permissionMode='default'; autoSaveSettings()">{{ t('defaultPermissionMode') }}</el-dropdown-item>
@@ -1963,7 +1963,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                     <el-dropdown-item @click="dsSettings.permissionMode='cowork'; autoSaveSettings()">{{ t('coworkPermissionMode') }}</el-dropdown-item>
                                     <el-dropdown-item @click="dsSettings.permissionMode='goal'; autoSaveSettings()">{{ t('goalPermissionMode') }}</el-dropdown-item>
                                   </template>
-                                  <!-- ACP 选项 -->
+                                  <!-- ACP option -->
                                   <template v-else-if="CLISettings.engine === 'acp'">
                                     <el-dropdown-item @click="acpSettings.permissionMode='plan'; autoSaveSettings()">{{ t('planMode') }}</el-dropdown-item>
                                     <el-dropdown-item @click="acpSettings.permissionMode='default'; autoSaveSettings()">{{ t('defaultPermissionMode') }}</el-dropdown-item>
@@ -1972,7 +1972,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                     <el-dropdown-item @click="acpSettings.permissionMode='cowork'; autoSaveSettings()">{{ t('danger')+t('coworkPermissionMode') }}</el-dropdown-item>
                                     <el-dropdown-item @click="acpSettings.permissionMode='goal'; autoSaveSettings()">{{ t('danger')+t('goalPermissionMode') }}</el-dropdown-item>
                                   </template>
-                                  <!-- WSL 沙盒选项 -->
+                                  <!-- WSL sandbox option -->
                                   <template v-else-if="CLISettings.engine === 'wsl'">
                                     <el-dropdown-item @click="wslSettings.permissionMode='plan'; autoSaveSettings()">{{ t('planMode') }}</el-dropdown-item>
                                     <el-dropdown-item @click="wslSettings.permissionMode='default'; autoSaveSettings()">{{ t('defaultPermissionMode') }}</el-dropdown-item>
@@ -1988,17 +1988,17 @@ function updateElement(el, rawMarkdown, formatFn) {
 
                       </div>
 
-                      <!-- 拖拽时的遮罩提示（可选，提升体验） -->
+                      <!-- Optional drag-and-drop overlay hint -->
                       <div v-if="isDragging" class="drop-overlay">
                         <el-icon><Upload /></el-icon>
                         <span>{{ t('dropToUpload') }}</span>
                       </div>
                     </div>
                     
-                  </div> <!-- 结束 unified-input-wrapper -->
+                  </div> <!-- End unified-input-wrapper -->
                 </div>
               </div>
-              <!-- 可拖拽的分割条 -->
+              <!-- Draggable divider -->
               <div
                 v-if="!isAssistantMode && !isMobile"
                 class="resizer"
@@ -2022,7 +2022,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                       class="browser-toggle-handle--left"
                       @click.stop="expandChatArea"
                   >
-                      <!-- 图标逻辑：面板打开时显示向右箭头(收起)，关闭时显示向左箭头(展开) -->
+                      <!-- Right arrow collapses an open panel; left arrow expands a closed panel -->
                       <i class='fa-solid fa-chevron-right'></i>
                   </div>
 
@@ -2031,27 +2031,27 @@ function updateElement(el, rawMarkdown, formatFn) {
                       class="browser-toggle-handle"
                       @click.stop="expandSidePanel"
                   >
-                      <!-- 图标逻辑：面板打开时显示向右箭头(收起)，关闭时显示向左箭头(展开) -->
+                      <!-- Right arrow collapses an open panel; left arrow expands a closed panel -->
                       <i class='fa-solid fa-chevron-left'></i>
                   </div>
                 </div>
               </div>
 
-              <!-- 侧边栏区域 -->
+              <!-- Sidebar area -->
               <div class="side-panel" 
                   ref="sidePanelRef"
                   :class="{ collapsed: !sidePanelOpen }" 
                   v-show="sidePanelOpen">
                   
-                  <!-- ✨ 书签式标签栏 (悬浮在面板外部) -->
+                  <!-- Bookmark-style tab bar floating outside the panel -->
                   <div class="vscode-tabs-header" v-if="openedExtensions.length > 0">
-                      <!-- 固定主页书签 -->
+                      <!-- Fixed home bookmark -->
                       <div class="vscode-tab" :class="{ active: !currentExtension }" @click="resetToDefaultView()">
                           <i class="fa-solid fa-shapes tab-icon"></i>
-                          <span class="tab-title">{{ t('extensionsView') || '扩展视图' }}</span>
+                          <span class="tab-title">{{ t('extensionsView') || 'Extensions view' }}</span>
                       </div>
 
-                      <!-- 动态扩展书签 -->
+                      <!-- Dynamic extension bookmarks -->
                       <div class="vscode-tab" 
                           v-for="ext in openedExtensions" 
                           :key="ext.id" 
@@ -2066,104 +2066,104 @@ function updateElement(el, rawMarkdown, formatFn) {
                       </div>
                   </div>
 
-                  <!-- ✨ 侧边栏实体面板 -->
+                  <!-- Sidebar panel -->
                   <div class="side-panel-body-container">
                       <div class="side-panel-scroll" ref="messagesPanel" :style="{ overflow: 'hidden', height: '100%', position: 'relative' }">
                           
-                          <!-- ✨ 浮动按钮层（固定于侧边栏面板，不随内容滚动） -->
+                          <!-- Floating controls fixed within the sidebar -->
                           <button v-if="activeSideView === 'tasks' && !viewingTaskDetail" 
                                   class="floating-back-btn" 
                                   @click="closeTaskCenter" 
-                                  :title="t('back') || '返回'">
+                                  :title="t('back') || 'Back'">
                               <i class="fa-solid fa-chevron-left"></i>
                           </button>
                           
                           <button v-if="activeSideView === 'tasks' && viewingTaskDetail" 
                                   class="floating-back-btn" 
                                   @click="closeTaskDetail" 
-                                  :title="t('back') || '返回'">
+                                  :title="t('back') || 'Back'">
                               <i class="fa-solid fa-chevron-left"></i>
                           </button>
                           
                           <button v-if="activeSideView === 'workspace'" 
                                   class="floating-back-btn" 
                                   @click="activeSideView = 'list'" 
-                                  :title="t('back') || '返回'">
+                                  :title="t('back') || 'Back'">
                               <i class="fa-solid fa-chevron-left"></i>
                           </button>
                           
                           <button v-if="activeSideView === 'toolDetail'" 
                                   class="floating-back-btn" 
                                   @click="closeToolBlockDetail" 
-                                  :title="t('back') || '返回'">
+                                  :title="t('back') || 'Back'">
                               <i class="fa-solid fa-chevron-left"></i>
                           </button>
 
-                          <!-- 工作区右上角操作按钮组 -->
+                          <!-- Workspace top-right controls -->
                           <div v-if="activeSideView === 'workspace'" class="floating-actions-group">
-                              <button class="floating-action-btn" @click="handleRootUpload" :title="t('upload') || '上传'">
+                              <button class="floating-action-btn" @click="handleRootUpload" :title="t('upload') || 'Upload'">
                                   <i class="fa-solid fa-cloud-arrow-up"></i>
                               </button>
-                              <button class="floating-action-btn" @click="refreshWorkspaceTree" :title="t('refresh') || '刷新'">
+                              <button class="floating-action-btn" @click="refreshWorkspaceTree" :title="t('refresh') || 'Refresh'">
                                   <i class="fa-solid fa-rotate-right"></i>
                               </button>
                           </div>
                           
-                          <!-- ✨ 浮动按钮层（固定于侧边栏面板，不随内容滚动） -->
-                          <!-- 任务列表视图：返回按钮 + 右上角新建按钮 -->
+                          <!-- Floating controls fixed within the sidebar -->
+                          <!-- Task list view: back and new-task controls -->
                           <template v-if="activeSideView === 'tasks' && !viewingTaskDetail">
-                              <button class="floating-back-btn" @click="closeTaskCenter" :title="t('back') || '返回'">
+                              <button class="floating-back-btn" @click="closeTaskCenter" :title="t('back') || 'Back'">
                                   <i class="fa-solid fa-chevron-left"></i>
                               </button>
                               <div class="floating-actions-group">
-                                  <button class="floating-action-btn" @click="openCreateTaskDialog" :title="t('createNewTask') || '新建任务'">
+                                  <button class="floating-action-btn" @click="openCreateTaskDialog" :title="t('createNewTask') || 'New task'">
                                       <i class="fa-solid fa-plus"></i>
                                   </button>
                               </div>
                           </template>
 
-                          <!-- 任务详情视图：仅返回按钮 -->
+                          <!-- Task detail view: back control only -->
                           <button v-if="activeSideView === 'tasks' && viewingTaskDetail" 
                                   class="floating-back-btn" 
                                   @click="closeTaskDetail" 
-                                  :title="t('back') || '返回'">
+                                  :title="t('back') || 'Back'">
                               <i class="fa-solid fa-chevron-left"></i>
                           </button>
 
-                          <!-- 工作区视图：返回按钮 + 右上角操作组（上传/刷新） -->
+                          <!-- Workspace view: back, upload and refresh controls -->
                           <template v-if="activeSideView === 'workspace'">
-                              <button class="floating-back-btn" @click="activeSideView = 'list'" :title="t('back') || '返回'">
+                              <button class="floating-back-btn" @click="activeSideView = 'list'" :title="t('back') || 'Back'">
                                   <i class="fa-solid fa-chevron-left"></i>
                               </button>
                               <div class="floating-actions-group">
-                                  <button class="floating-action-btn" @click="handleRootUpload" :title="t('upload') || '上传'">
+                                  <button class="floating-action-btn" @click="handleRootUpload" :title="t('upload') || 'Upload'">
                                       <i class="fa-solid fa-cloud-arrow-up"></i>
                                   </button>
-                                  <button class="floating-action-btn" @click="refreshWorkspaceTree" :title="t('refresh') || '刷新'">
+                                  <button class="floating-action-btn" @click="refreshWorkspaceTree" :title="t('refresh') || 'Refresh'">
                                       <i class="fa-solid fa-rotate-right"></i>
                                   </button>
                               </div>
                           </template>
 
-                          <!-- 工具详情视图：仅返回按钮 -->
+                          <!-- Tool detail view: back control only -->
                           <button v-if="activeSideView === 'toolDetail'" 
                                   class="floating-back-btn" 
                                   @click="closeToolBlockDetail" 
-                                  :title="t('back') || '返回'">
+                                  :title="t('back') || 'Back'">
                               <i class="fa-solid fa-chevron-left"></i>
                           </button>
 
-                          <!-- 1. 内部视图容器 (v-show控制，为了切换不丢失状态) -->
+                          <!-- 1. Internal view container uses v-show to retain state -->
                           <div v-show="!currentExtension" style="height: 100%; display: flex; flex-direction: column;">
                               
-                              <!-- 1.1 任务中心视图 (无顶部条，浮动返回按钮) -->
+                              <!-- 1.1 Task center view with floating back control -->
                               <div v-if="activeSideView === 'tasks'" class="task-center-container" style="height: 100%; display: flex; flex-direction: column; position: relative;">
 
-                                  <!-- A. 详情视图 -->
+                                  <!-- A. Detail view -->
                                   <div v-if="viewingTaskDetail" class="task-detail-view" style="height: 100%; display: flex; flex-direction: column; padding: 48px 16px 16px 16px;">
                                       
                                       <div class="task-detail-content" style="padding: 8px 0 0 0; overflow-y: auto; flex: 1;">
-                                          <!-- 任务摘要卡片 - 内嵌标题 -->
+                                          <!-- Task summary card with embedded heading -->
                                           <div class="task-info-summary" style="padding: 0; margin-bottom: 15px;">
                                               <el-card shadow="never" :body-style="{ padding: '14px 16px' }" style="border-style: dashed; background: var(--el-bg-color-page); border-radius: 12px;">
                                                   <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -2186,14 +2186,14 @@ function updateElement(el, rawMarkdown, formatFn) {
                                                           <i class="fa-regular fa-clock"></i> {{ formatTaskTime(viewingTaskDetail.created_at) }}
                                                       </span>
                                                       <el-button v-if="viewingTaskDetail.result" type="success" size="small" @click="openTaskResult(viewingTaskDetail)" style="border-radius: 20px;">
-                                                          <i class="fa-solid fa-square-poll-vertical"></i> {{ t('viewFinalResult') || '查看最终产出' }}
+                                                          <i class="fa-solid fa-square-poll-vertical"></i> {{ t('viewFinalResult') || 'View final result' }}
                                                       </el-button>
                                                   </div>
                                               </el-card>
                                           </div>
-                                          <el-divider content-position="left" style="margin: 12px 0;">{{ t('executionHistory') || '执行记录' }}</el-divider>
+                                          <el-divider content-position="left" style="margin: 12px 0;">{{ t('executionHistory') || 'Execution history' }}</el-divider>
                                           <div class="timeline-wrapper">
-                                              <el-empty v-if="!viewingTaskDetail.context || !viewingTaskDetail.context.history || viewingTaskDetail.context.history.length === 0" :description="t('noHistoryYet') || '暂无执行动态'"></el-empty>
+                                              <el-empty v-if="!viewingTaskDetail.context || !viewingTaskDetail.context.history || viewingTaskDetail.context.history.length === 0" :description="t('noHistoryYet') || 'No execution activity yet'"></el-empty>
                                               <el-timeline v-else>
                                                   <el-timeline-item v-for="(log, index) in viewingTaskDetail.context.history" :key="index" :type="log.includes('❌') ? 'danger' : (log.includes('✅') ? 'success' : 'primary')" size="large">
                                                       <div class="history-log-item markdown-body" style="font-size: 13px; line-height: 1.6; background: var(--el-bg-color-page); padding: 8px 12px; border-radius: 6px;">
@@ -2202,17 +2202,17 @@ function updateElement(el, rawMarkdown, formatFn) {
                                                   </el-timeline-item>
                                                   <el-timeline-item v-if="viewingTaskDetail.status === 'running'" color="#409EFF">
                                                       <template #dot><i class="fa-solid fa-spinner fa-spin"></i></template>
-                                                      <div style="color: var(--el-color-primary); font-size: 13px; font-style: italic;">{{ t('taskExecuting') || '任务执行中...' }} ({{ viewingTaskDetail.progress }}%)</div>
+                                                      <div style="color: var(--el-color-primary); font-size: 13px; font-style: italic;">{{ t('taskExecuting') || 'Task running...' }} ({{ viewingTaskDetail.progress }}%)</div>
                                                   </el-timeline-item>
                                               </el-timeline>
                                           </div>
                                       </div>
                                   </div>
 
-                                  <!-- B. 列表视图 -->
+                                  <!-- B. List view -->
                                   <div v-else class="task-list-view" style="height: 100%; display: flex; flex-direction: column; padding: 48px 16px 16px 16px;">
                                       <div class="task-content-wrapper" style="flex: 1; overflow-y: auto;">
-                                          <!-- 状态 A: 未配置工作区 -->
+                                          <!-- State A: workspace not configured -->
                                           <div v-if="!hasWorkspacePath" class="task-empty-state" style="padding: 60px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
                                               <el-empty :description="t('noWorkspaceConfigured')">
                                                   <template #image><i class="fa-solid fa-handshake-angle" style="font-size: 48px; color: var(--el-text-color-secondary);"></i></template>
@@ -2220,7 +2220,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                                   <el-button type="primary" @click="jumpToCLIConfig" style="border-radius: 20px;">{{ t('goToCLIConfig') }}</el-button>
                                               </el-empty>
                                           </div>
-                                          <!-- 状态 B: 任务列表 -->
+                                          <!-- State B: task list -->
                                           <div v-else class="task-list-wrapper">
                                               
                                               <el-empty v-if="taskList.length === 0" :description="t('noTasks')" style="padding: 30px 0;">
@@ -2256,14 +2256,14 @@ function updateElement(el, rawMarkdown, formatFn) {
                                   </div>
                               </div>
 
-                              <!-- 1.2 工作区视图 (无顶部条，浮动按钮) -->
+                              <!-- 1.2 Workspace view with floating controls -->
                               <div v-else-if="activeSideView === 'workspace'" class="workspace-center-container" style="height: 100%; display: flex; flex-direction: column; position: relative;">
 
 
                                   <div class="workspace-content-wrapper" style="flex: 1; overflow-y: auto; padding: 48px 16px 16px 16px;">
                                       <div v-if="!CLISettings.cc_path" style="padding: 40px 20px; text-align: center;">
                                           <el-empty :description="t('noWorkspaceConfigured')">
-                                              <el-button type="primary" @click="browseDirectory" style="border-radius: 20px;">选择文件夹</el-button>
+                                              <el-button type="primary" @click="browseDirectory" style="border-radius: 20px;">Select folder</el-button>
                                           </el-empty>
                                       </div>
                                       <div v-else style="height: 100%; box-sizing: border-box;">
@@ -2286,7 +2286,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                   </div>
                               </div>
 
-                              <!-- 1.3 工具详情视图 (无顶部条，浮动返回按钮) -->
+                              <!-- 1.3 Tool detail view with floating back control -->
                               <div v-else-if="activeSideView === 'toolDetail'" class="tool-detail-view" style="height: 100%; overflow-y: auto; padding: 48px 16px 16px 16px;">
                                 
                                   <div v-if="activeToolBlock" style="padding: 8px 0 0 0;">
@@ -2301,7 +2301,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                   <el-empty v-else :description="t('noBlockSelected')" style="margin-top: 40px;" />
                               </div>
 
-                              <!-- 1.4 扩展列表视图 (保持原有设计) -->
+                              <!-- 1.4 Extension list view -->
                               <div v-else class="extensions-list" style="margin: 10px; height: 100%; overflow-y: auto;">
                                   <el-card class="extension-card default-view-card" :class="{ active: currentExtension === null && activeSideView === 'list' }" @click="resetToDefaultView();expandChatArea();collapseSidePanel();">
                                       <div class="extension-info"><h3>{{ t('defaultView') }}</h3><p>{{ t('defaultViewDescription') }}</p></div>
@@ -2310,19 +2310,19 @@ function updateElement(el, rawMarkdown, formatFn) {
                                       <div class="extension-info"><h3>{{ t('taskCenter') }}</h3><p>{{ t('taskCenterDescription') }}</p></div>
                                   </el-card>
                                   <el-card class="extension-card workspace-card" @click="openWorkspace()" v-show="isElectron">
-                                      <div class="extension-info"><h3>{{ t('workspace') || '工作区文件' }}</h3><p>{{ t('workspaceDescription') || '管理与查看本地工作区文件树' }}</p></div>
+                                      <div class="extension-info"><h3>{{ t('workspace') || 'Workspace files' }}</h3><p>{{ t('workspaceDescription') || 'Manage and browse the local workspace file tree' }}</p></div>
                                   </el-card>
-                                  <!-- 分隔线 -->
+                                  <!-- Divider -->
                                   <div class="extensions-divider" style="margin-bottom: 12px;">
                                       <span>{{ t('availableExtensions') }}</span>
                                   </div>
 
-                                  <!-- 搜索与操作工具栏 -->
+                                  <!-- Search and action toolbar -->
                                   <div class="extensions-toolbar" style="display: flex; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: nowrap;">
                                       <div style="flex: 1; min-width: 0;">
                                           <el-input 
                                               v-model="searchExtensionQuery" 
-                                              :placeholder="t('search') || '搜索扩展...'" 
+                                              :placeholder="t('search') || 'Search extensions...'" 
                                               clearable
                                               style="width: 100%;"
                                           >
@@ -2343,7 +2343,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                       </el-button>
                                   </div>
 
-                                  <!-- 扩展列表 -->
+                                  <!-- Extension list -->
                                   <el-empty v-if="filteredExtensions.length === 0" :description="t('noExtensionsFound')" ></el-empty>
                                   <el-card v-for="ext in filteredExtensions" :key="ext.id" class="extension-card" :class="{ active: currentExtension && currentExtension.id === ext.id }" @click="switchExtension(ext)">
                                       <div class="btn-top-right" @click.stop>
@@ -2364,17 +2364,17 @@ function updateElement(el, rawMarkdown, formatFn) {
                               </div>
                           </div> 
 
-                          <!-- 2. 已打开的扩展 Iframe 多开视图 -->
+                          <!-- 2. Multiple open extension iframes -->
                           <template v-for="ext in openedExtensions" :key="ext.id">
                               <div v-show="currentExtension && currentExtension.id === ext.id" class="ext-iframe-wrapper" style="height: 100%;">
-                                  <div class="ext-floating-close-btn" :class="{ 'is-active': extButtonVisible }" @mousemove="handleExtMouseMove" @click="resetToDefaultView()" :title="t('backToDefaultView') || '返回默认视图'">
+                                  <div class="ext-floating-close-btn" :class="{ 'is-active': extButtonVisible }" @mousemove="handleExtMouseMove" @click="resetToDefaultView()" :title="t('backToDefaultView') || 'Return to default view'">
                                       <i class="fa-solid fa-arrow-left"></i> 
                                   </div>
                                   <iframe class="side-panel-iframe" :src="ext.iframeUrl || (currentExtension.id === ext.id ? sidePanelURL : '')" frameborder="0" allowfullscreen></iframe>
                               </div>
                           </template>
 
-                          <!-- 3. 加载中状态 -->
+                          <!-- 3. Loading state -->
                           <div v-show="currentExtension && (!currentExtension.iframeUrl && !sidePanelURL)" class="loading-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--el-bg-color-page); z-index: 10;">
                               <div class="loading-content">
                                   <i class="fa-solid fa-spinner fa-spin loading-icon"></i>
@@ -2386,7 +2386,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                   </div>
               </div>
 
-              <!-- 任务结果 Dialog：优化为支持历史切换 -->
+              <!-- Task result dialog with execution history selection -->
               <el-dialog append-to-body
                 v-model="showTaskResultDialog"
                 :title="selectedTaskTitle"
@@ -2395,9 +2395,9 @@ function updateElement(el, rawMarkdown, formatFn) {
                 destroy-on-close
               >
                 <div style="display: flex; height: 70vh; border: 1px solid var(--el-border-color-lighter); border-radius: 4px; overflow: hidden; margin: -10px 0;">
-                  <!-- 左侧：执行批次 -->
+                  <!-- Left: execution runs -->
                   <div v-if="selectedTaskHistory?.length > 1" style="width: 200px; background: var(--el-bg-color-page); border-right: 1px solid var(--el-border-color-lighter); display: flex; flex-direction: column;">
-                      <div style="padding: 10px; font-weight: bold; font-size: 13px; border-bottom: 1px solid var(--el-border-color-lighter);">{{ t('executionHistory') || '执行记录' }}</div>
+                      <div style="padding: 10px; font-weight: bold; font-size: 13px; border-bottom: 1px solid var(--el-border-color-lighter);">{{ t('executionHistory') || 'Execution history' }}</div>
                       <el-scrollbar style="flex: 1;">
                           <div style="padding: 8px;">
                               <div v-for="(item, idx) in selectedTaskHistory" 
@@ -2413,7 +2413,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                       </el-scrollbar>
                   </div>
 
-                  <!-- 右侧：内容 -->
+                  <!-- Right: content -->
                   <div style="flex: 1; display: flex; flex-direction: column; background: #fff;">
                       <el-scrollbar style="flex: 1;">
                           <div class="task-result-content markdown-body" style="padding: 20px;">
@@ -2427,7 +2427,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                 </template>
               </el-dialog>
 
-              <!-- 任务配置 Dialog -->
+              <!-- Task configuration dialog -->
               <el-dialog append-to-body
                 v-model="showCreateTaskDialog"
                 :title="isEditing ? t('editTask') || 'Edit task' : t('createNewTask')"
@@ -2482,7 +2482,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                       </el-select>
                     </el-form-item>
 
-                    <!-- 时间模式配置 -->
+                    <!-- Time mode configuration -->
                     <div v-if="newTaskForm.task_type === 'time'" class="sub-config-box">
                       <el-form-item :label="t('time')">
                         <el-time-picker v-model="newTaskForm.trigger_config.timeValue" value-format="HH:mm:ss" style="width: 100%"></el-time-picker>
@@ -2495,7 +2495,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                       </el-form-item>
                     </div>
 
-                    <!-- 周期模式配置 -->
+                    <!-- Recurring mode configuration -->
                     <div v-if="newTaskForm.task_type === 'cycle'" class="sub-config-box">
                       <el-form-item :label="t('cycleValue')">
                         <el-time-picker v-model="newTaskForm.trigger_config.cycleValue" value-format="HH:mm:ss" style="width: 100%"></el-time-picker>
@@ -2513,7 +2513,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                   <span class="dialog-footer">
                     <el-button @click="showCreateTaskDialog = false">{{ t('cancel') }}</el-button>
                     <el-button type="primary" :loading="isCreatingTask" @click="submitTaskForm">
-                      {{ isEditing ? (t('confirmEdit') || '保存并重新运行') : (newTaskForm.task_type === 'once' ? t('createAndRun') : t('confirmSave')) }}
+                      {{ isEditing ? (t('confirmEdit') || 'Save and rerun') : (newTaskForm.task_type === 'once' ? t('createAndRun') : t('confirmSave')) }}
                     </el-button>
                   </span>
                 </template>
@@ -2521,14 +2521,14 @@ function updateElement(el, rawMarkdown, formatFn) {
 
             </div>
           </div>
-          <!-- 群聊设置弹窗 -->
+          <!-- Group chat settings dialog -->
           <el-dialog append-to-body
             v-model="showGroupSettingsDialog"
             :title="t('groupChatSettings')"
             width="80%">
             <div class="knowledge-dialog-content">
               
-              <!-- 1. 开启/关闭群聊模式 -->
+              <!-- 1. Enable or disable group chat -->
               <el-form-item :label="t('enableGroupChat')" class="form-item-align" label-position="left">
                 <el-switch
                   v-model="isGroupMode"
@@ -2536,7 +2536,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                 ></el-switch>
               </el-form-item>
 
-              <!-- 2. 选择群聊成员 -->
+              <!-- 2. Select group chat participants -->
               <div class="group-settings-area" style="margin-top: 20px;">
                 <div style="margin-bottom: 10px; font-weight: bold;">{{ t('selectGroupAgents') }}</div>
                 
@@ -2546,7 +2546,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                     placeholder="Select"
                     style="width: 100%;">
                     
-                    <!-- 第一组：角色记忆 (Memories) -->
+                    <!-- First group: character memories -->
                     <el-option-group :label="t('characterRoles')">
                         <el-option
                             v-for="m in memories"
@@ -2559,7 +2559,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                         </el-option>
                     </el-option-group>
 
-                    <!-- 第二组：智能体 (Agents) -->
+                    <!-- Second group: agents -->
                     <el-option-group :label="t('agents')">
                         <el-option :label="t('defaultAgent')" value="super-model">
                             <span style="float: left">
@@ -2646,7 +2646,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             :title="t('agentSettings')"
             width="80%">
             <div class="agent-dialog-content">
-              <!-- 主智能体选择 -->
+              <!-- Primary agent selection -->
               <div class="agent-section">
                 <h3>{{ t('mainAgent') }}</h3>
                 <el-select 
@@ -2666,7 +2666,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                   </el-option>
                 </el-select>
               </div>
-              <!-- 工具智能体选择 -->
+              <!-- Tool agent selection -->
               <div class="agent-section">
                 <h3>{{ t('toolAgents') }}</h3>
                 <div 
@@ -2694,7 +2694,7 @@ function updateElement(el, rawMarkdown, formatFn) {
             :title="t('mcpServersManagement')"
             width="80%">
             <div class="knowledge-dialog-content">
-              <!-- 服务器列表 -->
+              <!-- Server list -->
               <div v-for="(server, name) in mcpServers" :key="name" class="knowledge-item">
                 <el-switch 
                   :active-value="false"  
@@ -2862,7 +2862,7 @@ function updateElement(el, rawMarkdown, formatFn) {
           :title="t('chatHistory')"
           width="80%">
           <div class="knowledge-dialog-content">
-            <!-- 搜索框与操作按钮行 -->
+            <!-- Search and action row -->
             <div class="search-action-row">
               <el-input
                 v-model="searchKeyword"
@@ -2906,7 +2906,7 @@ function updateElement(el, rawMarkdown, formatFn) {
               </div>
             </div>
 
-            <!-- 对话记录列表 -->
+            <!-- Conversation history list -->
             <div v-for="conv in filteredConversations" 
                 :key="conv.id" 
                 class="knowledge-item"
@@ -2929,7 +2929,7 @@ function updateElement(el, rawMarkdown, formatFn) {
               </div>
             </div>
 
-            <!-- 空状态提示 -->
+            <!-- Empty state -->
         <div v-if="filteredConversations.length === 0" class="empty-tip">
           {{ searchKeyword ? t('noResults') : t('noChatHistory') }}
         </div>
@@ -3107,7 +3107,7 @@ function updateElement(el, rawMarkdown, formatFn) {
       </el-main>
     </el-container>
   </div>
-  <!-- 引入Vue和Element Plus -->
+  <!-- Load Vue and Element Plus -->
   <script src="libs/vue.global.prod.js"></script>
   <script src="libs/element-plus.js"></script>
   <script src="libs/element-plus-icons.js"></script>
