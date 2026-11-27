@@ -10,6 +10,7 @@ on:
       - .gitignore
       - scripts/audit_english_surface.py
       - tests/test_english_surface_inventory.py
+      - scripts/windows_packaged_smoke.py
 
 permissions:
   contents: read
@@ -132,6 +133,27 @@ jobs:
             throw 'electron-builder did not produce win-unpacked'
           }
 
+      - name: Exercise bundled backend with a disposable profile
+        shell: pwsh
+        env:
+          PYTHONUTF8: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          uv run --locked python scripts/windows_packaged_smoke.py --server release/win-unpacked/resources/server/server.exe --log-dir "$env:RUNNER_TEMP/agent-backend-smoke"
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged backend runtime smoke test failed.' }
+          Copy-Item "$env:RUNNER_TEMP/agent-backend-smoke/BACKEND-SMOKE.json" "release/win-unpacked/BACKEND-SMOKE.json"
+
+      - name: Upload synthetic backend smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-smoke-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/agent-backend-smoke/*.log
+            ${{ runner.temp }}/agent-backend-smoke/BACKEND-SMOKE.json
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Create manifest, ZIP and checksum
         id: archive
         shell: pwsh
@@ -151,7 +173,8 @@ jobs:
             "Node: $(node --version)"
             "Electron: $electronVersion"
             'Package type: extracted Electron directory with bundled PyInstaller backend'
-            'Automated build check only; no GUI launch or audio/agent integration test performed.'
+            'Packaged backend smoke: see BACKEND-SMOKE.json (clean startup, local HTTP/WebSocket, settings and conversation restart).'
+            'No Electron GUI launch, real user profile, model inference, audio, avatar or agent integration test performed.'
             'No signing, installer, publishing, auto-updates or release tags.'
           )
           $manifest | Set-Content -Path "$root/BUILD-MANIFEST.txt" -Encoding UTF8
@@ -159,6 +182,7 @@ jobs:
           Compress-Archive -Path "$root/*" -DestinationPath "release/$name" -CompressionLevel Optimal
           $hash = (Get-FileHash "release/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $name" | Set-Content -Path "release/$name.sha256" -Encoding ASCII
+          Write-Host "Inner package SHA-256: $hash"
           "name=$name" >> $env:GITHUB_OUTPUT
           "sha256=$hash" >> $env:GITHUB_OUTPUT
           "## Windows x64 development package" >> $env:GITHUB_STEP_SUMMARY

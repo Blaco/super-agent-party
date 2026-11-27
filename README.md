@@ -50,7 +50,7 @@ git diff -- uv.lock
 
 The branch's [Windows x64 development workflow](.github/workflows/build.yml) attempts to package a PyInstaller Python backend and an unpacked Electron desktop app into a ZIP. It uploads the ZIP, SHA-256 checksum and embedded build manifest as a short-lived GitHub Actions artifact when successful. This is **not** a signed installer or a published release.
 
-The workflow is deliberately read-only and has no release/tag publishing privileges. Its output is a testing snapshot. Treat it as experimental until clean-profile and existing-profile launch, settings persistence, TabbyAPI chat, card import, TTS, and permitted agent actions are exercised on Windows.
+The workflow is deliberately read-only and has no release/tag publishing privileges. It runs a packaged-backend smoke test with an isolated synthetic profile and includes BACKEND-SMOKE.json in successful development snapshots. This does not launch the Electron GUI or exercise external providers. Its output is a testing snapshot. Treat it as experimental until clean-profile and existing-profile launch, settings persistence, TabbyAPI chat, card import, TTS, and permitted agent actions are exercised on Windows.
 
 ## Repository areas
 

@@ -35,3 +35,7 @@
 7. Only create a release/tag or overwrite a user-facing artifact when separately authorized by the user.
 
 No release pipeline has been enabled by the documentation bootstrap.
+
+## Automated packaged-backend smoke gate
+
+After Electron directory packaging, the Windows workflow runs scripts/windows_packaged_smoke.py against the bundled backend executable in the Electron resources directory. The test uses a disposable synthetic profile, exercises the existing loopback HTTP and WebSocket interfaces, verifies safe default settings, saves test settings and conversation data, and confirms the data is returned after a fresh backend process starts. BACKEND-SMOKE.json records the checks in the ZIP; synthetic logs are uploaded separately. No real user profiles, credentials or provider calls are required. This test is not a GUI launch, graceful shutdown, privacy/network-isolation test or real model/voice/agent integration test. The manual Windows acceptance criteria above remain required.

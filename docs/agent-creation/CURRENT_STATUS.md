@@ -218,3 +218,8 @@ Legal source attribution and unmodified user-authored multilingual content are d
 - The expanded audit identified two legacy launcher ignore patterns that the older scanner did not inspect. Both have been replaced with equivalent-length wildcard prefixes (slightly broader matching). Source gate and development packaging are retriggered; check the resulting run before claiming completion.
 
 - Corrected legacy launcher patterns to twelve UTF-8 byte wildcards after a local git check-ignore test; both original names are ignored. Source gate and Windows packaging run against the corrected commit.
+
+## Windows packaging and next runtime validation
+
+- Windows build 45928796787 and source audit 45928796821 succeeded at `289d96328a9408bfe97913e1176421716b7080f4`. Artifact 15167614737 is available via Actions; 1,084,425,120 bytes, outer artifact SHA-256 f4d9c104fddaf3022b29a77c9bf7273adfd1727251e1d0b7a1f3c3c186b3e9a3. The inner checksum is included in the artifact, not independently retrieved here.
+- Next development package now requires a real packaged backend startup, English HTTP assets, safe default settings, WebSocket ping/save and synthetic profile restart/persistence. This new test is pending Windows execution. Electron rendering, existing actual upstream profiles, TabbyAPI chat, audio/avatar and agent actions remain unverified. No changes to runtime source, user profiles or dependencies.
