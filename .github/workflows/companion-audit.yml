@@ -68,9 +68,13 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_english_delegation_modules.py' -v
       - name: Check Python syntax in edited modules
         run: python -m py_compile py/companion_defaults.py py/live_router.py py/sherpa_model_manager.py py/ebd_model_manager.py py/moss_model_manager.py server.py py/sub_agent.py py/diary_chat_integration.py py/autoBehavior.py
-      - name: Audit source text (inventory only; no automatic edits)
-        run: python scripts/audit_english_surface.py --root . --json english-surface-report.json --limit 25
+      - name: Inventory scanner regression tests
+        run: python -m unittest discover -s tests -p 'test_english_surface_inventory.py' -v
+      - name: Audit tracked source, skills, lockfiles and asset paths (inventory only)
+        run: python scripts/audit_english_surface.py --root . --tracked-only --json english-surface-report.json --limit 50
+        if: always()
       - name: Upload text inventory for review
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: english-surface-audit

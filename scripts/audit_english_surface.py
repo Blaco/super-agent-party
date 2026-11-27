@@ -1,46 +1,66 @@
 #!/usr/bin/env python3
-"""Read-only inventory of non-English surface text and region-specific providers.
+"""Read-only inventory of source text, dependency metadata, and packaged assets.
 
-This is an inventory, NOT a Chinese-language classifier or an automatic remover.
-It reports Han code points (which also occur in Japanese and other languages)
-and platform names for manual triage. Default exit status is zero.
+Han code points and provider names are review signals, not a language classifier
+or a determination that a package is unsafe. No source is modified.
 """
 
 from __future__ import annotations
 
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
 import re
+import subprocess
 
 TEXT_SUFFIXES = {
-    ".bat", ".css", ".html", ".js", ".json", ".jsx", ".md", ".mjs",
-    ".py", ".ps1", ".sh", ".toml", ".ts", ".txt", ".vbs", ".vue",
-    ".xml", ".yaml", ".yml",
+    ".bat", ".cfg", ".css", ".csv", ".html", ".ini", ".js", ".json", ".jsx",
+    ".lock", ".md", ".mjs", ".plist", ".py", ".ps1", ".rst", ".sh", ".spec",
+    ".svg", ".toml", ".ts", ".txt", ".vbs", ".vue", ".xml", ".yaml", ".yml",
 }
+TEXT_NAMES = {"dockerfile", "makefile", "license", "notice", "authors", "copying"}
 SKIP_DIRS = {
-    ".git", ".venv", "__pycache__", "node_modules", "dist", "release",
-    "build", "tiktoken_cache", "tha_models", "vrm", "doc",
-    "default_soulx_images",
+    ".git", ".venv", "__pycache__", "node_modules", "dist", "release", "build",
 }
-SKIP_FILES = {"package-lock.json", "uv.lock"}
-SKIP_PREFIXES = ("static/libs/", "static/source/", "static/fontawesome/")
-HAN = re.compile(r"[\u3400-\u9fff\U00020000-\U0002A6DF]")
+LOCKFILES = {"package-lock.json", "uv.lock", "pnpm-lock.yaml", "yarn.lock"}
+VENDORED_PREFIXES = ("static/libs/", "static/fontawesome/", "tiktoken_cache/")
+ASSET_PREFIXES = ("static/source/", "vrm/", "tha_models/", "default_soulx_images/", "doc/")
+MAX_TEXT_BYTES = 8 * 1024 * 1024
+HAN = re.compile(r"[\u3400-\u9fff\uf900-\ufaff\U00020000-\U0002EBEF\U00030000-\U000323AF]")
 PLATFORM = re.compile(
-    r"\b(?:qq|wechat|weixin|feishu|dingtalk|bilibili|douyin|"
-    r"weibo|kuaishou|xiaohongshu|modelscope|baidu|aliyun|"
-    r"siliconflow|alipay|taobao)\b",
+    r"(?<![a-z0-9])(?:qq|qq-botpy|wechat|wechatbot|weixin|wecom|feishu|lark-oapi|"
+    r"dingtalk|bilibili|douyin|weibo|kuaishou|xiaohongshu|modelscope|baidu|aliyun|"
+    r"siliconflow|alipay|taobao|gitee|funasr|smms|volcengine|bocha|xunfei|"
+    r"dashscope|hunyuan|qianfan|baichuan|zhipuai|hf-mirror|npmmirror|"
+    r"super-agent-party\.github\.io)(?![a-z0-9])",
     re.IGNORECASE,
 )
 MODEL_CONTEXT = re.compile(
-    r"system.?prompt|generic.?system.?prompt|content_append|"
-    r"template|lore|role.?prompt|tool.?description|"
-    r"messages|instruct|prompt_text",
+    r"system.?prompt|generic.?system.?prompt|content_append|template|lore|"
+    r"role.?prompt|tool.?description|messages|instruct|prompt_text",
     re.IGNORECASE,
 )
+
+
+def scope(path: str) -> str:
+    lower = path.lower()
+    name = Path(lower).name
+    if name in LOCKFILES:
+        return "dependency-lock"
+    if lower.startswith(VENDORED_PREFIXES):
+        return "vendored"
+    if name.split(".", 1)[0] in {"license", "notice", "authors", "copying"}:
+        return "legal-attribution"
+    if lower.startswith(("tests/", "docs/agent-creation/")) or lower == "scripts/audit_english_surface.py":
+        return "test-or-history"
+    if lower.startswith(ASSET_PREFIXES):
+        return "packaged-asset"
+    if lower.startswith("skills/"):
+        return "bundled-skill"
+    return "project-source"
 
 
 def category(path: str, line: str) -> str:
@@ -58,26 +78,53 @@ def category(path: str, line: str) -> str:
     return "other"
 
 
-def sources(root: Path):
+def sources(root: Path, tracked_only: bool = False):
+    if tracked_only:
+        result = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "-z"],
+            check=True, stdout=subprocess.PIPE,
+        )
+        for rel in sorted(set(os.fsdecode(p) for p in result.stdout.split(b"\0") if p)):
+            file = root / rel
+            yield file, Path(rel).as_posix()
+        return
     for current, dirs, files in os.walk(root):
         dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not d.startswith(".cache"))
         folder = Path(current)
         for name in sorted(files):
             file = folder / name
-            rel = file.relative_to(root).as_posix()
-            if name in SKIP_FILES or any(rel.startswith(p) for p in SKIP_PREFIXES):
-                continue
-            if file.suffix.lower() not in TEXT_SUFFIXES:
-                continue
-            yield file, rel
+            yield file, file.relative_to(root).as_posix()
 
 
-def inspect(root: Path):
+def inspect(root: Path, tracked_only: bool = False):
     findings = []
     examined = 0
     skipped_unreadable = []
-    for file, rel in sources(root):
+    excluded = []
+    scope_counts = Counter()
+    for file, rel in sources(root, tracked_only):
+        group = scope(rel)
+        scope_counts[group] += 1
+        path_signals = []
+        if HAN.search(rel):
+            path_signals.append("han-path")
+        if PLATFORM.search(rel):
+            path_signals.append("region-platform-path")
+        if path_signals:
+            findings.append({
+                "file": rel, "line": None, "category": "filename",
+                "scope": group, "signals": path_signals, "excerpt": rel,
+            })
+        if file.is_symlink() or not file.is_file():
+            excluded.append({"file": rel, "scope": group, "reason": "not-regular-file"})
+            continue
+        if file.suffix.lower() not in TEXT_SUFFIXES and file.name.lower() not in TEXT_NAMES:
+            excluded.append({"file": rel, "scope": group, "reason": "non-text-or-unrecognized-format"})
+            continue
         try:
+            if file.stat().st_size > MAX_TEXT_BYTES:
+                excluded.append({"file": rel, "scope": group, "reason": "text-size-limit"})
+                continue
             content = file.read_text(encoding="utf-8")
         except (UnicodeError, OSError):
             skipped_unreadable.append(rel)
@@ -89,64 +136,87 @@ def inspect(root: Path):
                 signals.append("han")
             if PLATFORM.search(line):
                 signals.append("region-platform")
-            if not signals:
-                continue
-            findings.append({
-                "file": rel,
-                "line": number,
-                "category": category(rel, line),
-                "signals": signals,
-                "excerpt": line.strip()[:240],
-            })
-    return examined, skipped_unreadable, findings
+            if signals:
+                findings.append({
+                    "file": rel, "line": number, "category": category(rel, line),
+                    "scope": group, "signals": signals, "excerpt": line.strip()[:240],
+                })
+    return examined, skipped_unreadable, findings, excluded, scope_counts
+
+
+def summarize(findings):
+    by_file = defaultdict(Counter)
+    by_scope = defaultdict(Counter)
+    for item in findings:
+        by_file[(item["scope"], item["file"])].update(item["signals"])
+        by_scope[item["scope"]].update(item["signals"])
+    ranked = [
+        {"scope": group, "file": file, "counts": dict(sorted(counts.items()))}
+        for (group, file), counts in by_file.items()
+    ]
+    priority = {
+        "project-source": 0, "bundled-skill": 1, "packaged-asset": 2,
+        "dependency-lock": 3, "vendored": 4, "legal-attribution": 5, "test-or-history": 6,
+    }
+    ranked.sort(key=lambda item: (
+        priority.get(item["scope"], 99),
+        -item["counts"].get("han", 0),
+        -sum(item["counts"].values()), item["file"],
+    ))
+    return ranked, {group: dict(sorted(counts.items())) for group, counts in sorted(by_scope.items())}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
-    parser.add_argument("--json", type=Path, help="Write full machine-readable findings to this file")
-    parser.add_argument("--limit", type=int, default=30, help="Maximum findings shown in console")
-    parser.add_argument(
-        "--fail-on-han", action="store_true",
-        help="Exit 1 if any Han code points remain (only use when the scope is ready)",
-    )
+    parser.add_argument("--json", type=Path, help="Write the machine-readable inventory")
+    parser.add_argument("--limit", type=int, default=30, help="Maximum ranked files shown in console")
+    parser.add_argument("--tracked-only", action="store_true", help="Inspect Git-tracked paths only")
+    parser.add_argument("--fail-on-han", action="store_true", help="Exit 1 if any Han signal remains in the scanned scope")
     args = parser.parse_args()
     root = args.root.resolve()
     if not root.is_dir():
         parser.error("Not a directory: " + str(root))
 
-    examined, skipped, findings = inspect(root)
+    try:
+        examined, skipped, findings, excluded, scope_counts = inspect(root, args.tracked_only)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        parser.error("Unable to enumerate tracked paths: " + str(exc))
+
     by_signal = Counter(signal for item in findings for signal in item["signals"])
     by_category = Counter(item["category"] for item in findings)
+    ranked, by_scope = summarize(findings)
     result = {
-        "schema": 1,
+        "schema": 2,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "root": str(root),
         "read_only": True,
-        "caveat": "Han characters are not sufficient to identify Chinese; human review required.",
+        "tracked_only": args.tracked_only,
+        "caveat": "Text and filename signals require manual review. Binary asset contents and excluded files are not inspected.",
         "examined_files": examined,
+        "paths_by_scope": dict(sorted(scope_counts.items())),
         "skipped_unreadable": skipped,
+        "excluded": excluded,
         "findings": findings,
         "counts_by_signal": dict(sorted(by_signal.items())),
         "counts_by_category": dict(sorted(by_category.items())),
+        "counts_by_scope": by_scope,
+        "ranked_files": ranked,
     }
     if args.json:
         output = args.json if args.json.is_absolute() else root / args.json
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
         print("Report:", output)
-    print("Files examined:", examined)
+    print("Text files examined:", examined)
     print("Signal totals:", dict(by_signal))
-    print("Categories:", dict(by_category))
+    print("Scopes:", json.dumps(by_scope, sort_keys=True))
     print("Unreadable files:", len(skipped))
-    for item in findings[:max(0, args.limit)]:
-        print(
-            "{0}:{1} [{2} / {3}] {4}".format(
-                item["file"], item["line"], item["category"],
-                ",".join(item["signals"]), item["excerpt"]
-            )
-        )
-    if args.fail_on_han and by_signal.get("han", 0):
+    print("Excluded paths requiring separate review:", len(excluded))
+    print("Ranked files:")
+    for item in ranked[:max(0, args.limit)]:
+        print("{scope}: {file}: {counts}".format(**item))
+    if args.fail_on_han and (by_signal.get("han", 0) or by_signal.get("han-path", 0)):
         return 1
     return 0
 
