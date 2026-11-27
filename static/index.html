@@ -7692,7 +7692,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                         >
                           <el-option :label="t('sherpa-onnx-sense-voice')" value="sherpa" ></el-option>
                           <el-option :label="t('webSpeech')" value="webSpeech" ></el-option>
-                          <el-option label="FunASR" value="funasr" ></el-option>
+                          <el-option v-if="asrSettings.engine === 'funasr'" label="Legacy local WebSocket ASR" value="funasr" ></el-option>
                           <el-option :label="t('openaiLike')" value="openai" ></el-option>
                         </el-select>
                       </el-form-item>
@@ -7926,17 +7926,8 @@ function updateElement(el, rawMarkdown, formatFn) {
                           <el-icon>
                             <i class="fa-solid fa-microphone"></i>
                           </el-icon>
-                          FunASR
-                          <el-link
-                            type="primary"
-                            :underline="false"
-                            href="https://github.com/modelscope/FunASR" 
-                            target="_blank"
-                          >
-                            <el-icon class="mr-1">
-                              <i class="fa-solid fa-key"></i>
-                            </el-icon>{{ t('gotoGithub') }}
-                          </el-link>
+                          Legacy local WebSocket ASR
+                          
                         </span>
                       </div>
                     </div>
@@ -10271,11 +10262,6 @@ function updateElement(el, rawMarkdown, formatFn) {
                         {{ t('openSkillsFolder') }}
                       </el-button>
                       <el-button 
-                        @click="openRepository('https://github.com/super-agent-party/super-agent-party.github.io/blob/main/skills.json')" 
-                        type="primary">
-                        {{ t('addYourSkills') }}
-                      </el-button>
-                      <el-button 
                         @click="handleRefreshSkills" 
                         type="primary"
                         :loading="skillsLoading">
@@ -11851,11 +11837,6 @@ function updateElement(el, rawMarkdown, formatFn) {
                         @click="showAddMCPDialo = true" 
                         type="primary">
                         {{ t('addNewMCP') }}
-                      </el-button>
-                      <el-button 
-                        @click="openRepository('https://github.com/super-agent-party/super-agent-party.github.io/blob/main/mcp.json')" 
-                        type="primary">
-                        {{ t('addYourMCP') }}
                       </el-button>
                     </div>
                   </div>
@@ -16339,7 +16320,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                     
                     <div class="plugin-button-group">
                       <el-button @click="openExtfile" type="primary">{{t('openExtfile')}}</el-button>
-                      <el-button @click="openRepository('https://github.com/super-agent-party/super-agent-party.github.io')" type="primary">{{t('addYourExtensions')}}</el-button>
+                      <el-button @click="openRepository('https://github.com/Blaco/super-agent-party/blob/agent-creation/config/extension_catalog.json')" type="primary">Extension catalog</el-button>
                       <el-button @click="handleRefreshClick" type="primary" :loading="refreshing">{{refreshButtonText}}</el-button>
                     </div>
                   </div>

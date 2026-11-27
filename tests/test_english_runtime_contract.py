@@ -289,6 +289,25 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         source = (ROOT / "static/js/webview-preload.js").read_text(encoding="utf-8")
         self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
 
+    def test_fork_catalog_packaging_and_legacy_defaults(self):
+        config = json.loads((ROOT / "config/settings_template.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["BotConfig"]["imgHost"], "easyImage2")
+        self.assertFalse(config["BotConfig"]["imgHost_enabled"])
+        self.assertFalse(any(key.startswith("gitee_") for key in config["BotConfig"]))
+        vue = (ROOT / "static/js/vue_data.js").read_text(encoding="utf-8")
+        self.assertNotIn("gitee_", vue)
+        self.assertNotIn("SMMS_api_key", vue)
+        html = (ROOT / "static/index.html").read_text(encoding="utf-8")
+        self.assertNotIn("super-agent-party.github.io", html)
+        self.assertNotIn("github.com/modelscope/FunASR", html)
+        self.assertIn("Legacy local WebSocket ASR", html)
+        self.assertEqual(html.count("Blaco/super-agent-party/blob/agent-creation/config/extension_catalog.json"), 2)
+        spec_path = ROOT / "server.spec"
+        spec = spec_path.read_text(encoding="utf-8")
+        ast.parse(spec, filename=str(spec_path))
+        self.assertIn("('config/extension_catalog.json', 'config')", spec)
+        self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in spec))
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)
