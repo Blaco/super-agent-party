@@ -300,13 +300,33 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         html = (ROOT / "static/index.html").read_text(encoding="utf-8")
         self.assertNotIn("super-agent-party.github.io", html)
         self.assertNotIn("github.com/modelscope/FunASR", html)
-        self.assertIn("Legacy local WebSocket ASR", html)
+        self.assertIn("The saved speech recognition engine is no longer supported.", html)
         self.assertEqual(html.count("Blaco/super-agent-party/blob/agent-creation/config/extension_catalog.json"), 2)
         spec_path = ROOT / "server.spec"
         spec = spec_path.read_text(encoding="utf-8")
         ast.parse(spec, filename=str(spec_path))
         self.assertIn("('config/extension_catalog.json', 'config')", spec)
         self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in spec))
+
+    def test_retired_asr_is_not_selectable_or_dispatched(self):
+        for relative in ("server.py", "static/index.html", "static/js/vue_data.js",
+                         "static/js/vue_methods.js", "static/js/locales/en-US.js",
+                         "config/settings_template.json"):
+            source = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertNotIn("funasr", source.lower(), relative)
+        config = json.loads((ROOT / "config/settings_template.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["asrSettings"]["engine"], "sherpa")
+        self.assertFalse(config["asrSettings"]["enabled"])
+        source = (ROOT / "server.py").read_text(encoding="utf-8")
+        ast.parse(source)
+        socket = source.split('@app.websocket("/ws/asr")', 1)[1].split('@app.post("/asr")', 1)[0]
+        http = source.split('@app.post("/asr")', 1)[1].split("class TTSConnectionManager:", 1)[0]
+        self.assertEqual(socket.count('if asr_engine not in ("sherpa", "openai"):'), 2)
+        for engine in ("sherpa", "openai"):
+            self.assertIn(f'asr_engine == "{engine}"', socket)
+            self.assertIn(f'asr_engine == "{engine}"', http)
+        self.assertIn("Unsupported ASR engine:", http)
+        self.assertNotIn("websockets.connect", socket + http)
 
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")

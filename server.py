@@ -7602,197 +7602,6 @@ asr_connections = []
 # Store audio frames for each connection
 audio_buffer: Dict[str, Dict[str, Any]] = {}
 
-def convert_audio_to_pcm16(audio_bytes: bytes, target_sample_rate: int = 16000) -> bytes:
-    """
-    Convert audio to PCM16 at 16 kHz.
-    """
-    import numpy as np
-    from scipy.io import wavfile
-    try:
-        # Create temporary file
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-            temp_file.write(audio_bytes)
-            temp_file_path = temp_file.name
-        
-        try:
-            # Read audio file
-            sample_rate, audio_data = wavfile.read(temp_file_path)
-            
-            # Convert to mono
-            if len(audio_data.shape) > 1:
-                audio_data = np.mean(audio_data, axis=1)
-            
-            # Convert to float32 for resampling
-            if audio_data.dtype != np.float32:
-                if audio_data.dtype == np.int16:
-                    audio_data = audio_data.astype(np.float32) / 32768.0
-                elif audio_data.dtype == np.int32:
-                    audio_data = audio_data.astype(np.float32) / 2147483648.0
-                else:
-                    audio_data = audio_data.astype(np.float32)
-            
-            # Resample to target rate
-            if sample_rate != target_sample_rate:
-                from scipy.signal import resample
-                num_samples = int(len(audio_data) * target_sample_rate / sample_rate)
-                audio_data = resample(audio_data, num_samples)
-            
-            # Convert to int16 PCM
-            audio_data = (audio_data * 32767).astype(np.int16)
-            
-            return audio_data.tobytes()
-            
-        finally:
-            # Delete temporary file
-            os.unlink(temp_file_path)
-            
-    except Exception as e:
-        print(f"Audio conversion error: {e}")
-        # Return original data if conversion fails
-        return audio_bytes
-
-async def funasr_recognize(audio_data: bytes, funasr_settings: dict,ws: WebSocket,frame_id) -> str:
-    """
-    Perform speech recognition with FunASR.
-    """
-    try:
-        # Get FunASR server address
-        funasr_url = funasr_settings.get('funasr_ws_url', 'ws://localhost:10095')
-        hotwords = funasr_settings.get('hotwords', '')
-        if not funasr_url.startswith('ws://') and not funasr_url.startswith('wss://'):
-            funasr_url = f"ws://{funasr_url}"
-        
-        # Connect to FunASR server
-        async with websockets.connect(funasr_url) as websocket:
-            print(f"Connected to FunASR server: {funasr_url}")
-            
-            # 1. Send initial configuration
-            init_config = {
-                "chunk_size": [5, 10, 5],
-                "wav_name": "python_client",
-                "is_speaking": True,
-                "chunk_interval": 10,
-                "mode": "offline",  # Use offline mode
-                "hotwords": hotwords_to_json(hotwords),
-                "use_itn": True
-            }
-            
-            await websocket.send(json.dumps(init_config))
-            print("Sent init config")
-            
-            # 2. Convert audio to PCM16
-            pcm_data = convert_audio_to_pcm16(audio_data)
-            print(f"PCM data length: {len(pcm_data)} bytes")
-            
-            # 3. Send audio in chunks
-            chunk_size = 960  # 30 ms of audio (16000 * 0.03 * 2 = 960 bytes)
-            total_sent = 0
-            
-            while total_sent < len(pcm_data):
-                chunk_end = min(total_sent + chunk_size, len(pcm_data))
-                chunk = pcm_data[total_sent:chunk_end]
-                
-                # Send binary PCM
-                await websocket.send(chunk)
-                total_sent = chunk_end
-            
-            print(f"Sent all audio data: {total_sent} bytes")
-            
-            # 4. Send end signal
-            end_config = {
-                "is_speaking": False,
-            }
-            
-            await websocket.send(json.dumps(end_config))
-            print("Sent end signal")
-            
-            # 5. Wait for recognition results
-            result_text = ""
-            timeout_count = 0
-            max_timeout = 200  # Maximum wait counter
-            
-            while timeout_count < max_timeout:
-                try:
-                    # Wait for response
-                    response = await asyncio.wait_for(websocket.recv(), timeout=0.1)
-                    
-                    try:
-                        # Try parsing JSON
-                        json_response = json.loads(response)
-                        print(f"Received response: {json_response}")
-                        
-                        if 'text' in json_response:
-                            text = json_response['text']
-                            if text and text.strip():
-                                result_text += text
-                                print(f"Got text: {text}")
-                                # Send result
-                                await ws.send_json({
-                                    "type": "transcription",
-                                    "id": frame_id,
-                                    "text": result_text,
-                                    "is_final": True
-                                })
-                            # Check whether the result is final
-                            if json_response.get('is_final', False):
-                                print("Got final result")
-                                break
-                                
-                    except json.JSONDecodeError:
-                        # Ignore non-JSON data, which may be binary
-                        print(f"Non-JSON response: {response}")
-                        pass
-                        
-                except asyncio.TimeoutError:
-                    timeout_count += 1
-                    continue
-                except websockets.exceptions.ConnectionClosed:
-                    print("WebSocket connection closed")
-                    break
-            
-            if not result_text:
-                print("No recognition result received")
-                return ""
-            
-            return result_text.strip()
-            
-    except Exception as e:
-        print(f"FunASR recognition error: {e}")
-        return f"FunASR recognition error: {str(e)}"
-
-def hotwords_to_json(input_str):
-    # Initialize result dictionary
-    result = {}
-    
-    # Split input into lines
-    lines = input_str.split('\n')
-    
-    for line in lines:
-        # Trim surrounding whitespace
-        cleaned_line = line.strip()
-        
-        # Skip empty lines
-        if not cleaned_line:
-            continue
-            
-        # Separate word and weight
-        parts = cleaned_line.rsplit(' ', 1)  # Split once from the right
-        
-        if len(parts) != 2:
-            continue  # Skip malformed lines
-            
-        word = parts[0].strip()
-        try:
-            weight = int(parts[1])
-        except ValueError:
-            continue  # Skip nonnumeric weights
-            
-        # Add to result dictionary
-        result[word] = weight
-    
-    # Convert to JSON string
-    return json.dumps(result, ensure_ascii=False)
-
 # ASR WebSocket handling
 @app.websocket("/ws/asr")
 async def asr_websocket_endpoint(websocket: WebSocket):
@@ -7801,10 +7610,8 @@ async def asr_websocket_endpoint(websocket: WebSocket):
     # Generate unique connection ID
     connection_id = str(uuid.uuid4())
     asr_connections.append(websocket)
-    funasr_websocket = None
     # Track connection state
     asr_engine = None
-    funasr_mode = None
     
     try:
         # Process messages
@@ -7815,104 +7622,18 @@ async def asr_websocket_endpoint(websocket: WebSocket):
                 # Load settings
                 settings = await load_settings()
                 asr_settings = settings.get('asrSettings', {})
-                asr_engine = asr_settings.get('engine', 'openai')  # Store engine type
-                if asr_engine == "funasr":
-                    funasr_mode = asr_settings.get('funasr_mode', 'openai')  # Store mode
-                    if funasr_mode == "2pass" or funasr_mode == "online":
-                        # Get FunASR server address
-                        funasr_url = asr_settings.get('funasr_ws_url', 'ws://localhost:10095')
-                        if not funasr_url.startswith('ws://') and not funasr_url.startswith('wss://'):
-                            funasr_url = f"ws://{funasr_url}"
-                        try:
-                            funasr_websocket = await websockets.connect(funasr_url)
-                        except Exception as e:
-                            funasr_websocket = None
-                            print(f"Failed to connect to FunASR: {e}")
+                asr_engine = asr_settings.get('engine', 'sherpa')  # Store engine type
+                if asr_engine not in ("sherpa", "openai"):
+                    await websocket.send_json({"type": "error", "message": "Unsupported speech engine. Select a supported engine in speech recognition settings."})
+                    continue
                 await websocket.send_json({
                     "type": "init_response",
                     "status": "ready"
                 })
                 print("ASR WebSocket connected:",asr_engine)
-            elif msg_type == "audio_start":
-                frame_id = message.get("id")
-                # Load settings
-                settings = await load_settings()
-                asr_settings = settings.get('asrSettings', {})
-                asr_engine = asr_settings.get('engine', 'openai')  # Store engine type
-                if asr_engine == "funasr":
-                    funasr_mode = asr_settings.get('funasr_mode', '2pass')  # Store mode
-                    hotwords = asr_settings.get('hotwords', '')
-                    if funasr_mode == "2pass":
-                        # Get FunASR server address
-                        funasr_url = asr_settings.get('funasr_ws_url', 'ws://localhost:10095')
-                        if not funasr_url.startswith('ws://') and not funasr_url.startswith('wss://'):
-                            funasr_url = f"ws://{funasr_url}"
-                        try:
-                            if not funasr_websocket:
-                                # Connect to FunASR server
-                                funasr_websocket = await websockets.connect(funasr_url)
-                            # 1. Send initial configuration
-                            init_config = {
-                                "chunk_size": [5, 10, 5],
-                                "wav_name": "python_client",
-                                "is_speaking": True,
-                                "chunk_interval": 10,
-                                "mode": funasr_mode,  
-                                "hotwords": hotwords_to_json(hotwords),
-                                "use_itn": True
-                            }
-                            await funasr_websocket.send(json.dumps(init_config))
-                            print("Sent init config")
-                            # 2. Start an asynchronous task to handle FunASR responses
-                            asyncio.create_task(handle_funasr_response(funasr_websocket, websocket))
-                        except Exception as e:
-                            print(f"Failed to connect to FunASR: {e}")
-                            await websocket.send_json({
-                                "type": "error",
-                                "message": f"Could not connect to FunASR server: {str(e)}"
-                            })
-                            # Mark connection failure to prevent subsequent operations
-                            funasr_websocket = None
-                    else:
-                        # Stop the asynchronous FunASR response task
-                        funasr_websocket = None
-                else:
-                    # Stop the asynchronous FunASR response task
-                    funasr_websocket = None
-            # Check connection before processing streamed audio
-            elif msg_type == "audio_stream":
-                frame_id = message.get("id")
-                audio_base64 = message.get("audio")
-
-                # Ensure funasr_websocket is initialized
-                if not funasr_websocket:
-                    continue  # Skip the current message
-
-                if audio_base64:
-                    # 1. Decode Base64 to binary int16 PCM
-                    pcm_data = base64.b64decode(audio_base64)
-
-                    # 2. Forward binary PCM directly to FunASR
-                    try:
-                        await funasr_websocket.send(pcm_data)
-                    except websockets.exceptions.ConnectionClosed:
-                        funasr_websocket = None
-                        # Load settings
-                        settings = await load_settings()
-                        asr_settings = settings.get('asrSettings', {})
-                        asr_engine = asr_settings.get('engine', 'openai')  # Store engine type
-                        if asr_engine == "funasr":
-                            funasr_mode = asr_settings.get('funasr_mode', '2pass')  # Store mode
-                            if funasr_mode == "2pass":
-                                # Get FunASR server address
-                                funasr_url = asr_settings.get('funasr_ws_url', 'ws://localhost:10095')
-                                if not funasr_url.startswith('ws://') and not funasr_url.startswith('wss://'):
-                                    funasr_url = f"ws://{funasr_url}"
-                                try:
-                                    funasr_websocket = await websockets.connect(funasr_url)
-                                except Exception as e:
-                                    funasr_websocket = None
-                                    print(f"Failed to connect to FunASR: {e}")
+            elif msg_type in ("audio_start", "audio_stream"):
+                # Retained clients may send these events; supported engines use complete audio.
+                continue
             elif msg_type == "audio_complete":
                 # Process complete audio data in non-streaming mode
                 frame_id = message.get("id")
@@ -7928,7 +7649,10 @@ async def asr_websocket_endpoint(websocket: WebSocket):
                         # Load settings
                         settings = await load_settings()
                         asr_settings = settings.get('asrSettings', {})
-                        asr_engine = asr_settings.get('engine', 'openai')
+                        asr_engine = asr_settings.get('engine', 'sherpa')
+                        if asr_engine not in ("sherpa", "openai"):
+                            await websocket.send_json({"type": "error", "id": frame_id, "message": "Unsupported speech engine. Select a supported engine in speech recognition settings."})
+                            continue
                         
                         result = ""
                         
@@ -7953,28 +7677,6 @@ async def asr_websocket_endpoint(websocket: WebSocket):
                                 "text": result,
                                 "is_final": True
                             })
-                        elif asr_engine == "funasr":
-                            # FunASR
-                            print("Using FunASR engine")
-                            funasr_mode = asr_settings.get('funasr_mode', 'offline')
-                            if funasr_mode == "offline":
-                                result = await funasr_recognize(audio_bytes, asr_settings,websocket,frame_id)
-                            else:
-                                # Ensure the connection is valid
-                                if not funasr_websocket:
-                                    continue
-                                
-                                # 4. Send end signal
-                                end_config = {
-                                    "is_speaking": False  # Only the necessary end marker is required
-                                }
-                                try:
-                                    await funasr_websocket.send(json.dumps(end_config))
-                                    print("Sent end signal")
-                                except websockets.exceptions.ConnectionClosed:
-                                    print("FunASR connection closed; cannot send end signal")
-                            funasr_websocket = None
-
                         elif asr_engine == "sherpa":
                             from py.sherpa_asr import sherpa_recognize
                             # Handle Sherpa
@@ -7997,9 +7699,6 @@ async def asr_websocket_endpoint(websocket: WebSocket):
             del audio_buffer[connection_id]
         if websocket in asr_connections:
             asr_connections.remove(websocket)
-        # Ensure the FunASR connection closes
-        if funasr_websocket:
-            await funasr_websocket.close()
 
 @app.post("/asr")
 async def asr_transcription(
@@ -8029,7 +7728,7 @@ async def asr_transcription(
         # 3. Load settings
         current_settings = await load_settings()
         asr_settings = current_settings.get('asrSettings', {})
-        asr_engine = asr_settings.get('engine', 'openai')
+        asr_engine = asr_settings.get('engine', 'sherpa')
         
         result = ""
         
@@ -8066,14 +7765,6 @@ async def asr_transcription(
                 model=asr_settings.get('model', 'whisper-1'),
             )
             result = response.text
-            
-        # ==========================================
-        # ASR engine: FunASR
-        # ==========================================
-        elif asr_engine == "funasr":
-            print("Using FunASR engine (offline mode)")
-            # funasr_recognize_offline handles its own performance
-            result = await funasr_recognize_offline(audio_bytes, asr_settings)
             
         # ==========================================
         # ASR engine: local Sherpa
@@ -8118,154 +7809,6 @@ async def asr_transcription(
                 "text": ""
             }
         )
-
-async def funasr_recognize_offline(audio_data: bytes, funasr_settings: dict) -> str:
-    """
-    Offline FunASR recognition for the HTTP endpoint.
-    """
-    try:
-        # Get FunASR server address
-        funasr_url = funasr_settings.get('funasr_ws_url', 'ws://localhost:10095')
-        hotwords = funasr_settings.get('hotwords', '')
-        if not funasr_url.startswith('ws://') and not funasr_url.startswith('wss://'):
-            funasr_url = f"ws://{funasr_url}"
-        
-        # Connect to FunASR server
-        async with websockets.connect(funasr_url) as websocket:
-            print(f"Connected to FunASR server: {funasr_url}")
-            
-            # 1. Send initial configuration in offline mode
-            init_config = {
-                "chunk_size": [5, 10, 5],
-                "wav_name": "http_client",
-                "is_speaking": True,
-                "chunk_interval": 10,
-                "mode": "offline",  # Force offline mode
-                "hotwords": hotwords_to_json(hotwords),
-                "use_itn": True
-            }
-            
-            await websocket.send(json.dumps(init_config))
-            print("Sent init config for offline mode")
-            
-            # 2. Convert audio to PCM16
-            pcm_data = convert_audio_to_pcm16(audio_data)
-            print(f"PCM data length: {len(pcm_data)} bytes")
-            
-            # 3. Send audio in chunks
-            chunk_size = 960  # 30 ms of audio
-            total_sent = 0
-            
-            while total_sent < len(pcm_data):
-                chunk_end = min(total_sent + chunk_size, len(pcm_data))
-                chunk = pcm_data[total_sent:chunk_end]
-                await websocket.send(chunk)
-                total_sent = chunk_end
-            
-            print(f"Sent all audio data: {total_sent} bytes")
-            
-            # 4. Send end signal
-            end_config = {
-                "is_speaking": False,
-            }
-            await websocket.send(json.dumps(end_config))
-            print("Sent end signal")
-            
-            # 5. Wait for recognition results
-            result_text = ""
-            timeout_count = 0
-            max_timeout = 300  # Maximum wait counter for the HTTP endpoint
-            
-            while timeout_count < max_timeout:
-                try:
-                    response = await asyncio.wait_for(websocket.recv(), timeout=0.1)
-                    
-                    try:
-                        json_response = json.loads(response)
-                        print(f"Received response: {json_response}")
-                        
-                        if 'text' in json_response:
-                            text = json_response['text']
-                            if text and text.strip():
-                                result_text += text
-                                print(f"Got text: {text}")
-                            
-                            # Check whether the result is final
-                            if json_response.get('is_final', False):
-                                print("Got final result")
-                                break
-                                
-                    except json.JSONDecodeError:
-                        # Ignore non-JSON responses
-                        pass
-                        
-                except asyncio.TimeoutError:
-                    timeout_count += 1
-                    continue
-                except websockets.exceptions.ConnectionClosed:
-                    print("WebSocket connection closed")
-                    break
-            
-            if not result_text:
-                print("No recognition result received")
-                return ""
-            
-            return result_text.strip()
-            
-    except Exception as e:
-        print(f"FunASR offline recognition error: {e}")
-        return f"FunASR recognition error: {str(e)}"
-
-
-async def handle_funasr_response(funasr_websocket, 
-                               client_websocket: WebSocket):
-    """
-    Handle FunASR responses and forward results to the client.
-    """
-    try:
-        async for message in funasr_websocket:
-            try:
-                if funasr_websocket:
-                    # FunASR may return JSON or binary data
-                    if isinstance(message, bytes):
-                        message = message.decode('utf-8')
-                    
-                    data = json.loads(message)
-                    print(f"FunASR response: {data}")
-                    # Parse the FunASR response
-                    if "text" in data:  # Ordinary recognition result
-                        if data.get('mode', '') == "2pass-online":
-                            await client_websocket.send_json({
-                                "type": "transcription",
-                                "text": data["text"],
-                                "is_final": False
-                            })
-                        else:
-                            await client_websocket.send_json({
-                                "type": "transcription",
-                                "text": data["text"],
-                                "is_final": True
-                            })
-                    elif "mode" in data:  # Initialization response
-                        print(f"FunASR initialized: {data}")
-                    else:
-                        print(f"Unknown FunASR response: {data}")
-                else:
-                    # On connection closure, send an error and end the task
-            
-                    break
-            except json.JSONDecodeError:
-                print(f"FunASR sent non-JSON data: {message[:100]}...")
-            except Exception as e:
-                print(f"Error processing FunASR response: {e}")
-                break
-
-    except websockets.exceptions.ConnectionClosed:
-        print("FunASR connection closed")
-    except Exception as e:
-        print(f"FunASR handler error: {e}")
-    finally:
-        await funasr_websocket.close()
 
 class TTSConnectionManager:
     def __init__(self):

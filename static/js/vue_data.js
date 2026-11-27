@@ -621,13 +621,10 @@ let vue_data = {
       model: "",
       base_url: "",
       api_key: "",
-      funasr_ws_url: "ws://127.0.0.1:10095",
-      funasr_mode: "offline",
       interactionMethod: "auto",
       hotkey : "Alt",
       wakeWord: "companion",
       endWord: "end conversation",
-      hotwords: "companion 80\nend conversation 80",
     },
     supportedLanguages: [
       { code: 'en-US', name: 'English' },

@@ -9103,7 +9103,7 @@ handleCreateSlackSeparator(val) {
     }
 
     // ==========================================
-    // Branch B: other binary-stream ASR modes (Sherpa/FunASR/OpenAI)
+    // Branch B: other binary-stream ASR modes (Sherpa/OpenAI)
     // ==========================================
     this.audioChunks = []; // Reset audio chunk buffer
 
