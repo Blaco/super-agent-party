@@ -1,29 +1,30 @@
 version: '3'
 
 services:
-  # 后端服务 (保持不变，不对外暴露端口，只暴露给 gateway)
+  # Build the backend from this checkout; expose it only to the gateway
   backend:
-    image: ailm32442/super-agent-party:latest
+    build: .
+    image: agent-creation:local
     container_name: sap-backend
     restart: unless-stopped
     volumes:
       - ./super-agent-data:/app/data
-    # 去掉了 ports 映射，因为我们要通过 gateway 访问
+    # No host port mapping; access the backend through the gateway
 
-  # 前端网关服务
+  # Inherited upstream authentication gateway (Docker Hub)
   gateway:
     image: ailm32442/nginx-for-sap:latest
     container_name: sap-gateway
     restart: unless-stopped
     ports:
-      - "3456:3456"  # 对外暴露的端口
+      - "127.0.0.1:3456:3456"  # Bind the gateway to loopback by default
     environment:
       - JWT_SECRET=ChangeThisToARandomString123!
       - INIT_USER=root
       - INIT_PASS=pass
-      # 如果忘记密码，将下面设置为 true 重启容器即可重置为 root/pass，重置完记得改回 false 或删除
+      # To reset forgotten credentials to the initial values, set true and restart; then restore false.
       - FORCE_RESET=false 
     volumes:
-      - ./gateway-data:/data # 持久化保存密码修改后的状态
+      - ./gateway-data:/data # Persist the authentication data
     depends_on:
       - backend

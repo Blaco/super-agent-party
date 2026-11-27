@@ -243,6 +243,28 @@ class EnglishDelegationModules(unittest.TestCase):
         self.assertIn("When you finish a task, update the project task list", server)
         self.assertIn("Current project tasks", server)
 
+    def test_docker_deployment_uses_fork_source_without_regional_registry(self):
+        data = (ROOT / "static/js/vue_data.js").read_text(encoding="utf-8")
+        renderer = (ROOT / "static/js/renderer.js").read_text(encoding="utf-8")
+        html = (ROOT / "static/index.html").read_text(encoding="utf-8")
+        locale = (ROOT / "static/js/locales/en-US.js").read_text(encoding="utf-8")
+        compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+        dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/docker-publish.yml").read_text(encoding="utf-8")
+        self.assertIn("git clone --branch agent-creation https://github.com/Blaco/super-agent-party.git", data)
+        self.assertIn("docker build -t agent-creation:local .", data)
+        self.assertIn("return this.dockerExamples;", renderer)
+        self.assertIn("return this.dockerExamples2;", renderer)
+        self.assertNotIn("dockerRegistry", data + renderer + html)
+        self.assertNotIn("dockerChina", locale + html)
+        self.assertFalse((ROOT / "docker-compose-acr.yml").exists())
+        self.assertIn("build: .", compose)
+        self.assertIn("127.0.0.1:3456:3456", compose)
+        self.assertIn("push: false", workflow)
+        self.assertNotIn("docker/login-action", workflow)
+        self.assertNotIn("aliyuncs.com", data + workflow + compose)
+        self.assertIsNone(HAN.search(dockerfile + compose))
+
     def test_main_task_completion_reminder(self):
         source = (ROOT / "server.py").read_text(encoding="utf-8")
         self.assertIn(

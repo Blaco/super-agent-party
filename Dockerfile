@@ -1,44 +1,44 @@
 FROM python:3.12-slim
 
-# 1. 安装系统依赖和 Node.js (包含 npm)
+# 1. Install system dependencies and Node.js (including npm)
 RUN apt-get update && \
-    # 安装基础工具包和 CA 证书（curl https 时需要）
+    # Install basic tools and CA certificates for HTTPS requests
     apt-get install -y gcc curl git ca-certificates && \
-    # 获取 NodeSource 的 Node 20.x 安装脚本并执行
+    # Fetch and run the NodeSource Node 20.x setup script
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    # 安装 nodejs (apt 安装 nodejs 会自动包含 npm)
+    # Install Node.js and npm
     apt-get install -y nodejs && \
-    # 清理 APT 缓存，减小镜像体积
+    # Clear APT caches to reduce image size
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 全局安装 acpx（这样任何地方都能直接用）
+# Install acpx globally
 RUN npm install -g acpx@latest
 
 WORKDIR /app
 
-# 2. 先只复制依赖文件 (利用缓存)
+# 2. Copy dependency files first to use cached layers
 COPY pyproject.toml uv.lock ./
 
-# 3. 安装 Python 依赖
+# 3. Install Python dependencies
 RUN pip install uv && \
     uv venv && \
     uv sync
 
-# 4. 最后再复制源代码 (这样改代码不会触发重新安装依赖)
+# 4. Copy source after dependencies to avoid unnecessary reinstalls
 COPY . .
 
-# 5. 拉取安全词表（默认不启用，仅 Steam 发布时需要）
+# 5. Fetch the optional safety word list (disabled by default; intended for Steam releases)
 ARG FETCH_SAFETY_WORDS=false
 RUN if [ "$FETCH_SAFETY_WORDS" = "true" ]; then python scripts/fetch_safety_words.py; fi
 
-# 6. 设置权限和目录
+# 6. Set directory permissions
 RUN mkdir -p uploaded_files && \
     chmod 755 uploaded_files
 
 EXPOSE 3456
 
-# 6. 配置环境变量
-# 移除 ELECTRON_NODE_EXEC，增加 IS_DOCKER=1 让 Python 后端明确知道自己在哪
+# 6. Configure environment variables
+# Use IS_DOCKER=1 instead of ELECTRON_NODE_EXEC to identify the container environment
 ENV HOST=0.0.0.0 \
     PORT=3456 \
     PYTHONUNBUFFERED=1 \

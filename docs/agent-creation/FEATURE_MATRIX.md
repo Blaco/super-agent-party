@@ -43,3 +43,8 @@ The provider adapters for Anthropic, Gemini and OpenAI Responses, knowledge retr
 ## Avatar and speech localization — 2026-11-26
 
 THA rendering, VRM, native MOSS voice cloning and model selection remain KEEP. THA HTML/JS and backend engine localized; VRM locale fallback fixed without changing its renderer. No permission, model asset or speech provider migration. Windows avatar and speech testing remains pending.
+
+
+## Optional Docker deployment — 2026-11-26
+
+Docker runtime and CLI sandbox remain KEEP; deployment instructions remain optional. Regional Aliyun registry selector and compose file removed, inherited registry publication disabled. Source-built fork examples replace upstream backend binaries; optional inherited global gateway remains until separately validated. No image release or Docker runtime test performed.

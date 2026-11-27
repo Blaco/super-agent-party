@@ -1857,31 +1857,16 @@ let vue_data = {
     currentUploadType: 'file',
     selectedCodeLang: 'python',
     previewClickHandler: null,
-    dockerExamples: `docker pull ailm32442/super-agent-party:latest
-docker run -d \\
-  -p 3456:3456 \\
-  -v ./super-agent-data:/app/data \\
-  ailm32442/super-agent-party:latest
-`,
-    dockerExamples2: `git clone https://github.com/heshengtao/super-agent-party.git
+    dockerExamples: `git clone --branch agent-creation https://github.com/Blaco/super-agent-party.git
 cd super-agent-party
-docker-compose up -d
-`,
-    dockerRegistry: 'international', // 默认国际源，用户可切换
-    
-    // 镜像地址配置
-    dockerImages: {
-      international: {
-        backend: 'ailm32442/super-agent-party:latest',
-        gateway: 'ailm32442/nginx-for-sap:latest',
-        composeFile: 'docker-compose.yml'
-      },
-      china: {
-        backend: 'crpi-9mgnqijkd7wc42x2.cn-shenzhen.personal.cr.aliyuncs.com/ailm32442/super-agent-party:latest',
-        gateway: 'crpi-9mgnqijkd7wc42x2.cn-shenzhen.personal.cr.aliyuncs.com/ailm32442/nginx-for-sap:latest',
-        composeFile: 'docker-compose-acr.yml'
-      }
-    },
+docker build -t agent-creation:local .
+docker run -d \\
+  -p 127.0.0.1:3456:3456 \\
+  -v ./super-agent-data:/app/data \\
+  agent-creation:local`,
+    dockerExamples2: `git clone --branch agent-creation https://github.com/Blaco/super-agent-party.git
+cd super-agent-party
+docker compose up --build -d`,
     browserEmbedCodeExamples: `<div id="super-agent-party">
   <iframe 
     src="${backendURL}/chat.html" 
