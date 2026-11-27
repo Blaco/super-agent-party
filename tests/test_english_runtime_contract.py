@@ -37,6 +37,159 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         with self.assertNoLogs("app", level="INFO"):
             self.assertEqual(trim(messages[:2]), messages[:2])
 
+    def test_opt_in_local_text_history_budget_and_boundaries(self):
+        import copy
+        import runpy
+        h = runpy.run_path(str(ROOT / "py/local_context.py"))
+        parse = h["local_context_window"]
+        capture = h["capture_text_history"]
+        expand = h["expand_local_text_history"]
+        endpoint = h["direct_local_endpoint"]
+        self.assertEqual(parse(None), 0)
+        self.assertEqual(parse("invalid"), 0)
+        self.assertEqual(parse("32768"), 32768)
+        self.assertEqual(parse("9999999"), 0)
+        self.assertEqual(endpoint("http://127.0.0.1:5000/v1/"), "http://127.0.0.1:5000/v1")
+        for url in ("https://api.openai.com/v1", "http://localhost:5000/v1",
+                    "http://127.0.0.1.example.org:5000/v1",
+                    "http://127.0.0.1:5000/v1?x=1", "http://user@127.0.0.1:5000/v1"):
+            self.assertIsNone(endpoint(url), url)
+
+        messages = [{"role": "system", "content": "persona"}]
+        messages += [{"role": "user" if i % 2 == 0 else "assistant",
+                      "content": "message " + str(i)} for i in range(31)]
+        original = copy.deepcopy(messages)
+        prepared = copy.deepcopy(messages[:1] + messages[-12:])
+        prepared[0]["content"] += " and lore"
+        prepared[-1]["content"] += " and memories"
+        snapshot = capture(messages, 32768)
+        expanded = expand(prepared, snapshot, 8192)
+        self.assertEqual(len(expanded), len(messages))
+        self.assertEqual(expanded[0], prepared[0])
+        self.assertEqual(expanded[-1], prepared[-1])
+        self.assertEqual(expanded[1:-1], messages[1:-1])
+        self.assertEqual(messages, original)
+        self.assertEqual(len(prepared), 13)
+        self.assertIs(expand(prepared, snapshot, 32000), prepared)
+        self.assertIs(expand(prepared, None, 8192), prepared)
+        altered = copy.deepcopy(prepared)
+        altered[1]["content"] = "different history"
+        self.assertIs(expand(altered, snapshot, 8192), altered)
+        malformed = copy.deepcopy(messages)
+        malformed[3]["content"] = [{"type": "image_url"}]
+        self.assertIsNone(capture(malformed, 32768))
+        malformed = copy.deepcopy(messages)
+        malformed[4]["tool_calls"] = [{"id": "call"}]
+        self.assertIsNone(capture(malformed, 32768))
+        long_dialogue = copy.deepcopy(messages)
+        for entry in long_dialogue[1:-12]:
+            entry["content"] += "x" * 3000
+        partial = expand(prepared, capture(long_dialogue, 16384), 4096)
+        self.assertGreater(len(partial), len(prepared))
+        self.assertLess(len(partial), len(messages))
+        self.assertEqual(partial[1]["role"], "user")
+        self.assertEqual(partial[-12:], prepared[-12:])
+        self.assertEqual(partial[1:-12], long_dialogue[-len(partial)+1:-12])
+
+    def test_local_context_completion_routing(self):
+        import asyncio
+        import runpy
+        from types import SimpleNamespace
+
+        h = runpy.run_path(str(ROOT / "py/local_context.py"))
+        source = (ROOT / "server.py").read_text(encoding="utf-8")
+        tree = ast.parse(source, filename="server.py")
+        helper = next(node for node in tree.body if isinstance(node, ast.AsyncFunctionDef)
+                      and node.name == "_local_text_completion")
+        calls = []
+        transports = []
+
+        class FakeTransport:
+            def __init__(self, **kwargs):
+                self.options = kwargs
+                self.closed = False
+                transports.append(self)
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                self.closed = True
+
+        class FakeClient:
+            def __init__(self, api_key="test", base_url="http://127.0.0.1:5000/v1",
+                         http_client=None):
+                self.api_key = api_key
+                self.base_url = base_url
+                self.transport = http_client
+                self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                pass
+
+            async def create(self, **kwargs):
+                calls.append((self, kwargs))
+                if kwargs.get("stream"):
+                    async def chunks():
+                        yield "chunk"
+                    return chunks()
+                return "completion"
+
+        import logging
+        scope = dict(h, AsyncOpenAI=FakeClient,
+                     httpx=SimpleNamespace(AsyncClient=FakeTransport, Timeout=lambda *a, **k: None),
+                     logging=logging, _wrap_client_chat_with_retry=lambda client: None)
+        exec(compile(ast.Module(body=[helper], type_ignores=[]), "server.py", "exec"), scope)
+        complete = scope["_local_text_completion"]
+        messages = [{"role": "user" if i % 2 == 0 else "assistant",
+                     "content": str(i)} for i in range(31)]
+        snapshot = h["capture_text_history"](messages, 32768)
+        prepared = messages[-12:]
+        cfg = {"base_url": "http://127.0.0.1:5000/v1", "max_tokens": 8192}
+        request = SimpleNamespace(max_tokens=None, fileLinks=None, asyncToolsID=None,
+                                  is_app_bot=False, is_sub_agent=False)
+
+        async def exercise():
+            original = FakeClient()
+            result = await complete(original, request, cfg, snapshot, [], [],
+                                    False, False, False, messages=prepared, stream=False)
+            self.assertEqual(result, "completion")
+            self.assertIsNot(calls[-1][0], original)
+            self.assertEqual(calls[-1][1]["messages"], messages)
+            self.assertEqual(calls[-1][1]["max_tokens"], 8192)
+            self.assertFalse(transports[-1].options["trust_env"])
+            self.assertFalse(transports[-1].options["follow_redirects"])
+            self.assertTrue(transports[-1].closed)
+
+            # Streaming keeps the direct transport open through consumption.
+            stream = await complete(original, request, cfg, snapshot, [], [],
+                                    False, False, False, messages=prepared, stream=True)
+            self.assertEqual([chunk async for chunk in stream], ["chunk"])
+            self.assertTrue(transports[-1].closed)
+            self.assertEqual(calls[-1][1]["messages"], messages)
+
+            # Remote endpoint, missing opt-in, active tools and mismatched client
+            # all keep the ordinary request and its original transport.
+            for active, settings, captured, schemas in (
+                (original, {"base_url": "https://example.com/v1"}, snapshot, []),
+                (original, cfg, None, []),
+                (original, cfg, snapshot, [{"type": "function"}]),
+                (FakeClient(base_url="https://example.com/v1"), cfg, snapshot, []),
+            ):
+                count = len(transports)
+                await complete(active, request, settings, captured, schemas, [],
+                               False, False, False, messages=prepared, stream=False,
+                               tools=schemas)
+                self.assertIs(calls[-1][0], active)
+                self.assertIs(calls[-1][1]["messages"], prepared)
+                self.assertEqual(calls[-1][1]["tools"], schemas)
+                self.assertEqual(len(transports), count)
+
+        asyncio.run(exercise())
+
     def test_backend_locale(self):
         data = json.loads((ROOT / "config/locales.json").read_text(encoding="utf-8"))
         self.assertEqual(set(data), {"en-US"})

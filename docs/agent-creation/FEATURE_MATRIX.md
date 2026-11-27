@@ -65,3 +65,7 @@ All 28 formerly self-closing Element Plus switches in the main desktop template 
 ## Conversation context visibility — 2026-11-26
 
 Chat streaming and persistence remain KEEP. The inherited 12-entry request cap is a confirmed source limitation, not an intentional final character-memory design. Counts-only diagnostics are added; provider-specific budget management, tool-chain continuity, history authorization and local inference testing remain outstanding. No changes to storage or history sent to providers.
+
+## Initial local context expansion — 2026-11-26
+
+Chat remains KEEP. Opt-in local text history expansion now works at the initial main-model request boundary when the literal loopback endpoint, message shape and budget checks pass. No changes to saved conversations, character cards or cloud request scope. Existing tool/media/auxiliary paths retain their old behavior pending further work. Full CI and actual Windows/TabbyAPI tests pending.

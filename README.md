@@ -35,6 +35,17 @@ npm start
 
 `npm test` is a static smoke check; it does not validate chat, sound, GPU inference, agents, or first launch. If `npm ci` fails while downloading Electron, retry after confirming connectivity to the official Electron GitHub release distribution. Do not redirect dependency installs to unverified mirrors.
 
+### Experimental local context window
+
+For direct local text chat only, opt in after verifying your TabbyAPI model's actual loaded context length. For example, if it is configured for 32,768 tokens, set the environment variable before starting SAP from the same PowerShell session:
+
+```powershell
+$env:SAP_LOCAL_CONTEXT_WINDOW = "32768"
+npm start
+```
+
+The backend defaults to the inherited request window when the variable is absent or invalid. This initial implementation restores older plain-text turns only at the initial main-model call, using an explicit `http://127.0.0.1:<port>/v1` endpoint with no proxy or redirects for the expanded request. It reserves output and prompt headroom using a conservative UTF-8 byte estimate, not an exact tokenizer. Tools, media, separate reasoning, search, named agents and configured round compression keep their existing behavior. The saved chat, auxiliary calls and cloud request window are unchanged. Stop SAP and remove the variable to disable the experiment. No automatic history summarization or cloud authorization has been implemented by this setting.
+
 ### Dependency lock maintenance
 
 The [Python dependency lock candidate workflow](.github/workflows/resolve-python-lock.yml) resolves the inherited Python lock against the current manifest, checks removed SDKs and package source metadata, and uploads a candidate lockfile and patch for review. It does not commit the result or publish packages. The current lockfile was resolved and reviewed using GitHub Actions run 45925158544; rerun the workflow when Python dependencies change. To reproduce locally using Python 3.12 and uv:

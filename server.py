@@ -475,6 +475,8 @@ from py.GeminiAsOpenAI import AsyncGeminiAsOpenAI
 from py.ResponsesAsOpenAI import AsyncResponsesAsOpenAI
 from py.get_setting import EXT_DIR, IS_DOCKER, SKILLS_DIR, _copy_default_skills, convert_to_opus_simple, load_covs, load_settings, save_covs, save_single_cov, save_settings,clean_temp_files_task,base_path,configure_host_port,UPLOAD_FILES_DIR,AGENT_DIR,MEMORY_CACHE_DIR,KB_DIR,DEFAULT_VRM_DIR,DEFAULT_THA_DIR,THA_USER_MODELS_DIR,DEFAULT_SOULX_IMAGES_DIR,SOULX_IMAGES_DIR,USER_DATA_DIR,LOG_DIR,TOOL_TEMP_DIR,COVS_PATH,DATABASE_PATH
 from py.llm_tool import get_image_base64,get_image_media_type
+from py.local_context import (capture_text_history, direct_local_endpoint,
+                              expand_local_text_history, local_context_window)
 timetamp = time.time()
 log_path = os.path.join(LOG_DIR, f"backend_{timetamp}.log")
 
@@ -3209,9 +3211,63 @@ async def heartbeat_wrapper(gen, interval=90):
         with suppress(asyncio.CancelledError):
             await gen_task
 
+async def _local_text_completion(client, request, settings, snapshot, assembled_tools, images,
+                                 enable_thinking, enable_deep_research, enable_web_search,
+                                 **kwargs):
+    """Expand only the initial main-model request, with a direct local transport."""
+    messages = kwargs["messages"]
+    endpoint = direct_local_endpoint(settings.get("base_url"))
+    if (not snapshot or type(client) is not AsyncOpenAI or not endpoint
+            or endpoint != direct_local_endpoint(client.base_url)
+            or assembled_tools or kwargs.get("tools") or images or request.fileLinks or request.asyncToolsID
+            or request.is_app_bot or request.is_sub_agent
+            or settings.get("max_rounds") or settings.get("enableOmniTTS")
+            or settings.get("reasoner", {}).get("enabled") or enable_thinking
+            or settings.get("tools", {}).get("deepsearch", {}).get("enabled") or enable_deep_research
+            or settings.get("webSearch", {}).get("enabled") or enable_web_search
+            or settings.get("CLISettings", {}).get("enabled")
+            or set(kwargs.get("extra_body") or {}) - {
+                "top_k", "min_p", "repetition_penalty", "typical_p",
+                "enable_thinking", "chat_template_kwargs"
+            }):
+        return await client.chat.completions.create(**kwargs)
+
+    output_tokens = request.max_tokens or settings.get("max_tokens")
+    expanded = expand_local_text_history(messages, snapshot, output_tokens)
+    if expanded is messages:
+        return await client.chat.completions.create(**kwargs)
+
+    logging.getLogger("app").info("[LocalContext] restored=%d window=%d",
+                                  len(expanded) - len(messages), snapshot[0])
+    kwargs["messages"] = expanded
+    if "max_completion_tokens" not in kwargs and "max_tokens" not in kwargs:
+        kwargs["max_tokens"] = output_tokens
+
+    # The enlarged history must never use an environment/manual proxy or follow redirects.
+    # A separate client is scoped to this completion; the ordinary client is unchanged.
+    async def local_stream():
+        async with httpx.AsyncClient(trust_env=False, follow_redirects=False,
+                                     timeout=httpx.Timeout(60.0, connect=10.0)) as transport:
+            async with AsyncOpenAI(api_key=client.api_key, base_url=endpoint,
+                                   http_client=transport) as direct:
+                _wrap_client_chat_with_retry(direct)
+                response = await direct.chat.completions.create(**kwargs)
+                async for chunk in response:
+                    yield chunk
+
+    if kwargs.get("stream"):
+        return local_stream()
+    async with httpx.AsyncClient(trust_env=False, follow_redirects=False,
+                                 timeout=httpx.Timeout(60.0, connect=10.0)) as transport:
+        async with AsyncOpenAI(api_key=client.api_key, base_url=endpoint,
+                               http_client=transport) as direct:
+            _wrap_client_chat_with_retry(direct)
+            return await direct.chat.completions.create(**kwargs)
+
+
 async def generate_stream_response(client, reasoner_client, request: ChatRequest, settings: dict, 
                                    fastapi_base_url, enable_thinking, enable_deep_research, 
-                                   enable_web_search, async_tools_id):
+                                   enable_web_search, async_tools_id, local_history=None):
     try:
         from mem0 import Memory
         global mcp_client_list, HA_client, ChromeMCP_client, sql_client
@@ -4408,7 +4464,9 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 if tools:
                     extra['tools'] = tools
 
-                response = await client.chat.completions.create(
+                response = await _local_text_completion(
+                    client, request, settings, local_history, tools, images,
+                    enable_thinking, enable_deep_research, enable_web_search,
                     model=model,
                     messages=msg,  # Include image information in messages
                     stream=True,
@@ -5711,7 +5769,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
             content={"error": str(e)},
         )
 
-async def generate_complete_response(client,reasoner_client, request: ChatRequest, settings: dict,fastapi_base_url,enable_thinking,enable_deep_research,enable_web_search):
+async def generate_complete_response(client,reasoner_client, request: ChatRequest, settings: dict,fastapi_base_url,enable_thinking,enable_deep_research,enable_web_search,local_history=None):
     from mem0 import Memory
     global mcp_client_list,HA_client,ChromeMCP_client,sql_client
     DRS_STAGE = 1 # 1: Requirement clarification; 2: Tool use; 3: Result generation
@@ -6339,7 +6397,9 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 **extra
             )
         else:
-            response = await client.chat.completions.create(
+            response = await _local_text_completion(
+                client, request, settings, local_history, tools, images,
+                enable_thinking, enable_deep_research, enable_web_search,
                 model=model,
                 messages=msg,  # Include image information in messages
                 temperature=request.temperature or settings['temperature'],
@@ -6972,6 +7032,11 @@ async def chat_endpoint(request: ChatRequest, fastapi_request: Request):
                 content={"error": {"message": "Your input was blocked by the content safety policy.", "type": "content_safety", "code": 403}}
             )
 
+    local_history = None
+    if model == 'super-model' and not request.is_app_bot and not request.is_sub_agent:
+        local_history = capture_text_history(
+            request.messages, local_context_window(os.environ.get("SAP_LOCAL_CONTEXT_WINDOW"))
+        )
     await _apply_group_memory_context(request)
 
     if model == 'super-model':
@@ -7105,7 +7170,7 @@ async def chat_endpoint(request: ChatRequest, fastapi_request: Request):
                 max_goal_iterations = request_settings.get("systemSettings", {}).get("goal_iterations", 30)
 
                 if not goal_mode_active:
-                    return await generate_stream_response(active_client, reasoner_client, request, request_settings, fastapi_base_url, enable_thinking, enable_deep_research, enable_web_search, async_tools_id)
+                    return await generate_stream_response(active_client, reasoner_client, request, request_settings, fastapi_base_url, enable_thinking, enable_deep_research, enable_web_search, async_tools_id, local_history=local_history)
 
                 async def goal_wrapper(iteration_counter):
                     while True:
@@ -7145,7 +7210,7 @@ async def chat_endpoint(request: ChatRequest, fastapi_request: Request):
                         })
 
                 return StreamingResponse(goal_wrapper([0]), media_type="text/event-stream")
-            return await generate_complete_response(active_client, reasoner_client, request, request_settings, fastapi_base_url, enable_thinking, enable_deep_research, enable_web_search)
+            return await generate_complete_response(active_client, reasoner_client, request, request_settings, fastapi_base_url, enable_thinking, enable_deep_research, enable_web_search, local_history=local_history)
         except asyncio.CancelledError:
             print("Client disconnected")
             raise

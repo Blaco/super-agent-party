@@ -242,3 +242,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Conversation context checkpoint
 
 - SAP-NG comparison confirms inherited default and named-group requests are clipped to 12 non-system entries before provider selection. Add content-free truncation diagnostics and regression test without changing current request data. The actual context-window fix is outstanding; plan provider-specific authorized history and budget accounting, complete tool groups and preservation of the latest real user request before increasing limits. No cloud scope change or build requested.
+
+## Experimental local context expansion checkpoint
+
+- Opt-in plain-text initial main-model context restoration implemented at the final request boundary. Actual and configured literal loopback endpoint must match; expanded request uses direct HTTP with no proxy or redirects. Budget includes prepared prompt and reserves output/headroom. Existing 12-entry behavior remains default and applies to cloud, tools, media and auxiliary paths. README documents the developer environment variable. Unit regression coverage added; live inference and full CI pending. Next: complete tool-chain integrity and provider-specific tokenizer/permissions before general context expansion or summaries.
