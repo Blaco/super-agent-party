@@ -9776,12 +9776,12 @@ hr.footnotes-sep {
 .ptt-seamless-wrapper {
   width: 100%;
   height: 100%;
-  min-height: 48px; /* 保持和输入框差不多的高度 */
+  min-height: 48px; /* Keep height similar to input */
   display: flex;
   flex-direction: column;
 }
 
-/* 2. 点击区域：完全透明，无边框，融为一体 */
+/* 2. Click area: fully transparent, borderless and integrated */
 .ptt-seamless-area {
   flex: 1;
   width: 100%;
@@ -9791,18 +9791,18 @@ hr.footnotes-sep {
   flex-direction: column;
   cursor: pointer;
   
-  /* 字体样式 */
+  /* Font styles */
   font-size: 15px;
   font-weight: 500;
-  color: var(--el-text-color-secondary); /* 默认灰色，像 placeholder */
+  color: var(--el-text-color-secondary); /* Gray by default, like placeholder */
   letter-spacing: 1px;
   
-  /* 关键：去背景、去边框 */
+  /* Key: remove background and border */
   background: transparent;
   border: none;
-  border-radius: inherit; /* 跟随父级圆角 */
+  border-radius: inherit; /* Inherit parent corner radius */
   
-  /* 防止触摸时选中文本 */
+  /* Prevent text selection on touch */
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
@@ -9810,15 +9810,15 @@ hr.footnotes-sep {
   transition: all 0.2s ease;
 }
 
-/* 3. 按下状态：背景微变，文字变色 */
+/* 3. Pressed state: slight background and text color changes */
 .ptt-seamless-area.is-recording {
-  /* 背景变成淡淡的主色调，而不是深色按钮 */
+  /* Use a subtle primary-color background rather than a dark button */
   background-color: var(--el-color-primary-light-9); 
   color: var(--el-color-primary);
   font-weight: 600;
 }
 
-/* 4. (可选) 简单的声波动画条，增加录音时的动感 */
+/* 4. Optional: simple waveform animation bars for recording feedback */
 .recording-wave {
   display: flex;
   align-items: center;
@@ -9847,19 +9847,19 @@ hr.footnotes-sep {
   50% { transform: scaleY(1.0); opacity: 1; }
 }
 
-/* 适配暗黑模式 */
+/* Adapt to dark mode */
 [data-theme="dark"] .ptt-seamless-area.is-recording {
   background-color: rgba(var(--el-color-primary-rgb), 0.15);
 }
 
-/* 桌面端全局录音悬浮层 */
+/* Desktop global recording overlay */
 .desktop-recording-overlay {
   position: fixed;
-  top: 40%; /* 浮动在屏幕中间偏上一点 */
+  top: 40%; /* Float slightly above screen center */
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 9999;
-  pointer-events: none; /* 防止遮挡鼠标点击 */
+  pointer-events: none; /* Prevent blocking mouse clicks */
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -9879,7 +9879,7 @@ hr.footnotes-sep {
 .desktop-recording-content .mic-icon {
   font-size: 40px;
   margin-bottom: 15px;
-  color: var(--el-primary-color); /* 主题色 */
+  color: var(--el-primary-color); /* Theme color */
 }
 
 .desktop-recording-content .ptt-text {
@@ -9888,7 +9888,7 @@ hr.footnotes-sep {
   letter-spacing: 1px;
 }
 
-/* 确保波纹动画在桌面提示框里正常显示 (如果你已经全局定义了，这段可以省略) */
+/* Ensure ripple animation renders in desktop prompt (omit if already globally defined) */
 .desktop-recording-content .recording-wave {
   display: flex;
   align-items: center;
@@ -9925,10 +9925,10 @@ hr.footnotes-sep {
    Skill Cards: Location Management Footer
    ========================================= */
 
-/* 消除原 provider-card 底部 padding 带来的影响，使底部状态栏贴边 */
+/* Offset original provider-card bottom padding so status bar reaches edge */
 .skill-card {
   padding-bottom: 0 !important; 
-  overflow: hidden; /* 确保底部圆角不会被状态栏破坏 */
+  overflow: hidden; /* Ensure status bar does not break bottom rounded corners */
   display: flex;
   flex-direction: column;
 }
@@ -9951,15 +9951,15 @@ hr.footnotes-sep {
   overflow: hidden;
 }
 
-/* 底部状态管理栏外层 */
+/* Outer bottom status management bar */
 .skill-locations-bar {
   display: flex;
   align-items: stretch;
-  margin: auto -1.25rem 0 -1.25rem; /* 抵消父级 padding，紧贴卡片底部和左右边缘 */
+  margin: auto -1.25rem 0 -1.25rem; /* Offset parent padding to reach card bottom and side edges */
   border-top: 1px solid var(--el-border-color-lighter);
 }
 
-/* 左右两侧的独立面板 */
+/* Independent left and right panels */
 .location-pane {
   flex: 1;
   padding: 10px 14px;
@@ -9970,24 +9970,24 @@ hr.footnotes-sep {
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 当该区域存在内容时，给出极其微弱的成功色混合背景 (完美适配多巴胺/暗色) */
+/* When this area has content, use a very subtle success-color blend for vibrant/dark themes */
 .location-pane.is-active {
   background-color: color-mix(in srgb, var(--el-color-success) 4%, transparent);
 }
 
-/* 禁用状态变灰 */
+/* Gray out disabled state */
 .location-pane.is-disabled {
   opacity: 0.5;
   pointer-events: none;
 }
 
-/* 分割线 */
+/* Divider */
 .pane-divider {
   width: 1px;
   background-color: var(--el-border-color-lighter);
 }
 
-/* 区域标题 (如 Global / Project) */
+/* Section title (e.g. Global / Project) */
 .pane-title {
   font-size: 11px;
   color: var(--el-text-color-secondary);
@@ -9999,15 +9999,15 @@ hr.footnotes-sep {
   gap: 6px;
 }
 
-/* 状态和操作按钮同行 */
+/* Status and action buttons on same row */
 .pane-action {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 24px; /* 固定高度防止按钮导致跳动 */
+  height: 24px; /* Fixed height to prevent button-induced layout shifts */
 }
 
-/* 状态文字指示器 */
+/* Status text indicator */
 .status-indicator {
   font-size: 12px;
   font-weight: 500;
@@ -10019,7 +10019,7 @@ hr.footnotes-sep {
 .status-indicator.pending { color: var(--el-text-color-placeholder); font-weight: 400; }
 .status-indicator.disabled { color: var(--el-color-danger); font-size: 11px; }
 
-/* 专门优化底部操作图标按钮，继承你的无边框风格 */
+/* Optimize bottom action icon buttons using existing borderless style */
 .action-icon-btn {
   margin: 0 !important;
   padding: 4px !important;
@@ -10033,53 +10033,53 @@ hr.footnotes-sep {
   transform: scale(1.1);
 }
 
-/* 1. 整体容器间距调整 */
+/* 1. Adjust overall container spacing */
 .workspace-tree-wrapper {
-    padding: 15px !important; /* 增加外边距 */
+    padding: 15px !important; /* Increase spacing around content */
 }
 
-/* 2. 调整树节点的高度和文字大小 */
+/* 2. Adjust tree node height and text size */
 .large-workspace-tree .el-tree-node__content {
-    height: 40px !important;   /* 增加每一行的高度 (默认通常是 26px) */
-    margin-bottom: 2px;        /* 节点之间留一点缝隙 */
-    border-radius: 6px;        /* 圆角看起来更现代 */
+    height: 40px !important;   /* Increase row height (normally 26px) */
+    margin-bottom: 2px;        /* Leave a small gap between nodes */
+    border-radius: 6px;        /* Rounded corners for modern appearance */
 }
 
-/* 3. 调整自定义节点内部布局 */
+/* 3. Adjust internal layout of custom nodes */
 .workspace-tree-node {
-    font-size: 15px !important; /* 放大文字大小 (从 13px -> 15px) */
+    font-size: 15px !important; /* Increase text size (13px to 15px) */
     display: flex;
     align-items: center;
     width: 100%;
 }
 
-/* 4. 放大图标尺寸 */
+/* 4. Enlarge icons */
 .workspace-tree-node i {
-    font-size: 18px !important; /* 图标放大 (从 14px -> 18px) */
-    margin-right: 10px !important; /* 图标与文字的间距 */
+    font-size: 18px !important; /* Enlarge icon (14px to 18px) */
+    margin-right: 10px !important; /* Gap between icon and text */
     width: 20px;
     text-align: center;
 }
 
-/* 5. 调整节点标签 */
+/* 5. Adjust node labels */
 .workspace-tree-node .node-label {
     gap: 8px !important; 
-    font-weight: 500; /* 稍微加粗文字 */
+    font-weight: 500; /* Slightly bold text */
     color: var(--el-text-color-primary);
 }
 
-/* 6. 调整右侧操作按钮的大小 */
+/* 6. Adjust size of right action buttons */
 .workspace-tree-node .node-actions .el-button {
-    font-size: 16px !important; /* 放大操作图标 */
+    font-size: 16px !important; /* Enlarge action icon */
     padding: 4px 8px;
 }
 
-/* 7. 悬浮状态背景加深（可选） */
+/* 7. Darken background on hover (optional) */
 .large-workspace-tree .el-tree-node__content:hover {
     background-color: var(--el-fill-color-light) !important;
 }
 
-/* 8. 选中状态样式 */
+/* 8. Selected state style */
 .large-workspace-tree .el-tree-node.is-current > .el-tree-node__content {
     background-color: var(--el-color-primary-light-9) !important;
     color: var(--el-color-primary) !important;
@@ -10093,7 +10093,7 @@ hr.footnotes-sep {
 
   &.el-button--primary {
     background-color: rgba(var(--el-color-primary-rgb), 0.1) !important;
-    color: var(--el-color-primary) !important; /* 图标呈颜色，背景浅 */
+    color: var(--el-color-primary) !important; /* Colored icon with light background */
 
     &:hover {
       background-color: rgba(var(--el-color-primary-rgb), 0.2) !important;
@@ -10114,23 +10114,23 @@ hr.footnotes-sep {
   border: 1px solid var(--el-border-color) !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
-  /* 修复尖角：减小向下的偏移和模糊度(例如改为 0 4px 10px)，使其在 8px 的缝隙内能平滑消散 */
+  /* Fix sharp corners: reduce downward offset and blur (e.g. 0 4px 10px) so shadow fades smoothly within 8px gap */
   box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.05), 
               0 4px 10px rgba(0, 0, 0, 0.08) !important;
               
   overflow: hidden; 
 }
 
-/* 胶囊模式专用（或者全局标准 primary 按钮） */
+/* Pill mode only (or global standard primary button) */
 .status-btn.el-button--primary {
-    /* 使用你主题定义的渐变或纯色 */
+    /* Use gradient or solid color defined in theme */
     background: linear-gradient(145deg, var(--el-color-primary), var(--el-color-primary-light-3)) !important;
-    color: #ffffff !important; /* 强制图标反色为白色 */
+    color: #ffffff !important; /* Force inverted icon color to white */
     box-shadow: 0 4px 12px rgba(var(--el-color-primary-rgb), 0.4) !important;
     border: none !important;
 }
 
-/* 胶囊按钮内部图标颜色强制白色 */
+/* Force icon inside pill button to white */
 .status-btn.el-button--primary i {
     color: #ffffff !important;
 }
@@ -10139,25 +10139,25 @@ hr.footnotes-sep {
    Enhanced Media Attachments (Adaptive Ratio)
    ========================================= */
 
-/* 1. 容器：允许内容根据大小自动换行 */
+/* 1. Container: allow content to wrap automatically according to size */
 .user-msg-attachments {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 10px;
-  justify-content: flex-end; /* 用户消息靠右 */
+  justify-content: flex-end; /* User messages aligned right */
 }
 
-/* 助手消息里的附件靠左 */
+/* Attachments in assistant messages aligned left */
 .message.assistant .user-msg-attachments {
   justify-content: flex-start;
 }
 
-/* 2. 基础项重置：取消 54px 固定尺寸 */
+/* 2. Reset base items: remove fixed 54px size */
 .user-msg-attachments .attachment-item-display {
   width: auto !important; 
   height: auto !important;
-  flex: 0 1 auto !important; /* 允许根据内容收缩 */
+  flex: 0 1 auto !important; /* Allow shrinking according to content */
   border-radius: 12px;
   overflow: hidden;
   position: relative;
@@ -10168,20 +10168,20 @@ hr.footnotes-sep {
   transition: transform 0.2s ease;
 }
 
-/* 3. 图片尺寸：适中 */
+/* 3. Image size: moderate */
 .image-item-wrapper {
-  max-width: 90px; /* 图片最大宽度 */
+  max-width: 90px; /* Maximum image width */
   max-height: 90px;
 }
 
-/* 4. 视频尺寸：明显比图片大一些，突出视觉重心 */
+/* 4. Video size: larger than image to emphasize visual focus */
 .video-item-wrapper {
-  max-width: 160px; /* 视频最大宽度 */
+  max-width: 160px; /* Maximum video width */
   max-height: 90px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* 5. 媒体渲染核心：保持原比例 */
+/* 5. Core media rendering: preserve aspect ratio */
 .preview-media-box {
   display: flex;
   align-items: center;
@@ -10195,17 +10195,17 @@ hr.footnotes-sep {
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: 300px; /* 强制最高上限 */
+  max-height: 300px; /* Enforce maximum height */
   display: block;
-  object-fit: contain; /* 确保不被裁切 */
+  object-fit: contain; /* Ensure no cropping */
 }
 
-/* 针对视频的黑色底色，防止比例不匹配时露白 */
+/* Black video background prevents white gaps if aspect ratios differ */
 .video-item-wrapper .preview-media-box {
   background-color: #000;
 }
 
-/* 6. 视频特有修饰：播放标识 */
+/* 6. Video-specific decoration: play indicator */
 .video-indicator {
   position: absolute;
   top: 10px;
@@ -10223,17 +10223,17 @@ hr.footnotes-sep {
   border: 1px solid rgba(255,255,255,0.3);
 }
 
-/* 3. 清除图标可能存在的默认边距 */
+/* 3. Clear default icon margins if present */
 .user-msg-attachments .file-icon {
   color: #ffffff !important;
 }
 
-/* 4. 文字区域：确保宽度 100% 且居中 */
+/* 4. Text area: ensure full width and centering */
 .user-msg-attachments .file-info .file-name {
-  color: #ffffff !important; /* 文字颜色 */
+  color: #ffffff !important; /* Text color */
 }
 
-/* 7. 文件附件 (保持 54px 方块) */
+/* 7. File attachments (retain 54px square) */
 .user-msg-attachments .attachment-item-display .file-item {
   width: 90px !important;
   height: 90px !important;
@@ -10246,7 +10246,7 @@ hr.footnotes-sep {
   padding: 0 !important;
 }
 
-/* 8. 悬停交互 */
+/* 8. Hover interaction */
 .attachment-item-display:hover {
   transform: scale(1.02);
   border-color: var(--el-color-primary) !important;
@@ -10261,7 +10261,7 @@ hr.footnotes-sep {
   margin-bottom: 20px;
   position: relative;
 }
-/* 连接线 */
+/* Connecting line */
 .guide-step:not(:last-child)::after {
   content: '';
   position: absolute;
@@ -10315,7 +10315,7 @@ code {
 
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* 视频建议稍微宽一点 */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Slightly wider columns recommended for video */
   gap: 20px;
   padding-top: 15px;
 }
@@ -10339,13 +10339,13 @@ code {
   display: block;
 }
 
-/* 顶部操作遮罩 */
+/* Top action overlay */
 .video-top-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 40px; /* 只占顶部一小部分 */
+  height: 40px; /* Occupy only a small top portion */
   padding: 8px 10px;
   background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
   display: flex;
@@ -10353,13 +10353,13 @@ code {
   align-items: flex-start;
   opacity: 0;
   transition: opacity 0.3s;
-  pointer-events: none; /* 重要：不干扰视频点击 */
+  pointer-events: none; /* Important: do not interfere with video clicks */
 }
 
-/* 鼠标悬浮在视频项时显示顶部按钮 */
+/* Show top buttons when hovering over video item */
 .video-item:hover .video-top-overlay {
   opacity: 1;
-  pointer-events: auto; /* 悬浮时允许点击按钮 */
+  pointer-events: auto; /* Allow button clicks on hover */
 }
 
 .video-quick-actions {
@@ -10386,13 +10386,13 @@ code {
   white-space: nowrap;
 }
 
-/* 隐藏 Checkbox 文字 */
+/* Hide checkbox text */
 :deep(.checkbox-no-label .el-checkbox__label) {
   display: none;
 }
 
 
-/* 1. 主容器：全局居中排版 */
+/* 1. Main container: globally centered layout */
 .dashboard-container {
   display: flex;
   flex-direction: column;
@@ -10409,30 +10409,30 @@ code {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 2. 核心区域宽度限制 */
+/* 2. Core area width limit */
 .dashboard-hero {
   width: 100%;
-  max-width: 760px; /* 类似搜索引擎的标准宽度 */
+  max-width: 760px; /* Standard search-engine-like width */
   margin-bottom: 30px;
   display: flex;
   flex-direction: column;
 }
 
-/* 3. 问候语：极致克制，去掉浮夸渐变，改用纯净文字 */
+/* 3. Greeting: restrained plain text rather than flashy gradient */
 .dashboard-title {
   font-size: 32px;
   font-weight: 500;
   color: var(--el-text-color-primary);
   margin-bottom: 24px;
-  text-align: left; /* 靠左对齐，和图例一致 */
+  text-align: left; /* Left-align to match example */
   letter-spacing: 1px;
 }
 
-/* 4. 融合式胶囊输入框 (强化立体感版) */
+/* 4. Integrated pill input (enhanced depth) */
 .hero-input-wrapper {
-  /* 1. 拉开色差：强制使用纯净组件底色(亮色下通常是纯白) */
+  /* 1. Increase contrast: enforce clean component background (usually pure white in light mode) */
   background-color: var(--el-bg-color) !important; 
-  /* 2. 边框稍微加深一档，勾勒明确的物理边界 */
+  /* 2. Darken border slightly to define physical edge */
   border: 1px solid var(--el-border-color-light);
   border-radius: 24px;
   overflow: hidden;
@@ -10440,29 +10440,29 @@ code {
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
-  /* 3. 强化阴影：双层阴影设计，增强纸面悬浮感 */
+  /* 3. Strengthen shadow: double-layer design for floating paper effect */
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), 
               0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-/* 输入框聚焦状态：发光+上浮反馈 */
+/* Input focus state: glow and lift feedback */
 .hero-input-wrapper.is-focus {
   background-color: var(--el-bg-color) !important;
   border-color: var(--el-color-primary);
-  /* 聚焦时强化主色调晕染和立体上浮感 */
+  /* Enhance primary-color glow and lift on focus */
   box-shadow: 0 12px 40px rgba(var(--el-color-primary-rgb), 0.12),
               0 0 0 1px var(--el-color-primary) inset,
               0 4px 12px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
 
-/* 输入框本身重置：彻底透明 */
+/* Reset input itself: fully transparent */
 .hero-textarea .el-textarea__inner {
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
   font-size: 16px;
-  padding: 20px 24px 10px 24px !important; /* 调整内边距 */
+  padding: 20px 24px 10px 24px !important; /* Adjust padding */
   color: var(--el-text-color-primary);
   line-height: 1.6;
 }
@@ -10472,18 +10472,18 @@ code {
   font-weight: 400;
 }
 
-/* 5. 融于一体的工具栏 (无边界感) */
+/* 5. Integrated toolbar (seamless appearance) */
 .hero-input-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px 12px 16px;
   background: transparent;
-  /* 移除原有的上边框，让工具栏和输入框融为一体 */
+  /* Remove original top border so toolbar blends into input */
   border-top: none; 
 }
 
-/* 工具栏图标按钮扁平化 */
+/* Flatten toolbar icon buttons */
 .hero-input-footer .el-button {
   background: transparent !important;
   border: none !important;
@@ -10501,7 +10501,7 @@ code {
   transform: scale(1.1);
 }
 
-/* 发送按钮特殊高亮 */
+/* Special highlight for send button */
 .hero-send-btn {
   color: var(--el-color-primary) !important;
 }
@@ -10510,25 +10510,25 @@ code {
   background-color: color-mix(in srgb, var(--el-color-primary) 15%, transparent) !important;
 }
 
-/* 6. 建议标签组 (Chips) - 替代原本臃肿的方块卡片 */
+/* 6. Suggestion chips - replace bulky square cards */
 .guide-grid {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start; /* 靠左排列 */
+  justify-content: flex-start; /* Left-align */
   gap: 12px;
   width: 100%;
-  max-width: 760px; /* 与输入框等宽 */
+  max-width: 760px; /* Same width as input */
 }
 
-/* 芯片式卡片 */
+/* Chip-style cards */
 .guide-card {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 10px 18px;
-  background-color: var(--el-bg-color-page); /* 使用稍深的底色 */
+  background-color: var(--el-bg-color-page); /* Use slightly darker background */
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 30px; /* 完全的胶囊形 */
+  border-radius: 30px; /* Fully pill-shaped */
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -10541,12 +10541,12 @@ code {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
 }
 
-/* 隐藏冗长的描述文字，只保留标题和图标 */
+/* Hide lengthy descriptions, retain title and icon */
 .card-info p {
   display: none;
 }
 
-/* 芯片内标题 */
+/* Title inside chip */
 .card-info h3 {
   margin: 0;
   font-size: 14px;
@@ -10559,7 +10559,7 @@ code {
   color: var(--el-text-color-primary);
 }
 
-/* 芯片内小图标 */
+/* Small icon inside chip */
 .card-icon {
   display: flex;
   align-items: center;
@@ -10570,7 +10570,7 @@ code {
   border-radius: 50%;
 }
 
-/* 图标颜色方案微调 (适应小尺寸) */
+/* Fine-tune icon color scheme for small size */
 .card-icon.blue { color: #409eff; }
 .card-icon.pink { color: #ff69b4; }
 .card-icon.gold { color: #e6a23c; }
@@ -10589,7 +10589,7 @@ code {
 }
 
 .card-icon.red {
-  color: #ff4136; /* 明亮红色 */
+  color: #ff4136; /* Bright red */
 }
 
 .card-icon.teal {
@@ -10597,52 +10597,52 @@ code {
 }
 
 .card-icon.gold {
-  color: #d4a017; /* 金色 - 用于添加新账户等高级操作 */
+  color: #d4a017; /* Gold - for advanced actions such as adding an account */
 }
 
 /* =========================================
-   Dashboard 建议标签（Chips）中收藏星星显色
+   Dashboard suggestion chip favorite star colors
    ========================================= */
 
-/* 1. 确保星星容器在胶囊右侧对齐 */
+/* 1. Ensure star container aligns to right of pill */
 .guide-card .fav-star {
   display: flex;
   align-items: center;
-  margin-left: 6px; /* 与标题保持一点间距 */
+  margin-left: 6px; /* Leave a small gap from title */
   cursor: pointer;
 }
 
-/* 2. 强制激活状态的星星显示为金黄色 */
+/* 2. Force active star to golden yellow */
 .guide-card .fav-star.active i,
 .guide-card .fav-star.active .fa-star {
-  color: #f1c40f !important; /* 经典的收藏金黄色 */
-  filter: drop-shadow(0 0 3px rgba(241, 196, 15, 0.4)); /* 增加微弱光晕，让它在深浅色背景下都好看 */
+  color: #f1c40f !important; /* Classic favorite gold */
+  filter: drop-shadow(0 0 3px rgba(241, 196, 15, 0.4)); /* Add faint glow for visibility on light and dark backgrounds */
   transition: all 0.3s ease;
 }
 
-/* 3. 悬停交互：星星稍微变大 */
+/* 3. Hover interaction: enlarge star slightly */
 .guide-card .fav-star:hover i {
   transform: scale(1.2);
-  color: #f39c12 !important; /* 悬停时深一度的橙黄 */
+  color: #f39c12 !important; /* Darker orange-yellow on hover */
 }
 
-/* 4. 针对 guide-card 内部布局的微调 */
+/* 4. Fine-tune guide-card internal layout */
 .guide-card.extension {
-  justify-content: space-between; /* 让内容和星星分别靠在两头 */
+  justify-content: space-between; /* Keep content and star at opposite ends */
   min-width: 100px;
 }
 
-/* 7. 移动端适配 */
+/* 7. Mobile adaptation */
 @media (max-width: 768px) {
   .dashboard-hero {
     margin-bottom: 20px;
   }
   .dashboard-title {
     font-size: 26px;
-    text-align: center; /* 手机端居中好看些 */
+    text-align: center; /* Center on phones for better appearance */
   }
   .guide-grid {
-    justify-content: center; /* 手机端标签居中 */
+    justify-content: center; /* Center chips on mobile */
   }
   .guide-card {
     padding: 8px 14px;
@@ -10651,25 +10651,25 @@ code {
 
 
 
-/* 扩展卡片右上角按钮组 */
+/* Extension card upper-right button group */
 .btn-top-right {
   position: absolute;
   top: 12px;
   right: 12px;
   z-index: 10;
-  display: flex;         /* 横向排列 */
-  align-items: center;   /* 居中对齐 */
+  display: flex;         /* Arrange horizontally */
+  align-items: center;   /* Center alignment */
 }
 
-/* 激活状态的星星颜色（明亮的金色） */
+/* Active star color (bright gold) */
 .star-active {
-  color: #e6a23c !important; /* Element Plus 的警告色(金色)，在深浅色下都很醒目 */
-  /* 可以加一点微微的发光感 */
+  color: #e6a23c !important; /* Element Plus warning color (gold), visible in both light and dark modes */
+  /* Optional subtle glow */
   filter: drop-shadow(0 0 2px rgba(230, 162, 60, 0.4));
   animation: star-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* 可选：点亮星星时的 Q 弹小动画 */
+/* Optional spring animation when star is activated */
 @keyframes star-pop {
   0% { transform: scale(0.8); }
   50% { transform: scale(1.2); }
@@ -10678,11 +10678,11 @@ code {
 
 
 /* =========================================
-   Unified & Hero Input Buttons Fix (不冲突版)
+   Unified & Hero Input Buttons Fix (conflict-free version)
    ========================================= */
 
-/* 1. 基础样式：针对独立的图标按钮 (TTS, ASR, 附件) */
-/* 我们使用更具体的类名，避免影响到 status-pill */
+/* 1. Base style: standalone icon buttons (TTS, ASR, attachments) */
+/* Use more specific class names to avoid affecting status-pill */
 .hero-input-footer .el-button:not(.status-pill):not(.el-button--primary):not(.el-button--danger) {
   background: transparent !important;
   border: none !important;
@@ -10695,11 +10695,11 @@ code {
   transition: all 0.2s ease !important;
 }
 
-/* 2. 激活状态：当 type="primary" 时（TTS开启、ASR开启） */
+/* 2. Active state: when type="primary" (TTS or ASR enabled) */
 .hero-input-footer .el-button--primary:not(.hero-send-btn) {
-  /* 强制显色 */
+  /* Force color display */
   color: var(--el-color-primary) !important;
-  /* 浅色背景提示 */
+  /* Light background indicator */
   background-color: color-mix(in srgb, var(--el-color-primary) 15%, transparent) !important;
   opacity: 1 !important;
   border: none !important;
@@ -10707,37 +10707,37 @@ code {
   border-radius: 8px !important;
 }
 
-/* 3. 悬停反馈 */
+/* 3. Hover feedback */
 .hero-input-footer .el-button:hover:not(.status-pill) {
   opacity: 1 !important;
   background-color: rgba(128, 128, 128, 0.1) !important;
   transform: scale(1.1);
 }
 
-/* 4. 专项保护：status-pill (模型选择胶囊) */
-/* 确保它拥有实色背景，不被上面的透明规则覆盖 */
+/* 4. Protect status-pill (model selection pill) */
+/* Ensure solid background is not overridden by transparent rules above */
 .hero-model-pill.status-pill, 
 .status-pill {
-  background-color: var(--el-fill-color-light, #f0f4f9) !important; /* 浅灰/主题填充色 */
+  background-color: var(--el-fill-color-light, #f0f4f9) !important; /* Light gray/theme fill color */
   border: 1px solid var(--el-border-color-lighter) !important;
   color: var(--el-text-color-primary) !important;
   opacity: 1 !important;
   display: inline-flex !important;
   padding: 6px 12px !important;
   height: 32px !important;
-  border-radius: 16px !important; /* 保持胶囊形状 */
+  border-radius: 16px !important; /* Maintain pill shape */
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-/* 暗色主题下的胶囊背景微调 */
+/* Fine-tune pill background in dark themes */
 [data-theme="dark"] .status-pill,
 [data-theme="midnight"] .status-pill,
 [data-theme="neon"] .status-pill {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* 5. 发送按钮：保持原有逻辑 */
+/* 5. Send button: retain original logic */
 .hero-send-btn {
   background: transparent !important;
   color: var(--el-color-primary) !important;
@@ -10745,30 +10745,30 @@ code {
   font-size: 18px !important;
 }
 
-/* 6. 移动端模型选择按钮适配 */
-/* 如果移动端使用的是 el-button 形式的模型选择器，强制其表现得像个胶囊 */
+/* 6. Mobile model selection button adaptation */
+/* If mobile model selector uses el-button, force pill appearance */
 .hero-input-footer .icon-btn i.fa-microchip {
-  color: var(--el-color-primary) !important; /* 图标给个颜色，显眼一点 */
+  color: var(--el-color-primary) !important; /* Color icon for visibility */
 }
 
 /* ====================================================
-   ✨ SAP Premium Motion System (全局高级动效系统) ✨
-   主打：丝滑页面切换、网格瀑布流进场、物理回弹交互
+   ✨ SAP Premium Motion System (global motion system) ✨
+   Smooth page transitions, staggered grid entry and physical spring feedback
    ==================================================== */
 
-/* 1. 核心动效变量 (物理曲线) */
+/* 1. Core motion variables (physical curves) */
 :root {
-  /* Apple 风格的丝滑减速曲线 (适合进场、移动) */
+  /* Apple-style smooth deceleration curve (entry and movement) */
   --ease-out-smooth: cubic-bezier(0.16, 1, 0.3, 1);
-  /* 带有物理弹性的曲线 (适合卡片弹出、对话气泡) */
+  /* Elastic curve (card popups and chat bubbles) */
   --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* 舒适的过渡时间 */
+  /* Comfortable transition duration */
   --motion-duration: 0.5s;
 }
 
 /* ----------------------------------------------------
-   2. 页面级平滑切换 (Page Transitions)
-   当点击左侧菜单切换页面时，整体页面柔和淡入上浮
+   2. Smooth page-level transitions (Page Transitions)
+   When switching pages via left menu, fade and lift page gently
 ---------------------------------------------------- */
 .page {
   animation: pageSlideFadeIn var(--motion-duration) var(--ease-out-smooth) both;
@@ -10779,7 +10779,7 @@ code {
   0% { 
     opacity: 0; 
     transform: translateY(15px) scale(0.995); 
-    filter: blur(2px); /* 极轻微的模糊增加景深感 */
+    filter: blur(2px); /* Very slight blur adds depth */
   }
   100% { 
     opacity: 1; 
@@ -10789,17 +10789,17 @@ code {
 }
 
 /* ----------------------------------------------------
-   3. 高级网格瀑布流进场 (Staggered Waterfall)
-   自动应用于知识库、模型配置、插件等所有的网格布局
+   3. Staggered grid entry (Staggered Waterfall)
+   Automatically applies to knowledge bases, model settings, plugins and other grid layouts
 ---------------------------------------------------- */
-/* 为网格内的子元素绑定弹跳进场动画 */
+/* Bind bounce entry animation to grid children */
 .provider-grid > div, 
 .guide-grid > div, 
 .plugins-grid > div {
   animation: cardPopIn 0.6s var(--ease-out-back) both;
 }
 
-/* 动态交错延迟 (利用 nth-child 实现纯 CSS 瀑布流) */
+/* Dynamic staggered delays (pure CSS waterfall via nth-child) */
 .provider-grid > div:nth-child(1), .guide-grid > div:nth-child(1), .plugins-grid > div:nth-child(1) { animation-delay: 0.05s; }
 .provider-grid > div:nth-child(2), .guide-grid > div:nth-child(2), .plugins-grid > div:nth-child(2) { animation-delay: 0.10s; }
 .provider-grid > div:nth-child(3), .guide-grid > div:nth-child(3), .plugins-grid > div:nth-child(3) { animation-delay: 0.15s; }
@@ -10812,7 +10812,7 @@ code {
 .provider-grid > div:nth-child(10), .guide-grid > div:nth-child(10), .plugins-grid > div:nth-child(10) { animation-delay: 0.50s; }
 .provider-grid > div:nth-child(11), .guide-grid > div:nth-child(11), .plugins-grid > div:nth-child(11) { animation-delay: 0.55s; }
 .provider-grid > div:nth-child(12), .guide-grid > div:nth-child(12), .plugins-grid > div:nth-child(12) { animation-delay: 0.60s; }
-/* 超过12个的元素统一延迟，防止等待过久 */
+/* Use same delay beyond 12 elements to avoid excessive waiting */
 .provider-grid > div:nth-child(n+13), .guide-grid > div:nth-child(n+13), .plugins-grid > div:nth-child(n+13) { animation-delay: 0.65s; }
 
 @keyframes cardPopIn {
@@ -10827,39 +10827,39 @@ code {
 }
 
 /* ----------------------------------------------------
-   4. 物理反馈交互 (Tactile Micro-interactions)
-   针对卡片、按钮的悬停与点击物理反馈
+   4. Tactile Micro-interactions
+   Physical hover and click feedback for cards and buttons
 ---------------------------------------------------- */
-/* 确保这些元素使用物理曲线进行形变 */
+/* Ensure these elements transform using physical curves */
 .provider-card, .guide-card, .extension-card, .vendor-card, .tool-item, .el-button, .market-link-banner {
   transition: transform 0.3s var(--ease-out-back), box-shadow 0.4s var(--ease-out-smooth), border-color 0.3s ease !important;
 }
 
-/* 悬停时：上浮放大，产生“吸附”感 */
+/* Hover: lift and enlarge for a magnetic effect */
 .provider-card:hover, .guide-card:hover, .extension-card:hover, .vendor-card:hover, .tool-item:hover {
   transform: translateY(-4px) scale(1.01) !important;
-  z-index: 10; /* 悬停时提层，防止阴影被遮挡 */
+  z-index: 10; /* Raise stacking level on hover to avoid clipping shadow */
 }
 
-/* 点击时：模拟物理按压，微缩小 */
+/* Click: simulate physical press by scaling down slightly */
 .provider-card:active, .guide-card:active, .extension-card:active, .vendor-card:active, .el-button:active, .market-link-banner:active {
   transform: scale(0.96) !important;
-  transition-duration: 0.1s !important; /* 按下瞬间响应变快 */
+  transition-duration: 0.1s !important; /* Respond more quickly when pressed */
 }
 
 /* ----------------------------------------------------
-   5. 输入系统与菜单 (Input & Navigation Flow)
+   5. Input & Navigation Flow
 ---------------------------------------------------- */
-/* 输入框聚焦时的平滑光晕扩散 */
+/* Smooth glow spread when input receives focus */
 .el-input__wrapper, .el-textarea__inner {
   transition: transform 0.3s var(--ease-out-smooth), box-shadow 0.3s var(--ease-out-smooth), background-color 0.3s ease !important;
 }
 .el-input__wrapper.is-focus, .el-textarea__inner:focus {
   transform: translateY(-1px) !important;
-  /* 光晕扩散效果已在前面主体样式中定义，此处增强平滑度 */
+  /* Glow spread defined in earlier main styles; improve smoothness here */
 }
 
-/* 左侧菜单点击水波纹/平滑滑块 */
+/* Left menu click ripple/smooth slider */
 .el-menu-item {
   transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s var(--ease-out-back) !important;
 }
@@ -10868,15 +10868,15 @@ code {
 }
 
 /* ----------------------------------------------------
-   6. 对话列表进场动效 (Chat Messages Entry)
-   让新生成的消息气泡从下向上 Q弹入场
+   6. Chat Messages Entry
+   Animate new message bubbles upward with a spring effect
 ---------------------------------------------------- */
 .message {
   animation: messagePop 0.5s var(--ease-out-back) both;
-  transform-origin: bottom left; /* AI 消息从左下角生长 */
+  transform-origin: bottom left; /* AI message grows from bottom left */
 }
 .message.user {
-  transform-origin: bottom right; /* User 消息从右下角生长 */
+  transform-origin: bottom right; /* User message grows from bottom right */
 }
 
 @keyframes messagePop {
@@ -10892,17 +10892,17 @@ code {
 
 
 /* ----------------------------------------------------
-   7. 弹窗高级感 (Dialog / Overlays) - 最终兼容版
+   7. Dialog / Overlays - final compatible version
 ---------------------------------------------------- */
 
-/* 1. 遮罩层：增加毛玻璃感 */
+/* 1. Overlay: add frosted glass appearance */
 .el-overlay {
   backdrop-filter: blur(6px) saturate(150%);
   -webkit-backdrop-filter: blur(6px) saturate(150%);
   background-color: rgba(0, 0, 0, 0.4) !important;
 }
 
-/* 2. 对话框本体：弹性进入 */
+/* 2. Dialog itself: elastic entry */
 .dialog-fade-enter-active .el-dialog {
   animation: sapDialogPopIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
@@ -10912,47 +10912,47 @@ code {
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* 3. 重要：移除之前建议的 .el-popup-parent--hidden .main-container { filter: ... } */
-/* 因为 filter 会导致 fixed 定位失效，弹窗无法全屏 */
+/* 3. Important: remove previously suggested .el-popup-parent--hidden .main-container { filter: ... } */
+/* Filter breaks fixed positioning, preventing full-screen dialogs */
 .el-popup-parent--hidden .main-container {
   filter: none !important; 
 }
 
-/* 4. 修改之前的页面进入动画，防止干扰弹窗 */
-/* 将之前的 .page 动画改为只针对 page 内部的直接子元素（不含弹窗） */
+/* 4. Modify previous page entry animation to avoid interfering with dialogs */
+/* Apply previous .page animation only to direct children of page (excluding dialogs) */
 .page > *:not(.el-dialog):not(.el-overlay) {
   animation: pageSlideFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 
 /* =========================================
-   Modernized El-Dialog (高级大圆角弹窗)
+   Modernized El-Dialog (large rounded dialog)
    ========================================= */
 
-/* 1. 弹窗主体容器 */
+/* 1. Main dialog container */
 .el-dialog {
-  /* 🌟 核心：20px 大圆角 */
+  /* 🌟 Key: large 20px corner radius */
   border-radius: 20px !important; 
-  /* 确保内部背景不刺破圆角 */
+  /* Ensure internal background stays within rounded corners */
   overflow: hidden; 
   
-  /* 背景与边框适配 */
+  /* Adapt background and border */
   background: var(--el-bg-color) !important;
   border: 1px solid var(--el-border-color-lighter) !important;
   
-  /* 深度感：多层物理阴影 */
+  /* Depth: multiple physical shadow layers */
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), 
               0 4px 12px rgba(0, 0, 0, 0.08) !important;
   
-  /* 针对不同主题微调 */
+  /* Fine-tune for different themes */
   transition: background 0.3s, box-shadow 0.3s;
 }
 
-/* 2. 标题栏区域 (Header) */
+/* 2. Header area */
 .el-dialog__header {
-  padding: 24px 28px 12px !important; /* 增加边距，更有呼吸感 */
+  padding: 24px 28px 12px !important; /* Increase spacing */
   margin-right: 0 !important;
-  /* 移除底部线条，采用纯净风格 */
+  /* Remove bottom line for clean style */
   border-bottom: none !important;
 }
 
@@ -10963,13 +10963,13 @@ code {
   letter-spacing: -0.5px;
 }
 
-/* 3. 关闭按钮重制 (Close Button) */
+/* 3. Redesigned close button */
 .el-dialog__headerbtn {
   top: 20px !important;
   right: 20px !important;
   width: 32px !important;
   height: 32px !important;
-  border-radius: 50% !important; /* 圆形背景 */
+  border-radius: 50% !important; /* Circular background */
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   display: flex !important;
   align-items: center;
@@ -10978,7 +10978,7 @@ code {
 
 .el-dialog__headerbtn:hover {
   background-color: rgba(128, 128, 128, 0.1) !important;
-  transform: rotate(90deg); /* 悬停时轻轻旋转，增加交互感 */
+  transform: rotate(90deg); /* Rotate slightly on hover for feedback */
 }
 
 .el-dialog__headerbtn .el-dialog__close {
@@ -10986,7 +10986,7 @@ code {
   font-size: 16px !important;
 }
 
-/* 4. 内容区域 (Body) */
+/* 4. Body area */
 .el-dialog__body {
   padding: 12px 28px 24px !important;
   color: var(--el-text-color-regular);
@@ -10994,36 +10994,36 @@ code {
   line-height: 1.6;
 }
 
-/* 5. 底部操作栏 (Footer) */
+/* 5. Footer action bar */
 .el-dialog__footer {
   padding: 16px 28px 24px !important;
-  /* 顶部的极细分割线，适配深浅色 */
+  /* Very thin top divider for light and dark themes */
   border-top: 1px solid color-mix(in srgb, var(--el-border-color-lighter) 50%, transparent) !important;
   background-color: transparent !important;
 }
 
-/* 6. 弹窗内的按钮间距优化 */
+/* 6. Optimize button spacing in dialog */
 .el-dialog__footer .el-button {
   padding: 10px 20px !important;
-  border-radius: 10px !important; /* 按钮也跟进大圆角逻辑 */
+  border-radius: 10px !important; /* Buttons follow larger corner-radius style */
   font-weight: 600;
 }
 
 /* =========================================
-   针对特定主题的微调 (Optional Extras)
+   Theme-specific adjustments (Optional Extras)
    ========================================= */
 
-/* Dark / Midnight / Neon 主题下的内发光，增加实体感 */
+/* Inner glow in Dark / Midnight / Neon themes adds depth */
 [data-theme="dark"] .el-dialog,
 [data-theme="midnight"] .el-dialog,
 [data-theme="neon"] .el-dialog {
   border-color: rgba(255, 255, 255, 0.1) !important;
-  /* 添加一条极细的顶边光，像玻璃边缘 */
+  /* Add a very fine top-edge highlight like glass */
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
               0 20px 50px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* 移除 Element Plus 默认的进入动画，使用我们的 sapDialogPopIn */
+/* Remove Element Plus default entry animation and use sapDialogPopIn */
 .dialog-fade-enter-active, .dialog-fade-leave-active {
   animation: none !important;
 }
@@ -11032,33 +11032,33 @@ code {
    Mobile El-Dialog Vertical Centering
    ========================================= */
 @media (max-width: 768px) {
-  /* 1. 让弹窗容器（遮罩层）变为 Flex 布局 */
+  /* 1. Make dialog container (overlay) a flex layout */
   .el-overlay-dialog {
     display: flex !important;
     align-items: center !important;   /* Center vertically */
     justify-content: center !important; /* Center horizontally */
-    padding: 12px !important;         /* 视口四周留一点间距，防止贴边 */
+    padding: 12px !important;         /* Leave small gap around viewport edges */
   }
 
-  /* 2. 重置弹窗自身的 Margin */
+  /* 2. Reset dialog margin */
   .el-dialog {
-    margin: 0 !important;      /* 彻底移除默认的 margin-top，由父级 flex 居中控制 */
-    width: 92% !important;     /* 宽度占满 92% */
-    max-height: 85vh !important; /* 限制最大高度，防止内容撑破屏幕 */
+    margin: 0 !important;      /* Remove default margin-top entirely; parent flex controls centering */
+    width: 92% !important;     /* Occupy 92% width */
+    max-height: 85vh !important; /* Limit maximum height to prevent content exceeding screen */
     display: flex;
     flex-direction: column;
-    border-radius: 20px !important; /* 保持高级大圆角 */
+    border-radius: 20px !important; /* Retain large rounded corners */
   }
 
-  /* 3. 确保弹窗内容过多时可以内部滚动 */
+  /* 3. Ensure overflowing dialog content can scroll internally */
   .el-dialog__body {
     flex: 1;
-    overflow-y: auto;          /* 开启内部滚动 */
+    overflow-y: auto;          /* Enable internal scrolling */
     -webkit-overflow-scrolling: touch; 
     padding: 15px 20px !important;
   }
 
-  /* 4. 优化页脚按钮布局：让两个按钮并排平分宽度 */
+  /* 4. Optimize footer buttons: two buttons side by side with equal width */
   .el-dialog__footer {
     padding: 12px 20px 20px !important;
   }
@@ -11069,7 +11069,7 @@ code {
   }
   
   .el-dialog__footer .el-button {
-    flex: 1; /* 平分宽度 */
+    flex: 1; /* Divide width equally */
     margin: 0 !important;
   }
 }
@@ -11079,41 +11079,41 @@ code {
    Extension Card Anti-Shake Optimization
    ========================================= */
 
-/* 1. 稳定卡片：悬停时取消物理位移和缩放，改用纯颜色/阴影反馈 */
+/* 1. Stabilize cards: remove physical translation and scaling on hover; use color/shadow feedback */
 .extension-card:hover {
-  transform: none !important; /* 彻底禁用物理上浮 */
+  transform: none !important; /* Disable physical lift entirely */
   border-color: var(--el-color-primary) !important;
-  /* 用更深更广的阴影来模拟“浮起感”，而不移动像素位置 */
+  /* Simulate lift with deeper, broader shadow without moving pixels */
   box-shadow: 0 0 0 1px var(--el-color-primary), 
               0 10px 30px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* 2. 移除点击时的“按压”缩放 (关键修复) */
-/* 点击时如果发生 scale(0.96)，按钮会瞬间变小，导致鼠标滑出 */
+/* 2. Remove press scaling on click (key fix) */
+/* scale(0.96) on click shrinks button instantly, potentially moving pointer outside it */
 .extension-card:active, 
 .extension-card .el-button:active {
   transform: none !important; 
 }
 
-/* 3. 稳定按钮：取消悬停时的位移，仅保留缩放或背景变化 */
+/* 3. Stabilize buttons: remove hover displacement, retain only scale or background changes */
 .extension-card .btn-top-right .el-button {
-  transform: none !important; /* 禁止移动 */
-  transition: background-color 0.2s, color 0.2s !important; /* 只保留颜色过渡 */
+  transform: none !important; /* Prevent movement */
+  transition: background-color 0.2s, color 0.2s !important; /* Retain color transitions only */
   
-  /* 增大点击热区：使用透明边框扩大感应区，但不改变视觉大小 */
+  /* Enlarge hit area with transparent border without changing visible size */
   border: 4px solid transparent !important; 
   background-clip: padding-box !important;
 }
 
 .extension-card .btn-top-right .el-button:hover {
-  transform: scale(1.1) !important; /* 只允许轻微缩放，不准位移 */
+  transform: scale(1.1) !important; /* Allow only slight scaling, no displacement */
   background-color: var(--el-fill-color-dark) !important;
 }
 
-/* 4. 隔离层：当鼠标进入按钮区域时，通过伪类确保卡片背景不会干扰 */
+/* 4. Isolation layer: use pseudo-class to prevent card background interfering when pointer enters button area */
 .extension-card .btn-top-right {
   padding: 10px;
-  margin: -10px; /* 负边距抵消 padding，扩大拦截区域 */
+  margin: -10px; /* Negative margin offsets padding to enlarge interception area */
   z-index: 100;
 }
 
@@ -11121,11 +11121,11 @@ code {
    Dashboard Chips (Guide Cards) Anti-Shake
    ========================================= */
 
-/* 1. 降低进场动画的幅度：从 25px 减小到 8px，去掉回弹效果 */
+/* 1. Reduce entry animation displacement from 25px to 8px and remove bounce */
 @keyframes dashboardPopIn {
   0% { 
     opacity: 0; 
-    transform: translateY(8px); /* 极小位移 */
+    transform: translateY(8px); /* Minimal displacement */
     filter: blur(4px);
   }
   100% { 
@@ -11135,25 +11135,25 @@ code {
   }
 }
 
-/* 覆盖之前的动画 */
+/* Override previous animation */
 .guide-grid > .guide-card {
   animation: dashboardPopIn 0.4s var(--ease-out-smooth) both !important;
-  /* 移除弹性过渡，改用线性减速过渡 */
+  /* Remove elastic transition and use linear deceleration */
   transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.2s ease-out !important;
 }
 
-/* 2. 移除点击时的物理按压感 (避免点击星星时卡片缩小) */
+/* 2. Remove physical press feedback on click (avoid card shrinking when clicking star) */
 .guide-card:active {
   transform: none !important; 
 }
 
-/* 3. 悬停效果：仅保留极其轻微的上浮，不使用 scale */
+/* 3. Hover: retain very slight lift without scale */
 .guide-card:hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* 4. 重点优化：星星按钮 (收藏图标) */
+/* 4. Optimize star button (favorite icon) */
 .guide-card .fav-star {
   position: relative;
   z-index: 10;
@@ -11166,19 +11166,19 @@ code {
   transition: background-color 0.2s !important;
 }
 
-/* 悬停在星星上时，只改变星星背景，不让卡片整体产生视觉干扰 */
+/* On star hover, change only star background to avoid disturbing entire card */
 .guide-card .fav-star:hover {
   background-color: rgba(128, 128, 128, 0.1);
 }
 
-/* 移除星星点击时的物理抖动 */
+/* Remove physical jitter when clicking star */
 .guide-card .fav-star:active {
-  transform: scale(0.9); /* 只有星星缩放，卡片不动 */
+  transform: scale(0.9); /* Only star scales, card remains still */
 }
 
-/* 5. 布局稳定性：防止取消收藏时，列表重排导致的瞬间位移跳动 */
+/* 5. Layout stability: prevent sudden shifts when unfavoriting reorders list */
 .guide-grid {
-  /* 启用平滑过渡，如果 Vue 使用了 transition-group 效果更好 */
+  /* Enable smooth transitions; Vue transition-group improves effect */
   transition: all 0.5s var(--ease-out-smooth);
 }
 
@@ -11187,16 +11187,16 @@ code {
    Storage Section Waterfall Entry
    ========================================= */
 
-/* 1. 统一绑定进场动画：文本列表、图片网格、视频网格 */
+/* 1. Bind shared entry animation to text lists, image grids and video grids */
 .text-list > .file-item,
 .image-grid > .image-item,
 .video-grid > .video-item {
-  /* 使用平滑曲线，避免存储列表在大面积重排时产生眩晕感 */
+  /* Use smooth curve to avoid dizziness when large storage lists reorder */
   animation: cardPopIn 0.6s var(--ease-out-smooth) both;
 }
 
-/* 2. 动态交错延迟 (Staggered Delays) */
-/* 我们为前 12 个元素设置阶梯式延迟 */
+/* 2. Staggered Delays */
+/* Set stepped delays for first 12 elements */
 .text-list > .file-item:nth-child(1), .image-grid > .image-item:nth-child(1), .video-grid > .video-item:nth-child(1) { animation-delay: 0.05s; }
 .text-list > .file-item:nth-child(2), .image-grid > .image-item:nth-child(2), .video-grid > .video-item:nth-child(2) { animation-delay: 0.10s; }
 .text-list > .file-item:nth-child(3), .image-grid > .image-item:nth-child(3), .video-grid > .video-item:nth-child(3) { animation-delay: 0.15s; }
@@ -11210,15 +11210,15 @@ code {
 .text-list > .file-item:nth-child(11),.image-grid > .image-item:nth-child(11),.video-grid > .video-item:nth-child(11){ animation-delay: 0.55s; }
 .text-list > .file-item:nth-child(12),.image-grid > .image-item:nth-child(12),.video-grid > .video-item:nth-child(12){ animation-delay: 0.60s; }
 
-/* 超过12个的元素不再延迟，防止超长列表渲染过慢 */
+/* No further delay beyond 12 elements to avoid slow long-list rendering */
 .text-list > .file-item:nth-child(n+13), 
 .image-grid > .image-item:nth-child(n+13), 
 .video-grid > .video-item:nth-child(n+13) { 
   animation-delay: 0.65s; 
 }
 
-/* 3. 物理交互反馈加固 */
-/* 确保文件列表行在鼠标悬停时也有平滑的提升感 */
+/* 3. Reinforce physical interaction feedback */
+/* Ensure file-list rows also lift smoothly on hover */
 .file-item {
   transition: all 0.3s var(--ease-out-smooth) !important;
   border: 1px solid transparent;
@@ -11226,19 +11226,19 @@ code {
 
 .file-item:hover {
   background-color: var(--el-bg-color) !important;
-  transform: translateX(4px) !important; /* 文本列表适合向右微移，而不是向上浮 */
+  transform: translateX(4px) !important; /* Text lists suit slight rightward movement rather than upward lift */
   box-shadow: var(--shadow-sm);
   border-color: var(--el-color-primary-light-8) !important;
 }
 
-/* 图片和视频卡片悬停上浮 */
+/* Lift image and video cards on hover */
 .image-item:hover, .video-item:hover {
   transform: translateY(-5px) scale(1.02) !important;
   box-shadow: var(--shadow-lg) !important;
   z-index: 5;
 }
 
-/* 点击反馈：轻微按压 */
+/* Click feedback: slight press */
 .file-item:active, .image-item:active, .video-item:active {
   transform: scale(0.98) !important;
   transition-duration: 0.1s !important;
@@ -11249,12 +11249,12 @@ code {
    Logo & License Page Waterfall Entry
    ========================================= */
 
-/* 1. 主卡片整体进场 */
+/* 1. Main card entry */
 .license-notice {
   animation: pageSlideFadeIn 0.6s var(--ease-out-smooth) both;
 }
 
-/* 2. 内部区块序列进场 (标题、警告区、联系区、链接区、协议区) */
+/* 2. Sequential entry of inner sections (title, warning, contact, links, license) */
 .license-notice > h1,
 .license-notice > h3,
 .license-notice > .notice-section,
@@ -11264,7 +11264,7 @@ code {
   animation: cardPopIn 0.6s var(--ease-out-smooth) both;
 }
 
-/* 区块间的微小延迟，让页面自上而下“流”出来 */
+/* Small delays between sections make page flow from top to bottom */
 .license-notice > h1 { animation-delay: 0.05s; }
 .license-notice > h3 { animation-delay: 0.10s; }
 .license-notice > .notice-section { animation-delay: 0.15s; }

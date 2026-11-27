@@ -474,3 +474,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Main stylesheet English comment pass 5
 
 - Parent 01f6b23bb87351f68039653e3983d93587fbff87. Translate 250 comment lines covering MCP lists, loading overlays, task center, input and message controls, side panels, dropdowns and PTT. Non-comment CSS byte-identical; line count unchanged; 650 flagged lines remain. No implementation, dependency or permission change. CI and Windows visual validation pending; revert for rollback.
+
+## 2026-11-26 — Main stylesheet English comment pass 6
+
+- Parent 81256823076caf95801fe30802681ab8d910bf03. Translate 250 comment lines covering PTT, model status, trees, media attachments, dashboard, motion and dialog styling. Non-comment CSS byte-identical; line count unchanged; 400 flagged lines remain. No runtime changes. CI and Windows visual validation pending; revert for rollback.
