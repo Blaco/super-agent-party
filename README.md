@@ -4,7 +4,7 @@
 
 This project adapts [Super Agent Party](https://github.com/heshengtao/super-agent-party) for an English-only interface, predictable local inference, persistent character continuity, voice interaction, and explicitly authorized tools. It is developed on the [`agent-creation` branch](https://github.com/Blaco/super-agent-party/tree/agent-creation).
 
-**Development status:** This is an active fork, not a finished release. The interface and several core prompts have been localized; parts of the inherited backend still require translation and integration testing. A successful source audit does not establish that every feature works in a packaged application.
+**Development status:** This is an active fork, not a finished release. First-party source, bundled skills and inherited design documents have been localized. A tracked-file text and path gate prevents new Han characters in those areas; binary artwork and live behavior still require separate review. A successful source audit does not establish that every feature works in a packaged application.
 
 ## Project priorities
 
@@ -15,7 +15,7 @@ This project adapts [Super Agent Party](https://github.com/heshengtao/super-agen
 5. **Optional agent delegation:** maintain explicit tool permissions and OpenClaw's ACPX/ACP integration. Task history and private character context must remain separate.
 6. **Optional providers:** OpenRouter and other cloud inference services remain user-configurable. There must be no silent cloud fallback, hidden upload or unexpected provider switch.
 
-Discord, Telegram and Slack messaging, and YouTube/Twitch streaming, remain optional adjacent features. They are not the product's primary interface. Chinese-only messaging/livestream adapters have been removed from the active runtime; legacy source references may remain while the audit continues.
+Discord, Telegram and Slack messaging, and YouTube/Twitch streaming, remain optional adjacent features. They are not the product's primary interface. Chinese-only messaging/livestream adapters have been removed from the active runtime. Historical, legal, compatibility-test and third-party references are retained where appropriate.
 
 ## Platform and prerequisites
 
@@ -27,7 +27,7 @@ Run these commands in PowerShell from the checkout:
 git clone https://github.com/Blaco/super-agent-party.git
 Set-Location super-agent-party
 git switch agent-creation
-uv sync --python 3.12
+uv sync --locked --python 3.12
 npm ci
 npm test
 npm start

@@ -20,14 +20,17 @@ TEXT_SUFFIXES = {
     ".bat", ".cfg", ".css", ".csv", ".html", ".ini", ".js", ".json", ".jsx",
     ".lock", ".md", ".mjs", ".plist", ".py", ".ps1", ".rst", ".sh", ".spec",
     ".svg", ".toml", ".ts", ".txt", ".vbs", ".vue", ".xml", ".yaml", ".yml",
+    ".cjs", ".less", ".scss", ".sass", ".map", ".gitattributes",
 }
-TEXT_NAMES = {"dockerfile", "makefile", "license", "notice", "authors", "copying"}
+TEXT_NAMES = {"dockerfile", "makefile", "license", "notice", "authors", "copying",
+              ".dockerignore", ".gitignore", ".gitattributes", ".python-version"}
 SKIP_DIRS = {
     ".git", ".venv", "__pycache__", "node_modules", "dist", "release", "build",
 }
 LOCKFILES = {"package-lock.json", "uv.lock", "pnpm-lock.yaml", "yarn.lock"}
 VENDORED_PREFIXES = ("static/libs/", "static/fontawesome/", "tiktoken_cache/")
 ASSET_PREFIXES = ("static/source/", "vrm/", "tha_models/", "default_soulx_images/", "doc/")
+FIRST_PARTY_SCOPES = {"project-source", "bundled-skill", "packaged-asset"}
 MAX_TEXT_BYTES = 8 * 1024 * 1024
 HAN = re.compile(r"[\u3400-\u9fff\uf900-\ufaff\U00020000-\U0002EBEF\U00030000-\U000323AF]")
 PLATFORM = re.compile(
@@ -52,7 +55,8 @@ def scope(path: str) -> str:
         return "dependency-lock"
     if lower.startswith(VENDORED_PREFIXES):
         return "vendored"
-    if name.split(".", 1)[0] in {"license", "notice", "authors", "copying"}:
+    if (lower.startswith("license-third-party/") or lower == "contributing.md"
+            or name.split(".", 1)[0] in {"license", "notice", "authors", "copying"}):
         return "legal-attribution"
     if lower.startswith(("tests/", "docs/agent-creation/")) or lower == "scripts/audit_english_surface.py":
         return "test-or-history"
@@ -172,6 +176,8 @@ def main() -> int:
     parser.add_argument("--json", type=Path, help="Write the machine-readable inventory")
     parser.add_argument("--limit", type=int, default=30, help="Maximum ranked files shown in console")
     parser.add_argument("--tracked-only", action="store_true", help="Inspect Git-tracked paths only")
+    parser.add_argument("--fail-on-first-party-han", action="store_true",
+                        help="Fail on Han text/paths or unreadable text in first-party source, skills or assets")
     parser.add_argument("--fail-on-han", action="store_true", help="Exit 1 if any Han signal remains in the scanned scope")
     args = parser.parse_args()
     root = args.root.resolve()
@@ -216,6 +222,17 @@ def main() -> int:
     print("Ranked files:")
     for item in ranked[:max(0, args.limit)]:
         print("{scope}: {file}: {counts}".format(**item))
+    if args.fail_on_first_party_han:
+        violations = [item for item in findings if item["scope"] in FIRST_PARTY_SCOPES
+                      and {"han", "han-path"}.intersection(item["signals"])]
+        unreadable = [path for path in skipped if scope(path) in FIRST_PARTY_SCOPES]
+        oversized = [item["file"] for item in excluded if item["scope"] in FIRST_PARTY_SCOPES
+                     and item["reason"] == "text-size-limit"]
+        if violations or unreadable or oversized:
+            print("First-party English gate failed:", len(violations), "Han findings,",
+                  len(unreadable), "unreadable text files,", len(oversized), "oversized text files")
+            return 1
+        print("First-party English gate passed (text and paths only).")
     if args.fail_on_han and (by_signal.get("han", 0) or by_signal.get("han-path", 0)):
         return 1
     return 0

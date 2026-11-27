@@ -53,3 +53,7 @@ Docker runtime and CLI sandbox remain KEEP; deployment instructions remain optio
 ## Native speech and regional preset cleanup — 2026-11-26
 
 MOSS remains KEEP, with the existing Ava English voice selected by default for new/missing settings; explicit voice selections and multilingual assets remain intact. Removed unused resource options from a previously disconnected regional TTS provider and retired locale entries. Generic speech/model endpoints remain available.
+
+## Source localization acceptance checkpoint — 2026-11-26
+
+First-party UI, backend source, bundled skill text and inherited design documents: translated and zero Han findings in source audit 45928289260. Regional runtime cleanup passed audit 45928480135. Retired upstream promotional assets removed; optional Western bots, generic service adapters, local model/speech/avatar features and legal notices remain. First-party text/path gate and asset-reference regression checks now enforce the source acceptance criteria. This is not evidence of complete Windows runtime functionality or a binary-artwork language audit.
