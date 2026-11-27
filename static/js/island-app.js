@@ -275,7 +275,8 @@ function createIslandApp() {
         return h >= 18 || h < 6;
       },
       weatherDesc() {
-        if (this.weatherCode === null) return this.t('weatherLoading');
+        if (this.weatherError) return this.weatherError;
+        if (this.weatherCode === null) return this.weatherLoading ? this.t('weatherLoading') : this.t('weatherUnknown');
         const wc = I18N[this.islandLang].weatherCodes[this.weatherCode];
         return wc || this.t('weatherUnknown');
       },
@@ -953,10 +954,11 @@ function createIslandApp() {
 
       // ===== Weather =====
       async tryFetchIpCity() {
+        if (this.weatherCity) return;
         try {
           const res = await fetch('/api/ip-city');
           const data = await res.json();
-          if (data.city) {
+          if (data.city && !this.weatherCity) {
             this.weatherCity = data.city;
             if (data.lat != null && data.lon != null) {
               this.ipLat = data.lat;
@@ -1081,7 +1083,7 @@ function createIslandApp() {
           { name: 'island_pomodoro_pause', description: 'Pause or resume the current Pomodoro', parameters: { type: 'object', properties: {}, required: [] } },
           { name: 'island_pomodoro_stop', description: 'Stop the current Pomodoro', parameters: { type: 'object', properties: {}, required: [] } },
           { name: 'island_pomodoro_status', description: 'Get current Pomodoro status', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_pomodoro_history', description: 'Get todays Pomodoro statistics', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_pomodoro_history', description: 'Get today\'s Pomodoro statistics', parameters: { type: 'object', properties: {}, required: [] } },
           { name: 'island_clipboard_list', description: 'List clipboard history', parameters: { type: 'object', properties: { query: { type: 'string', description: 'Search keyword, optional' } }, required: [] } },
           { name: 'island_clipboard_get', description: 'Read current system clipboard content', parameters: { type: 'object', properties: {}, required: [] } },
           { name: 'island_clipboard_write', description: 'Write text to the system clipboard', parameters: { type: 'object', properties: { text: { type: 'string', description: 'Text to write' } }, required: ['text'] } },
@@ -1349,11 +1351,14 @@ function createIslandApp() {
             return;
 
           case 'island_weather_set_city':
-            const newCity = tp.city;
+            const newCity = (tp?.city || '').trim();
+            if (!newCity) { sendResult(this.t('weatherCityNotFound')); return; }
             this.weatherCity = newCity;
+            this.ipLat = null;
+            this.ipLon = null;
             localStorage.setItem('island_weather_city', newCity);
             this.fetchWeather();
-            sendResult(this.t('mcpWeatherCitySet') + ' ' + newCity);
+            sendResult(this.t('mcpWeatherCitySet') + newCity);
             return;
 
           case 'island_get_time':

@@ -180,6 +180,12 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         self.assertIn("islandLang: 'en-US'", source)
         self.assertIn("weatherCity: ''", source)
         self.assertIn("localStorage.getItem('island_weather_city')", source)
+        self.assertIn("if (this.weatherCity) return;", source)
+        self.assertIn("if (data.city && !this.weatherCity)", source)
+        self.assertIn("if (this.weatherError) return this.weatherError;", source)
+        setter = source.split("case 'island_weather_set_city':", 1)[1].split("case 'island_get_time':", 1)[0]
+        self.assertIn("this.ipLat = null;", setter)
+        self.assertIn("this.ipLon = null;", setter)
         self.assertIn('lang="en-US"', html)
         self.assertIn('async def proxy_geocode(city: str, lang: str = "en"):', server)
         for name in ("island_music_play", "island_weather_get_current",
