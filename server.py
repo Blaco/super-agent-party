@@ -9157,7 +9157,7 @@ async def text_to_speech(request: Request):
             from py.moss_tts import moss_generate_audio
             
             # 读取 MOSS 参数设定
-            moss_voice = tts_settings.get('mossVoice', 'Junhao')
+            moss_voice = tts_settings.get('mossVoice', 'Ava')
             moss_speed = float(tts_settings.get('mossSpeed', 1.0))
             
             # 移动端语速安全降速

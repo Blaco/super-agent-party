@@ -237,7 +237,7 @@ def _process_tts_sync(text: str, voice: str, speed: float, prompt_audio_path: st
                 logging.warning(f"Failed to delete temp file {temp_wav_path}: {e}")
 
 
-async def moss_generate_audio(text: str, voice: str = "Junhao", speed: float = 1.0, prompt_audio_path: str = "") -> bytes:
+async def moss_generate_audio(text: str, voice: str = "Ava", speed: float = 1.0, prompt_audio_path: str = "") -> bytes:
     """Asynchronous wrapper: run heavy inference in a thread pool."""
     # Validate arguments
     if not text or not text.strip():

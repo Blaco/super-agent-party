@@ -48,3 +48,8 @@ THA rendering, VRM, native MOSS voice cloning and model selection remain KEEP. T
 ## Optional Docker deployment — 2026-11-26
 
 Docker runtime and CLI sandbox remain KEEP; deployment instructions remain optional. Regional Aliyun registry selector and compose file removed, inherited registry publication disabled. Source-built fork examples replace upstream backend binaries; optional inherited global gateway remains until separately validated. No image release or Docker runtime test performed.
+
+
+## Native speech and regional preset cleanup — 2026-11-26
+
+MOSS remains KEEP, with the existing Ava English voice selected by default for new/missing settings; explicit voice selections and multilingual assets remain intact. Removed unused resource options from a previously disconnected regional TTS provider and retired locale entries. Generic speech/model endpoints remain available.

@@ -4258,7 +4258,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                       <!-- 默认音色选择 -->
                       <el-form-item :label="t('DefaultVoice')" class="form-item-align">
                         <el-select v-model="newTTSConfig.mossVoice" @change="autoSaveSettings" class="full-width-input">
-                          <!-- 中文音色 -->
+                          <!-- Chinese-language voices (optional) -->
                           <el-option label="Junhao (zh-male)" value="Junhao"></el-option>
                           <el-option label="Zhiming (zh-male)" value="Zhiming"></el-option>
                           <el-option label="Weiguo (zh-male)" value="Weiguo"></el-option>
@@ -4267,14 +4267,14 @@ function updateElement(el, rawMarkdown, formatFn) {
                           <el-option label="Lingyu (zh-female)" value="Lingyu"></el-option>
                           <el-option label="Mei (zh-female)" value="Mei"></el-option>
 
-                          <!-- 英文音色 -->
+                          <!-- English-language voices -->
                           <el-option label="Ava (en-female)" value="Ava"></el-option>
                           <el-option label="Bella (en-female)" value="Bella"></el-option>
                           <el-option label="Adam (en-male)" value="Adam"></el-option>
                           <el-option label="Nathan (en-male)" value="Nathan"></el-option>
                           <el-option label="Trump (en-male)" value="Trump"></el-option>
 
-                          <!-- 日文音色 (二次元ACG) -->
+                          <!-- Japanese-language character voices (optional) -->
                           <el-option label="Soyo (ja-female)" value="Soyo"></el-option>
                           <el-option label="Anon (ja-female)" value="Anon"></el-option>
                           <el-option label="Saki (ja-female)" value="Saki"></el-option>
@@ -8192,7 +8192,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                       <!-- 默认音色选择 -->
                       <el-form-item :label="t('DefaultVoice')" class="form-item-align">
                         <el-select v-model="ttsSettings.mossVoice" @change="autoSaveSettings" class="full-width-input">
-                          <!-- 中文音色 -->
+                          <!-- Chinese-language voices (optional) -->
                           <el-option label="Junhao (zh-male)" value="Junhao"></el-option>
                           <el-option label="Zhiming (zh-male)" value="Zhiming"></el-option>
                           <el-option label="Weiguo (zh-male)" value="Weiguo"></el-option>
@@ -8201,14 +8201,14 @@ function updateElement(el, rawMarkdown, formatFn) {
                           <el-option label="Lingyu (zh-female)" value="Lingyu"></el-option>
                           <el-option label="Mei (zh-female)" value="Mei"></el-option>
 
-                          <!-- 英文音色 -->
+                          <!-- English-language voices -->
                           <el-option label="Ava (en-female)" value="Ava"></el-option>
                           <el-option label="Bella (en-female)" value="Bella"></el-option>
                           <el-option label="Adam (en-male)" value="Adam"></el-option>
                           <el-option label="Nathan (en-male)" value="Nathan"></el-option>
                           <el-option label="Trump (en-male)" value="Trump"></el-option>
 
-                          <!-- 日文音色 (二次元ACG) -->
+                          <!-- Japanese-language character voices (optional) -->
                           <el-option label="Soyo (ja-female)" value="Soyo"></el-option>
                           <el-option label="Anon (ja-female)" value="Anon"></el-option>
                           <el-option label="Saki (ja-female)" value="Saki"></el-option>

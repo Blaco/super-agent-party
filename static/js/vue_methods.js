@@ -13745,7 +13745,7 @@ stopTTSActivities() {
       customTTSserver: "http://127.0.0.1:9880",
       customTTSspeaker: "",
       customTTSspeed: 1.0,
-      mossVoice: 'Junhao',
+      mossVoice: 'Ava',
       mossSpeed: 1.0,
     };
     this.showAddTTSDialog = true;

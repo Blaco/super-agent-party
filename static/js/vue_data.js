@@ -724,23 +724,9 @@ let vue_data = {
 
 
       // moss
-      mossVoice: 'Junhao',
+      mossVoice: 'Ava',
       mossSpeed: 1.0,
     },
-    volcResourceOptions: [
-        { value: 'volc_tts_release', label: 'Legacy / Standard' },
-        // 豆包 1.0
-        { value: 'seed-tts-1.0', label: 'Doubao 1.0 (Character-based)' },
-        { value: 'volc.service_type.10029', label: 'Doubao 1.0 (Character-based ServiceType)' },
-        { value: 'seed-tts-1.0-concurr', label: 'Doubao 1.0 (Concurrent)' },
-        { value: 'volc.service_type.10048', label: 'Doubao 1.0 (Concurrent ServiceType)' },
-        // 豆包 2.0
-        { value: 'seed-tts-2.0', label: 'Doubao 2.0 (Character-based)' },
-        // 声音复刻
-        { value: 'seed-icl-1.0', label: 'Voice cloning 1.0 (Character-based)' },
-        { value: 'seed-icl-1.0-concurr', label: 'Voice cloning 1.0 (Concurrent)' },
-        { value: 'seed-icl-2.0', label: 'Voice cloning 2.0 (Character-based)' }
-    ],
     activeTTSTab: 'default', // 控制 TTS 标签页切换
     showAddTTSDialog: false, // 控制添加 TTS 的对话框显示
     newTTSConfig: {
@@ -789,7 +775,7 @@ let vue_data = {
       googleServiceAccount: '', // JSON 字符串
       googleVoice: '',
 
-      mossVoice: 'Junhao',
+      mossVoice: 'Ava',
       mossSpeed: 1.0,
 
       newtts:{}
