@@ -21,7 +21,7 @@ async def DDGsearch(query):
             return ""
 
     try:
-        # 使用默认executor在单独线程中执行同步操作
+        # Run the synchronous operation in a separate thread using the default executor
         return await asyncio.get_event_loop().run_in_executor(None, sync_search)
     except Exception as e:
         print(f"Event loop error: {e}")
@@ -71,10 +71,10 @@ async def searxng(query,categories="general"):
             for result in soup.find_all('article', class_='result'):
                 title = result.find('h3').get_text() if result.find('h3') else 'No title'
                 
-                # 修复：使用正确的选择器
+                # Use the correct selector
                 link_elem = result.find('a', class_='url_header')
                 if not link_elem:
-                    # 备用方案：从h3内的链接获取
+                    # Fallback: extract the link inside the h3 element
                     h3 = result.find('h3')
                     link_elem = h3.find('a') if h3 else None
                 
@@ -260,7 +260,7 @@ async def Exa_search(query):
                 query=query,
                 num_results=max_results,
             )
-            # 判断repose的类型
+            # Determine the response type
             if type(response) == list or type(response) == dict:
                 return json.dumps(response, indent=2, ensure_ascii=False)
             elif type(response) == str:
@@ -458,8 +458,8 @@ from typing import Optional, Dict, Any
 
 class FirecrawlClient:
     """
-    Firecrawl API 客户端
-    支持官方API和自部署实例
+    Firecrawl API client
+    Supports the official API and self-hosted instances
     """
     
     def __init__(self, base_url: str, api_key: Optional[str] = None):
@@ -472,20 +472,20 @@ class FirecrawlClient:
             self.headers['Authorization'] = f'Bearer {api_key}'
     
     def _get_api_path(self, endpoint: str) -> str:
-        """根据基础URL自动判断API版本路径"""
+        """Determine the API version path from the base URL."""
         if '/v2/' in self.base_url:
-            # 官方API v2
+            # Official API v2
             return f"{self.base_url}/{endpoint}"
         elif '/v1/' in self.base_url:
-            # 自部署通常是v1
+            # Self-hosted instances typically use v1
             return f"{self.base_url}/{endpoint}"
         else:
-            # 默认追加路径
+            # Append the default path
             return f"{self.base_url}/{endpoint}"
     
     def scrape(self, url: str, formats: list = None, **kwargs) -> Dict[str, Any]:
         """
-        单页面抓取 (Scrape)
+        Scrape a single page.
         """
         formats = formats or ["markdown"]
         endpoint = self._get_api_path("scrape")
@@ -507,9 +507,9 @@ class FirecrawlClient:
     
     def crawl(self, url: str, limit: int = 10, **kwargs) -> str:
         """
-        整站爬取 (Crawl) - 异步作业，需要轮询
+        Crawl a website using an asynchronous job that requires polling.
         """
-        # 提交爬取任务
+        # Submit the crawl job
         submit_endpoint = self._get_api_path("crawl")
         payload = {
             "url": url,
@@ -532,8 +532,8 @@ class FirecrawlClient:
         job_id = job_data.get("id")
         check_url = job_data.get("url") or f"{self.base_url}/crawl/{job_id}"
         
-        # 轮询等待完成
-        max_wait = 300  # 5分钟超时
+        # Poll until the job completes
+        max_wait = 300  # 5-minute timeout
         interval = 2
         start_time = time.time()
         
@@ -557,7 +557,7 @@ class FirecrawlClient:
     
     def search(self, query: str, limit: int = 5, scrape_options: dict = None) -> Dict[str, Any]:
         """
-        搜索 (Search)
+        Search.
         """
         endpoint = self._get_api_path("search")
         
@@ -579,7 +579,7 @@ class FirecrawlClient:
     
     def map(self, url: str, search: str = None) -> Dict[str, Any]:
         """
-        网站地图 (Map)
+        Map a website.
         """
         endpoint = self._get_api_path("map")
         
@@ -599,28 +599,28 @@ class FirecrawlClient:
 
 async def firecrawl_search(original_url: str, query: str = None) -> str:
     """
-    Firecrawl 主函数
-    支持多种模式：scrape(单页), crawl(整站), search(搜索), map(地图)
+    Main Firecrawl function
+    Supports scrape (single page), crawl (website), search and map modes.
     """
     settings = await load_settings()
     
     def sync_crawler():
         try:
-            # 获取配置
+            # Get configuration
             base_url = settings['webSearch'].get('firecrawl_url', 'https://api.firecrawl.dev/v2')
             api_key = settings['webSearch'].get('firecrawl_api_key', '')
             mode = settings['webSearch'].get('firecrawl_mode', 'scrape')
             
-            # 初始化客户端
+            # Initialize the client
             client = FirecrawlClient(base_url, api_key)
             
-            # 根据模式执行不同操作
+            # Perform the operation for the selected mode
             if mode == 'scrape':
-                # 单页抓取
+                # Scrape a single page
                 result = client.scrape(
                     original_url,
                     formats=["markdown", "html"],
-                    onlyMainContent=True  # 只获取主要内容
+                    onlyMainContent=True  # Retrieve only the main content
                 )
                 
                 if result.get("success") and result.get("data"):
@@ -634,10 +634,10 @@ async def firecrawl_search(original_url: str, query: str = None) -> str:
                     return f"Firecrawl scraping failed: {result.get('error', 'Unknown error')}"
             
             elif mode == 'crawl':
-                # 整站爬取
+                # Crawl the website
                 result = client.crawl(
                     original_url,
-                    limit=10,  # 限制页面数避免过长
+                    limit=10,  # Limit the page count to avoid excessive output
                     scrapeOptions={
                         "formats": ["markdown"],
                         "onlyMainContent": True
@@ -650,7 +650,7 @@ async def firecrawl_search(original_url: str, query: str = None) -> str:
                     
                     content_parts = [f"# Crawl results\n\nRetrieved {total} pages:\n"]
                     
-                    for i, page in enumerate(pages[:5], 1):  # 最多显示5页
+                    for i, page in enumerate(pages[:5], 1):  # Show at most five pages
                         md = page.get("markdown", "")
                         meta = page.get("metadata", {})
                         title = meta.get("title", f"Page {i}")
@@ -663,8 +663,8 @@ async def firecrawl_search(original_url: str, query: str = None) -> str:
                     return f"Firecrawl crawling failed: {result.get('error', 'Unknown error')}"
             
             elif mode == 'search':
-                # 搜索模式 - 当传入的是查询词而非URL时
-                search_query = query or original_url  # 如果没有单独提供query，将URL作为查询词
+                # Search mode: the supplied input is a query rather than a URL
+                search_query = query or original_url  # Use the URL argument as the query if no separate query is supplied
                 result = client.search(
                     search_query,
                     limit=5,
@@ -691,14 +691,14 @@ async def firecrawl_search(original_url: str, query: str = None) -> str:
                     return f"Firecrawl search failed: {result.get('error', 'Unknown error')}"
             
             elif mode == 'map':
-                # 网站地图模式
+                # Website map mode
                 result = client.map(original_url)
                 
                 if result.get("success") and result.get("links"):
                     links = result["links"]
                     content_parts = [f"# Sitemap: {original_url}\n\nFound {len(links)} links:\n"]
                     
-                    for link in links[:20]:  # 限制显示数量
+                    for link in links[:20]:  # Limit displayed results
                         title = link.get("title", "Untitled")
                         url = link.get("url", "")
                         desc = link.get("description", "")
@@ -717,12 +717,12 @@ async def firecrawl_search(original_url: str, query: str = None) -> str:
             return f"Firecrawl processing failed: {str(e)}"
 
     try:
-        # Firecrawl自部署版本通常不需要检查robots.txt（由服务内部处理）
-        # 但官方API版本建议保留检查
+        # Self-hosted Firecrawl normally handles robots.txt internally
+        # Retain the check for the official API
         settings = await load_settings()
         base_url = settings['webSearch'].get('firecrawl_url', '')
         
-        # 如果是官方API，检查robots.txt
+        # Check robots.txt when using the official API
         if 'api.firecrawl.dev' in base_url:
             if not await check_robots_txt(original_url):
                 raise PermissionError(f"Access denied: target site forbids crawling")
@@ -761,8 +761,8 @@ import re
 
 async def simple_fetch(url):
     """
-    改进的网页抓取工具，返回结构化的清洗后内容
-    支持抓取内网和外网页面
+    Web scraping tool returning structured, cleaned content
+    Supports internal and external web pages.
     """
     def sync_fetch():
         try:
@@ -778,13 +778,13 @@ async def simple_fetch(url):
             return None, f"Failed to retrieve {url}: {str(e)}"
     
     def clean_and_extract(html_content):
-        """提取并清洗HTML内容，返回结构化数据"""
+        """Extract and clean HTML, returning structured data."""
         if not html_content:
             return None
         
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        # 移除不需要的标签
+        # Remove unnecessary tags
         for tag in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'iframe', 'noscript']):
             tag.decompose()
         
@@ -793,30 +793,30 @@ async def simple_fetch(url):
             'sections': []
         }
         
-        # 提取页面标题
+        # Extract the page title
         title_tag = soup.find('title')
         if title_tag:
             structured_content['title'] = title_tag.get_text().strip()
         
-        # 提取主要内容区域（优先查找main, article, 或id/class包含content的div）
+        # Find the main content area, preferring main, article or a div with content in its ID/class
         main_content = soup.find('main') or soup.find('article') or \
                       soup.find('div', {'id': re.compile(r'content|main', re.I)}) or \
                       soup.find('div', {'class': re.compile(r'content|main|article', re.I)}) or \
                       soup.body or soup
         
-        # 提取所有标题和段落
+        # Extract headings and paragraphs
         for element in main_content.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p']):
             text = element.get_text(separator=' ', strip=True)
             
-            # 清洗文本：移除多余空白
+            # Clean text by removing excess whitespace
             text = re.sub(r'\s+', ' ', text).strip()
             
-            # 过滤掉过短的内容（可能是噪音）
+            # Exclude very short content that may be noise
             if len(text) < 3:
                 continue
             
             if element.name.startswith('h'):
-                # 标题
+                # Heading
                 level = int(element.name[1])
                 structured_content['sections'].append({
                     'type': 'heading',
@@ -824,7 +824,7 @@ async def simple_fetch(url):
                     'content': text
                 })
             else:
-                # 段落
+                # Paragraph
                 structured_content['sections'].append({
                     'type': 'paragraph',
                     'content': text
@@ -833,7 +833,7 @@ async def simple_fetch(url):
         return structured_content
     
     try:
-        # 检查 robots.txt 合规性
+        # Check robots.txt compliance
         if not await check_robots_txt(url):
             return {
                 'error': 'PermissionError',
@@ -844,13 +844,13 @@ async def simple_fetch(url):
         html_content = await loop.run_in_executor(None, sync_fetch)
         
         if isinstance(html_content, tuple):
-            # 返回的是错误信息
+            # The response contains an error
             return {
                 'error': 'FetchError',
                 'message': html_content[1]
             }
         
-        # 清洗并提取结构化内容
+        # Clean and extract structured content
         structured_data = clean_and_extract(html_content)
         
         if not structured_data or not structured_data['sections']:
@@ -868,7 +868,7 @@ async def simple_fetch(url):
         }
 
 
-# OpenAI function 定义
+# OpenAI function definition
 simple_fetch_tool = {
     "type": "function",
     "function": {
@@ -889,25 +889,25 @@ simple_fetch_tool = {
 
 async def markdown_new(original_url):
     """
-    通过 markdown.new 服务将网页转换为 Markdown 格式
+    Convert a web page to Markdown using markdown.new.
     """
     
     def sync_crawler():
-        # 拼接 markdown.new 的服务地址
+        # Construct the markdown.new service URL
         detail_url = "https://markdown.new/"
         url = f"{detail_url}{original_url}"
         
         try:
-            # 添加一个基础的 User-Agent 防屏蔽
+            # Include a basic User-Agent header
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
             
-            # 发起请求
+            # Send the request
             response = requests.get(url, headers=headers, timeout=60)
             
             if response.status_code == 200:
-                # markdown.new 默认直接返回纯文本的 markdown 内容
+                # markdown.new returns plain Markdown text by default
                 return response.text
             else:
                 return f"Failed to retrieve {original_url}: HTTP {response.status_code}"
@@ -916,7 +916,7 @@ async def markdown_new(original_url):
             return f"Failed to retrieve {original_url}: {str(e)}"
 
     try:
-        # 检查 robots.txt 合规性（保持与你原有逻辑一致）
+        # Check robots.txt compliance using the existing logic
         if not await check_robots_txt(original_url):
             raise PermissionError(f"Access denied: target site forbids crawling")
             
@@ -948,8 +948,8 @@ markdown_new_tool = {
 
 async def youcom_search(query):
     """
-    You.com 搜索，支持免费层级（MCP，100次/天）和付费层级（REST API，消耗 API Key 额度）。
-    通过 webSearch.youcom_tier 设置切换：'free'（默认）或 'api_key'。
+    You.com search supports the free MCP tier (100 requests/day) and the paid REST API tier using API key quota.
+    Select free (default) or api_key through webSearch.youcom_tier.
     """
     settings = await load_settings()
     tier = settings['webSearch'].get('youcom_tier', 'free')
@@ -962,15 +962,15 @@ async def youcom_search(query):
 
 async def _youcom_search_free(query):
     """
-    免费层级：通过 You.com MCP 端点请求，无需 API Key，每天 100 次额度。
-    端点: https://api.you.com/mcp?profile=free
-    MCP Streamable HTTP 协议：先 initialize 获取 Session ID，再 tools/call 调用 you-search。
+    Free tier: use the You.com MCP endpoint without an API key, subject to a daily allowance of 100 requests.
+    Endpoint: https://api.you.com/mcp?profile=free
+    MCP Streamable HTTP: initialize to obtain a session ID, then invoke you-search with tools/call.
     """
     settings = await load_settings()
     max_results = settings['webSearch'].get('youcom_max_results', 10)
     base_url = "https://api.you.com/mcp?profile=free"
 
-    # 读取用户代理设置
+    # Read the user-configured proxy
     proxy_url = settings.get('systemSettings', {}).get('proxy', '')
     proxies = None
     if proxy_url:
@@ -979,7 +979,7 @@ async def _youcom_search_free(query):
     def sync_mcp():
         try:
             # Step 1: Initialize MCP session
-            # 必须同时 Accept application/json 和 text/event-stream（MCP Streamable HTTP 规范）
+            # Accept both application/json and text/event-stream as required by MCP Streamable HTTP
             init_resp = requests.post(
                 base_url,
                 json={
@@ -1039,7 +1039,7 @@ async def _youcom_search_free(query):
 
             result_data = search_resp.json()
 
-            # 解析 structuredContent（优先）或 content text
+            # Parse structuredContent first, then content text
             structured = result_data.get("result", {}).get("structuredContent", {}).get("results", {})
             if structured:
                 formatted_results = []
@@ -1054,7 +1054,7 @@ async def _youcom_search_free(query):
                     })
                 return json.dumps(formatted_results, indent=2, ensure_ascii=False)
 
-            # 回退：从 content text 中提取
+            # Fallback: extract from content text
             content = result_data.get("result", {}).get("content", [])
             text_parts = []
             for item in content:
@@ -1078,12 +1078,12 @@ async def _youcom_search_free(query):
 
 async def _youcom_search_api(query):
     """
-    付费层级：通过 You.com REST API 请求，需要 API Key。
-    API文档: https://you.com/specs/openapi_search_v1.yaml
+    Paid tier: use the You.com REST API with an API key.
+    API documentation: https://you.com/specs/openapi_search_v1.yaml
     """
     settings = await load_settings()
 
-    # 读取用户代理设置
+    # Read the user-configured proxy
     proxy_url = settings.get('systemSettings', {}).get('proxy', '')
     proxies = None
     if proxy_url:

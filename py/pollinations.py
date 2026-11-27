@@ -24,7 +24,7 @@ async def pollinations_image(prompt: str, width=512, height=512, model="flux"):
     url = f"https://image.pollinations.ai/prompt/{prompt}?width={width}&height={height}&model={model}&nologo=true&enhance=true&private=true&safe=true"
     res_data = requests.get(url).content
     image_id = str(uuid.uuid4())
-    # 将图片保存到本地UPLOAD_FILES_DIR，文件名为image_id，返回本地文件路径
+    # Save the image in UPLOAD_FILES_DIR using image_id as the filename and return the local path
     with open(f"{UPLOAD_FILES_DIR}/{image_id}.png", "wb") as f:
         f.write(res_data)
     return f"![image]({url})"
@@ -33,27 +33,27 @@ pollinations_image_tool = {
     "type": "function",
     "function": {
         "name": "pollinations_image",
-        "description": "通过英文prompt生成图片，并返回markdown格式的图片链接，你必须直接以原markdown格式发给用户，用户才能直接看到图片。\n当你需要发送图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！",
+        "description": "Generate an image using an English prompt and return its Markdown image link. Send the original Markdown directly to the user so the image is visible.\nUse Markdown image syntax for the URL, for example:\n\n![Image name](image URL)\n\nPlace the image Markdown on a separate line.",
         "parameters": {
             "type": "object",
             "properties": {
                 "prompt": {
                     "type": "string",
-                    "description": "需要生成图片的英文prompt，例如：A little girl in a red hat。你可以尽可能的丰富你的prompt，以获得更好的效果",
+                    "description": "English image generation prompt, for example: A red fox in a snowy forest. Include descriptive details for better results.",
                 },
                 "width": {
                     "type": "number",
-                    "description": "图片宽度",
+                    "description": "Image width",
                     "default":512
                 },
                 "height": {
                     "type": "number",
-                    "description": "图片高度",
+                    "description": "Image height",
                     "default": 512
                 },
                 "model": {
                     "type": "string",
-                    "description": "使用的模型",
+                    "description": "Model to use",
                     "default": "flux",
                     "enum": ["flux", "turbo"],
                 }
@@ -92,14 +92,14 @@ async def openai_image(prompt: str, size="auto"):
             HOST = '127.0.0.1'
         PORT = get_port()
         image_id = str(uuid.uuid4())
-        # 将图片保存到本地UPLOAD_FILES_DIR，文件名为image_id，返回本地文件路径
+        # Save the image in UPLOAD_FILES_DIR using image_id as the filename and return the local path
         with open(f"{UPLOAD_FILES_DIR}/{image_id}.png", "wb") as f:
             f.write(base64.b64decode(res))
         res = f"![image](http://{HOST}:{PORT}/uploaded_files/{image_id}.png)"
     else:
         res_data = requests.get(res_url).content
         image_id = str(uuid.uuid4())
-        # 将图片保存到本地UPLOAD_FILES_DIR，文件名为image_id，返回本地文件路径
+        # Save the image in UPLOAD_FILES_DIR using image_id as the filename and return the local path
         with open(f"{UPLOAD_FILES_DIR}/{image_id}.png", "wb") as f:
             f.write(res_data)
     return res
@@ -108,17 +108,17 @@ openai_image_tool = {
     "type": "function",
     "function": {
         "name": "openai_image",
-        "description": "通过英文prompt生成图片，并返回markdown格式的图片链接，你必须直接以原markdown格式发给用户，用户才能直接看到图片。\n当你需要发送图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！",
+        "description": "Generate an image using an English prompt and return its Markdown image link. Send the original Markdown directly to the user so the image is visible.\nUse Markdown image syntax for the URL, for example:\n\n![Image name](image URL)\n\nPlace the image Markdown on a separate line.",
         "parameters": {
             "type": "object",
             "properties": {
                 "prompt": {
                     "type": "string",
-                    "description": "需要生成图片的英文prompt，例如：A little girl in a red hat。你可以尽可能的丰富你的prompt，以获得更好的效果",
+                    "description": "English image generation prompt, for example: A red fox in a snowy forest. Include descriptive details for better results.",
                 },
                 "size": {
                     "type": "string",
-                    "description": "图片大小，默认为auto",
+                    "description": "Image size, defaults to auto",
                     "default": "auto", 
                     "enum": ["auto","1024x1024", "1536x1024", "1024x1536", "256x256", "512x512", "1792x1024", "1024x1792"],
                 }
@@ -129,15 +129,15 @@ openai_image_tool = {
 }
 
 def process_image_content(text):
-    # 正则表达式匹配 ![]() 中的内容
+    # Match Markdown image syntax ![]() using a regular expression
     pattern = r'!\[.*?\]\((.*?)\)'
     
     def replace_match(match):
         content = match.group(1)
         
-        # 检查是否是 base64 数据
+        # Check whether the data is base64-encoded
         if content.startswith('data:image'):
-            # 提取 base64 部分（假设格式为 data:image/xxx;base64,实际数据）
+            # Extract base64 data from the data:image/xxx;base64, payload format
             base64_data = content.split(',', 1)[1]
             HOST = get_host()
             if HOST == '0.0.0.0':
@@ -145,26 +145,26 @@ def process_image_content(text):
             PORT = get_port()
             image_id = str(uuid.uuid4())
             
-            # 确保上传目录存在
+            # Ensure the upload directory exists
             os.makedirs(UPLOAD_FILES_DIR, exist_ok=True)
             
-            # 保存图片到本地
+            # Save the image locally
             file_path = f"{UPLOAD_FILES_DIR}/{image_id}.png"
             with open(file_path, "wb") as f:
                 f.write(base64.b64decode(base64_data))
             
-            # 返回新的图片链接
+            # Return the new image link
             return f"![image](http://{HOST}:{PORT}/uploaded_files/{image_id}.png)"
         else:
-            # 如果是普通 URL，直接返回原内容
+            # Return the original content unchanged for ordinary URLs
             return match.group(0)
     
-    # 使用 re.sub 进行替换
+    # Replace matches using re.sub
     result = re.sub(pattern, replace_match, text)
     return result
 
 
-# 辅助工具：安全兼容读取对象属性或字典键
+# Helper: safely read object attributes or dictionary keys
 def get_attr_or_key(obj, key, default=None):
     if isinstance(obj, dict):
         return obj.get(key, default)
@@ -172,7 +172,7 @@ def get_attr_or_key(obj, key, default=None):
 
 
 # ==========================================
-# 2. 您的对话生图函数（增加对 modalities 的支持）
+# 2. Conversational image generation with modalities support
 # ==========================================
 async def openai_chat_image(prompt: str, img_url_list: list = []):
     settings = await load_settings()
@@ -195,7 +195,7 @@ async def openai_chat_image(prompt: str, img_url_list: list = []):
         else:
             content = prompt
 
-        # 优先尝试 modalities 参数
+        # Try the modalities parameter first
         try:
             response = await client.chat.completions.create(
                 model=model,
@@ -209,7 +209,7 @@ async def openai_chat_image(prompt: str, img_url_list: list = []):
             )
         except Exception as e:
             err_msg = str(e).lower()
-            # 如果模型不支持 modalities 或者是老版本接口，捕获异常并降级回常规调用
+            # Fall back to a standard call if the model or older API does not support modalities
             if "modalities" in err_msg or "extra parameters" in err_msg or "unsupported" in err_msg or "400" in err_msg:
                 response = await client.chat.completions.create(
                     model=model,
@@ -232,11 +232,11 @@ async def openai_chat_image(prompt: str, img_url_list: list = []):
         choice = response.choices[0]
         message = choice.message
         
-        # 1. 提取基础文本内容
+        # 1. Extract the base text content
         res_text = get_attr_or_key(message, 'content') or ""
         
-        # 2. 如果是通过 modalities 参数原生生成的图片（存放在 images 数组中）
-        # 我们只需将其直接包装成 Markdown 语法拼接在文本尾部
+        # 2. Handle native images generated through modalities and stored in the images array
+        # Wrap the images in Markdown syntax and append them to the text
         images_field = get_attr_or_key(message, 'images')
         if images_field and isinstance(images_field, list):
             for img in images_field:
@@ -246,10 +246,10 @@ async def openai_chat_image(prompt: str, img_url_list: list = []):
                     if img_url_obj:
                         url_str = get_attr_or_key(img_url_obj, 'url')
                         if url_str:
-                            # 拼接到文本末尾，让后续的正则统一解析
+                            # Append to the text for subsequent regular-expression processing
                             res_text += f"\n\n![image]({url_str})"
 
-        # 3. 统一调用您原有的 process_image_content 函数进行本地保存和 URL 替换
+        # 3. Use process_image_content to save images locally and replace URLs
         res = process_image_content(res_text)
         
     return res
@@ -258,17 +258,17 @@ openai_chat_image_tool = {
     "type": "function",
     "function": {
         "name": "openai_chat_image",
-        "description": "通过英文prompt生成图片或者图片编辑，并返回markdown格式的图片链接，你必须直接以原markdown格式发给用户，用户才能直接看到图片。\n当你需要发送图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！",
+        "description": "Generate or edit an image using an English prompt and return its Markdown image link. Send the original Markdown directly to the user so the image is visible.\nUse Markdown image syntax for the URL, for example:\n\n![Image name](image URL)\n\nPlace the image Markdown on a separate line.",
         "parameters": {
             "type": "object",
             "properties": {
                 "prompt": {
                     "type": "string",
-                    "description": "需要生成图片的英文prompt或者修改图片的prompt，例如：`A little girl in a red hat` 或者 `Change the girl's hat to white`。你可以尽可能的丰富你的prompt，以获得更好的效果",
+                    "description": "English image generation or editing prompt, for example: `A red fox in a snowy forest` or `Change the sky to a clear blue`. Include descriptive details for better results.",
                 },
                 "img_url_list": {
                     "type": "array",
-                    "description": "执行图片编辑任务时的可选的字段，列表字段中每个元素都必须是图片URL，图片URL可以是用户上传的本地图片URL，格式类似于：http://127.0.0.1:3456/1.jpg ，也可以是一个公网上的图片URL",
+                    "description": "Optional image URLs for editing. Each list item must be an image URL, either a local uploaded image such as http://127.0.0.1:3456/1.jpg or a public image URL.",
                 },
             },
             "required": ["prompt"],

@@ -108,3 +108,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — skills and extension managers
 
 - Localized all remaining flagged lines in py/skills.py and py/extensions.py. Retain GitHub and ZIP installation, skill sync, extension update and Node extension APIs. Replace automatic upstream GitHub/Gitee catalog retrieval with the fork-controlled packaged config/extension_catalog.json (initially empty, pending review of candidate extensions); keep the existing /remote-list response contract and point the catalog button to the fork. User-specified GitHub proxy support remains. Static Han scan and route/link checks passed; Python parsing, CI, packaged configuration and interactive installation still require verification. Next: remaining backend modules, assets, skills contents and repository-wide regional inventory. No package requested.
+
+## Follow-up source checkpoint — web search and image tools
+
+- Completed the remaining English source conversion of py/web_search.py (67 flagged lines) and py/pollinations.py (31 flagged lines). Search changes are comments/docstrings; image changes include agent-facing schema descriptions, examples and developer comments. Preserve provider configuration, robots checks, network behavior, tool names, Markdown rendering and image processing. Static line coverage and zero literal Han checks passed. Added AST and source regression coverage; Python CI and live providers remain unverified. No package requested.

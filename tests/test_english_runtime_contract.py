@@ -246,6 +246,17 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         html = (ROOT / "static/index.html").read_text(encoding="utf-8")
         self.assertIn("Blaco/super-agent-party/blob/agent-creation/config/extension_catalog.json", html)
 
+    def test_search_and_image_tools_are_english(self):
+        for relative in ("py/web_search.py", "py/pollinations.py"):
+            path = ROOT / relative
+            source = path.read_text(encoding="utf-8")
+            ast.parse(source, filename=str(path))
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
+        image = (ROOT / "py/pollinations.py").read_text(encoding="utf-8")
+        self.assertIn("process_image_content", image)
+        self.assertIn("modalities", image)
+        self.assertIn("![Image name](image URL)", image)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)
