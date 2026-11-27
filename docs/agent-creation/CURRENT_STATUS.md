@@ -96,3 +96,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — VRM renderer localization complete
 
 - Translated all 310 remaining Han-flagged lines in static/js/vrm.js. Together with the preceding 220-line pass, the renderer now has zero detected literal Han characters. Changes are comment-only, including shader/CSS comments, subtitles, VMC, XR, PTT, audio synchronization and model switching. Multilingual punctuation handling remains intact. The full-file English regression check was added. Preliminary syntax check passed with unchanged static imports excluded solely for parser compatibility; full module CI and Windows rendering remain outstanding. Next: CLI and local application modules, skills/extensions, then repository-wide inventory. No package requested.
+
+## Follow-up source checkpoint — CLI tool localization complete
+
+- Translated all 255 remaining Han-flagged lines in py/cli_tool.py (comments and docstrings only). Corrected stale explanatory comments to reflect actual ZeroBox workspace read/write and network configuration. No command execution logic, sandbox settings, permission checks, schemas, process management, redaction behavior or task data changed. Zero literal Han characters remain. Added AST and full-file English regression coverage; Python execution and CI are not verified in this editing environment. Next: local application modules, skills/extensions and full inventory. No package requested.

@@ -202,6 +202,17 @@ class EnglishRuntimeContractTests(unittest.TestCase):
                          "ttsWebSocket.binaryType = 'arraybuffer'"):
             self.assertIn(contract, source)
 
+    def test_cli_tool_source_is_english(self):
+        path = ROOT / "py/cli_tool.py"
+        source = path.read_text(encoding="utf-8")
+        ast.parse(source, filename=str(path))
+        self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
+        for contract in ("COMMAND_TIMEOUT = 300", "resolve_strict_path",
+                         "get_or_create_docker_sandbox", "bubblewrap",
+                         '"allow_write": [cwd]', '"allow_read": [cwd]',
+                         '"allow_net": True'):
+            self.assertIn(contract, source)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

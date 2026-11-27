@@ -24,9 +24,9 @@ import anyio
 from py.get_setting import load_settings
 from py.get_setting import SKILLS_DIR,IS_DOCKER
 
-COMMAND_TIMEOUT = 300  # 5分钟超时
+COMMAND_TIMEOUT = 300  # 5-minute timeout
 
-# ==================== 环境初始化 ====================
+# ==================== Environment initialization ====================
 
 try:
     from zerobox import Sandbox, SandboxCommandError
@@ -34,10 +34,10 @@ try:
 except ImportError:
     HAS_ZEROBOX = False
 
-# ==================== WSL 环境检测与工具 ====================
+# ==================== WSL environment detection and tools ====================
 
 def _check_wsl_available() -> bool:
-    """检测 WSL 是否可用（仅 Windows 上有效）"""
+    """Check whether WSL is available (Windows only)."""
     if platform.system() != "Windows":
         return False
     try:
@@ -51,14 +51,14 @@ def _check_wsl_available() -> bool:
         return False
 
 def _windows_to_wsl_path(win_path: str) -> str:
-    """将 Windows 路径转换为 WSL 路径 (如 D:\\foo\\bar -> /mnt/d/foo/bar)"""
+    """Convert a Windows path to its WSL equivalent (e.g. D:/foo/bar to /mnt/d/foo/bar)."""
     path = Path(win_path).resolve()
     drive = path.drive[0].lower()
-    rest = str(path).replace('\\', '/')[2:]  # 去掉 "D:"
+    rest = str(path).replace('\\', '/')[2:]  # Remove the drive letter and colon
     return f"/mnt/{drive}{rest}"
 
 async def _ensure_bubblewrap_in_wsl() -> tuple:
-    """检测 WSL 中是否已安装 bubblewrap，如未安装则自动安装。返回 (success: bool, message: str)"""
+    """Check for bubblewrap in WSL and install it if missing. Return (success: bool, message: str)."""
     check_cmd = ["wsl.exe", "-e", "bash", "-c", "command -v bwrap || echo NOT_FOUND"]
     proc = await asyncio.create_subprocess_exec(
         *check_cmd,
@@ -70,7 +70,7 @@ async def _ensure_bubblewrap_in_wsl() -> tuple:
     if b"NOT_FOUND" not in stdout:
         return True, "bubblewrap already installed in WSL."
     
-    # 自动安装 bubblewrap
+    # Install bubblewrap automatically
     install_cmd = [
         "wsl.exe", "-e", "bash", "-c",
         "sudo apt-get update -qq && sudo apt-get install -y -qq bubblewrap"
@@ -91,7 +91,7 @@ async def _ensure_bubblewrap_in_wsl() -> tuple:
         )
 
 def get_shell_environment():
-    """通过子进程获取完整的 shell 环境"""
+    """Obtain the complete shell environment through a subprocess."""
     shell = os.environ.get('SHELL', '/bin/zsh')
     home = Path.home()
     
@@ -102,7 +102,7 @@ def get_shell_environment():
         'env'
     ]
     
-    # Windows 环境简单跳过
+    # Skip on Windows
     if platform.system() == "Windows":
         return
 
@@ -128,12 +128,12 @@ def get_shell_environment():
 
 get_shell_environment()
 
-# ==================== 核心基础设施：流处理 ====================
+# ==================== Core infrastructure: stream processing ====================
 
 
 async def read_stream(stream, *, is_error: bool = False):
     """
-    改进的流读取器：支持多编码回退，确保能抓取到系统原始报错。
+    Improved stream reader with encoding fallbacks to capture original system errors.
     """
     if stream is None:
         return
@@ -146,7 +146,7 @@ async def read_stream(stream, *, is_error: bool = False):
             break
             
         decoded = ""
-        # 依次尝试：UTF-8 -> GBK (Windows) -> CP437 -> 替换模式
+        # Try UTF-8, GBK (Windows), CP437, then replacement decoding
         for enc in ['utf-8', 'gbk', 'cp437']:
             try:
                 decoded = line_bytes.decode(enc).rstrip()
@@ -159,11 +159,11 @@ async def read_stream(stream, *, is_error: bool = False):
             
         yield f"{prefix}{decoded}"
 
-# 修改 read_stream 为分块读取，防止进度条挂起
+# Read streams in chunks to prevent progress bars from hanging
 async def read_stream_chunks(stream, prefix=""):
     """
-    分块读取流，不等待换行符，解决进度条显示问题。
-    智能编码检测：优先 UTF-8，若 NUL 字符过多则尝试 UTF-16LE（WSL 部分消息使用）。
+    Read stream chunks without waiting for a newline so progress bars display correctly.
+    Prefer UTF-8; try UTF-16LE if many NUL characters occur (some WSL messages use it).
     """
     if stream is None:
         return
@@ -175,13 +175,13 @@ async def read_stream_chunks(stream, prefix=""):
                 break
             
             decoded = ""
-            # 优先尝试 UTF-8
+            # Try UTF-8 first
             try:
                 decoded = chunk.decode('utf-8')
             except UnicodeDecodeError:
                 pass
             
-            # 若 UTF-8 解码结果中 NUL 字符或替换字符过多，说明可能是 UTF-16LE 数据
+            # Many NUL or replacement characters in the UTF-8 result may indicate UTF-16LE
             if decoded:
                 bad_chars = decoded.count('\x00') + decoded.count('\ufffd')
                 if bad_chars > len(decoded) * 0.3:
@@ -205,7 +205,7 @@ async def read_stream_chunks(stream, prefix=""):
 
 
 async def _merge_streams(*streams):
-    """合并多个异步流"""
+    """Merge multiple asynchronous streams."""
     streams = [s.__aiter__() for s in streams]
     while streams:
         for stream in list(streams):
@@ -216,7 +216,7 @@ async def _merge_streams(*streams):
                 streams.remove(stream)
 
 async def _get_current_cwd() -> str:
-    """获取当前配置的工作目录"""
+    """Get the currently configured working directory."""
     settings = await load_settings()
     cwd = settings.get("CLISettings", {}).get("cc_path")
     if not cwd:
@@ -225,12 +225,12 @@ async def _get_current_cwd() -> str:
 
 def get_detailed_exit_info(code: int, command: str) -> str:
     """
-    根据退出码和操作系统，生成详细的诊断信息 and 建议。
+    Generate detailed diagnostics and suggestions based on the exit code and operating system.
     """
     cmd_name = command.strip().split()[0] if command.strip() else "unknown"
     system = platform.system()
     
-    # 基础映射
+    # Base mapping
     explanations = {
         1: "Exit code 1 indicates command failure. Inspect the preceding error output for the specific cause.",
         2: "Incorrect use of a shell builtin.",
@@ -238,7 +238,7 @@ def get_detailed_exit_info(code: int, command: str) -> str:
         127: "Command not found (Linux/Unix).",
         130: "Terminated by Control-C.",
         137: "Process forcibly terminated (possibly due to an out-of-memory condition).",
-        # Windows 特有
+        # Windows-specific
         9009: f"Windows: command '{cmd_name}' not found. Check whether the program is installed and on PATH.",
         5: "Windows: access denied (insufficient permissions).",
     }
@@ -260,7 +260,7 @@ def get_detailed_exit_info(code: int, command: str) -> str:
 
 
 
-# 辅助函数：统计首尾的空行数量
+# Helper: count leading and trailing blank lines
 def count_empty_padding(lines):
     start = 0
     while start < len(lines) and not lines[start].strip():
@@ -272,17 +272,17 @@ def count_empty_padding(lines):
 
 def _apply_patch(content: str, old_string: str, new_string: str, replace_all: bool = False) -> tuple[bool, str, str]:
     """
-    高度鲁棒的补丁应用算法，解决 AI 换行符幻觉和"空行不断膨胀"的问题。
+    Robust patch application that handles hallucinated line breaks and accumulating blank lines.
     """
-    # 统一换行符为 \n
+    # Normalize newlines to \n
     content_lf = content.replace('\r\n', '\n')
     old_lf = old_string.replace('\r\n', '\n')
     new_lf = new_string.replace('\r\n', '\n')
 
-    # 1. 绝对精确匹配 (速度最快，且绝不产生多余空行)
+    # 1. Exact matching (fastest and avoids adding extra blank lines)
     if old_lf in content_lf:
         if replace_all:
-            # 检查是否至少有一个匹配（str.replace 自身会处理）
+            # Check for at least one match (str.replace handles replacement)
             new_content = content_lf.replace(old_lf, new_lf)
             count = content_lf.count(old_lf)
             return True, new_content, f"Replaced {count} occurrence(s)."
@@ -292,13 +292,13 @@ def _apply_patch(content: str, old_string: str, new_string: str, replace_all: bo
                 return False, content, f"[Error] old_string found {count} times in file. Provide more surrounding context to make it unique, or use replace_all=True."
             return True, content_lf.replace(old_lf, new_lf, 1), "Exact match successful."
 
-    # 2. 智能模糊匹配阶段
+    # 2. Fuzzy matching stage
     content_lines = content_lf.split('\n')
     old_lines = old_lf.split('\n')
     new_lines = new_lf.split('\n')
 
 
-    # 统计并剥离 old_lines 首尾用来凑格式的空行
+    # Count and strip padding blank lines from both ends of old_lines
     old_pad_start, old_pad_end = count_empty_padding(old_lines)
     old_actual_end = len(old_lines) - old_pad_end
     old_stripped = old_lines[old_pad_start : old_actual_end]
@@ -306,7 +306,7 @@ def _apply_patch(content: str, old_string: str, new_string: str, replace_all: bo
     if not old_stripped:
         return False, content, "old_string is empty or only contains whitespaces."
 
-    # 滑动窗口匹配
+    # Sliding-window matching
     def find_all_matches(ignore_leading=False):
         matches = []
         for i in range(len(content_lines) - len(old_stripped) + 1):
@@ -341,7 +341,7 @@ def _apply_patch(content: str, old_string: str, new_string: str, replace_all: bo
         return -1
 
     if replace_all:
-        # replace_all: 找到所有模糊匹配并替换
+        # replace_all: find and replace all fuzzy matches
         matches = find_all_matches(ignore_leading=False)
         match_type = "Fuzzy match (trailing whitespace)"
         if not matches:
@@ -349,7 +349,7 @@ def _apply_patch(content: str, old_string: str, new_string: str, replace_all: bo
             match_type = "Fuzzy match (leading+trailing whitespace)"
 
         if matches:
-            # 从后往前替换，防止索引偏移
+            # Replace from the end toward the beginning to avoid shifting indexes
             new_pad_start, new_pad_end = count_empty_padding(new_lines)
             strip_front = min(old_pad_start, new_pad_start)
             strip_back = min(old_pad_end, new_pad_end)
@@ -364,7 +364,7 @@ def _apply_patch(content: str, old_string: str, new_string: str, replace_all: bo
             new_content = '\n'.join(result_lines)
             return True, new_content, f"{match_type} - replaced {len(matches)} occurrence(s)."
 
-        # 匹配失败
+        # No match
         first_line_clean = old_stripped[0].strip()
         candidates = []
         for i, line in enumerate(content_lines):
@@ -382,26 +382,26 @@ def _apply_patch(content: str, old_string: str, new_string: str, replace_all: bo
         msg = "Fuzzy match successful (ignored leading/trailing whitespaces)."
 
     if match_idx != -1:
-        # 切片截取被保留的原文
+        # Slice out the retained original text
         pre = content_lines[:match_idx]
         post = content_lines[match_idx + len(old_stripped):]
         
-        # --- 杜绝空行膨胀的核心逻辑 ---
+        # --- Core logic to prevent blank-line accumulation ---
         new_pad_start, new_pad_end = count_empty_padding(new_lines)
         
-        # 抵消 AI 在 old 和 new 中同时附带的无用上下文空行
-        # 只有当 AI 故意在 new_string 中多加了空行时（即差值），才将其写入文件
+        # Cancel unnecessary context blank lines included in both old and new text
+        # Only write the difference when new_string intentionally adds blank lines
         strip_front = min(old_pad_start, new_pad_start)
         strip_back = min(old_pad_end, new_pad_end)
         
         new_actual_end = len(new_lines) - strip_back
         new_final = new_lines[strip_front : new_actual_end]
         
-        # 核心修复：使用纯 List 合并，绝对不硬编码拼接额外的 "\n"
+        # Merge lists directly without hardcoding additional newline characters
         new_content = '\n'.join(pre + new_final + post)
         return True, new_content, msg
 
-    # 匹配失败，生成带行号的纠错建议给 AI
+    # On failure, generate line-numbered correction suggestions for the agent
     first_line_clean = old_stripped[0].strip()
     candidates =[]
     for i, line in enumerate(content_lines):
@@ -413,12 +413,12 @@ def _apply_patch(content: str, old_string: str, new_string: str, replace_all: bo
         err_msg += "Did you mean one of these locations?\n" + "\n".join(candidates[:5])
     return False, content, err_msg
 
-# ==================== [新增] 核心基础设施：进程管理 ====================
+# ==================== Core infrastructure: process management ====================
 
 class ProcessManager:
-    """全局后台进程管理器 (Docker & Local) - 增强版 (支持 Windows 进程树查杀)"""
+    """Global background process manager (Docker and local), including Windows process-tree termination."""
     def __init__(self):
-        # 结构: {pid: {"proc": proc, "logs": deque, "cmd": str, "type": str, "task": task, "status": str, "start_time": str}}
+        # Structure: {pid: {"proc": proc, "logs": deque, "cmd": str, "type": str, "task": task, "status": str, "start_time": str}}
         self._processes = {}
         self._counter = 0
 
@@ -427,7 +427,7 @@ class ProcessManager:
         return str(self._counter)
 
     async def register_process(self, proc, cmd: str, p_type: str):
-        """注册并开始监控一个后台进程"""
+        """Register and start monitoring a background process."""
         pid = self.generate_id()
         logs = deque(maxlen=2000)
         
@@ -446,7 +446,7 @@ class ProcessManager:
 
     async def send_input(self, pid: str, text: str) -> str:
         """
-        往指定的后台进程中发送输入（模拟键盘敲击，例如输入 'y\n'）
+        Send input to the specified background process (simulating keystrokes, such as entering y followed by a newline).
         """
         if pid not in self._processes:
             return f"Error: Process ID {pid} not found."
@@ -461,7 +461,7 @@ class ProcessManager:
             return f"Error: Process {pid} was not started with stdin enabled."
             
         try:
-            # 确保发送的文本以换行符结尾，模拟用户按下回车键
+            # Ensure the text ends with a newline to simulate pressing Enter
             if not text.endswith('\n'):
                 text += '\n'
                 
@@ -477,7 +477,7 @@ class ProcessManager:
             if not stream: return
             try:
                 while True:
-                    # 改为读取分块，不再使用 readline()
+                    # Read chunks instead of using readline()
                     chunk = await stream.read(1024) 
                     if not chunk:
                         break
@@ -494,8 +494,8 @@ class ProcessManager:
 
                     timestamp = datetime.now().strftime("%H:%M:%S")
                     
-                    # 处理回车符 \r，将其替换为换行，这样 log 中能看到进度条的每一步更新
-                    # 如果不需要保留进度条每一行，可以直接 decoded.strip()
+                    # Replace carriage returns with newlines so logs show progress updates
+                    # Use decoded.strip() if individual progress updates are unnecessary
                     lines = decoded.replace('\r', '\n').splitlines()
                     for line in lines:
                         if line.strip():
@@ -546,8 +546,8 @@ class ProcessManager:
 
     async def kill_process(self, pid: str):
         """
-        强制结束进程。
-        针对 Windows 使用 taskkill /T 结束进程树，防止子进程残留。
+        Force a process to terminate.
+        On Windows, use taskkill /T to terminate the process tree and avoid leaving child processes.
         """
         if pid not in self._processes:
             return f"Error: Process ID {pid} not found."
@@ -555,22 +555,22 @@ class ProcessManager:
         info = self._processes[pid]
         proc = info["proc"]
         
-        # 即使 proc.returncode 已经有值，也要尝试清理可能的孤儿进程
+        # Attempt to clean up possible orphaned processes even if proc.returncode is already set
         os_pid = proc.pid
         
         try:
             info["status"] = "terminating..."
             
             if platform.system() == "Windows":
-                # Windows: 使用 taskkill /F (强制) /T (进程树) /PID <pid>
-                # 这是清理 PowerShell/CMD 启动的子进程的关键
+                # Windows: use taskkill /F (force) /T (process tree) /PID <pid>
+                # This is important for cleaning up children started by PowerShell or CMD
                 kill_cmd = f"taskkill /F /T /PID {os_pid}"
                 subprocess.run(kill_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
-                # Linux/Mac: 尝试杀进程组 (如果适用) 或标准 terminate
+                # Linux/macOS: try terminating the process group if applicable, or use standard termination
                 try:
                     proc.terminate()
-                    # 给一点时间优雅退出
+                    # Allow time for a graceful exit
                     await asyncio.wait_for(proc.wait(), timeout=2.0)
                 except (asyncio.TimeoutError, ProcessLookupError):
                     try:
@@ -586,11 +586,11 @@ class ProcessManager:
         
     async def kill_all(self):
         """
-        关闭所有注册在管理器中的活动进程。
+        Stop all active processes registered in the manager.
         """
         active_pids = []
         for pid, info in list(self._processes.items()):
-            # 过滤掉已经退出的进程
+            # Exclude processes that have already exited
             status = info.get("status", "")
             if "exited" not in status and "terminated" not in status:
                 active_pids.append(pid)
@@ -600,11 +600,11 @@ class ProcessManager:
             
         print(f"Found {len(active_pids)} active background processes. Terminating...")
         
-        # 并发执行清理任务
+        # Run cleanup tasks concurrently
         tasks = [self.kill_process(pid) for pid in active_pids]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # 打印清理结果
+        # Print cleanup results
         for pid, res in zip(active_pids, results):
             if isinstance(res, Exception):
                 print(f"[Warn] Failed to kill process {pid}: {res}")
@@ -613,22 +613,22 @@ class ProcessManager:
 
 process_manager = ProcessManager()
 
-# ==================== [新增] 核心基础设施：Docker 网络代理 ====================
+# ==================== Core infrastructure: Docker network proxy ====================
 
 async def send_process_input_tool(pid: str, text: str) -> str:
-    """[Common] 往指定的后台进程发送交互输入（stdin）"""
+    """[Common] Send interactive input (stdin) to a specified background process."""
     if not pid:
         return "Error: 'pid' is required to send input."
     return await process_manager.send_input(pid, text)
 
 class DockerPortProxy:
-    """纯 Python 实现的 Docker 端口转发器 (Container -> Host)"""
+    """Pure Python Docker port forwarder (container to host)."""
     def __init__(self, container_name: str):
         self.container_name = container_name
         self.proxies = {} # {local_port: server_obj}
 
     async def start_forward(self, local_port: int, container_port: int):
-        """开启转发：本地 TCP Server -> docker exec 桥接 -> 容器内部端口"""
+        """Start forwarding from a local TCP server through a docker exec bridge to the container port."""
         if local_port in self.proxies:
             return f"Port {local_port} is already being forwarded."
 
@@ -652,9 +652,9 @@ class DockerPortProxy:
             return s.connect_ex(('127.0.0.1', port)) != 0
 
     async def _handle_client(self, client_reader, client_writer, container_port):
-        """处理每个连接：启动一个 docker exec 进程作为管道"""
+        """Handle each connection using a docker exec process as a pipe."""
         try:
-            # 微型 Python 转发脚本，在容器内运行
+            # Small Python forwarding script that runs inside the container
             proxy_script = (
                 "import socket,sys,threading;"
                 "s=socket.socket();"
@@ -724,19 +724,19 @@ class DockerPortProxy:
 
 DOCKER_PROXIES = {} # {container_name: ProxyInstance}
 
-# ==================== Docker Sandbox 基础设施 ====================
+# ==================== Docker sandbox infrastructure ====================
 
 def get_safe_container_name(cwd: str) -> str:
-    """根据路径生成合法容器名"""
+    """Generate a valid container name from a path."""
     abs_path = str(Path(cwd).resolve())
     path_hash = hashlib.md5(abs_path.encode()).hexdigest()[:12]
     return f"sandbox-{path_hash}"
 
 async def get_or_create_docker_sandbox(cwd: str, image_name: str = "docker/sandbox-templates:claude-code") -> str:
-    """获取或创建基于路径的持久化沙盒，并映射全局skills目录"""
+    """Get or create a persistent path-based sandbox and map the global skills directory."""
     container_name = get_safe_container_name(cwd)
     
-    # 获取主机的全局skills目录
+    # Get the host global skills directory
     host_skills_dir = SKILLS_DIR
     
     check_proc = await asyncio.create_subprocess_exec(
@@ -752,18 +752,18 @@ async def get_or_create_docker_sandbox(cwd: str, image_name: str = "docker/sandb
         if "Up" in status:
             return container_name
         else:
-            # 启动已存在的容器
+            # Start the existing container
             await asyncio.create_subprocess_exec("docker", "start", container_name, stdout=asyncio.subprocess.PIPE)
             return container_name
     
-    # 创建新容器，映射主机的全局skills目录
-    # 注意：我们将主机skills目录映射到容器内的 /root/.agents/skills
-    # 这是标准Agent Skills CLI使用的路径
+    # Create a container and map the host global skills directory
+    # Note: mount the host skills directory at the container destination specified below
+    # This is the standard Agent Skills CLI path
     create_cmd = [
         "docker", "run", "-d",
         "--name", container_name,
-        "-v", f"{cwd}:/workspace",  # 映射工作目录
-        "-v", f"{host_skills_dir}:/home/agent/.agents/skills",   # 映射全局skills目录到容器内
+        "-v", f"{cwd}:/workspace",  # Map the working directory
+        "-v", f"{host_skills_dir}:/home/agent/.agents/skills",   # Map the global skills directory into the container
         "-w", "/workspace",
         "--restart", "unless-stopped",
         image_name,
@@ -778,9 +778,9 @@ async def get_or_create_docker_sandbox(cwd: str, image_name: str = "docker/sandb
     stdout, stderr = await proc.communicate()
     
     if proc.returncode == 0:
-        # 容器创建成功，确保容器内的skills目录权限正确
+        # After container creation, ensure its skills directory permissions are correct
         try:
-            # 设置容器内skills目录的权限
+            # Set permissions for the container skills directory
             chown_cmd = [
                 "docker", "exec", container_name,
                 "chown", "-R", "root:root", "/root/.agents/skills"
@@ -792,12 +792,12 @@ async def get_or_create_docker_sandbox(cwd: str, image_name: str = "docker/sandb
             )
             await chown_proc.communicate()
         except Exception:
-            # 权限设置失败不影响主要功能
+            # Permission setup failure does not prevent primary functionality
             pass
         
         return container_name
     else:
-        # 简单重试逻辑
+        # Simple retry logic
         if "is already in use" in stderr.decode():
             await asyncio.sleep(0.5)
             return await get_or_create_docker_sandbox(cwd, image_name)
@@ -805,7 +805,7 @@ async def get_or_create_docker_sandbox(cwd: str, image_name: str = "docker/sandb
 
 
 async def _exec_docker_cmd_simple(cwd: str, cmd_list: list) -> str:
-    """内部辅助函数：在容器内执行简单命令并获取输出"""
+    """Internal helper: run a simple command in the container and return its output."""
     container_name = await get_or_create_docker_sandbox(cwd)
     full_cmd = ["docker", "exec", "-i", "-w", "/workspace", container_name] + cmd_list
     
@@ -820,10 +820,10 @@ async def _exec_docker_cmd_simple(cwd: str, cmd_list: list) -> str:
         raise Exception(f"Command failed: {stderr.decode().strip()}")
     return stdout.decode()
 
-# ==================== 敏感信息脱敏工具 ====================
+# ==================== Sensitive information redaction ====================
 
 def _is_env_file(file_path: str) -> bool:
-    """判断文件是否为环境变量文件（基于文件名）"""
+    """Determine whether a file is an environment file based on its filename."""
     if not file_path:
         return False
     name = os.path.basename(file_path)
@@ -834,7 +834,7 @@ def _is_env_file(file_path: str) -> bool:
     )
 
 def _mask_sensitive_value(value: str) -> str:
-    """脱敏值：将值替换为掩码，只显示首尾部分"""
+    """Mask a value, revealing only its beginning and end."""
     v = value.strip()
     if len(v) <= 4:
         return '*' * len(v)
@@ -844,7 +844,7 @@ def _mask_sensitive_value(value: str) -> str:
         return v[:3] + '*' * (len(v) - 6) + v[-3:]
 
 def _mask_env_content(text: str) -> str:
-    """对包含 KEY=VALUE 的行进行脱敏，VALUE 部分替换为掩码"""
+    """Redact lines containing KEY=VALUE by masking the VALUE portion."""
     pattern = re.compile(
         r'^(\s*(?:export\s+)?[A-Za-z_][A-Za-z0-9_]*\s*=\s*)(\S+)(.*)$',
         re.IGNORECASE
@@ -865,16 +865,16 @@ def _mask_env_content(text: str) -> str:
 
 def _maybe_mask_output(file_path: str, output: str) -> str:
     """
-    根据文件路径决定是否脱敏输出。
-    用于 read_file、read_file_range、tail_file 等工具。
-    输出可能包含行号前缀，例如 "   42 | CONTENT"。
+    Determine whether to redact output based on the file path.
+    Used by tools such as read_file, read_file_range and tail_file.
+    Output may include a line-number prefix, such as "   42 | CONTENT".
     """
     if not _is_env_file(file_path):
         return output
 
     masked = []
     for line in output.splitlines():
-        # 如果包含管道符，可能是带行号的输出
+        # A pipe separator may indicate line-numbered output
         if '|' in line:
             parts = line.split('|', 1)
             if len(parts) == 2:
@@ -888,11 +888,11 @@ def _maybe_mask_output(file_path: str, output: str) -> str:
         masked.append(masked_line)
     return "\n".join(masked)
 
-# ==================== Docker 环境工具实现 (含新功能) ====================
+# ==================== Docker environment tools (including additional features) ====================
 
 async def docker_sandbox(command: str, background: bool = False, timeout: int = 600) -> AsyncIterator[str]:
     """
-    [Docker] 沙盒执行（打平版，直接返回异步生成器）
+    [Docker] Execute in the sandbox (directly return an async generator).
     """
     effective_timeout = max(1, min(timeout, 3600))
     settings = await load_settings()
@@ -962,7 +962,7 @@ async def docker_sandbox(command: str, background: bool = False, timeout: int = 
         yield f"[ERROR] Failed to start Docker process: {str(e)}"
 
 async def glob_files_tool(pattern: str, exclude: str = "**/node_modules/**,**/.git/**,**/__pycache__/**") -> str:
-    """[Docker] Glob 递归查找"""
+    """[Docker] Recursive glob search."""
     try:
         real_cwd = await _get_current_cwd()
         exclude_list = [e.strip() for e in exclude.split(",") if e.strip()]
@@ -997,13 +997,13 @@ print(json.dumps(filtered))
 
 async def todo_write_tool(action: str, id: str = None, content: str = None, 
                           priority: str = "medium", status: str = None) -> str:
-    """[Docker] 待办任务管理工具 - 使用3位数字有序ID"""
+    """[Docker] To-do management using sequential numeric IDs."""
     try:
         real_cwd = await _get_current_cwd()
         container_name = await get_or_create_docker_sandbox(real_cwd)
         todo_file = "/workspace/.agents/ai_todos.json"
         
-        # 从 Docker 容器读取任务列表
+        # Read the task list from the Docker container
         try:
             data = await _exec_docker_cmd_simple(real_cwd, ["cat", todo_file])
             todos = json.loads(data)
@@ -1012,18 +1012,18 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
             
         msg = ""
 
-        # 生成下一个有序ID的辅助函数
+        # Helper to generate the next sequential ID
         def _generate_ordered_id(existing_todos):
             if not existing_todos:
                 return "1"
-            # 找出最大数字 ID（兼容旧数据）
+            # Find the maximum numeric ID, supporting legacy data
             numeric_ids = [int(t['id']) for t in existing_todos if t['id'].isdigit()]
             if not numeric_ids:
                 return "1"
-            return str(max(numeric_ids) + 1)  # 1, 2, 3... 不补零，不限制位数
+            return str(max(numeric_ids) + 1)  # 1, 2, 3... no zero padding or fixed digit count
 
         if action == "create":
-            """创建新任务 - 自动生成3位数字有序ID"""
+            """Create a task and automatically generate its sequential numeric ID."""
             if not content: 
                 return "[Error] Creating a task requires content"
             
@@ -1040,7 +1040,7 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
             msg = f"[Success] Created task #{new_id}: {content[:30]}"
             
         elif action == "list":
-            """列出所有任务 - 按ID数字排序"""
+            """List all tasks in numeric ID order."""
             if not todos: 
                 return "No tasks yet"
             
@@ -1055,7 +1055,7 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
             return "\n".join(lines)
 
         elif action == "complete":
-            """【高频】标记任务为已完成 - 幂等操作"""
+            """Frequently used: mark a task complete (idempotent)."""
             if not id: 
                 return "[Error] Completing a task requires an ID (e.g. 1)"
             
@@ -1071,7 +1071,7 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
                 msg = f"[Success] Completed task #{id}"
 
         elif action == "toggle":
-            """切换完成状态"""
+            """Toggle completion status."""
             if not id: 
                 return "[Error] Toggling task status requires an ID"
             
@@ -1089,7 +1089,7 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
                 msg = f"[Success] Reopened task #{id}"
 
         elif action == "update":
-            """编辑任务详情"""
+            """Edit task details."""
             if not id: 
                 return "[Error] Updating a task requires an ID"
             
@@ -1113,7 +1113,7 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
             msg = f"[Success] Updated task #{id}"
 
         elif action == "delete":
-            """删除任务"""
+            """Delete a task."""
             if not id: 
                 return "[Error] Deleting a task requires an ID"
             
@@ -1127,7 +1127,7 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
         else:
             return f"[Error] Unknown action: {action}"
 
-        # 写回 Docker 容器
+        # Write back to the Docker container
         with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding='utf-8', newline='\n') as tmp:
             tmp.write(json.dumps(todos, indent=2, ensure_ascii=False))
             tmp_path = tmp.name
@@ -1146,7 +1146,7 @@ async def todo_write_tool(action: str, id: str = None, content: str = None,
     except Exception as e:
         return f"[Error] Task operation failed: {str(e)}"
     
-# 恢复原有的 Docker 基础文件工具
+# Restore the original Docker file tools
 async def list_files_tool(path: str = ".", show_all: bool = True) -> str:
     try:
         real_cwd = await _get_current_cwd()
@@ -1155,7 +1155,7 @@ async def list_files_tool(path: str = ".", show_all: bool = True) -> str:
     except Exception as e: return str(e)
 
 async def read_file_tool(path: str, start_line: int = None, end_line: int = None) -> str:
-    """[Docker] 读取文件"""
+    """[Docker] Read a file."""
     if start_line is not None or end_line is not None:
         return await read_file_range_tool(path, start_line or 1, end_line or 1)
     try:
@@ -1187,7 +1187,7 @@ if total > 1000:
     except Exception as e: return f"[Error] Read failed: {str(e)}"
 
 async def read_file_range_tool(path: str, start_line: int, end_line: int) -> str:
-    """[Docker] 精准读取指定行范围"""
+    """[Docker] Read an exact range of lines."""
     try:
         if start_line < 1 or end_line < start_line: return "[Error] Invalid line range."
         real_cwd = await _get_current_cwd()
@@ -1207,7 +1207,7 @@ with open("{path}", "r", encoding="utf-8", errors="replace") as f:
     except Exception as e: return str(e)
 
 async def tail_file_tool(path: str, lines: int = 100) -> str:
-    """[Docker] 读取文件末尾"""
+    """[Docker] Read the end of a file."""
     try:
         real_cwd = await _get_current_cwd()
         script = f"""
@@ -1242,19 +1242,19 @@ async def edit_file_tool(path: str, content: str) -> str:
     except Exception as e: return str(e)
 
 def _mask_grep_output(grep_output: str) -> str:
-    """对 grep 输出进行脱敏，对于 .env 文件中的匹配行，遮蔽 VALUE 部分"""
+    """Redact grep output by masking VALUE in matching .env file lines."""
     if not grep_output:
         return grep_output
     lines = grep_output.splitlines()
     masked_lines = []
     for line in lines:
-        # grep 输出格式通常为：filename:line_number:matched_text
+        # Typical grep output: filename:line_number:matched_text
         parts = line.split(':', 2)
         if len(parts) >= 3:
             fname = parts[0]
             line_no = parts[1]
             content = parts[2]
-            # 如果文件名匹配 .env 模式，脱敏内容
+            # Redact content if the filename matches an .env pattern
             if _is_env_file(fname) or '.env' in fname.lower():
                 content = _mask_env_content(content)
             masked_lines.append(f"{fname}:{line_no}:{content}")
@@ -1264,7 +1264,7 @@ def _mask_grep_output(grep_output: str) -> str:
 
 
 async def search_files_tool(pattern: str, path: str = ".") -> str:
-    """[Docker] Grep 搜索"""
+    """[Docker] Grep search."""
     try:
         real_cwd = await _get_current_cwd()
         cmd = f"grep -rn '{pattern}' '{path}'"
@@ -1274,26 +1274,26 @@ async def search_files_tool(pattern: str, path: str = ".") -> str:
     except Exception as e: return str(e)
 
 
-# ==================== [新增] 管理工具：进程与网络 ====================
+# ==================== Management tools: processes and networking ====================
 
 async def list_processes_tool() -> str:
-    """[Common] 列出所有后台进程 (Docker & 本地)"""
+    """[Common] List all background processes (Docker and local)."""
     return process_manager.list_processes()
 
 async def get_process_logs_tool(pid: str) -> str:
-    """[Common] 获取指定进程的日志"""
+    """[Common] Get logs for the specified process."""
     if not pid:
         return "Error: 'pid' is required to fetch logs."
     return process_manager.get_logs(pid)
 
 async def kill_process_tool(pid: str) -> str:
-    """[Common] 终止指定的后台进程"""
+    """[Common] Terminate the specified background process."""
     if not pid:
         return "Error: 'pid' is required to kill a process."
     return await process_manager.kill_process(pid)
 
 async def docker_manage_ports_tool(action: str, container_port: int = 8000, host_port: int = None) -> str:
-    """[Docker] 端口转发管理"""
+    """[Docker] Port-forwarding management."""
     try:
         real_cwd = await _get_current_cwd()
         container_name = await get_or_create_docker_sandbox(real_cwd)
@@ -1315,7 +1315,7 @@ async def docker_manage_ports_tool(action: str, container_port: int = 8000, host
         return f"[Error] Port tool failed: {str(e)}"
 
 async def local_net_tool(action: str, port: int = None) -> str:
-    """[Local] 本地网络工具：检查端口占用"""
+    """[Local] Network tool: check port usage."""
     if action == "check":
         if not port: return "Error: Port required."
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -1324,7 +1324,7 @@ async def local_net_tool(action: str, port: int = None) -> str:
             return f"Port {port} on localhost is {status}."
     
     if action == "scan":
-        # 简单扫描常用开发端口
+        # Scan common development ports
         common_ports = [3000, 5000, 8000, 8080, 80, 443, 3306, 5432]
         results = []
         for p in common_ports:
@@ -1337,11 +1337,11 @@ async def local_net_tool(action: str, port: int = None) -> str:
         
     return "Unknown action. Use check or scan."
 
-# ==================== 本地环境 (Local) 工具实现 ====================
+# ==================== Local environment tools ====================
 
 def resolve_strict_path(cwd: str, sub_path: str, check_symlink: bool = True) -> Path:
     """
-    严格工作区路径解析 (已修复跨平台斜杠混用 Bug)
+    Strict workspace path resolution, including handling mixed cross-platform path separators.
     """
     base = Path(cwd).resolve()
     
@@ -1350,7 +1350,7 @@ def resolve_strict_path(cwd: str, sub_path: str, check_symlink: bool = True) -> 
         
     sub_path = sub_path.strip().replace('\x00', '').replace('\n', '')
     
-    # ★ 修复：利用 Path.parts 跨平台安全解析路径节点，防止正反斜杠混用逃逸
+    # Use Path.parts to parse path components safely across platforms and prevent mixed-separator escapes
     if '..' in Path(sub_path).parts:
         raise PermissionError(f"Path traversal detected: {sub_path}")
     
@@ -1376,44 +1376,44 @@ def resolve_strict_path(cwd: str, sub_path: str, check_symlink: bool = True) -> 
 
 def validate_bash_command(command: str, cwd: str, mode: str = "default") -> Tuple[bool, str]:
     """
-    动态路径感知安全校验（涵盖工作区自我毁灭、.NET 类型加速器绕过、异步 Job 炸弹等防御）
+    Dynamic path-aware security validation, including checks for destructive operations, execution indirection and resource exhaustion.
     """
     cmd_lower = command.lower()
     
-    # 获取规范化的工作区绝对路径
+    # Get the normalized absolute workspace path
     resolved_cwd = str(Path(cwd).resolve()).lower()
     
-    # ==================== [优化] 动态绝对路径逃逸检测 ====================
-    # 仅在非 YOLO 模式下检测工作区逃逸
+    # ==================== Dynamic absolute-path escape detection ====================
+    # Check for workspace escape only outside YOLO mode
     potential_paths = []
     if mode != "yolo":
-        # 预清洗：在提取路径前，先移除所有网络 URL、Git 远程仓库地址、SSH 目标，彻底杜绝联网命令的误判
-        # 1. 移除 http://, https://, ftp://, sftp://, git://, ssh:// 等标准 URL
+        # Before extracting paths, remove network URLs, Git remotes and SSH destinations to avoid false positives
+        # 1. Remove standard URLs such as HTTP, HTTPS, FTP, SFTP, Git and SSH URLs
         cmd_for_path_extraction = re.sub(r'[a-zA-Z0-9\+-\.]+://[^\s"\'|&<>]+', ' ', command)
-        # 2. 移除 git@github.com:owner/repo.git 或 github.com:owner/repo.git 等 SSH/Git 格式
+        # 2. Remove SSH/Git remote-address formats such as git@github.com:owner/repo.git
         cmd_for_path_extraction = re.sub(r'\b(?:[a-zA-Z0-9._%+-]+@)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}:[^\s"\'|&<>]+', ' ', cmd_for_path_extraction)
 
         for match in re.finditer(r'([a-zA-Z]:[/\\][^\s"\'|&<>]+|[/\\][^\s"\'|&<>]+)', cmd_for_path_extraction):
             raw_path = match.group(1)
             start_idx = match.start()
             
-            # 判定是否为普通相对路径的一部分（如 .\test.txt 或 dir\file.txt）
+            # Determine whether this is part of an ordinary relative path, such as a test file or subdirectory
             if raw_path.startswith('/') or raw_path.startswith('\\'):
                 if start_idx > 0:
                     prev_char = cmd_for_path_extraction[start_idx - 1]
-                    # 若前驱字符为 '.'、'_' 或字母数字，说明这只是相对路径的一部分，跳过检测
+                    # Skip if the preceding character is a period, underscore or alphanumeric character
                     if prev_char in ('.', '_') or prev_char.isalnum():
                         continue
             
             potential_paths.append(raw_path)
             
-        # 敏感 Windows 根目录列表（长度 >= 5），用于区分路径与 Windows 命令行参数（如 /s, /f, /quiet）
+        # Sensitive Windows root directories (length >= 5) distinguish paths from command-line switches
         win_sensitive_dirs = {
             "windows", "users", "program files", "program files (x86)", 
             "programdata", "recovery", "system volume information", "boot", "intel"
         }
 
-        # 允许的系统可执行程序名（避免误判 cmd.exe, powershell.exe 等系统工具本身的路径）
+        # Allowed system executable names prevent false positives for system tools themselves
         allowed_system_exes = {
             "cmd.exe", "powershell.exe", "pwsh.exe", "bash.exe", "git.exe", 
             "conhost.exe", "tar.exe", "curl.exe", "ssh.exe", "wsl.exe",
@@ -1421,26 +1421,26 @@ def validate_bash_command(command: str, cwd: str, mode: str = "default") -> Tupl
         }
         
         for raw_path in potential_paths:
-            # Windows 特殊处理：过滤掉命令行参数/开关（如 /s, /f, /q, /quiet 等）
+            # Windows-specific handling: filter command-line switches such as /s, /f, /q and /quiet
             if platform.system() == "Windows" and raw_path.startswith('/'):
                 clean_path = raw_path[1:]
-                # 如果不包含其他斜杠/反斜杠，说明是单级路径或参数开关
+                # No additional separator indicates a single-level path or switch
                 if '/' not in clean_path and '\\' not in clean_path:
                     if clean_path.lower() not in win_sensitive_dirs:
-                        # 认定为普通的参数开关或非敏感目录，予以放行
+                        # Allow ordinary switches or non-sensitive directories
                         continue
 
-            # 跨平台驱动器号防护：如果是非 Windows 系统，但路径却包含 Windows 盘符（如 C:\），直接拦截
+            # Reject Windows drive-letter paths on non-Windows systems
             if platform.system() != "Windows" and re.match(r'^[a-zA-Z]:', raw_path):
                 return False, f"Access to path outside workspace is blocked: {raw_path}"
 
             try:
-                # 规范化命令中出现的每一个绝对路径
+                # Normalize each absolute path appearing in the command
                 resolved_target = str(Path(raw_path).resolve()).lower()
                 
-                # 关键判定：如果该绝对路径不以工作区路径(cwd)开头，说明 AI 试图操作外部文件！
+                # Check whether the absolute path is outside the current workspace
                 if not resolved_target.startswith(resolved_cwd):
-                    # 排除系统级工具路径本身的误判，确保其确实是允许的系统程序，而非敏感目录
+                    # Avoid false positives for allowed system executable paths while still checking sensitive directories
                     target_name = Path(resolved_target).name.lower()
                     if target_name in allowed_system_exes:
                         continue
@@ -1449,11 +1449,11 @@ def validate_bash_command(command: str, cwd: str, mode: str = "default") -> Tupl
                 continue
     # ====================================================================
 
-    # 1. 防止路径穿越逃逸
+    # 1. Prevent path traversal outside the workspace
     if re.search(r'\.\.[/\\]', command) or '..' in Path(command).parts:
         return False, "Path traversal (..) is blocked"
 
-    # 2. 跨平台敏感目录防护 (仅在非 YOLO 模式下拦截，YOLO 模式允许自由调试系统配置文件)
+    # 2. Cross-platform sensitive-directory protection (outside YOLO mode)
     if mode != "yolo":
         sensitive_roots = [
             r'(?:\s|^)/etc', r'(?:\s|^)/var', r'(?:\s|^)/root', 
@@ -1468,7 +1468,7 @@ def validate_bash_command(command: str, cwd: str, mode: str = "default") -> Tupl
             if re.search(pattern, command, re.IGNORECASE):
                 return False, f"Access to sensitive system directory blocked"
 
-    # 3. 跨平台毁灭性操作 (任何模式均会拦截，保障系统最基础的安全底线)
+    # 3. Block destructive operations on every platform and in every mode
     destructive_patterns = [
         (r'rm\s+-[rRfF\s]+\s*(/|[a-z]:[/\\])\*?', "Recursive delete root"),
         (r'mkfs\.[a-z]+', "Filesystem format"),                    
@@ -1482,12 +1482,12 @@ def validate_bash_command(command: str, cwd: str, mode: str = "default") -> Tupl
         (r'(?:\s|^)Remove-Item\s+-Recurse\s+-Force\s+[a-z]:[/\\]', "Powershell recursive delete root"),
         (r'(?:\s|^)nvram\s+-c', "Clear Mac NVRAM"),
         
-        # 针对特定漏洞的毁灭性行为防护 (拦截关键系统服务与核心进程控制)
+        # Protect critical system services and core processes from destructive operations
         (r'(?:\s|^)(taskkill|Stop-Process)(?:\.exe)?(?:\s|[/-]).*(?:svchost|lsass|csrss|smss|wininit|services|explorer)\.exe', "System process termination blocked"),
         (r'(?:\s|^)sc(?:\.exe)?\s+(?:stop|delete|config)\s+(?:wuauserv|WinDefend|SamSs|eventlog)', "Critical service modification blocked"),
         (r'(?:\s|^)schtasks(?:\.exe)?\s+/(create|change|delete)', "Scheduled tasks modification blocked"),
 
-        # 防止工作区自我毁灭
+        # Prevent destruction of the workspace itself
         (r'\b(?:rm|remove-item|del|rd|rmdir)(?:\.exe)?\s+-[rRfFsS\s\-]*\s*(?:\.|\*)(?:\s|$|;|&&|\|\||&)', "Workspace self-destruction blocked"),
         (r'\bremove-item\s+-[rR\s\-]*\s*(?:\.|\*)(?:\s|$|;|&&|\|\||&)', "Workspace self-destruction blocked"),
     ]
@@ -1496,7 +1496,7 @@ def validate_bash_command(command: str, cwd: str, mode: str = "default") -> Tupl
         if re.search(pattern, command, re.IGNORECASE):
             return False, f"Destructive operation blocked: {reason}"
     
-    # 4. 风险操作
+    # 4. Risky operations
     if mode != "yolo":
         risk_patterns = [
             (r'(?:\s|^)sudo\s+', "sudo usage blocked"),
@@ -1507,33 +1507,33 @@ def validate_bash_command(command: str, cwd: str, mode: str = "default") -> Tupl
             (r'(?:\s|^)osascript\s+-e\s+.*password', "AppleScript password prompt blocked"),
             (r'(Invoke-WebRequest|iwr|Invoke-RestMethod|irm).*\|\s*(Invoke-Expression|iex)', "PowerShell remote script execution"),
             
-            # 动态执行、混淆与 .NET 类型/加速器（如 [IO.File]）绕过防御
+            # Validate dynamic execution, obfuscation and .NET type or accelerator usage
             (r'\b(?:iex|Invoke-Expression)\b', "PowerShell Invoke-Expression blocked"),
             
-            # 针对 Char-Code 编码与字符拼接的防御
+            # Check character-code encoding and string concatenation
             (r'\[char\s*\]|\[byte\s*\]', "PowerShell Type Accelerator obfuscation blocked"),
             (r'\[(?:System\.)?Convert\]\s*::\s*ToChar', "PowerShell Convert-ToChar obfuscation blocked"),
             (r'\[(?:System\.)?Text\.Encoding\]', "PowerShell Text Encoding obfuscation blocked"),
             
-            # 针对所有 .NET 静态方法和敏感对象初始化的严密防御
+            # Validate .NET static methods and sensitive object initialization
             (r'\[[a-zA-Z0-9\._]+\]::', ".NET static methods blocked"),
             (r'New-Object\s+(?:-TypeName\s+)?\[?(?:System\.)?(?:IO|Environment|Diagnostics|Security|Net|DirectoryServices|Management|Reflection|Runtime|ServiceProcess|Convert|Console|Threading|Web|Microsoft)', "Sensitive .NET object creation blocked"),
 
             (r'\$\{?env:(?:WINDIR|SYSTEMROOT|SYSTEMDRIVE|PROGRAMDATA|PROGRAMFILES|USERPROFILE|APPDATA|LOCALAPPDATA|TEMP|TMP)\}?', "Sensitive environment variable access blocked"),
             
-            # 异步 Job 耗尽/分叉炸弹防御
+            # Protect against asynchronous job exhaustion and fork bombs
             (r'\b(?:Start-Job|Start-ThreadJob)\b', "Asynchronous job creation blocked"),
             (r'\s+-AsJob\b', "Asynchronous job parameter blocked"),
             (r'ForEach-Object\s+-[Pa-z]*\s*Parallel', "Parallel loop execution blocked"),
 
-            # 限制 WMI/CIM 信息收集命令
+            # Restrict WMI/CIM information-gathering commands
             (r'\b(?:Get-WmiObject|Get-CimInstance|Invoke-CimMethod|Invoke-WmiMethod|gwmi|gcim)\b', "WMI/CIM queries blocked"),
 
-            # 基础资源超载/递归炸弹规避
+            # Guard against resource exhaustion and recursive execution
             (r'\*\s*(?:\d{3,}MB|\d+GB|\d{8,})', "Large memory allocation multiplication blocked"),
             (r'function\s+([a-zA-Z0-9_-]+)\s*\{\s*\1\s*\}', "Simple recursion fork bomb blocked"),
 
-            # 进程与服务控制 (普通进程也拦截，除非 yolo)
+            # Process and service control restrictions (including ordinary processes outside YOLO mode)
             (r'(?:\s|^)(taskkill(?:\.exe)?|Stop-Process|Stop-Service|sc(?:\.exe)?\s+stop|sc(?:\.exe)?\s+delete|net(?:\.exe)?\s+stop)(?:\s|[/-]|$)', "Process/Service termination blocked"),
             (r'(?:powershell|pwsh).*(?:-encodedcommand|-enc\s|-e\s)', "PowerShell encoded command execution blocked"),
         ]
@@ -1545,11 +1545,11 @@ def validate_bash_command(command: str, cwd: str, mode: str = "default") -> Tupl
 
 async def shell_tool_local(command: str, background: bool = False, timeout: int = 600) -> AsyncIterator[str]:
     """
-    [Local] 执行本地命令
-    - Windows: 维持原有的 powershell/cmd 逻辑。
-    - 非 Windows: 优先使用 zerobox.Sandbox 提供 OS 级沙盒隔离。
+    [Local] Execute a local command.
+    - Windows: retain the existing PowerShell/CMD logic.
+    - Other platforms: prefer OS-level sandboxing via zerobox.Sandbox.
     """
-    # 限制超时范围：1秒到1小时
+    # Limit the timeout to between one second and one hour
     effective_timeout = max(1, min(timeout, 3600))
     
     settings = await load_settings()
@@ -1560,7 +1560,7 @@ async def shell_tool_local(command: str, background: bool = False, timeout: int 
         yield "Error: No workspace directory specified (cc_path)."
         return
     
-    # 安全校验策略（双重防护）
+    # Security validation policy (two layers)
     allowed, validate_result = validate_bash_command(command, cwd, mode=perm)
     if not allowed:
         yield f"[Security] Command blocked: {validate_result}"
@@ -1568,26 +1568,26 @@ async def shell_tool_local(command: str, background: bool = False, timeout: int 
     
     system = platform.system()
 
-    # ==================== 非 Windows 且安装了 ZeroBox 的情况 ====================
-    # 注意：SDK 目前是同步阻塞设计。为了保持 CLI 响应，我们在线程中运行它。
-    # 且为了 PID 管理器的兼容性，仅在前台任务（background=False）时使用 SDK。
+    # ==================== Non-Windows with ZeroBox installed ====================
+    # The SDK is synchronous; run it in a thread to keep the CLI responsive.
+    # For PID-manager compatibility, use the SDK only for foreground tasks (background=False).
     if system != "Windows" and HAS_ZEROBOX and not background and not IS_DOCKER:
         try:
             yield f"--- [Sandbox Mode] Executing via zerobox.Sandbox ---\n"
             
             def run_sandbox():
-                # 创建沙盒实例：允许读写当前工作目录，开启所有权限以兼容复杂命令
-                # 如果需要更严格，可以将 allow_all=True 改为 allow_write=[cwd]
+                # Create the sandbox with workspace-scoped read/write permissions
+                # Network access remains enabled by the existing configuration
                 sb = Sandbox.create({
                     "cwd": cwd,
                     "allow_write": [cwd],  
                     "allow_read": [cwd],  
                     "allow_net": True,
                 })
-                # 使用 .output() 获取 code, stdout, stderr 且不抛出执行异常
+                # Use .output() to obtain code, stdout and stderr without raising execution exceptions
                 return sb.sh(command).output(timeout=float(effective_timeout))
 
-            # 在线程池中执行同步的 SDK 调用
+            # Run the synchronous SDK call in a thread pool
             result = await asyncio.to_thread(run_sandbox)
             
             if result.stdout:
@@ -1599,21 +1599,21 @@ async def shell_tool_local(command: str, background: bool = False, timeout: int 
                 yield f"\n--- Execution finished (Exit Code: {result.code}) ---"
                 yield get_detailed_exit_info(result.code, command)
             
-            return # 任务结束
+            return # Task finished
 
         except subprocess.TimeoutExpired:
             yield f"\n\n[TIMEOUT ERROR] Command exceeded {effective_timeout} seconds and was terminated."
             return
         except Exception as e:
             yield f"[Sandbox Error] ZeroBox SDK execution failed: {str(e)}\nAttempting fallback to standard shell...\n"
-            # 报错后不返回，继续尝试下方的标准执行逻辑
+            # On error, continue to the standard execution fallback below
 
-    # ==================== Windows 或 回退到标准 Shell 的情况 ====================
+    # ==================== Windows or standard shell fallback ====================
     
     if system == "Windows":
         exe, args = "powershell.exe", ["-NoLogo", "-NonInteractive", "-Command", command]
     else:
-        # 非 Windows 环境回退或后台任务
+        # Non-Windows fallback or background task
         exe, args = os.environ.get('SHELL', '/bin/bash'), ["-c", command]
 
     env = os.environ.copy()
@@ -1665,7 +1665,7 @@ async def shell_tool_local(command: str, background: bool = False, timeout: int 
                 yield get_detailed_exit_info(process.returncode, command)
                 
         except asyncio.TimeoutError:
-            # 杀进程树逻辑
+            # Process-tree termination logic
             if system == "Windows":
                 subprocess.run(f"taskkill /F /T /PID {process.pid}", shell=True, capture_output=True)
             else:
@@ -1681,8 +1681,8 @@ async def shell_tool_local(command: str, background: bool = False, timeout: int 
 
 async def shell_tool_wsl(command: str, background: bool = False, timeout: int = 600) -> AsyncIterator[str]:
     """
-    [WSL] 通过 WSL2 沙盒执行命令。
-    使用 wsl.exe 调用 WSL 内的 bash，结合 bubblewrap 提供额外的进程级沙盒隔离。
+    [WSL] Execute a command through the WSL2 sandbox.
+    Invoke Bash through wsl.exe with bubblewrap for additional process-level isolation.
     """
     effective_timeout = max(1, min(timeout, 3600))
     
@@ -1777,9 +1777,9 @@ async def shell_tool_wsl(command: str, background: bool = False, timeout: int = 
     except Exception as e:
         yield f"[WSL system error] Failed to start process: {str(e)}"
 
-# 恢复原有的 Local 文件工具
+# Restore the original local file tools
 async def list_files_tool_local(path: str = ".", show_all: bool = True) -> str:
-    """[Local] 列出文件：优先显示目录，支持数量截断，过滤隐藏文件"""
+    """[Local] List files with directories first, optional count limit and hidden-file filtering."""
     try:
         cwd = await _get_current_cwd()
         target = resolve_strict_path(cwd, path, check_symlink=True)
@@ -1787,7 +1787,7 @@ async def list_files_tool_local(path: str = ".", show_all: bool = True) -> str:
         if not target.is_dir():
             return f"[Error] Not a directory: {path}"
 
-        # 使用 scandir 获取更详细的信息且速度更快
+        # Use scandir for detailed information and faster enumeration
         entries = []
         try:
             with os.scandir(target) as it:
@@ -1796,17 +1796,17 @@ async def list_files_tool_local(path: str = ".", show_all: bool = True) -> str:
                         continue
                     
                     is_dir = entry.is_dir()
-                    # 格式：(是否目录, 排序名, 显示字符串)
-                    # 目录排在前面 (0)，文件排在后面 (1)
+                    # Format: (directory sort flag, sort name, display text)
+                    # Directories sort first (0), files second (1)
                     display_name = f"{entry.name}/" if is_dir else entry.name
                     entries.append((0 if is_dir else 1, entry.name.lower(), display_name))
         except PermissionError:
             return f"[Error] Permission denied accessing: {path}"
 
-        # 排序：先按目录/文件分，再按名称字母序
+        # Sort by directory/file status, then alphabetically by name
         entries.sort()
 
-        # 数量截断防止 Token 爆炸
+        # Limit item count to avoid excessive context usage
         MAX_ITEMS = 200
         result_lines = [e[2] for e in entries[:MAX_ITEMS]]
         
@@ -1821,7 +1821,7 @@ async def list_files_tool_local(path: str = ".", show_all: bool = True) -> str:
         return f"[Error] List failed: {str(e)}"
 
 def _format_line(line_number: int, content: str, max_line_chars: int = 1000) -> str:
-    """格式化单行为带行号的输出"""
+    """Format one line with its line number."""
     content_stripped = content.rstrip('\r\n')
     if len(content_stripped) > max_line_chars:
         half = max_line_chars // 2
@@ -1843,7 +1843,7 @@ async def read_file_tool_local(path: str, start_line: int = None, end_line: int 
         if not target.exists() or not target.is_file():
             return f"[Error] File not found: {path}"
 
-        # 二进制检查保持不变...
+        # Keep the binary-file check unchanged
         with open(target, 'rb') as f_bin:
             if b'\0' in f_bin.read(1024):
                 return f"[Error] Cannot read binary file: {path}"
@@ -1869,16 +1869,16 @@ async def read_file_tool_local(path: str, start_line: int = None, end_line: int 
             res += f"\n\n... [Warning] Content truncated (Safety Limit). Last line read: {line_idx}."
             res += f"\n💡 [Hint] The file is large or has very long lines. Use 'read_file_range_local' to explore specific sections."
         
-        # 脱敏处理
+        # Redact sensitive information
         return _maybe_mask_output(path, res)
     except Exception as e: 
         return f"[Error] Read failed: {str(e)}"  
 
 async def read_file_range_tool_local(path: str, start_line: int, end_line: int) -> str:
-    """[Local] 精准读取文件指定行范围，增加溢出保护"""
+    """[Local] Read an exact line range with output-size protection."""
     try:
-        MAX_TOTAL_CHARS = 30000  # 单次返回最大字符数，防止上下文爆炸
-        MAX_LINE_CHARS = 1000    # 单行最大显示长度
+        MAX_TOTAL_CHARS = 30000  # Maximum characters per response to limit context usage
+        MAX_LINE_CHARS = 1000    # Maximum displayed characters per line
         
         if start_line < 1 or end_line < start_line:
             return "[Error] Invalid line range."
@@ -1911,13 +1911,13 @@ async def read_file_range_tool_local(path: str, start_line: int, end_line: int) 
             return f"[Error] start_line ({start_line}) is beyond file length ({line_idx})."
         
         res = "\n".join(output)
-        # 脱敏处理
+        # Redact sensitive information
         return _maybe_mask_output(path, res)
     except Exception as e: 
         return f"[Error] Range read failed: {str(e)}"
 
 async def tail_file_tool_local(path: str, lines: int = 100) -> str:
-    """[Local] 读取文件末尾"""
+    """[Local] Read the end of a file."""
     try:
         cwd = await _get_current_cwd()
         target = resolve_strict_path(cwd, path, check_symlink=True)
@@ -1934,19 +1934,19 @@ async def tail_file_tool_local(path: str, lines: int = 100) -> str:
     except Exception as e: return f"[Error] Tail failed: {str(e)}"
     
 async def edit_file_tool_local(path: str, content: str) -> str:
-    """[Local] 写入文件：修复了绝对路径误判问题"""
+    """[Local] Write a file with corrected absolute-path handling."""
     try:
         cwd = await _get_current_cwd()
-        # 这一步已经确保了 path 不会逃逸出 cwd
+        # The resolved path has already been checked against the working directory
         target = resolve_strict_path(cwd, path, check_symlink=True)
         
-        # 1. 确保父目录存在
+        # 1. Ensure the parent directory exists
         parent_dir = target.parent
-        # --- 删除了导致报错的 resolve_strict_path(cwd, str(parent_dir)...) ---
+        # Removed the redundant parent-directory resolution that caused an error
         
         await aiofiles.os.makedirs(parent_dir, exist_ok=True)
 
-        # 2. 创建备份 (如果文件存在)
+        # 2. Create a backup if the file exists
         backup_msg = ""
         if target.exists():
             try:
@@ -1956,7 +1956,7 @@ async def edit_file_tool_local(path: str, content: str) -> str:
             except Exception as e:
                 print(f"[Warn] Backup failed: {e}")
 
-        # 3. 原子写入
+        # 3. Atomic write
         temp_path = target.with_suffix(target.suffix + f".tmp.{uuid.uuid4().hex[:6]}")
         try:
             async with aiofiles.open(temp_path, 'w', encoding='utf-8') as f:
@@ -1977,13 +1977,13 @@ async def edit_file_tool_local(path: str, content: str) -> str:
         return f"[Error] Edit failed: {str(e)}"
 
 async def search_files_tool_local(pattern: str, path: str = ".") -> str:
-    """[Local] 智能搜索：支持正则表达式，自动跳过二进制文件和常见忽略目录"""
+    """[Local] Search with regular expressions, skipping binary files and common ignored directories."""
     try:
         cwd = await _get_current_cwd()
         target_dir = resolve_strict_path(cwd, path, check_symlink=True)
         target_str = str(target_dir)
         
-        # 使用 Python 实现搜索
+        # Implement search in Python
         matches = []
         regex = re.compile(pattern)
         MAX_RESULTS = 1000
@@ -2028,7 +2028,7 @@ async def search_files_tool_local(pattern: str, path: str = ".") -> str:
 
 
 async def glob_files_tool_local(pattern: str, exclude: str = "") -> str:
-    """[Local] 智能查找：使用 pathlib.glob 支持 ** 递归，兼容 Windows"""
+    """[Local] Find files with pathlib.glob, including recursive patterns and Windows compatibility."""
     try:
         cwd = await _get_current_cwd()
         base = Path(cwd).resolve()
@@ -2036,7 +2036,7 @@ async def glob_files_tool_local(pattern: str, exclude: str = "") -> str:
         excludes = [e.strip() for e in exclude.split(",") if e.strip()]
         DEFAULT_EXCLUDES = {'.git', 'node_modules', '__pycache__', 'venv', 'dist', 'build'}
 
-        # 使用 pathlib 的 glob，天然支持 ** 递归，并且与系统分隔符无关
+        # pathlib glob supports recursive ** patterns independently of the platform separator
         matched_paths = list(base.glob(pattern))
 
         results = []
@@ -2044,20 +2044,20 @@ async def glob_files_tool_local(pattern: str, exclude: str = "") -> str:
             if not p.is_file():
                 continue
 
-            # 计算相对路径，用于后续匹配 and 输出
+            # Calculate the relative path for matching and output
             try:
                 rel = p.relative_to(base)
             except ValueError:
-                # 如果路径不在 base 内（理论上不会发生），跳过
+                # Skip paths outside the base directory (not expected)
                 continue
 
-            rel_str = rel.as_posix()  # 统一使用正斜杠，跨平台一致
+            rel_str = rel.as_posix()  # Use forward slashes consistently across platforms
 
-            # 排除命中 exclude 参数中的模式
+            # Exclude matches against the exclude patterns
             if any(fnmatch.fnmatch(rel_str, ex) for ex in excludes):
                 continue
 
-            # 排除默认隐藏/构建目录（检查路径中的每一级目录）
+            # Exclude default hidden/build directories by checking every directory component
             parts = rel.parts
             if any(part in DEFAULT_EXCLUDES or part.startswith('.') for part in parts):
                 continue
@@ -2076,7 +2076,7 @@ async def glob_files_tool_local(pattern: str, exclude: str = "") -> str:
         return f"[Error] Glob failed: {str(e)}"
 
 async def edit_file_string_tool_local(path: str, old_string: str, new_string: str, replace_all: bool = False) -> str:
-    """[Local] 精确字符串替换（基于 old_string/new_string，类似 opencode 的 Edit 工具）"""
+    """[Local] Exact string replacement using old_string and new_string, similar to the opencode Edit tool."""
     try:
         cwd = await _get_current_cwd()
         target = resolve_strict_path(cwd, path, check_symlink=True)
@@ -2103,7 +2103,7 @@ async def edit_file_string_tool_local(path: str, old_string: str, new_string: st
         return f"[Error] String edit failed: {str(e)}"
 
 async def edit_file_string_tool(path: str, old_string: str, new_string: str, replace_all: bool = False) -> str:
-    """[Docker] 精确字符串替换（基于 old_string/new_string，类似 opencode 的 Edit 工具）"""
+    """[Docker] Exact string replacement using old_string and new_string, similar to the opencode Edit tool."""
     try:
         real_cwd = await _get_current_cwd()
         container_name = await get_or_create_docker_sandbox(real_cwd)
@@ -2139,7 +2139,7 @@ async def edit_file_string_tool(path: str, old_string: str, new_string: str, rep
 
 async def todo_write_tool_local(action: str, id: str = None, content: str = None, 
                                 priority: str = "medium", status: str = None) -> str:
-    """本地待办任务管理工具 - 使用3位数字有序ID"""
+    """Local to-do management using sequential numeric IDs."""
     try:
         cwd = await _get_current_cwd()
         party_dir = Path(cwd) / ".agents"
@@ -2148,7 +2148,7 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
         
         todo_file = party_dir / "ai_todos.json"
         
-        # 读取现有任务
+        # Read existing tasks
         todos = []
         if todo_file.exists():
             try:
@@ -2161,18 +2161,18 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
             
         msg = ""
 
-        # 生成下一个有序ID的辅助函数
+        # Helper to generate the next sequential ID
         def _generate_ordered_id(existing_todos):
             if not existing_todos:
                 return "1"
-            # 找出最大数字 ID（兼容旧数据）
+            # Find the maximum numeric ID, supporting legacy data
             numeric_ids = [int(t['id']) for t in existing_todos if t['id'].isdigit()]
             if not numeric_ids:
                 return "1"
-            return str(max(numeric_ids) + 1)  # 1, 2, 3... 不补零，不限制位数
+            return str(max(numeric_ids) + 1)  # 1, 2, 3... no zero padding or fixed digit count
 
         if action == "create":
-            """创建新任务 - 自动生成3位数字有序ID"""
+            """Create a task and automatically generate its sequential numeric ID."""
             if not content: 
                 return "[Error] Creating a task requires content"
             
@@ -2189,12 +2189,12 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
             msg = f"[Success] Created task #{new_id}: {content[:30]}"
             
         elif action == "list":
-            """列出所有任务 - 按ID数字大小排序"""
+            """List all tasks in numeric ID order."""
             if not todos: 
                 return "No project tasks yet"
             
             lines = ["**Project task list** (higher IDs were created later):"]
-            # 按ID数字排序，确保展示有序性
+            # Sort by numeric ID to preserve display order
             sorted_todos = sorted(todos, key=lambda x: int(x['id']) if x['id'].isdigit() else 0)
             
             for t in sorted_todos:
@@ -2205,7 +2205,7 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
             return "\n".join(lines)
 
         elif action == "complete":
-            """【高频】标记任务为已完成 - 幂等操作"""
+            """Frequently used: mark a task complete (idempotent)."""
             if not id: 
                 return "[Error] Completing a task requires an ID (e.g. 1)"
             
@@ -2221,7 +2221,7 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
                 msg = f"[Success] Completed task #{id}"
 
         elif action == "toggle":
-            """切换完成状态 - pending↔done"""
+            """Toggle completion status between pending and done."""
             if not id: 
                 return "[Error] Toggling task status requires an ID"
             
@@ -2239,7 +2239,7 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
                 msg = f"[Success] Reopened task #{id}"
 
         elif action == "update":
-            """编辑任务详情"""
+            """Edit task details."""
             if not id: 
                 return "[Error] Updating a task requires an ID"
             
@@ -2263,7 +2263,7 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
             msg = f"[Success] Updated task #{id}"
 
         elif action == "delete":
-            """删除任务"""
+            """Delete a task."""
             if not id: 
                 return "[Error] Deleting a task requires an ID"
             
@@ -2277,7 +2277,7 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
         else:
             return f"[Error] Unknown action: {action}"
 
-        # 保存到本地文件
+        # Save to the local file
         async with aiofiles.open(todo_file, 'w', encoding='utf-8') as f:
             await f.write(json.dumps(todos, indent=2, ensure_ascii=False))
             
@@ -2286,46 +2286,46 @@ async def todo_write_tool_local(action: str, id: str = None, content: str = None
     except Exception as e:
         return f"[Error] Operation failed: {str(e)}"
     
-# ==================== [新增] Skill 专用读取工具 ====================
+# ==================== Skill-specific reading tools ====================
 
 async def read_skill_tool_logic(cwd: str, skill_id: str, is_docker: bool = True) -> str:
     """
-    内部通用逻辑：读取 Skill 文件夹结构和说明文档。
-    若工作区不存在该技能，且全局技能目录可用，则自动复制到工作区（Docker/Local 均支持）。
+    Shared internal logic for reading a skill directory tree and documentation.
+    If the skill is absent from the workspace but available globally, copy it into the workspace (Docker or local).
     """
     skill_rel_path = f".agents/skills/{skill_id}"
     workspace_skill_path = f"/workspace/.agents/skills/{skill_id}" if is_docker else str(Path(cwd) / ".agents" / "skills" / skill_id)
 
-    # ----- 复制逻辑：工作区缺失时，从全局复制 -----
+    # ----- Copy from the global directory if the workspace copy is missing -----
     if is_docker:
-        # Docker 环境：利用已映射的全局技能目录
-        container_name = await get_or_create_docker_sandbox(cwd)          # 获取/创建容器
-        global_skill_path = f"/home/agent/.agents/skills/{skill_id}"      # 容器内全局技能路径
+        # Docker environment: use the mapped global skills directory
+        container_name = await get_or_create_docker_sandbox(cwd)          # Get or create the container
+        global_skill_path = f"/home/agent/.agents/skills/{skill_id}"      # Global skills path inside the container
         try:
-            # 1. 检查工作区技能是否存在
+            # 1. Check whether the workspace skill exists
             test_cmd = ["test", "-d", workspace_skill_path]
-            await _exec_docker_cmd_simple(cwd, test_cmd)                  # 不存在会抛出异常
+            await _exec_docker_cmd_simple(cwd, test_cmd)                  # Raises an exception if absent
         except Exception:
-            # 2. 工作区不存在，尝试从全局复制
+            # 2. If the workspace copy is missing, try copying from the global directory
             try:
-                # 检查全局技能是否存在
+                # Check whether the global skill exists
                 test_global = ["test", "-d", global_skill_path]
                 await _exec_docker_cmd_simple(cwd, test_global)
 
-                # 确保目标父目录存在
+                # Ensure the destination parent directory exists
                 mkdir_cmd = ["mkdir", "-p", f"/workspace/.agents/skills"]
                 await _exec_docker_cmd_simple(cwd, mkdir_cmd)
 
-                # 执行复制
+                # Copy the skill
                 cp_cmd = ["cp", "-r", global_skill_path, f"/workspace/.agents/skills/"]
                 await _exec_docker_cmd_simple(cwd, cp_cmd)
 
                 print(f"[Skill AutoCopy][Docker] Copied global skill '{skill_id}' to workspace.")
             except Exception as e:
-                # 复制失败或全局技能不存在，继续尝试读取工作区（若不存在则后续报错）
+                # If copying fails or the global skill is missing, continue reading the workspace (a later error reports absence)
                 pass
     else:
-        # Local 环境：使用 shutil 复制（已实现，但整合到 logic 中统一管理）
+        # Local environment: copy with shutil using the shared logic
         workspace_path = Path(cwd) / ".agents" / "skills" / skill_id
         if not workspace_path.exists():
             global_path = Path(SKILLS_DIR) / skill_id
@@ -2341,9 +2341,9 @@ async def read_skill_tool_logic(cwd: str, skill_id: str, is_docker: bool = True)
                     print(f"[Skill AutoCopy][Local] Copied global skill '{skill_id}' to workspace.")
                 except Exception as e:
                     print(f"[Skill AutoCopy][Local] Copy failed: {e}. Will fallback to global read.")
-                    # 降级读取已由主流程处理
+                    # The main flow handles fallback reading
 
-    # ----- 原有读取逻辑保持不变（读取工作区技能）-----
+    # ----- Existing workspace skill reading logic -----
     tree_str = ""
     doc_content = ""
 
@@ -2365,7 +2365,7 @@ async def read_skill_tool_logic(cwd: str, skill_id: str, is_docker: bool = True)
             if not base_path.exists():
                 return f"[Error] Skill '{skill_id}' folder does not exist in workspace and auto-copy failed or global skill unavailable."
 
-            # 生成本地文件树（深度 ≤2）
+            # Generate the local file tree (depth <= 2)
             tree_lines = [f"{skill_id}/"]
             for p in base_path.rglob("*"):
                 if p.name.startswith("."): continue
@@ -2375,7 +2375,7 @@ async def read_skill_tool_logic(cwd: str, skill_id: str, is_docker: bool = True)
                 tree_lines.append(f"{indent}{p.name}{'/' if p.is_dir() else ''}")
             tree_str = "\n".join(tree_lines)
 
-            # 读取本地说明文档
+            # Read local documentation
             for name in ["SKILL.md", "skill.md", "SKILLS.md", "skills.md"]:
                 doc_path = base_path / name
                 if doc_path.exists():
@@ -2394,12 +2394,12 @@ async def read_skill_tool_logic(cwd: str, skill_id: str, is_docker: bool = True)
     return res
 
 async def read_skill_tool(skill_id: str) -> str:
-    """[Docker] 读取特定技能的完整文档和文件树"""
+    """[Docker] Read a specified skill's complete documentation and file tree."""
     cwd = await _get_current_cwd()
     return await read_skill_tool_logic(cwd, skill_id, is_docker=True)
 
 async def read_skill_tool_local(skill_id: str) -> str:
-    """[Local] 读取特定技能的完整文档和文件树"""
+    """[Local] Read a specified skill's complete documentation and file tree."""
     cwd = await _get_current_cwd()
     return await read_skill_tool_logic(cwd, skill_id, is_docker=False)
 
@@ -2410,10 +2410,10 @@ COMMON_BASH_DESC = (
     "3. If 'background' is true, wait a few seconds for initialization before checking logs/status; do not poll rapidly."
 )
 
-# ==================== 工具注册表 (完整) ====================
+# ==================== Complete tool registry ====================
 
 TOOLS_REGISTRY = {
-    # --- 只读 ---
+    # --- Read-only ---
     "list_files": {
         "type": "function", "function": {
             "name": "list_files_tool", 
@@ -2523,7 +2523,7 @@ TOOLS_REGISTRY = {
             }
         }
     },
-    # --- 编辑 ---
+    # --- Editing ---
     "edit_file": {
         "type": "function", "function": {
             "name": "edit_file_tool", 
@@ -2570,7 +2570,7 @@ TOOLS_REGISTRY = {
             }
         }
     },
-    # --- 任务 ---
+    # --- Tasks ---
     "todo_write": {
         "type": "function",
         "function": {
@@ -2607,7 +2607,7 @@ TOOLS_REGISTRY = {
             }
         }
     },
-    # --- 基础设施 ---
+    # --- Infrastructure ---
     "bash": {
         "type": "function", "function": {
             "name": "docker_sandbox", 
@@ -2711,7 +2711,7 @@ TOOLS_REGISTRY = {
 }
 
 LOCAL_TOOLS_REGISTRY = {
-    # --- 只读 ---
+    # --- Read-only ---
     "list_files_local": {
         "type": "function", "function": {
             "name": "list_files_tool_local", 
@@ -2818,7 +2818,7 @@ LOCAL_TOOLS_REGISTRY = {
             }
         }
     },
-    # --- 编辑 ---
+    # --- Editing ---
     "edit_file_local": {
         "type": "function", "function": {
             "name": "edit_file_tool_local", 
@@ -2901,7 +2901,7 @@ LOCAL_TOOLS_REGISTRY = {
             }
         }
     },
-    # --- 基础设施 ---
+    # --- Infrastructure ---
     "bash_local": {
         "type": "function", "function": {
             "name": "shell_tool_local", 
@@ -3004,8 +3004,8 @@ LOCAL_TOOLS_REGISTRY = {
 }
 
 def get_tools_for_mode(mode: str) -> list:
-    """获取 Docker 环境工具集"""
-    # 基础只读
+    """Get the Docker environment tool set."""
+    # Basic read-only tools
     read = [TOOLS_REGISTRY["list_files"], 
             TOOLS_REGISTRY["read_file"], 
             TOOLS_REGISTRY["read_file_range"],
@@ -3014,9 +3014,9 @@ def get_tools_for_mode(mode: str) -> list:
             TOOLS_REGISTRY["glob_files"],
             TOOLS_REGISTRY["read_skill"]
             ]
-    # 编辑
+    # Editing
     edit = [TOOLS_REGISTRY["edit_file"], TOOLS_REGISTRY["edit_file_string"], TOOLS_REGISTRY["todo_write"]]
-    # 基础设施 (执行/进程/端口)
+    # Infrastructure (execution, processes and ports)
     infra = [TOOLS_REGISTRY["bash"], TOOLS_REGISTRY["list_processes"], TOOLS_REGISTRY["get_process_logs"], TOOLS_REGISTRY["kill_process"], TOOLS_REGISTRY["manage_ports"]]
     
     if mode == "default": return read
@@ -3025,7 +3025,7 @@ def get_tools_for_mode(mode: str) -> list:
     return read
 
 def get_local_tools_for_mode(mode: str) -> list:
-    """获取 Local 环境工具集"""
+    """Get the local environment tool set."""
     read = [
         LOCAL_TOOLS_REGISTRY["list_files_local"], 
         LOCAL_TOOLS_REGISTRY["read_file_local"], 
@@ -3048,7 +3048,7 @@ def get_local_tools_for_mode(mode: str) -> list:
     return read
 
 WSL_TOOLS_REGISTRY = {
-    # --- 只读 (复用 Local 文件工具) ---
+    # --- Read-only (reuse local file tools) ---
     "list_files_wsl": LOCAL_TOOLS_REGISTRY["list_files_local"],
     "read_file_wsl": LOCAL_TOOLS_REGISTRY["read_file_local"],
     "read_file_range_wsl": LOCAL_TOOLS_REGISTRY["read_file_range_local"],
@@ -3056,11 +3056,11 @@ WSL_TOOLS_REGISTRY = {
     "search_files_wsl": LOCAL_TOOLS_REGISTRY["search_files_local"],
     "glob_files_wsl": LOCAL_TOOLS_REGISTRY["glob_files_local"],
     "read_skill_wsl": LOCAL_TOOLS_REGISTRY["read_skill_local"],
-    # --- 编辑 (复用 Local 文件工具) ---
+    # --- Editing (reuse local file tools) ---
     "edit_file_wsl": LOCAL_TOOLS_REGISTRY["edit_file_local"],
     "edit_file_string_wsl": LOCAL_TOOLS_REGISTRY["edit_file_string_local"],
     "todo_write_wsl": LOCAL_TOOLS_REGISTRY["todo_write_local"],
-    # --- 基础设施 (WSL 专属 bash + 通用进程管理) ---
+    # --- Infrastructure (WSL-specific Bash and shared process management) ---
     "bash_wsl": {
         "type": "function", "function": {
             "name": "shell_tool_wsl",
@@ -3088,7 +3088,7 @@ WSL_TOOLS_REGISTRY = {
 }
 
 def get_wsl_tools_for_mode(mode: str) -> list:
-    """获取 WSL 环境工具集（复用 Local 文件工具 + WSL bash）"""
+    """Get the WSL environment tool set (local file tools and WSL Bash)."""
     read = [
         WSL_TOOLS_REGISTRY["list_files_wsl"],
         WSL_TOOLS_REGISTRY["read_file_wsl"],
