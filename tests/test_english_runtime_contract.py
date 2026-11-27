@@ -159,6 +159,17 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         self.assertEqual(example["characterBook"][0]["keysRaw"], "keyword1\nkeyword2")
         self.assertNotIn("avatar", example)
 
+    def test_main_process_and_main_template_are_english(self):
+        main = (ROOT / "main.js").read_text(encoding="utf-8")
+        html = (ROOT / "static/index.html").read_text(encoding="utf-8")
+        for name, source in (("main.js", main), ("static/index.html", html)):
+            with self.subTest(module=name):
+                self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
+        self.assertEqual(html.count(r"""<el-option label="Japanese" :value="'\u65e5\u672c\u8a9e'">"""), 2)
+        self.assertIn("REAL_PORT_FOUND", main)
+        self.assertIn("shell.trashItem(filePath)", main)
+        self.assertIn("Backend started but health check response timed out", main)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

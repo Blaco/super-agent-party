@@ -77,3 +77,8 @@ Legal source attribution and unmodified user-authored multilingual content are d
 
 - Source audit for `bf6ab1b8134a77fc03d48e556cdbec892780e8ef` passed at https://github.com/Blaco/super-agent-party/actions/runs/45917460431.
 - All 3,868 remaining Han-flagged lines in server.py and static/js/vue_methods.js have been addressed; both contain zero literal Han characters. Existing multilingual group-memory matching and narrator compatibility are retained using Unicode escapes. JavaScript syntax and the character-card JSON example passed precommit checks. Regression coverage added; source CI for this commit and Windows interactive validation remain outstanding. Other inherited modules still need an inventory; no new package requested.
+
+## Follow-up source checkpoint — main interface and Electron
+
+- Source CI for `ec4a4a43f87c958d2004466c641d51d8218cfd1d` passed: https://github.com/Blaco/super-agent-party/actions/runs/45918758039.
+- static/index.html and main.js now contain zero literal Han characters (1,245 flagged lines addressed); two Japanese translation-target values are preserved via equivalent Vue-bound escapes. Main process and inline JavaScript syntax and markup equivalence checks passed. New source CI and interactive Windows validation remain outstanding. Next localization targets: static/js/vrm.js and static/js/island-app.js, followed by CLI, local application, skills and extension modules and a repository-wide audit. No package requested.
