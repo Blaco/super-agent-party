@@ -4,7 +4,7 @@ const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { spawn } = require('child_process')
 const { randomBytes } = require('crypto')
-const { exec, execSync } = require('child_process');
+const { execSync } = require('child_process');
 const { download } = require('electron-dl');
 const fs = require('fs')
 const os = require('os')
@@ -2898,14 +2898,6 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
           window.stopSlackBotHandler && window.stopSlackBotHandler()
         `);
       }
-    });
-    ipcMain.handle('exec-command', (event, command) => {
-      return new Promise((resolve, reject) => {
-        exec(command, (error, stdout, stderr) => {
-          if (error) reject(error);
-          else resolve(stdout);
-        });
-      });
     });
     // Other IPC handlers
     ipcMain.on('open-external', (event, url) => {

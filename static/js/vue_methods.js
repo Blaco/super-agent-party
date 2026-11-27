@@ -1,3 +1,9 @@
+function sanitizeChatHtml(content) {
+  return window.DOMPurify.sanitize(content, {
+    FORBID_TAGS: ['base', 'embed', 'form', 'iframe', 'object', 'style'],
+  });
+}
+
 const md = window.markdownit({
     html: true,
     linkify: true,
@@ -193,6 +199,7 @@ const ALL_ALLOWED_EXTENSIONS = [...new Set([
 ])];
 
 let vue_methods = {
+  sanitizeChatHtml,
   stringifyEntityId(value) {
     if (value === null || value === undefined || value === '') {
       return null;
@@ -1533,7 +1540,7 @@ formatMessage(content, index) {
     return `<a href="${formattedHref}" target="_blank"${otherAttrs}>`;
   });
 
-  return rendered;
+  return sanitizeChatHtml(rendered);
 },
 
     formatMessageWrapper(content) {
@@ -1705,6 +1712,8 @@ formatMessage(content, index) {
       console.log('Render HTML preview');
       
       const sandbox = document.createElement('iframe');
+      sandbox.setAttribute('sandbox', 'allow-scripts');
+      sandbox.referrerPolicy = 'no-referrer';
       sandbox.srcdoc = `<!DOCTYPE html>
         <html>
           <head>
@@ -1764,10 +1773,11 @@ formatMessage(content, index) {
           <i class="fa-solid fa-triangle-exclamation"></i>
           <div>
             <h4>Preview rendering failed</h4>
-            <code>${error.message}</code>
+            <code></code>
           </div>
         </div>
       `;
+      container.querySelector('code').textContent = error.message;
     },
     // Detect unclosed code blocks
     hasUnclosedCodeBlock(parts) {

@@ -118,6 +118,7 @@ function updateElement(el, rawMarkdown, formatFn) {
   </script>
   <!-- Include markdown-it and highlight.js scripts -->
   <script src="libs/markdown-it.min.js"></script>
+  <script src="libs/purify.min.js"></script>
   <!-- 1. KaTeX styles -->
   <link rel="stylesheet" href="libs/katex.min.css">
 
@@ -1072,7 +1073,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                         
                         <!-- User message body -->
                         <div v-if="message.role === 'user'" class="user-content" data-mjx-disabled="true">
-                            <div v-html="message.content" class="user-msg"></div>
+                            <div v-html="sanitizeChatHtml(message.content)" class="user-msg"></div>
 
                             <!-- Attachment area uses user-msg-attachments for styling -->
                             <div class="message-attachments-display user-msg-attachments" 
@@ -1205,7 +1206,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                         
                         <!-- System message body -->
                         <div v-else class="system-content" data-mjx-disabled="true">
-                          <div v-html="index===0 ? (t('system_prompt') + message.content):message.content" class="scroll-on-hover" @click="openEditDialog(message.role, message.content,index)" :style="{ 'max-height': index===0 ? '200px' : 'none', 'overflow-y': index===0 ? 'auto' : 'hidden' }"></div>
+                          <div v-html="sanitizeChatHtml(index===0 ? (t('system_prompt') + message.content):message.content)" class="scroll-on-hover" @click="openEditDialog(message.role, message.content,index)" :style="{ 'max-height': index===0 ? '200px' : 'none', 'overflow-y': index===0 ? 'auto' : 'hidden' }"></div>
                         </div>
 
                       </div>

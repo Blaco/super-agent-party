@@ -226,6 +226,7 @@
 "github-markdown-css@5.8.1","MIT","https://github.com/sindresorhus/github-markdown-css"
 "highlight.js@11.7.0","BSD-3-Clause","https://github.com/highlightjs/highlight.js"
 "html2canvas@1.4.1","MIT","https://github.com/niklasvh/html2canvas"
+"DOMPurify@3.5.0","Apache-2.0 OR MPL-2.0","https://github.com/cure53/DOMPurify"
 "KaTeX@0.18.11","MIT","https://github.com/KaTeX/KaTeX"
 "markdown-it@14.3.3","MIT","https://github.com/markdown-it/markdown-it"
 "markdown-it-container@4.0.0","MIT","https://github.com/markdown-it/markdown-it-container"

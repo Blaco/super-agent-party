@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/github.min.css">
   <link rel="stylesheet" href="css/styles.css">
   <script src="libs/markdown-it.min.js"></script>
+  <script src="libs/purify.min.js"></script>
   <script src="libs/highlight.min.js"></script>
   <style>
     :root { color-scheme: light dark; }
@@ -367,10 +368,10 @@
         for (var i = 0; i < div.childNodes.length; i++) {
           var n = div.childNodes[i];
           if (n.nodeType === 1 && n.tagName === 'HR') { flush(); continue; }
-          if (n.nodeType === 3) { buf += n.textContent; }
+          if (n.nodeType === 3) { buf += esc(n.textContent); }
           else if (n.nodeType === 1 && isBlock(n)) { flush(); blocks.push(n.outerHTML); }
           else if (n.nodeType === 1) { buf += n.outerHTML || n.textContent || ''; }
-          else { buf += n.textContent || ''; }
+          else { buf += esc(n.textContent || ''); }
         }
         flush();
         return blocks;
@@ -412,7 +413,12 @@
       function appendBubbles(raw, wrapper) {
         var filtered = filterNonStandardTags(raw);
         var blks;
-        try { blks = splitBlocks(md.render(filtered)); }
+        try {
+          var safeHtml = window.DOMPurify.sanitize(md.render(filtered), {
+            FORBID_TAGS: ['base', 'embed', 'form', 'iframe', 'object', 'style'],
+          });
+          blks = splitBlocks(safeHtml);
+        }
         catch(e) {
           var b = document.createElement('div');
           b.className = 'msg-bubble';

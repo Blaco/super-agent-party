@@ -548,10 +548,10 @@ const A2UIRendererComponent = {
         if (!text) return '';
         // Try the globally defined md object
         if (typeof md !== 'undefined' && md.render) {
-            return md.render(text);
+            return sanitizeChatHtml(md.render(text));
         }
         // Fallback: handle line breaks if md is unavailable
-        return text.replace(/\n/g, '<br>');
+        return sanitizeChatHtml(text.replace(/\n/g, '<br>'));
     },
     isObj(val) {
       return val && typeof val === 'object';
@@ -2170,8 +2170,8 @@ function showNotification(message, type = 'success', title = '') {
             <i class="${iconClass}"></i>
         </div>
         <div class="notif-content">
-            ${title ? `<div class="notif-title">${title}</div>` : ''}
-            <div class="notif-desc" style="${!title ? 'color: var(--el-text-color-primary);' : ''}">${message}</div>
+            ${title ? `<div class="notif-title">${sanitizeChatHtml(title)}</div>` : ''}
+            <div class="notif-desc" style="${!title ? 'color: var(--el-text-color-primary);' : ''}">${sanitizeChatHtml(message)}</div>
         </div>
         <div class="notif-progress" style="transition-duration: ${duration}ms"></div>
     `;
