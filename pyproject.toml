@@ -35,7 +35,7 @@ dependencies = [
     "tavily-python>=0.7.0",
     "tzlocal>=5.3.1",
     "uvicorn[standard]>=0.34.2",
-    "mem0ai>=1.0.0,<2",
+    "mem0ai>=2.0.18,<3",
     "e2b-code-interpreter>=1.5.0",
     "duckduckgo-search>=8.0.3",
     "langchain-google-community>=2.0.7",
@@ -95,4 +95,4 @@ dependencies = [
 ]
 
 [tool.uv]
-constraint-dependencies = ["multidict<7"]
+constraint-dependencies = ["multidict<7", "wcmatch>=11.2,<12"]
