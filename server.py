@@ -9679,11 +9679,16 @@ async def load_file_endpoint(request: Request, files: List[UploadFile] = File(No
         logger.error(f"Error processing request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+from py.upload_paths import InvalidUploadPath, resolve_upload_path
+
 @app.delete("/delete_file")
 async def delete_file_endpoint(request: Request):
     data = await request.json()
     file_name = data.get("fileName")
-    file_path = os.path.join(UPLOAD_FILES_DIR, file_name)
+    try:
+        file_path = resolve_upload_path(UPLOAD_FILES_DIR, file_name)
+    except InvalidUploadPath:
+        raise HTTPException(status_code=403, detail="Invalid upload filename")
     try:
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -9701,7 +9706,11 @@ async def delete_files_endpoint(req: FileNames):
     success_files = []
     errors = []
     for name in req.fileNames:
-        path = os.path.join(UPLOAD_FILES_DIR, name)
+        try:
+            path = resolve_upload_path(UPLOAD_FILES_DIR, name)
+        except InvalidUploadPath:
+            errors.append("Invalid upload filename")
+            continue
         try:
             if os.path.exists(path):
                 os.remove(path)
@@ -10199,7 +10208,10 @@ async def update_storage_endpoint(request: Request):
 
 @app.get("/get_file_content")
 async def get_file_content_endpoint(file_url: str):
-    file_path = os.path.join(UPLOAD_FILES_DIR, file_url)
+    try:
+        file_path = resolve_upload_path(UPLOAD_FILES_DIR, file_url)
+    except InvalidUploadPath:
+        raise HTTPException(status_code=403, detail="Invalid upload filename")
     content = await get_file_content(file_path)
     return JSONResponse(content={"content": content})
 

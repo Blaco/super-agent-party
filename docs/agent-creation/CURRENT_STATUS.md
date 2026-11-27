@@ -229,3 +229,8 @@ Legal source attribution and unmodified user-authored multilingual content are d
 - Packaged backend test in run 45930156315 passed; the development artifact was uploading when checked. Clean synthetic profile and restart/persistence verified; no Electron UI or actual provider tests.
 - SAP-NG added as pinned reference in REFERENCE_RESEARCH.md. Prioritize local auth, path/permission fences, message-chain integrity and prompt/stream ownership; do not merge its regional integrations, mirrors, locale files or model-facing text.
 - Mermaid now configured strict in desktop, browser chat and theme reinitialization. Regression check added; CI and visual tests pending. General Markdown and HTML preview remain separate review items.
+
+## Upload storage boundary checkpoint
+
+- Build 45930156315 completed successfully with packaged-backend smoke and uploaded artifact 15168327479. Its source is 92c6c936; it predates the latest hardening.
+- Three storage read/delete endpoints now share flat-name containment validation, with regression tests and packaged synthetic HTTP checks. CI/Windows execution pending. Local-file import authorization, authentication, other file endpoints and tool path permissions remain separate tasks.

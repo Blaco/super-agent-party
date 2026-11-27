@@ -51,3 +51,7 @@ Reference: [Noromon/super-agent-party-ng](https://github.com/Noromon/super-agent
 | Windows/bootstrap | README.md | Evaluate encoding and runtime detection fixes individually. Reject regional mirror fallback and unlocked dependency fallback; retain our locked build. |
 
 Review scope: README, SECURITY.md, the named Python modules and test file, and three Mermaid initialization sites. This is an initial source review, not an exhaustive security audit or proof of NG feature functionality. No NG source module or dependency imported. The Mermaid setting is a standard library configuration applied independently across our three existing sites; reference credit retained. Future adaptations must pass the first-party English gate, preserve upstream attribution and be separately tested.
+
+### First targeted storage adaptation
+
+At the same SAP-NG pin, reviewed py/routers/files.py (read/delete containment) and py/auth.py (path_under). Our existing UI lists only top-level uploaded files, so use a separately implemented flat filename validator with canonical containment, link rejection and Windows special-name handling. No NG module copied. Preserve valid ordinary file operations and add unit plus packaged HTTP regression checks.

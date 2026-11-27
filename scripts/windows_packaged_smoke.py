@@ -15,7 +15,9 @@ import socket
 import subprocess
 import tempfile
 import time
-from urllib.request import ProxyHandler, build_opener
+from urllib.error import HTTPError
+from urllib.parse import urlencode
+from urllib.request import ProxyHandler, Request, build_opener
 
 from websockets.sync.client import connect
 
@@ -179,6 +181,43 @@ def check_http(port, profile):
             "Default local agent endpoint is missing")
 
 
+def check_upload_storage(port, profile):
+    uploads = profile / "uploaded_files"
+    read_file = uploads / "ci-read.txt"
+    delete_file = uploads / "ci-delete.txt"
+    batch_file = uploads / "ci-batch.txt"
+    outside = profile / "ci-outside.txt"
+    for path in (read_file, delete_file, batch_file, outside):
+        path.write_text("Synthetic upload fixture.", encoding="utf-8")
+
+    def request(path, method="GET", payload=None, expected=200):
+        body = None if payload is None else json.dumps(payload).encode("utf-8")
+        req = Request(f"http://127.0.0.1:{port}{path}", data=body,
+                      headers={"Content-Type": "application/json"}, method=method)
+        try:
+            with HTTP.open(req, timeout=10) as response:
+                require(response.status == expected, f"{path}: wrong HTTP status")
+                return json.loads(response.read())
+        except HTTPError as exc:
+            require(exc.code == expected, f"{path}: wrong HTTP error")
+            return json.loads(exc.read())
+
+    query = lambda name: "/get_file_content?" + urlencode({"file_url": name})
+    require("Synthetic upload fixture." in request(query(read_file.name))["content"],
+            "Ordinary upload read failed")
+    outside_name = "../" + outside.name
+    request(query(outside_name), expected=403)
+    request("/delete_file", "DELETE", {"fileName": outside_name}, expected=403)
+    require(request("/delete_file", "DELETE", {"fileName": delete_file.name})["success"],
+            "Ordinary upload delete failed")
+    batch = request("/delete_files", "DELETE", {"fileNames": [batch_file.name, outside_name]})
+    require(batch["successFiles"] == [batch_file.name] and len(batch["errors"]) == 1,
+            "Mixed batch did not isolate the rejected entry")
+    require(outside.read_text(encoding="utf-8") == "Synthetic upload fixture.",
+            "File outside uploads was altered")
+    require(not delete_file.exists() and not batch_file.exists(), "Upload deletion failed")
+
+
 def check_safe_defaults(settings):
     require(settings["systemSettings"]["language"] == "en-US", "Wrong stored locale")
     require(settings["systemSettings"]["network"] == "local", "Network default is not local")
@@ -198,6 +237,8 @@ def run(executable, log_dir, timeout):
         with running_backend(executable, profile, home, log_dir / "first-start.log", timeout) as port:
             check_http(port, profile)
             checks.append("clean-profile-http-and-packaged-english-assets")
+            check_upload_storage(port, profile)
+            checks.append("upload-storage-read-delete-containment")
             with connect(f"ws://127.0.0.1:{port}/ws", proxy=None, open_timeout=10) as ws:
                 settings = receive_type(ws, "settings")["data"]
                 check_safe_defaults(settings)
