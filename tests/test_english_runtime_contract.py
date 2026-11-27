@@ -170,6 +170,24 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         self.assertIn("shell.trashItem(filePath)", main)
         self.assertIn("Backend started but health check response timed out", main)
 
+    def test_dynamic_island_english_and_tool_contract(self):
+        source = (ROOT / "static/js/island-app.js").read_text(encoding="utf-8")
+        html = (ROOT / "static/island.html").read_text(encoding="utf-8")
+        server = (ROOT / "server.py").read_text(encoding="utf-8")
+        for content in (source, html):
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in content))
+            self.assertNotIn("zh-CN", content)
+        self.assertIn("islandLang: 'en-US'", source)
+        self.assertIn("weatherCity: ''", source)
+        self.assertIn("localStorage.getItem('island_weather_city')", source)
+        self.assertIn('lang="en-US"', html)
+        self.assertIn('async def proxy_geocode(city: str, lang: str = "en"):', server)
+        for name in ("island_music_play", "island_weather_get_current",
+                     "island_task_create", "island_calendar_list",
+                     "island_pomodoro_start", "island_clipboard_write",
+                     "island_translate"):
+            self.assertIn("name: '" + name + "'", source)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

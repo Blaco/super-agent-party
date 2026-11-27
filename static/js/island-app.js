@@ -2,141 +2,6 @@
 const MY_EXT_ID = 'dynamic_island';
 
 const I18N = {
-  'zh-CN': {
-    weatherLoading: '加载中...',
-    weatherUnknown: '未知',
-    weatherCityNotFound: '未找到城市',
-    weatherFetchError: '获取失败',
-    weatherCodes: {
-      0: '晴', 1: '多云', 2: '少云', 3: '晴间多云',
-      45: '雾', 48: '雾凇',
-      51: '毛毛雨', 53: '小雨', 55: '中雨',
-      61: '小雨', 63: '中雨', 65: '大雨',
-      71: '小雪', 73: '中雪', 75: '大雪',
-      95: '雷暴', 96: '雷暴伴冰雹', 99: '强雷暴伴冰雹'
-    },
-    weekdays: ['日', '一', '二', '三', '四', '五', '六'],
-    musicNotPlaying: '未在播放',
-    tasksHeader: '待办事项',
-    tasksShowCompleted: '查看已完成',
-    tasksHideCompleted: '隐藏已完成',
-    tasksNewPlaceholder: '新增待办...',
-    tasksEmpty: '暂无待办事项',
-    taskRestore: '恢复',
-    taskComplete: '标记完成',
-    calendarEmpty: '当天没有日程',
-    calendarAllDay: '全天',
-    calendarNewPlaceholder: '新增日程...',
-    calendarAllDayTitle: '全天',
-    pomoReadyFocus: '准备专注',
-    pomoReadyBreak: '准备休息',
-    pomoFocus: '专注',
-    pomoBreak: '休息',
-    pomoMin: '分',
-    pomoStart: '开始专注',
-    pomoPause: '暂停',
-    pomoResume: '继续',
-    pomoStop: '结束',
-    pomoFocusing: '专注中',
-    pomoBreaking: '休息中',
-    pomoToday: '个',
-    pomoTodayMin: '分钟',
-    taskCenter: '任务中心',
-    taskCenterActive: '个进行中',
-    taskCenterEmpty: '暂无子智能体任务',
-    taskCenterCompleted: '已完成',
-    clipboardHeader: '剪切板',
-    clipboardRefresh: '读取剪切板',
-    clipboardClear: '清空',
-    clipboardSearch: '搜索...',
-    clipboardNoMatch: '无匹配结果',
-    clipboardEmpty: '剪切板为空，复制内容后自动记录',
-    clipboardOpenBrowser: '浏览器打开',
-    clipboardOpen: '打开',
-    clipboardCompose: '写邮件',
-    clipboardPin: '固定',
-    clipboardDelete: '删除',
-    clipboardImagePlaceholder: '[剪贴板图片]',
-    navWeather: '天气',
-    navMusic: '音乐',
-    navTasks: '任务',
-    navCalendar: '日历',
-    navPomodoro: '番茄',
-    navTaskCenter: '任务中心',
-    navClipboard: '剪切板',
-    navTranslate: '翻译',
-    translateHeader: '翻译',
-    translateSourcePlaceholder: '请输入要翻译的文本...',
-    translateTargetLang: '目标语言',
-    translateSystemLang: '跟随系统',
-    translateBtn: '翻译',
-    translateResultPlaceholder: '翻译结果将显示在这里',
-    translateCopy: '复制',
-    translateClear: '清空',
-    minimalMode: '极简模式',
-    minimalModeClose: '关闭极简模式',
-    reminderHint: '点击展开灵动岛查看详情',
-    timeJustNow: '刚刚',
-    timeMinutesAgo: '分钟前',
-    timeHoursAgo: '小时前',
-    mcpPlaying: '已播放',
-    mcpPaused: '已暂停',
-    mcpNext: '已切下一首',
-    mcpPrev: '已切上一首',
-    mcpMusicInfoNone: '未检测到播放信息',
-    mcpWeatherCitySet: '天气城市已设置为',
-    mcpTaskCreated: '已创建待办: ',
-    mcpTaskNone: '暂无待办事项',
-    mcpTaskNotFound: '未找到匹配的待办: ',
-    mcpTaskDone: '已完成',
-    mcpTaskRestored: '已恢复',
-    mcpTaskDeleted: '已删除: ',
-    mcpCalendarEmpty: '暂无待办事项',
-    mcpCalendarAllDay: ' (全天)',
-    mcpCalendarItems: '个待办',
-    mcpCalendarYear: '年',
-    mcpCalendarMonth: '月',
-    mcpCalendarMonthEmpty: '暂无待办',
-    mcpPomoStarted: '分钟, 休息',
-    mcpPomoStartedPrefix: '番茄钟已启动: 专注',
-    mcpPomoStartedSuffix: '分钟',
-    mcpPomoNoRunning: '没有正在运行的番茄钟',
-    mcpPomoPaused: '番茄钟已暂停',
-    mcpPomoResumed: '番茄钟已恢复',
-    mcpPomoStopped: '番茄钟已停止',
-    mcpPomoNotRunning: '番茄钟未运行。今日已完成',
-    mcpPomoPausedStatus: '⏸ 已暂停',
-    mcpPomoRunningStatus: '▶ 运行中',
-    mcpPomoRemaining: '剩余',
-    mcpPomoSession: ' | 专注',
-    mcpPomoBreakSession: '分钟 休息',
-    mcpPomoToday: '今日: ',
-    mcpPomoCount: '个番茄, 共',
-    mcpPomoFocusMin: '分钟专注',
-    mcpClipboardEmpty: '剪切板历史为空',
-    mcpClipboardReading: '正在读取剪切板...',
-    mcpClipboardWriteNoText: '请提供要写入的文本',
-    mcpClipboardWritten: '已写入剪切板: ',
-    mcpClipboardCleared: '剪切板历史已清空',
-    mcpUnknownTool: '未知工具: ',
-    mcpWeatherDirect: '实时天气:\n温度: ',
-    mcpWeatherCondition: '\n天气状况: ',
-    mcpWeatherWind: '\n风速: ',
-    mcpWeatherUnit: ' km/h',
-    mcpWeatherError: '查询天气时出错: ',
-    mcpForecastHeader: '的',
-    mcpForecastSuffix: '天天气预报:',
-    mcpForecastDay: '白天',
-    mcpForecastNight: '夜间',
-    mcpForecastError: '查询预报时出错: ',
-    alertOpenWeb: '打开网页',
-    alertCompose: '撰写邮件',
-    navHeatmap: '热力图',
-    heatmapHeader: '智能体活跃度',
-    heatmapEmpty: '暂无活动记录\n聊天、完成任务都会点亮热力图',
-    todayCount: '今日 {0}',
-    agentDone: '活干完啦，快来看看吧！',
-  },
   'en-US': {
     weatherLoading: 'Loading...',
     weatherUnknown: 'Unknown',
@@ -259,10 +124,10 @@ const I18N = {
     mcpWeatherWind: '\nWind speed: ',
     mcpWeatherUnit: ' km/h',
     mcpWeatherError: 'Weather query error: ',
-    mcpForecastHeader: '',
+    mcpForecastHeader: ' ',
     mcpForecastSuffix: '-day forecast:',
-    mcpForecastDay: 'Day',
-    mcpForecastNight: 'Night',
+    mcpForecastDay: 'Day: ',
+    mcpForecastNight: 'Night: ',
     mcpForecastError: 'Forecast query error: ',
     alertOpenWeb: 'Open',
     alertCompose: 'Compose',
@@ -299,7 +164,7 @@ function createIslandApp() {
   return Vue.createApp({
     data() {
       return {
-        islandLang: 'zh-CN',
+        islandLang: 'en-US',
         mode: 'still',           // still | quick | large
         activePanel: 0,          // 0=weather, 1=music, 2=tasks, 3=calendar, 4=pomodoro, 5=taskcenter, 6=clipboard, 7=translate, 8=heatmap
         themeMode: 'dark',
@@ -322,7 +187,7 @@ function createIslandApp() {
         // Weather state
         weatherTemp: null,
         weatherCode: null,
-        weatherCity: '北京',
+        weatherCity: '',
         weatherLoading: false,
         weatherError: null,
         editingCity: false,
@@ -389,7 +254,7 @@ function createIslandApp() {
         translatedText: '',
         isTranslating: false,
         targetLang: 'system',
-        targetLangActual: 'zh-CN',
+        targetLangActual: 'en-US',
         translateAbortController: null,
         // Minimal mode state
         isMinimalMode: false,
@@ -517,9 +382,7 @@ function createIslandApp() {
         }
         const months = [];
         let lastMonth = -1;
-        const monthNames = this.islandLang === 'en-US'
-          ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-          : ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         for (let col = 0; col < grid.length; col++) {
           const midDate = new Date(startDate);
           midDate.setDate(midDate.getDate() + col * 7 + 3);
@@ -529,9 +392,7 @@ function createIslandApp() {
             lastMonth = m;
           }
         }
-        const dayLabels = this.islandLang === 'en-US'
-          ? ['','Mon','','Wed','','Fri','']
-          : ['','一','','三','','五',''];
+        const dayLabels = ['','Mon','','Wed','','Fri',''];
         return { grid, months, dayLabels };
       },
       heatmapTodayCount() {
@@ -547,7 +408,7 @@ function createIslandApp() {
       },
       // Calendar computed
       weekDayLabels() {
-        return this.islandLang === 'en-US' ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] : ['一','二','三','四','五','六','日'];
+        return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
       },
       weekRange() {
         const d = new Date(this.calendarSelectedDate + 'T00:00:00');
@@ -556,11 +417,8 @@ function createIslandApp() {
         monday.setDate(d.getDate() - day + 1);
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
-        if (this.islandLang === 'en-US') {
-          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-          return `${months[monday.getMonth()]} ${monday.getDate()} - ${months[sunday.getMonth()]} ${sunday.getDate()}`;
-        }
-        return `${monday.getMonth()+1}月${monday.getDate()}日 - ${sunday.getMonth()+1}月${sunday.getDate()}日`;
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${months[monday.getMonth()]} ${monday.getDate()} - ${months[sunday.getMonth()]} ${sunday.getDate()}`;
       },
       weekDates() {
         const d = new Date(this.calendarSelectedDate + 'T00:00:00');
@@ -589,11 +447,8 @@ function createIslandApp() {
       selectedDateLabel() {
         const d = new Date(this.calendarSelectedDate + 'T00:00:00');
         const wdIdx = d.getDay() === 0 ? 6 : d.getDay() - 1;
-        if (this.islandLang === 'en-US') {
-          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-          return `${months[d.getMonth()]} ${d.getDate()} ${this.weekDayLabels[wdIdx]}`;
-        }
-        return `${d.getMonth()+1}月${d.getDate()}日 周${this.weekDayLabels[wdIdx]}`;
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${months[d.getMonth()]} ${d.getDate()} ${this.weekDayLabels[wdIdx]}`;
       },
       dayTasks() {
         return this.tasks
@@ -679,11 +534,8 @@ function createIslandApp() {
       monthPickerLabel() {
         const now = new Date();
         const m = new Date(now.getFullYear(), now.getMonth() + this.calendarMonthOffset, 1);
-        if (this.islandLang === 'en-US') {
-          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-          return `${months[m.getMonth()]} ${m.getFullYear()}`;
-        }
-        return `${m.getFullYear()}年${m.getMonth()+1}月`;
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${months[m.getMonth()]} ${m.getFullYear()}`;
       },
       monthCalendarDays() {
         const now = new Date();
@@ -716,14 +568,14 @@ function createIslandApp() {
     created() {
       const savedTheme = localStorage.getItem('island_theme');
       if (savedTheme) { this.themeMode = savedTheme; document.documentElement.setAttribute('data-theme', savedTheme); }
-      this.weatherCity = localStorage.getItem('island_weather_city') || '北京';
+      this.weatherCity = localStorage.getItem('island_weather_city') || '';
       this.loadTasks();
       try { this.pomodoro.sessions = JSON.parse(localStorage.getItem('island_pomodoro') || '[]'); } catch (e) { this.pomodoro.sessions = []; }
       try { this.clipboardHistory = JSON.parse(localStorage.getItem('island_clipboard') || '[]'); } catch (e) { this.clipboardHistory = []; }
       this.clipboardHistory = this.clipboardHistory.filter(h => h && typeof h.text === 'string');
       this.clipboardHistory.forEach(h => { if (!h.type) h.type = this.detectContentType(h.text || ''); });
       try { this.clipboardPinned = JSON.parse(localStorage.getItem('island_clipboard_pinned') || '[]'); } catch (e) { this.clipboardPinned = []; }
-      this.targetLangActual = navigator.language || navigator.userLanguage || 'zh-CN';
+      this.targetLangActual = navigator.language || navigator.userLanguage || 'en-US';
       const today = new Date();
       this.calendarSelectedDate = fmtLocalDate(today);
       this.activeReminderTask = null;
@@ -789,20 +641,13 @@ function createIslandApp() {
 
     methods: {
       t(key, arg) {
-        const lang = I18N[this.islandLang] || I18N['zh-CN'];
-        const str = lang[key] || I18N['zh-CN'][key] || key;
+        const lang = I18N['en-US'];
+        const str = lang[key] ?? key;
         return arg != null ? str.replace('{0}', arg) : str;
       },
       async fetchLanguage() {
-        try {
-          const res = await fetch('/cur_language');
-          const data = await res.json();
-          if (I18N[data.language]) this.islandLang = data.language;
-        } catch (e) {
-          const navLang = (navigator.language || navigator.userLanguage || '').startsWith('zh') ? 'zh-CN' : 'en-US';
-          this.islandLang = navLang;
-        }
-        document.title = this.islandLang === 'zh-CN' ? '灵动岛' : 'Dynamic Island';
+        this.islandLang = 'en-US';
+        document.title = 'Dynamic Island';
         this.updateTime();
       },
 
@@ -811,12 +656,8 @@ function createIslandApp() {
         const n = new Date();
         this.currentTime = n.getHours() + ':' + String(n.getMinutes()).padStart(2, '0');
         const wd = I18N[this.islandLang].weekdays;
-        if (this.islandLang === 'en-US') {
-          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-          this.currentDate = `${wd[n.getDay()]} ${months[n.getMonth()]} ${n.getDate()}`;
-        } else {
-          this.currentDate = `${n.getMonth() + 1}月${n.getDate()}日 周${wd[n.getDay()]}`;
-        }
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        this.currentDate = `${wd[n.getDay()]} ${months[n.getMonth()]} ${n.getDate()}`;
       },
       toggleTheme() {
         this.themeMode = this.themeMode === 'dark' ? 'light' : 'dark';
@@ -1137,9 +978,9 @@ function createIslandApp() {
             latitude = this.ipLat;
             longitude = this.ipLon;
           } else {
-            const city = this.weatherCity || '北京';
-            const isChinese = /[\u4e00-\u9fff]/.test(city);
-            const lang = isChinese ? 'zh' : 'en';
+            const city = this.weatherCity;
+            if (!city) { this.weatherError = this.t('weatherCityNotFound'); this.weatherLoading = false; return; }
+            const lang = 'en';
             const geoRes = await fetch(`/api/geocode?city=${encodeURIComponent(city)}&lang=${lang}`);
             const geoData = await geoRes.json();
             if (!geoData.results || !geoData.results.length) {
@@ -1199,7 +1040,7 @@ function createIslandApp() {
             const d = JSON.parse(e.data);
             if (d.type === 'call_mcp_tool') this.handleMcpCall(d.data);
             if (d.type === 'island_music_state') this.handleMusicState(d.data);
-            if (d.type === 'island_ai_reply_done') { this.loadHeatmap(); this.showAlert({ icon: 'fa-comment-dots', text: d.data?.text || 'AI 已回复', dismissible: true, duration: 5000 }); }
+            if (d.type === 'island_ai_reply_done') { this.loadHeatmap(); this.showAlert({ icon: 'fa-comment-dots', text: d.data?.text || 'AI replied', dismissible: true, duration: 5000 }); }
             if (d.type === 'island_notification') this.showAlert({ icon: d.data?.icon || 'fa-bell', text: d.data?.text || '', dismissible: true, duration: 5000 });
             if (d.type === 'island_task_progress') this.handleTaskProgress(d.data);
             if (d.type === 'island_task_list') this.centerTasks = d.data || [];
@@ -1220,32 +1061,32 @@ function createIslandApp() {
       registerMcpTools() {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
         this.ws.send(JSON.stringify({ type: 'register_node_extension_mcp', data: { ext_id: MY_EXT_ID, tools: [
-          { name: 'island_music_play',  description: '播放/恢复当前音乐', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_music_pause', description: '暂停音乐', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_music_next',  description: '下一首', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_music_prev',  description: '上一首', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_music_get_info', description: '获取当前播放信息', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_music_set_volume', description: '设置音量 0-100', parameters: { type: 'object', properties: { level: { type: 'integer', description: '0-100' } }, required: ['level'] } },
-          { name: 'island_weather_get_current', description: '查询指定城市或当前配置城市的实时天气', parameters: { type: 'object', properties: { city: { type: 'string', description: '城市名称' } }, required: [] } },
-          { name: 'island_weather_get_forecast', description: '查询指定城市未来几天天气预报', parameters: { type: 'object', properties: { city: { type: 'string', description: '城市名称' }, days: { type: 'integer', description: '预报天数, 默认3' } }, required: [] } },
-          { name: 'island_weather_set_city', description: '设置灵动岛天气显示的城市', parameters: { type: 'object', properties: { city: { type: 'string', description: '城市名称' } }, required: ['city'] } },
-          { name: 'island_get_time', description: '获取当前日期和时间信息', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_task_create', description: '在灵动岛上创建一条待办事项，可关联到日历', parameters: { type: 'object', properties: { text: { type: 'string', description: '待办内容' }, due_time: { type: 'string', description: '开始时间 ISO 格式, 可选' }, end_time: { type: 'string', description: '结束/过期时间 ISO 格式, 可选, 默认 due_time+1h' }, all_day: { type: 'boolean', description: '是否全天事件, 可选' } }, required: ['text'] } },
-          { name: 'island_task_list', description: '列出灵动岛上所有待办事项', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_task_complete', description: '按文本匹配并标记完成灵动岛上的一条待办事项', parameters: { type: 'object', properties: { text: { type: 'string', description: '待办内容关键词（模糊匹配）' } }, required: ['text'] } },
-          { name: 'island_task_delete', description: '按文本匹配并删除灵动岛上的一条待办事项', parameters: { type: 'object', properties: { text: { type: 'string', description: '待办内容关键词（模糊匹配）' } }, required: ['text'] } },
-          { name: 'island_calendar_list', description: '列出指定日期的所有待办事项', parameters: { type: 'object', properties: { date: { type: 'string', description: '日期, YYYY-MM-DD 格式, 默认今天' } }, required: [] } },
-          { name: 'island_calendar_month', description: '列出指定月份每天的任务数量', parameters: { type: 'object', properties: { year: { type: 'integer', description: '年份, 如 2025' }, month: { type: 'integer', description: '月份 1-12' } }, required: ['year', 'month'] } },
-          { name: 'island_pomodoro_start', description: '启动番茄钟进行专注计时', parameters: { type: 'object', properties: { focus_minutes: { type: 'integer', description: '专注时长(分钟), 默认25' }, break_minutes: { type: 'integer', description: '休息时长(分钟), 默认5' }, task_name: { type: 'string', description: '任务名称, 可选' } }, required: [] } },
-          { name: 'island_pomodoro_pause', description: '暂停/恢复当前番茄钟', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_pomodoro_stop', description: '停止当前番茄钟', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_pomodoro_status', description: '查询当前番茄钟状态', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_pomodoro_history', description: '查询今日番茄钟统计', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_clipboard_list', description: '列出剪切板历史记录', parameters: { type: 'object', properties: { query: { type: 'string', description: '搜索关键词, 可选' } }, required: [] } },
-          { name: 'island_clipboard_get', description: '读取系统剪切板当前内容', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_clipboard_write', description: '写入文本到系统剪切板', parameters: { type: 'object', properties: { text: { type: 'string', description: '要写入的文本内容' } }, required: ['text'] } },
-          { name: 'island_clipboard_clear', description: '清空剪切板历史', parameters: { type: 'object', properties: {}, required: [] } },
-          { name: 'island_translate', description: '翻译文本到指定语言', parameters: { type: 'object', properties: { text: { type: 'string', description: '要翻译的文本' }, target_lang: { type: 'string', description: '目标语言, 如 简体中文、English、日本語 等, 默认跟随系统' } }, required: ['text'] } }
+          { name: 'island_music_play',  description: 'Play or resume current music', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_music_pause', description: 'Pause music', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_music_next',  description: 'Next track', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_music_prev',  description: 'Previous track', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_music_get_info', description: 'Get current playback information', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_music_set_volume', description: 'Set volume (0-100)', parameters: { type: 'object', properties: { level: { type: 'integer', description: '0-100' } }, required: ['level'] } },
+          { name: 'island_weather_get_current', description: 'Get current weather for the specified or configured city', parameters: { type: 'object', properties: { city: { type: 'string', description: 'City name' } }, required: [] } },
+          { name: 'island_weather_get_forecast', description: 'Get the forecast for a specified city', parameters: { type: 'object', properties: { city: { type: 'string', description: 'City name' }, days: { type: 'integer', description: 'Forecast days, default 3' } }, required: [] } },
+          { name: 'island_weather_set_city', description: 'Set the city displayed in Dynamic Island weather', parameters: { type: 'object', properties: { city: { type: 'string', description: 'City name' } }, required: ['city'] } },
+          { name: 'island_get_time', description: 'Get current date and time', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_task_create', description: 'Create a Dynamic Island task, optionally linked to the calendar', parameters: { type: 'object', properties: { text: { type: 'string', description: 'Task text' }, due_time: { type: 'string', description: 'Start time in ISO format, optional' }, end_time: { type: 'string', description: 'End or expiry time in ISO format, optional, default due_time+1h' }, all_day: { type: 'boolean', description: 'Whether this is an all-day event, optional' } }, required: ['text'] } },
+          { name: 'island_task_list', description: 'List all Dynamic Island tasks', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_task_complete', description: 'Match a Dynamic Island task by text and mark it complete', parameters: { type: 'object', properties: { text: { type: 'string', description: 'Task text keyword (fuzzy match)' } }, required: ['text'] } },
+          { name: 'island_task_delete', description: 'Match a Dynamic Island task by text and delete it', parameters: { type: 'object', properties: { text: { type: 'string', description: 'Task text keyword (fuzzy match)' } }, required: ['text'] } },
+          { name: 'island_calendar_list', description: 'List all tasks for a specified date', parameters: { type: 'object', properties: { date: { type: 'string', description: 'Date in YYYY-MM-DD format, default today' } }, required: [] } },
+          { name: 'island_calendar_month', description: 'List task counts by day for a specified month', parameters: { type: 'object', properties: { year: { type: 'integer', description: 'Year, for example 2025' }, month: { type: 'integer', description: 'Month (1-12)' } }, required: ['year', 'month'] } },
+          { name: 'island_pomodoro_start', description: 'Start a Pomodoro focus timer', parameters: { type: 'object', properties: { focus_minutes: { type: 'integer', description: 'Focus duration in minutes, default 25' }, break_minutes: { type: 'integer', description: 'Break duration in minutes, default 5' }, task_name: { type: 'string', description: 'Task name, optional' } }, required: [] } },
+          { name: 'island_pomodoro_pause', description: 'Pause or resume the current Pomodoro', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_pomodoro_stop', description: 'Stop the current Pomodoro', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_pomodoro_status', description: 'Get current Pomodoro status', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_pomodoro_history', description: 'Get todays Pomodoro statistics', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_clipboard_list', description: 'List clipboard history', parameters: { type: 'object', properties: { query: { type: 'string', description: 'Search keyword, optional' } }, required: [] } },
+          { name: 'island_clipboard_get', description: 'Read current system clipboard content', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_clipboard_write', description: 'Write text to the system clipboard', parameters: { type: 'object', properties: { text: { type: 'string', description: 'Text to write' } }, required: ['text'] } },
+          { name: 'island_clipboard_clear', description: 'Clear clipboard history', parameters: { type: 'object', properties: {}, required: [] } },
+          { name: 'island_translate', description: 'Translate text into a specified language', parameters: { type: 'object', properties: { text: { type: 'string', description: 'Text to translate' }, target_lang: { type: 'string', description: 'Target language, for example English, French or Japanese; defaults to system language' } }, required: ['text'] } }
         ] } }));
       },
 
@@ -1493,7 +1334,7 @@ function createIslandApp() {
             const l = (tp && tp.level != null) ? Math.max(0, Math.min(100, parseInt(tp.level))) : 50;
             this.volume = l;
             this.sendMusicControl('volume', l);
-            sendResult(`音量: ${l}%`);
+            sendResult(`Volume: ${l}%`);
             break;
 
           case 'island_weather_get_current':
@@ -1517,7 +1358,7 @@ function createIslandApp() {
 
           case 'island_get_time':
             const now = new Date();
-            const t = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} 星期${I18N[this.islandLang].weekdays[now.getDay()]}`;
+            const t = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} ${I18N[this.islandLang].weekdays[now.getDay()]}`;
             sendResult(t);
             return;
 
@@ -1527,7 +1368,7 @@ function createIslandApp() {
             return;
           case 'island_task_list':
             if (!this.tasks.length) { sendResult(this.t('mcpTaskNone')); return; }
-            r = this.tasks.map(t => (t.done ? '✅' : '⬜') + ' ' + t.text + (t.due_time ? ' (到期: ' + this.formatTaskTime(t.due_time) + ')' : '')).join('\n');
+            r = this.tasks.map(t => (t.done ? '✅' : '⬜') + ' ' + t.text + (t.due_time ? ' (Due: ' + this.formatTaskTime(t.due_time) + ')' : '')).join('\n');
             sendResult(r);
             return;
           case 'island_task_complete':
@@ -1549,9 +1390,9 @@ function createIslandApp() {
           case 'island_calendar_list':
             const listDate = (tp && tp.date) ? tp.date : todayLocalStr();
             const dayItems = this.tasks.filter(t => t.due_time && t.due_time.slice(0, 10) === listDate);
-            if (!dayItems.length) { sendResult(`${listDate} 暂无待办事项`); return; }
+            if (!dayItems.length) { sendResult(`${listDate} No tasks`); return; }
             r = dayItems.map(t => (t.done ? '✅' : '⬜') + ' ' + t.text + (t.all_day ? this.t('mcpCalendarAllDay') : '') + (!t.all_day && t.due_time ? ' ' + this.formatTaskTime(t.due_time) : '')).join('\n');
-            sendResult(`${listDate} 的待办:\n` + r);
+            sendResult(`${listDate} tasks:\n` + r);
             return;
           case 'island_calendar_month':
             const y = tp.year, m = tp.month;
@@ -1570,7 +1411,7 @@ function createIslandApp() {
             if (tp.break_minutes) this.pomodoro.breakMinutes = Math.max(1, Math.min(30, parseInt(tp.break_minutes)));
             this.pomodoro.taskName = tp.task_name || '';
             this.pomodoroStart();
-            sendResult(this.t('mcpPomoStartedPrefix') + this.pomodoro.focusMinutes + this.t('mcpPomoStarted') + this.pomodoro.breakMinutes + this.t('mcpPomoStartedSuffix') + (this.pomodoro.taskName ? ', 任务: ' + this.pomodoro.taskName : ''));
+            sendResult(this.t('mcpPomoStartedPrefix') + this.pomodoro.focusMinutes + this.t('mcpPomoStarted') + this.pomodoro.breakMinutes + this.t('mcpPomoStartedSuffix') + (this.pomodoro.taskName ? ', Task: ' + this.pomodoro.taskName : ''));
             return;
           case 'island_pomodoro_pause':
             if (!this.pomodoro.running) { sendResult(this.t('mcpPomoNoRunning')); return; }
@@ -1584,7 +1425,7 @@ function createIslandApp() {
             return;
           case 'island_pomodoro_status':
             if (!this.pomodoro.running) { sendResult(this.t('mcpPomoNotRunning') + this.pomodoroTodayCount + this.t('mcpPomoCount') + this.pomodoroTodayMinutes + this.t('mcpPomoFocusMin')); return; }
-            sendResult((this.pomodoro.paused ? this.t('mcpPomoPausedStatus') : this.t('mcpPomoRunningStatus')) + ' | ' + this.pomodoroPhaseLabel + ' | ' + this.t('mcpPomoRemaining') + ' ' + this.pomodoroDisplayTime + this.t('mcpPomoSession') + this.pomodoro.focusMinutes + this.t('mcpPomoBreakSession') + this.pomodoro.breakMinutes + this.t('mcpPomoStartedSuffix') + (this.pomodoro.taskName ? ' | 任务: ' + this.pomodoro.taskName : ''));
+            sendResult((this.pomodoro.paused ? this.t('mcpPomoPausedStatus') : this.t('mcpPomoRunningStatus')) + ' | ' + this.pomodoroPhaseLabel + ' | ' + this.t('mcpPomoRemaining') + ' ' + this.pomodoroDisplayTime + this.t('mcpPomoSession') + this.pomodoro.focusMinutes + this.t('mcpPomoBreakSession') + this.pomodoro.breakMinutes + this.t('mcpPomoStartedSuffix') + (this.pomodoro.taskName ? ' | Task: ' + this.pomodoro.taskName : ''));
             return;
           case 'island_pomodoro_history':
             sendResult(this.t('mcpPomoToday') + this.pomodoroTodayCount + this.t('mcpPomoCount') + this.pomodoroTodayMinutes + this.t('mcpPomoFocusMin'));
@@ -1595,7 +1436,7 @@ function createIslandApp() {
             const items = q ? this.clipboardHistory.filter(h => h.text.toLowerCase().includes(q.toLowerCase())) : this.clipboardHistory;
             if (!items.length) { sendResult(this.t('mcpClipboardEmpty')); return; }
             r = items.slice(0, 10).map(h => `[${this.detectContentType(h.text)}] ${h.text.substring(0, 100)} (${this.formatClipboardTime(h.time)})`).join('\n');
-            sendResult('剪切板历史:\n' + r);
+            sendResult('Clipboard history:\n' + r);
             return;
           case 'island_clipboard_get':
             this.requestClipboard();
@@ -1625,8 +1466,8 @@ function createIslandApp() {
 
       async fetchWeatherDirect(city, forecast) {
         try {
-          const isChinese = /[\u4e00-\u9fff]/.test(city);
-          const lang = isChinese ? 'zh' : 'en';
+          if (!city) return this.t('weatherCityNotFound');
+          const lang = 'en';
           const geoRes = await fetch(`/api/geocode?city=${encodeURIComponent(city)}&lang=${lang}`);
           const geoData = await geoRes.json();
           if (!geoData.results || !geoData.results.length) return `${this.t('mcpTaskNotFound').replace(/: $/, '')} "${city}"`;
@@ -1634,7 +1475,7 @@ function createIslandApp() {
           const wRes = await fetch(`/api/weather?lat=${latitude}&lon=${longitude}`);
           const wData = await wRes.json();
           const cw = wData.current_weather;
-          return `${city}实时天气:\n温度: ${cw.temperature}°C\n天气状况: ${I18N[this.islandLang].weatherCodes[cw.weathercode] || this.t('weatherUnknown')}\n风速: ${cw.windspeed} km/h`;
+          return `${city} current weather:\nTemperature: ${cw.temperature}°C\nCondition: ${I18N[this.islandLang].weatherCodes[cw.weathercode] || this.t('weatherUnknown')}\nWind speed: ${cw.windspeed} km/h`;
         } catch (err) {
           return `${this.t('mcpWeatherError')}${err.message}`;
         }
@@ -1642,8 +1483,8 @@ function createIslandApp() {
 
       async fetchForecast(city, days) {
         try {
-          const isChinese = /[\u4e00-\u9fff]/.test(city);
-          const lang = isChinese ? 'zh' : 'en';
+          if (!city) return this.t('weatherCityNotFound');
+          const lang = 'en';
           const geoRes = await fetch(`/api/geocode?city=${encodeURIComponent(city)}&lang=${lang}`);
           const geoData = await geoRes.json();
           if (!geoData.results || !geoData.results.length) return `${this.t('mcpTaskNotFound').replace(/: $/, '')} "${city}"`;
@@ -1669,8 +1510,8 @@ function createIslandApp() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               messages: [
-                { role: 'system', content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${targetLang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。` },
-                { role: 'user', content: `请翻译以下内容到${targetLang}：\n\n${text}` }
+                { role: 'system', content: `You are a professional translator. Translate the supplied content into ${targetLang}, preserve the original formatting (including Markdown and line breaks), and return only the translation.` },
+                { role: 'user', content: `Translate the following into ${targetLang}:\n\n${text}` }
               ],
               stream: false,
               temperature: 0.1
@@ -1678,9 +1519,9 @@ function createIslandApp() {
           });
           if (!res.ok) throw new Error('Network error');
           const data = await res.json();
-          return data.choices?.[0]?.message?.content || '翻译失败';
+          return data.choices?.[0]?.message?.content || 'Translation failed';
         } catch (err) {
-          return `翻译出错: ${err.message}`;
+          return `Translation error: ${err.message}`;
         }
       },
 
@@ -1708,11 +1549,11 @@ function createIslandApp() {
       },
 
       // ===== Marquee =====
-      // 用单段文字 + 复制的方式做无缝循环。关键点：
-      //   1. 两个 item 之间的间距应该等于容器宽度 (boxWidth)，这样一次只看到一段歌词，
-      //      第二段从右边出来时第一段已经从左边消失，避免视觉重叠。
-      //   2. 动画位移 = itemWidth + spacing，end-start 完全等于循环周期，无缝衔接。
-      //   3. 每秒检测一次动画是否还在跑 (playState === 'running')，跑马灯卡住就重启。
+      // Create a seamless loop using one text segment and its duplicate.
+      //   1. Space the items by the container width (boxWidth) so only one lyric segment is visible.
+      //      The first segment exits left before the second enters from the right, avoiding overlap.
+      //   2. Animation distance = itemWidth + spacing; the full displacement equals one loop.
+      //   3. Check every second whether playState is running and restart a stalled marquee.
       startMarquee() {
         const text = this.currentTrack + (this.currentArtist ? '  \u2022  ' + this.currentArtist : '');
         const changed = this._marqueeText !== text;
@@ -1720,7 +1561,7 @@ function createIslandApp() {
         if (!changed && this.marqueeAnim && this.marqueeAnim.playState === 'running') return;
         this.stopMarquee();
         if (!text) return;
-        // 等待 DOM 渲染完成 (v-if 切换 / 文本变化)
+        // Wait for DOM rendering after v-if or text changes.
         this.$nextTick(() => this._buildMarquee());
       },
 
@@ -1736,13 +1577,13 @@ function createIslandApp() {
         const itemWidth = a.offsetWidth;
         const boxWidth = box.offsetWidth;
         if (!itemWidth || !boxWidth) return;
-        // 间距略小于容器宽度，保证一次只显示一段但留出微小余量
+        // Keep spacing slightly below the container width to leave a small margin.
         const spacing = Math.max(boxWidth - 8, itemWidth);
-        // 通过 margin 而非 CSS gap 控制间距，避免和 JS 计算冲突
+        // Use margin rather than CSS gap to avoid conflicts with JavaScript calculations.
         a.style.marginRight = spacing + 'px';
         b.style.marginRight = spacing + 'px';
         const itemStep = itemWidth + spacing;
-        // 速度：每秒约 35 像素
+        // Speed: approximately 35 pixels per second.
         const dur = Math.max(8000, (itemStep / 35) * 1000);
         this.marqueeAnim = track.animate(
           [
@@ -1751,7 +1592,7 @@ function createIslandApp() {
           ],
           { duration: dur, iterations: Infinity, easing: 'linear' }
         );
-        // 兜底：检测卡死 (浏览器在最小化/切换 tab 时会暂停动画，恢复后可能不自动 play)
+        // Recover stalled animations after browser minimization or tab changes.
         if (this.marqueeTimer) clearInterval(this.marqueeTimer);
         this.marqueeTimer = setInterval(() => {
           if (!this.isPlaying || this.mode === 'large') return;
@@ -1921,11 +1762,11 @@ function createIslandApp() {
               messages: [
                 {
                   role: 'system',
-                  content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${lang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。如果被翻译的文字与目标语言一致，则返回原文即可。`
+                  content: `You are a professional translator. Translate the supplied content into ${lang}, preserve its original formatting (including Markdown and line breaks), and return only the translation. If it is already in the target language, return the original text.`
                 },
                 {
                   role: 'user',
-                  content: `请翻译以下内容到${lang}：\n\n${this.sourceText}`
+                  content: `Translate the following into ${lang}:\n\n${this.sourceText}`
                 }
               ],
               stream: true,
@@ -1985,7 +1826,7 @@ function createIslandApp() {
       },
       changeTranslateLang() {
         if (this.targetLang === 'system') {
-          this.targetLangActual = navigator.language || navigator.userLanguage || 'zh-CN';
+          this.targetLangActual = navigator.language || navigator.userLanguage || 'en-US';
         } else {
           this.targetLangActual = this.targetLang;
         }

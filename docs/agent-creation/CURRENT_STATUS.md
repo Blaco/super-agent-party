@@ -82,3 +82,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 
 - Source CI for `ec4a4a43f87c958d2004466c641d51d8218cfd1d` passed: https://github.com/Blaco/super-agent-party/actions/runs/45918758039.
 - static/index.html and main.js now contain zero literal Han characters (1,245 flagged lines addressed); two Japanese translation-target values are preserved via equivalent Vue-bound escapes. Main process and inline JavaScript syntax and markup equivalence checks passed. New source CI and interactive Windows validation remain outstanding. Next localization targets: static/js/vrm.js and static/js/island-app.js, followed by CLI, local application, skills and extension modules and a repository-wide audit. No package requested.
+
+## Follow-up source checkpoint — Dynamic Island
+
+- Dynamic Island JavaScript and HTML are English-only, including model-facing tool descriptions, translation prompts and date/weather output. Removed the unused alternate UI locale and hardcoded regional weather fallback; retain configured cities and existing IP lookup, with an explicit set-city prompt when no city is available. Geocoding defaults to English. Translation targets and user content remain supported. No tool identifiers, route paths or stored-data keys changed. Static checks passed before commit; source CI and Windows interactive verification remain outstanding. Next target: VRM renderer comments, then CLI/local application/skills/extensions and repository-wide inventory. No new package requested.

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en-US">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,7 +30,7 @@
          @pointermove="onPointerMove"
           @pointerup="onPointerUp">
 
-      <!-- 提醒态（所有视图可见） -->
+      <!-- Reminder state (visible in all views) -->
       <div class="alert-content" v-if="alertActive" @click.stop="alertActionHandler ? null : dismissAlert()">
         <i :class="'fa-solid ' + alertIcon"></i>
         <span class="alert-text">{{ alertText }}</span>
@@ -40,11 +40,11 @@
         <i class="fa-solid fa-xmark alert-close" v-if="alertDismissible" @click.stop="dismissAlert"></i>
       </div>
 
-      <!-- Still / Quick 视图 -->
+      <!-- Still / Quick view -->
       <template v-if="!isLargeView">
 
 
-        <!-- 持久任务提醒（日历触发） -->
+        <!-- Persistent task reminder (calendar triggered) -->
         <div class="reminder-content" v-if="showReminderInQuick && !alertActive">
           <div class="reminder-top">
             <i class="fa-solid fa-clock reminder-icon"></i>
@@ -56,7 +56,7 @@
           <div class="reminder-hint">{{ t('reminderHint') }}</div>
         </div>
 
-        <!-- 番茄钟运行显示（still/quick） -->
+        <!-- Running Pomodoro display (still/quick) -->
         <div class="pomo-quick" v-if="showPomodoroInQuick && !alertActive && !showReminderInQuick">
           <svg class="pomo-quick-ring" viewBox="0 0 32 32" width="32" height="32">
             <circle cx="16" cy="16" r="13" fill="none"
@@ -74,17 +74,17 @@
           </button>
         </div>
 
-        <!-- Still 模式 + 无音乐：纯时间 -->
+        <!-- Still mode without music: time only -->
         <div class="still-content" v-if="mode === 'still' && !showMusicQuick && !alertActive && !showReminderInQuick && !showPomodoroInQuick">
           <span class="still-time">{{ currentTime || '--:--' }}</span>
         </div>
 
-        <!-- Quick 模式 + 无音乐：天气 + 时间/日期（占满） -->
+        <!-- Quick mode without music: weather, time and date -->
         <div class="quick-content" v-if="isQuickView && !showMusicQuick && !alertActive && !showReminderInQuick && !showPomodoroInQuick">
           <div class="quick-weather" v-if="weatherTemp !== null">
             <i :class="'fa-solid ' + weatherIcon"></i>
             <span>{{ weatherTemp }}°</span>
-            <span class="quick-weather-city">{{ weatherCity }}</span>
+            <span class="quick-weather-city">{{ weatherCity || 'Set city' }}</span>
           </div>
           <span class="quick-time">{{ currentTime }}</span>
           <span class="quick-date">{{ currentDate }}</span>
@@ -92,16 +92,16 @@
             <button class="quick-minimal-btn" @click.stop="toggleMinimalMode" :title="isMinimalMode ? t('minimalModeClose') : t('minimalMode')">
               <i class="fa-solid fa-feather"></i>
             </button>
-            <button class="quick-theme-btn" @click.stop="toggleTheme" :title="themeMode === 'dark' ? '切换浅色' : '切换深色'">
+            <button class="quick-theme-btn" @click.stop="toggleTheme" :title="themeMode === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'">
               <i :class="themeMode === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
             </button>
-            <button class="quick-close-btn" @click.stop="closeWindow" :title="islandLang === 'zh-CN' ? '关闭灵动岛' : 'Close Island'">
+            <button class="quick-close-btn" @click.stop="closeWindow" title="Close Island">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
         </div>
 
-        <!-- 音乐播放中：歌名跑马灯（占满整个矩形） -->
+        <!-- Music playing: scrolling track name -->
         <div class="quick-content music-full" v-if="showMusicQuick && hasMusic && !alertActive">
           <div class="artwork-wrap">
             <i class="fa-solid fa-music"></i>
@@ -114,10 +114,10 @@
         </div>
       </template>
 
-      <!-- Large 视图 -->
+      <!-- Large view -->
       <template v-if="isLargeView">
         <div class="panels-wrapper" ref="panelsWrapper">
-          <!-- 面板1: 天气/时间 -->
+          <!-- Panel 1: Weather / time -->
           <div class="panel weather-panel" :style="panelStyles.p0">
             <div class="weather-icon-large" v-if="weatherTemp !== null">
               <i :class="'fa-solid ' + weatherIcon"></i>
@@ -130,7 +130,7 @@
             <div class="weather-desc">{{ weatherDesc }}</div>
             <div class="weather-city-row">
               <button v-if="!editingCity" class="weather-city-btn" @click.stop="startEditCity">
-                {{ weatherCity }} <i class="fa-solid fa-pen-to-square"></i>
+                {{ weatherCity || 'Set city' }} <i class="fa-solid fa-pen-to-square"></i>
               </button>
               <input v-else ref="cityInput" class="weather-city-input" v-model="editCityText"
                      @keydown.enter="saveEditCity" @blur="saveEditCity" @click.stop />
@@ -140,7 +140,7 @@
             <div class="weather-date">{{ currentDate }}</div>
           </div>
 
-          <!-- 面板2: 音乐 -->
+          <!-- Panel 2: Music -->
           <div class="panel music-panel" :style="panelStyles.p1">
             <div class="large-artwork"
                  @mouseenter="albumHovered = true"
@@ -174,7 +174,7 @@
             </div>
           </div>
 
-          <!-- 面板3: 任务 -->
+          <!-- Panel 3: Tasks -->
           <div class="panel tasks-panel" :style="panelStyles.p2">
             <div class="tasks-header">
               <i class="fa-solid fa-list-check tasks-icon"></i>
@@ -222,7 +222,7 @@
             </div>
           </div>
 
-          <!-- 面板4: 日历 -->
+          <!-- Panel 4: Calendar -->
           <div class="panel calendar-panel" :style="panelStyles.p3">
             <div class="cal-week-nav">
               <button class="cal-nav-btn" @click.stop="prevWeek">
@@ -256,7 +256,7 @@
             </div>
             <div class="cal-pomo-stats" v-if="selectedDatePomo">
               <i class="fa-solid fa-fire"></i>
-              <span>{{ selectedDatePomo.count }} 次专注 · {{ selectedDatePomo.minutes }} 分钟</span>
+              <span>{{ selectedDatePomo.count }} focus sessions · {{ selectedDatePomo.minutes }} minutes</span>
             </div>
             <div class="cal-tasks-list" ref="calTasksList">
               <div v-if="!dayTasks.length" class="cal-tasks-empty">
@@ -333,7 +333,7 @@
             </div>
           </div>
 
-          <!-- 面板5: 番茄钟 -->
+          <!-- Panel 5: Pomodoro -->
           <div class="panel pomodoro-panel" :style="panelStyles.p4">
             <div class="pomo-card" :class="{ running: pomodoro.running, paused: pomodoro.paused, focus: pomodoro.phase === 'focus' }">
               <div class="pomo-ring-wrap">
@@ -407,7 +407,7 @@
             </div>
           </div>
 
-          <!-- 面板6: 任务中心 -->
+          <!-- Panel 6: Task Center -->
           <div class="panel taskcenter-panel" :style="panelStyles.p5">
             <div class="tc-header">
               <i class="fa-solid fa-robot tc-icon"></i>
@@ -444,7 +444,7 @@
             </div>
           </div>
 
-          <!-- 面板7: 剪切板 -->
+          <!-- Panel 7: Clipboard -->
           <div class="panel clipboard-panel" :style="panelStyles.p6">
             <div class="clip-header">
               <i class="fa-solid fa-clipboard-list clip-icon"></i>
@@ -489,7 +489,7 @@
                   <button v-if="item.type === 'email'" class="clip-act-btn email" @click.stop="openUrl('mailto:' + item.text)" :title="t('clipboardCompose')">
                     <i class="fa-solid fa-paper-plane"></i>
                   </button>
-                  <button class="clip-act-btn copy" @click.stop="copyToClipboard(item.text)" title="复制">
+                  <button class="clip-act-btn copy" @click.stop="copyToClipboard(item.text)" title="Copy">
                     <i class="fa-solid fa-copy"></i>
                   </button>
                   <button class="clip-act-btn pin" :class="{ active: isClipboardPinned(item.id) }" @click.stop="togglePinClipboard(item.id)" :title="t('clipboardPin')">
@@ -503,7 +503,7 @@
             </div>
           </div>
 
-          <!-- 面板8: 翻译 -->
+          <!-- Panel 8: Translate -->
           <div class="panel translate-panel" :style="panelStyles.p7">
             <div class="translate-header">
               <i class="fa-solid fa-language translate-icon"></i>
@@ -516,16 +516,16 @@
             <div class="translate-bar">
               <select class="translate-lang-sel" v-model="targetLang" @change="changeTranslateLang" @click.stop>
                 <option value="system">{{ t('translateSystemLang') }}</option>
-                <option value="简体中文">简体中文</option>
-                <option value="繁體中文">繁體中文</option>
+                <option :value="'\u7b80\u4f53\u4e2d\u6587'">Simplified Chinese</option>
+                <option :value="'\u7e41\u9ad4\u4e2d\u6587'">Traditional Chinese</option>
                 <option value="English">English</option>
-                <option value="Français">Français</option>
-                <option value="Русский">Русский</option>
-                <option value="Deutsch">Deutsch</option>
-                <option value="Español">Español</option>
+                <option value="Français">French</option>
+                <option value="Русский">Russian</option>
+                <option value="Deutsch">German</option>
+                <option value="Español">Spanish</option>
                 <option value="Portuguese">Portuguese</option>
-                <option value="日本語">日本語</option>
-                <option value="한국어">한국어</option>
+                <option :value="'\u65e5\u672c\u8a9e'">Japanese</option>
+                <option value="한국어">Korean</option>
               </select>
               <button class="translate-submit-btn" @click.stop="handleTranslate" :disabled="!sourceText.trim() || isTranslating">
                 <i v-if="isTranslating" class="fa-solid fa-spinner fa-spin"></i>
@@ -550,7 +550,7 @@
             </div>
           </div>
 
-          <!-- 面板9: 热力图 -->
+          <!-- Panel 9: Heatmap -->
           <div class="panel heatmap-panel" :style="panelStyles.p8">
             <div class="heatmap-header">
               <i class="fa-solid fa-fire heatmap-icon"></i>
@@ -593,7 +593,7 @@
           </div>
         </div>
 
-        <!-- 面板指示器 -->
+        <!-- Panel indicators -->
         <div class="panel-indicator">
               <button class="panel-nav-btn" :class="{ active: activePanel === 0 }"
                       @click.stop="switchPanel(0)" :title="t('navWeather')">

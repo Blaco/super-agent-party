@@ -11665,7 +11665,7 @@ async def proxy_weather(lat: float, lon: float, daily: str = None, forecast_days
     return {"error": "weather_fetch_failed"}
 
 @app.get("/api/geocode")
-async def proxy_geocode(city: str, lang: str = "zh"):
+async def proxy_geocode(city: str, lang: str = "en"):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
