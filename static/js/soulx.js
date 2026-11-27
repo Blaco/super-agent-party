@@ -27,7 +27,7 @@
   var transparentBg = true;
   var frameFormat = 'image/jpeg';
 
-  // ---- 视频帧渲染 ----
+  // ---- Video frame rendering ----
   var targetFps = 25;
   var frameQueue = [];
   var lastFrameTime = 0;
@@ -36,12 +36,12 @@
   var expectedWidth = 512;
   var expectedHeight = 512;
   var condImageDrawn = false;
-  var condImageEl = null;   // 缓存的参考图片 Image 元素
-  var showingCond = false;  // 当前是否正在显示参考图
+  var condImageEl = null;   // Cached reference Image element
+  var showingCond = false;  // Whether the reference image is currently displayed
   var renderLoopStarted = false;
 
-  // ---- 音画同步状态 ----
-  // 音频立即调度播放，帧异步到达入队。渲染循环以音频时钟为基准展示帧。
+  // ---- Audio/video synchronization state ----
+  // Schedule audio immediately and enqueue frames as they arrive. Render against the audio clock.
   var chunkAudioSamples = 15360;
   var samplesSent = 0;
   var samplesProcessed = 0;
@@ -51,20 +51,20 @@
   var framesShown = 0;
   var framesShownTotal = 0;
   var audioChain = Promise.resolve();
-  var sendChain = Promise.resolve();  // 发送独立链，不阻塞解码
-  var pendingSends = 0;    // 尚未真正写入 FlashHead 的音频块数
-  var pendingFlush = false; // audioInputComplete 到达时，等发送链排空后再 flush 尾帧
-  var holdDrain = false;    // 等待 FlashHead 尾帧(flushed)期间，暂缓排期剩余音频
+  var sendChain = Promise.resolve();  // Independent send chain; does not block decoding
+  var pendingSends = 0;    // Audio chunks not yet written to FlashHead
+  var pendingFlush = false; // On audioInputComplete, wait for the send chain before flushing tail frames
+  var holdDrain = false;    // Defer scheduling remaining audio while waiting for FlashHead tail frames (flushed)
   var holdDrainTimer = null;
-  var sessionEnded = false; // 本次会话播放已结束，丢弃迟到的补零/尾帧
+  var sessionEnded = false; // Playback has ended; discard late padding/tail frames
   var nextPlayTime = 0;
   var audioClockStart = 0;
   var scheduledDuration = 0;
   var ttsSessionId = 0;
   var processedChunks = new Set();
-  var sessionChunkStamp = 0;   // 随 ttsStarted 递增，跨会话去重隔离
-  var nextExpectedChunkIdx = 0;  // 排序缓冲：期望的下一个 chunkIndex
-  var chunkSortBuffer = {};      // 排序缓冲：暂存乱序到达的 chunk { chunkIndex: { audioBytes, subtitleText } }
+  var sessionChunkStamp = 0;   // Increment on ttsStarted to isolate deduplication across sessions
+  var nextExpectedChunkIdx = 0;  // Reordering buffer: next expected chunkIndex
+  var chunkSortBuffer = {};      // Buffer out-of-order chunks { chunkIndex: { audioBytes, subtitleText } }
   var activeSources = [];
   var MAX_INFLIGHT_CHUNKS = 12;
   var subtitleTimer = null;
@@ -75,7 +75,7 @@
   var mediaRecorder = null;
   var pttRecording = false;
 
-  setStatus('正在加载配置...');
+  setStatus('Loading configuration...');
 
   Promise.all([fetchSoulxConfig(), fetchSoulxImages()]).then(function (results) {
     var data = results[0];
@@ -103,11 +103,11 @@
       condImageSrc = 'data:image/png;base64,' + condImageB64;
     }
     if (!condImageSrc) {
-      setError('未配置参考图片，请在主界面设置中上传一张人物照片');
+      setError('No reference image configured. Upload a character photo in the main settings.');
       return;
     }
 
-    // 一律转 base64 发送，跨平台无需担心路径或网络权限
+    // Always send base64 to avoid cross-platform path or network permission issues
     var resolvedUrl = condImageSrc;
     if (!/^https?:\/\//i.test(resolvedUrl) && !/^data:/i.test(resolvedUrl)) {
       resolvedUrl = location.origin + resolvedUrl;
@@ -116,7 +116,7 @@
       var reader = new FileReader();
       reader.onload = function () {
         condImageB64 = String(reader.result).split(',')[1] || '';
-        // 预载参考图片，用于空闲时显示
+        // Preload the reference image for idle display
         condImageEl = new Image();
         condImageEl.onload = function () { condImageEl._loaded = true; };
         condImageEl.src = resolvedUrl;
@@ -129,10 +129,10 @@
       };
       reader.readAsDataURL(blob);
     }).catch(function (err) {
-      setError('读取参考图片失败: ' + err.message);
+      setError('Failed to read reference image: ' + err.message);
     });
   }).catch(function (err) {
-    setError('加载配置失败: ' + err.message);
+    setError('Failed to load configuration: ' + err.message);
   });
 
   function fetchSoulxConfig() {
@@ -168,7 +168,7 @@
     img.src = condImageSrc;
   }
 
-  // ==================== FlashHead 连接 ====================
+  // ==================== FlashHead connection ====================
 
   function connectFlashHead() {
     if (isConnecting || windowClosing) return;
@@ -183,7 +183,7 @@
       wsUrl = wsUrl.replace(/\/$/, '') + '/ws/stream';
     }
 
-    setStatus('正在连接 FlashHead 服务...');
+    setStatus('Connecting to FlashHead service...');
 
     try {
       flashheadWs = new WebSocket(wsUrl);
@@ -203,7 +203,7 @@
         transparent_bg: transparentBg
       };
       flashheadWs.send(JSON.stringify(initMsg));
-      setStatus('正在初始化模型...');
+      setStatus('Initializing model...');
     };
 
     flashheadWs.onmessage = function (event) {
@@ -225,17 +225,17 @@
             isConnecting = false;
             if (msg.cond_preview) {
               condImageSrc = 'data:image/png;base64,' + msg.cond_preview;
-              // 更新缓存的参考图为 matted 版本（透明背景）
+              // Update the cached reference image to the matted version (transparent background)
               condImageEl = new Image();
               condImageEl.onload = function () { condImageEl._loaded = true; };
               condImageEl.src = condImageSrc;
-              condImageEl._loaded = true; // data: URL 同步可用
+              condImageEl._loaded = true; // data: URL is available synchronously
               showingCond = false;
             }
             condImageDrawn = false;
             drawCondImage();
             hideOverlay();
-            // 本地路径模式：直接传文件路径，WSL2 后端自动转换为 /mnt/... 路径
+            // Local path mode: send the file path; the WSL2 backend converts it to /mnt/...
             break;
           case 'frames_meta':
             if (msg.width && msg.height && (msg.width !== canvas.width || msg.height !== canvas.height)) {
@@ -249,13 +249,13 @@
             }
             break;
           case 'flushed':
-            // FlashHead 已补零生成尾部尾帧，解除暂缓，排期剩余音频
+            // FlashHead has padded and generated the tail frames; resume scheduling remaining audio
             if (holdDrain) {
               holdDrain = false;
               clearTimeout(holdDrainTimer);
               drainDecodedAudio();
-              // 若音频此刻已播完（没有可排期的尾部音频），
-              // 直接丢弃这些补零尾帧，避免回图后再闪一下
+              // If audio has already finished (no remaining audio to schedule),
+              // discard the padded tail frames to avoid a flash after returning to the reference image
               if (audioClockStart === 0 && scheduledDuration === 0) {
                 sessionEnded = true;
                 clearFrameQueue();
@@ -267,7 +267,7 @@
           case 'reset_ok':
             break;
           case 'error':
-            setError('FlashHead 错误: ' + (msg.message || '未知错误'));
+            setError('FlashHead error: ' + (msg.message || 'Unknown error'));
             break;
         }
       } else {
@@ -280,7 +280,7 @@
       isConnecting = false;
       flashheadWs = null;
       if (!windowClosing) {
-        setStatus('FlashHead 连接已断开，正在重连...');
+        setStatus('FlashHead disconnected. Reconnecting...');
         scheduleReconnect();
       }
     };
@@ -300,7 +300,7 @@
 
   var frameDecodeChain = Promise.resolve();
 
-  // ==================== Anime4K 超分（WebGPU，可选开关） ====================
+  // ==================== Anime4K upscaling (WebGPU, optional) ====================
   var SR = {
     device: null, adapter: null, pipe: null, inTex: null,
     inCanvas: null, outCanvas: null, blitObj: null, Klass: null,
@@ -415,7 +415,7 @@
     return (SR.enabled && SR.ready) ? 2 : 1;
   }
 
-  // JPEG/WebP 批量格式: [4B count][4B len][frame]...
+  // JPEG/WebP batch format: [4B count][4B len][frame]...
   function handleFlashheadFrames(buffer) {
     if (!isReady) return;
     var decodeGeneration = frameGeneration;
@@ -443,8 +443,8 @@
         if (sessionEnded) { bm.close(); continue; }
         frameQueue.push(bm);
       }
-      // 帧到达时排出队列中所有已解码的音频，首次整批排，后续增量排。
-      // 等待 FlashHead 尾帧(flushed)期间暂缓排期，保证尾部音频有帧可播。
+      // On frame arrival, drain decoded audio: schedule the first batch together, then incrementally.
+      // Defer audio scheduling until FlashHead tail frames arrive (flushed), so remaining audio has frames.
       if (!holdDrain) {
         drainDecodedAudio();
       }
@@ -470,18 +470,18 @@
     var samplesPerFrame = 16000 / targetFps;
 
     function tick(ts) {
-      // 音频驱动模式下：根据已播放音频位置决定应显示第几帧
+      // Audio-driven mode: choose the frame based on the current playback position
       if (audioClockStart > 0 && scheduledDuration > 0) {
         showingCond = false;
         var elapsed = audioCtx.currentTime - audioClockStart;
         if (elapsed < 0) elapsed = 0;
         if (elapsed > scheduledDuration) {
-          // 音频播完，切回回退模式继续消费队列中的尾帧
+          // When audio ends, return to fallback mode and consume remaining queued frames
           audioClockStart = 0;
           scheduledDuration = 0;
           lastFrameTime = performance.now();
           if (!holdDrain) {
-            // 丢弃补零/迟到的尾帧，直接过渡到静态图，避免回图后“再闪一下”
+            // Discard padded/late tail frames and return directly to the still image to avoid a flash
             sessionEnded = true;
             clearFrameQueue();
           }
@@ -497,7 +497,7 @@
           }
         }
       } else {
-        // 无音频时的回退：按目标帧率消费帧（等待尾帧期间暂停消费）
+        // Without audio, consume frames at the target frame rate (pause while awaiting tail frames)
         var dt = ts - lastFrameTime;
         if (dt >= frameInterval && frameQueue.length > 0 && !holdDrain) {
           showingCond = false;
@@ -510,7 +510,7 @@
           lastFrameTime = ts;
         } else if (frameQueue.length === 0) {
           lastFrameTime = ts;
-          // 队列空了，显示参考图片（仅在 FlashHead 就绪后，且不处于等待尾帧状态）
+          // If the queue is empty, show the reference image once FlashHead is ready and no tail frames are pending
           if (!showingCond && isReady && condImageEl && condImageEl._loaded && !holdDrain) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(condImageEl, 0, 0, canvas.width, canvas.height);
@@ -519,7 +519,7 @@
           }
         }
       }
-      // 安全阀
+      // Safety limit
       var maxBacklog = targetFps * 8;
       while (frameQueue.length > maxBacklog) {
         var fb = frameQueue.shift();
@@ -531,7 +531,7 @@
     animFrameId = requestAnimationFrame(tick);
   }
 
-  // ==================== TTS 音频通道 ====================
+  // ==================== TTS audio channel ====================
 
   function connectTTS() {
     var protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -588,7 +588,7 @@
     } catch (e) {}
   }
 
-  // 串行链：解码 → 缓冲；发送异步，不阻塞解码。帧到位后才调度播放。
+  // Serial decode/buffer chain; send asynchronously without blocking decoding. Schedule playback when frames arrive.
   function enqueueAudio(audioBytes, subtitleText) {
     var sessionId = ttsSessionId;
     pendingSends++;
@@ -618,7 +618,7 @@
                   samplesSent += float32Data.length;
                 }
                 pendingSends--;
-                // audioInputComplete 到达时若还有音频未写完 FlashHead，等全部写完再 flush
+                // If audioInputComplete arrives while writes are pending, wait for all writes before flushing
                 if (pendingFlush && pendingSends <= 0) {
                   pendingFlush = false;
                   sendToFlashhead({ type: 'flush' });
@@ -632,7 +632,7 @@
     });
   }
 
-  // 流控：限制发送领先处理量不超过 4 个 chunk，防止 FlashHead 积压
+  // Flow control: cap the send lead at four chunks to avoid a FlashHead backlog
   function paceInFlight(sessionId, done) {
     var MAX_LEAD_SAMPLES = chunkAudioSamples * 4;
     var sentAhead = samplesSent - samplesProcessed;
@@ -658,7 +658,7 @@
   }
 
   function scheduleChunk(audioBuffer, subtitleText, sessionId) {
-    // 有新音频被排期，说明会话仍在播放中
+    // Newly scheduled audio means the session is still playing
     sessionEnded = false;
     var startTime = Math.max(audioCtx.currentTime + 0.03, nextPlayTime);
     if (!audioClockStart || audioClockStart === 0) {
@@ -758,14 +758,14 @@
       } else if (msg.type === 'omniStreaming') {
         if (data.text) showSubtitle(data.text);
       } else if (msg.type === 'audioInputComplete') {
-        // 主窗口已把全部音频送出：让 FlashHead 提前补零生成尾帧，
-        // 若还有音频未写完 FlashHead，则在发送链排空后再 flush。
+        // The main window has sent all audio: let FlashHead pad and generate tail frames early.
+        // If any audio writes remain, flush after the send chain drains.
         if (pendingSends <= 0) {
           sendToFlashhead({ type: 'flush' });
         } else {
           pendingFlush = true;
         }
-        // 等待 FlashHead 尾帧(flushed)期间暂缓排期剩余音频，保证尾部有帧可播
+        // Wait for FlashHead tail frames (flushed) before scheduling remaining audio
         holdDrain = true;
         clearTimeout(holdDrainTimer);
         holdDrainTimer = setTimeout(function () {
@@ -776,7 +776,7 @@
         }, 2000);
       } else if (msg.type === 'allChunksCompleted') {
         hideSubtitle();
-        // 让 FlashHead 把剩余不足一个 chunk 的尾部音频补零生成尾帧，避免结尾画面定格
+        // Pad the final partial audio chunk to generate tail frames and prevent a frozen final image
         sendToFlashhead({ type: 'flush' });
       } else if (msg.type === 'stopSpeaking') {
         hideSubtitle();
@@ -821,7 +821,7 @@
     return btoa(binary);
   }
 
-  // ==================== 状态提示 ====================
+  // ==================== Status messages ====================
 
   function setStatus(text) {
     statusText.textContent = text;
@@ -858,7 +858,7 @@
   var textField = document.getElementById('text-input-field');
   var sendBtn = document.getElementById('text-send-btn');
 
-  // ==================== 控制面板（鼠标移动显示，静止后自动隐藏，与 THA 一致） ====================
+  // ==================== Controls (show on mouse movement; hide when idle, matching THA) ====================
   var isPanelHovered = false;
   var hideTimeout = null;
 
@@ -902,7 +902,7 @@
     });
   }
 
-  // --- 锁定穿透 ---
+  // --- Lock and click-through ---
   bindTapEvent(lockBtn, function () {
     isLocked = !isLocked;
     var icon = lockBtn.querySelector('i');
@@ -919,7 +919,7 @@
     }
   });
 
-  // --- 隐藏画面 ---
+  // --- Hide display ---
   bindTapEvent(hideBtn, function () {
     isHidden = !isHidden;
     var icon = hideBtn.querySelector('i');
@@ -934,7 +934,7 @@
     }
   });
 
-  // --- 语音输入（PTT） ---
+  // --- Voice input (PTT) ---
   bindTapEvent(voiceBtn, function () {
     pttVisible = !pttVisible;
     var icon = voiceBtn.querySelector('i');
@@ -948,7 +948,7 @@
     }
   });
 
-  // --- 文字输入 ---
+  // --- Text input ---
   bindTapEvent(textBtn, function () {
     textInputVisible = !textInputVisible;
     var icon = textBtn.querySelector('i');
@@ -962,19 +962,19 @@
     }
   });
 
-  // --- 字幕开关 ---
+  // --- Subtitle toggle ---
   bindTapEvent(subtitleBtn, function () {
     isSubtitleEnabled = !isSubtitleEnabled;
     subtitleContainer.style.display = isSubtitleEnabled ? 'block' : 'none';
     subtitleBtn.style.color = isSubtitleEnabled ? '#28a745' : '#dc3545';
   });
 
-  // --- 刷新 ---
+  // --- Refresh ---
   bindTapEvent(refreshBtn, function () {
     location.reload();
   });
 
-  // --- 关闭 ---
+  // --- Close ---
   bindTapEvent(closeBtn, function () {
     windowClosing = true;
     if (window.electronAPI && window.electronAPI.stopSoulxWindow) {
@@ -984,7 +984,7 @@
     }
   });
 
-  // ==================== PTT 录音 ====================
+  // ==================== PTT recording ====================
 
   function initPttWs() {
     if (pttWs && pttWs.readyState === WebSocket.OPEN) return;
@@ -1045,7 +1045,7 @@
     });
   }
 
-  // ==================== 文字发送 ====================
+  // ==================== Send text ====================
 
   function sendTextMessage() {
     var text = textField.value.trim();

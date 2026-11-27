@@ -104,6 +104,27 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         self.assertIsNotNone(mode_map)
         self.assertEqual(json.loads(mode_map.group(1).replace("'", '"')), commands["MODE_COMMAND_MAP"])
 
+    def test_english_soulx_preload_and_livestream(self):
+        for relative in ("static/js/soulx.js", "static/soulx.html",
+                         "static/js/preload.js", "py/twitch_service.py", "py/ytdm.py"):
+            source = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
+            if relative.endswith(".py"):
+                ast.parse(source, filename=relative)
+        html = (ROOT / "static/soulx.html").read_text(encoding="utf-8")
+        self.assertIn('lang="en-US"', html)
+        for control in ("drag-btn", "lock-btn", "hide-btn", "voice-btn", "text-btn",
+                        "subtitle-btn", "refresh-btn", "close-btn"):
+            self.assertIn(f'id="{control}"', html)
+        twitch = (ROOT / "py/twitch_service.py").read_text(encoding="utf-8")
+        youtube = (ROOT / "py/ytdm.py").read_text(encoding="utf-8")
+        for event in ("danmaku", "buy_guard", "gift", "enter_room"):
+            self.assertIn(f'"{event}"', twitch)
+        for event in ("danmaku", "super_chat", "gift"):
+            self.assertIn(f'"{event}"', youtube)
+        renderer = (ROOT / "static/js/renderer.js").read_text(encoding="utf-8")
+        self.assertIn('TTS playback request:', renderer)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

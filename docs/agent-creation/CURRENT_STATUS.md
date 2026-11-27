@@ -59,3 +59,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — shortcut correction
 
 - Source audit for `28d17755ad2f7d3f79d2822f2500991f49806c16` failed on JS syntax in the shortcut permission-mode map (run 45916727019). Corrected the map and strengthened its regression test. No permission semantics changed. New CI pending.
+
+## Follow-up source checkpoint — avatar and optional livestream text
+
+- SoulX avatar status/controls, Electron preload diagnostics and the YouTube/Twitch listener modules are now English; renderer A2UI fallback and additional diagnostics were localized. Shared message IDs, external protocol fields and audio/video processing are unchanged. Source CI and runtime validation remain pending. No new package requested.

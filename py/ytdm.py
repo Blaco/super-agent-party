@@ -7,11 +7,11 @@ from typing import Optional, Callable
 
 class YouTubeDMClient:
     """
-    极简轮询客户端
-    用法：client = YouTubeDMClient(api_key, video_id, on_message)
-          client.start()   # 非阻塞，内部启动线程
+    Minimal polling client
+    Usage: client = YouTubeDMClient(api_key, video_id, on_message)
+          client.start()   # Non-blocking; starts an internal thread
           ...
-          client.stop()    # 线程安全退出
+          client.stop()    # Thread-safe shutdown
     """
     def __init__(self,
                  api_key: str,
@@ -29,9 +29,9 @@ class YouTubeDMClient:
         self._stop_evt = threading.Event()
         self._thread: Optional[threading.Thread] = None
 
-    # --------- 外部调用 ---------
+    # --------- Public methods ---------
     def start(self):
-        """非阻塞启动"""
+        """Start without blocking."""
         if self._thread and self._thread.is_alive():
             return
         self._stop_evt.clear()
@@ -39,23 +39,23 @@ class YouTubeDMClient:
         self._thread.start()
 
     def stop(self):
-        """线程安全停止"""
+        """Stop safely across threads."""
         self._stop_evt.set()
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=self.poll_interval + 1)
 
-    # --------- 内部轮询 ---------
+    # --------- Internal polling ---------
     def _run(self):
         self._chat_id = self._get_live_chat_id()
-        print('[YouTube] got chat_id:', self._chat_id)   # ← 新增
+        print('[YouTube] got chat_id:', self._chat_id)   # Log discovered chat ID
         if not self._chat_id:
-            print('[YouTube] 未开播，线程退出')
+            print('[YouTube] Stream is not live; stopping listener')
             return
 
         while not self._stop_evt.is_set():
             try:
                 self._poll_once()
-                print('[YouTube] poll_once done')        # ← 新增
+                print('[YouTube] poll_once done')        # Log poll completion
             except Exception as e:
                 print('[YouTube] poll error:', e)
             time.sleep(self.poll_interval)
@@ -72,8 +72,8 @@ class YouTubeDMClient:
 
     def _poll_once(self):
         """
-        YouTube 轮询核心逻辑
-        识别类型：textMessageEvent(弹幕), superChatEvent(SC), fanFundingEvent(会员赞助)
+        YouTube polling logic
+        Handles textMessageEvent (chat), superChatEvent (Super Chat), fanFundingEvent (sponsorship).
         """
         rsp = self._yt.liveChatMessages().list(
             liveChatId=self._chat_id,
@@ -86,19 +86,19 @@ class YouTubeDMClient:
             author = item["authorDetails"]["displayName"]
             msg_type = item["snippet"].get("type")
             
-            # 1. 统一类型映射初始化
+            # 1. Initialize shared event type mapping
             danmu_type = "danmaku"
             content = ""
             
-            # 2. 根据 YouTube 消息类型解析内容
+            # 2. Parse content based on the YouTube message type
             if msg_type == "textMessageEvent":
-                # 普通弹幕
+                # Standard chat message
                 danmu_type = "danmaku"
                 text = item["snippet"]["displayMessage"]
                 content = f"{author}: {text}"
                 
             elif msg_type == "superChatEvent":
-                # 醒目留言 (SC)
+                # Super Chat (SC)
                 danmu_type = "super_chat"
                 details = item["snippet"].get("superChatDetails", {})
                 user_text = details.get("userComment", "")
@@ -109,16 +109,16 @@ class YouTubeDMClient:
                     content = f"{author} sent a Super Chat ({amount})"
                     
             elif msg_type == "fanFundingEvent": 
-                # 频道会员/赞助 (YouTube 赠礼类)
+                # Channel membership or sponsorship (YouTube gift event)
                 danmu_type = "gift"
                 content = f"{author} sponsored the channel!"
                 
             else:
-                # 兜底：其他类型（如进场占位符等）统统转为普通文本显示
+                # Fallback: show other events (such as arrival placeholders) as plain chat
                 text = item["snippet"].get("displayMessage", "")
                 content = f"{author}: {text}"
 
-            # 3. 构造统一格式并广播
+            # 3. Construct and broadcast the shared message format
             msg = {
                 'id': str(uuid.uuid4()),
                 "type": "message",
@@ -128,6 +128,6 @@ class YouTubeDMClient:
             }
             self.on_message(msg)
 
-        # 更新下一次抓取的 Token
+        # Update the token for the next polling request
         self._page_token = rsp.get("nextPageToken")
         

@@ -516,8 +516,8 @@ const A2UIRendererComponent = {
       if (this.$root && typeof this.$root.ClickToListen === 'function') {
         this.$root.ClickToListen(text, voice);
       } else {
-        console.warn('A2UI: 根实例上未找到 ClickToListen 方法。');
-        this.$emit('action', `TTS播放请求: ${text}`); // 降级处理
+        console.warn('A2UI: ClickToListen method not found on the root instance.');
+        this.$emit('action', `TTS playback request: ${text}`); // Fallback
       }
     },
 
@@ -739,7 +739,7 @@ const app = Vue.createApp({
       this.webviewPreloadPath = fileUrl;
       
     } catch (e) {
-      console.error('获取 Preload 路径失败:', e);
+      console.error('Failed to get preload path:', e);
     }
 
     window.handleToolApproval = (toolCallId, action) => {
@@ -750,7 +750,7 @@ const app = Vue.createApp({
     // ★ 监听主进程发来的“开新标签”指令（仅 Electron）
     if (isElectron && window.electronAPI && window.electronAPI.onNewTab) {
         window.electronAPI.onNewTab((url) => {
-            console.log('收到新标签页请求:', url);
+            console.log('Received new tab request:', url);
             this.openUrlInNewTab(url);
         });
     }
@@ -758,7 +758,7 @@ const app = Vue.createApp({
     // 监听下载事件（仅 Electron）
     if (isElectron && window.downloadAPI) {
         window.downloadAPI.onDownloadStarted((data) => {
-            console.log('🔥前端已收到下载任务:', data);
+            console.log('Frontend received download task:', data);
             // 新增下载项放到最前面
             this.downloads.unshift({
                 ...data,
@@ -1012,7 +1012,7 @@ const app = Vue.createApp({
           this.addExtension(); // 执行安装 Extension 的方法
         }
       }).catch(() => {
-        console.log('用户取消了安装');
+        console.log('User cancelled installation');
       });
     };
 
@@ -1114,7 +1114,7 @@ const app = Vue.createApp({
     'CLISettings.cc_path': {
       handler(newPath) {
         if (newPath) {
-          console.log('工作区路径更新，准备启动文件监听:', newPath);
+          console.log('Workspace path updated; starting file watcher:', newPath);
           this.setupWorkspaceWatcher(newPath);
         } else if (window.electronAPI && window.electronAPI.stopWorkspaceWatch) {
           window.electronAPI.stopWorkspaceWatch();
@@ -1164,7 +1164,7 @@ const app = Vue.createApp({
       this.handleSkillsPolling(this.activeMenu,this.subMenu, newVal);
     },
     'CLISettings.cc_path': function(newPath) {
-      console.log('工作区路径变化，更新技能状态');
+      console.log('Workspace path changed; updating skill state');
       this.fetchProjectSkillsStatus();
     },
     'searchEngine': function(newVal) {
@@ -1432,7 +1432,7 @@ const app = Vue.createApp({
 
     // 动态过滤表格数据
     filteredAffectionData() {
-      console.log("计算属性触发，当前数据长度:", this.affectionDataList.length);
+      console.log("Computed property updated; current data length:", this.affectionDataList.length);
       // 检查基础数据是否存在
       if (!this.affectionDataList || this.affectionDataList.length === 0) {
         return [];

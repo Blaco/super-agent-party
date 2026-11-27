@@ -3,26 +3,26 @@ const path = require('path');
 const { remote } = require('@electron/remote/main')
 
 
-// 缓存最后一次 VMC 配置（默认关闭）
+// Cache the most recent VMC configuration (disabled by default)
 let vmcCfg = { receive:{enable:false,port:39539,syncExpression: false}, send:{enable:false,host:'127.0.0.1',port:39540} };
 
-// 主进程推送最新配置
+// Receive the latest configuration from the main process
 ipcRenderer.on('vmc-config-changed', (_, cfg) => { vmcCfg = cfg; });
 
-// 与 main.js 保持一致的默认服务器配置（仅作 fallback，端口被占用时主进程会通过 backend-ready 推送真实值）
+// Default server configuration matches main.js (fallback only; backend-ready supplies the actual port if occupied)
 const HOST = '127.0.0.1'
 const PORT = 3456
-// 获取从主进程传递的配置数据
+// Get configuration data passed from the main process
 const windowConfig = {
     windowName: "default",
 };
-// 暴露基本的ipcRenderer给骨架屏页面使用
+// Expose basic ipcRenderer functions for the loading screen
 contextBridge.exposeInMainWorld('electron', {
   isMac: process.platform === 'darwin',
   isWindows: process.platform === 'win32',
   ipcRenderer: {
     on: (channel, func) => {
-      // 只允许特定的通道
+      // Allow only specific channels
       const validChannels = ['backend-ready', 'trigger-search'];
       if (validChannels.includes(channel)) {
         ipcRenderer.on(channel, (event, ...args) => func(...args));
@@ -30,12 +30,12 @@ contextBridge.exposeInMainWorld('electron', {
     },
 
   },
-  // 暴露服务器配置（动态：backend-ready 推送前用默认值，推送后用真实值）
+  // Expose dynamic server configuration: defaults until backend-ready supplies the actual values
   server: {
     host: HOST,
     port: PORT
   },
-  // 同步获取服务器信息（host/port）
+  // Get server information (host/port) synchronously
   getServerInfo: () => ipcRenderer.invoke('get-server-info'),
   requestStopQQBot: () => ipcRenderer.invoke('request-stop-qqbot'),
   requestStopFeishuBot : () => ipcRenderer.invoke('request-stop-feishubot'),
@@ -47,37 +47,37 @@ contextBridge.exposeInMainWorld('electron', {
   requestStopWeComBot : () => ipcRenderer.invoke('request-stop-wecombot'),
 });
 
-// 暴露安全接口
+// Expose safe interfaces
 contextBridge.exposeInMainWorld('electronAPI', {
   onNewTab: (callback) => ipcRenderer.on('create-tab', (_, url) => callback(url)),
   saveScreenshotDirect: (buffer) => ipcRenderer.invoke('save-screenshot-direct', { buffer }),
-  // 系统功能
+  // System functions
   openExternal: (url) => shell.openExternal(url),
   openPath: (filePath) => shell.openPath(filePath),
   getAppPath: () => ipcRenderer.invoke('get-app-path'),
   getPath: () => remote.app.getPath('downloads'),
-  // 窗口控制
+  // Window controls
   windowAction: (action) => ipcRenderer.invoke('window-action', action),
   onWindowState: (callback) => ipcRenderer.on('window-state', callback),
 
-  // 文件对话框
+  // File dialogs
   openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
   openImageDialog: () => ipcRenderer.invoke('open-image-dialog'),
   readFile: (filePath) => ipcRenderer.invoke('readFile', filePath),
-  // 路径处理
+  // Path handling
   pathJoin: (...args) => path.join(...args),
   sendLanguage: (lang) => ipcRenderer.send('set-language', lang),
-  // 全局缩放（字体/界面缩放）
+  // Global zoom (font/interface scaling)
   setZoomFactor: (factor) => {
     try { webFrame.setZoomFactor(Number(factor) || 1); } catch (e) { /* noop */ }
   },
   getZoomFactor: () => {
     try { return webFrame.getZoomFactor(); } catch (e) { return 1; }
   },
-  // 环境检测
+  // Environment detection
   isElectron: true,
 
-  // 自动更新
+  // Automatic updates
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   downloadUpdate: () => ipcRenderer.invoke('download-update'),
   quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
@@ -87,12 +87,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onDownloadProgress: (callback) => ipcRenderer.on('download-progress', callback),
   onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', callback),
   showContextMenu: (menuType, data) => ipcRenderer.invoke('show-context-menu', { menuType, data }),
-  //保存环境变量
+  // Save environment variables
   setNetworkVisibility: (visible) => ipcRenderer.invoke('set-env', { key: 'networkVisible', value: visible }), 
   
   saveChromeSettings: (settings) => ipcRenderer.invoke('save-chrome-config', settings),
   getInternalCDPInfo: () => ipcRenderer.invoke('get-internal-cdp-info'),
-  //重启app
+  // Restart the app
   restartApp: () => ipcRenderer.invoke('restart-app'),
   startVRMWindow: (windowConfig) => ipcRenderer.invoke('start-vrm-window', windowConfig),
   stopVRMWindow: () => ipcRenderer.invoke('stop-vrm-window'),
@@ -104,13 +104,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('set-ignore-mouse-events', ignore, options),
   getIgnoreMouseStatus: () => ipcRenderer.invoke('get-ignore-mouse-status'),
   downloadFile: (payload) => ipcRenderer.invoke('download-file', payload),
-  // 修改：添加回调参数
+  // Accept a callback
   getWindowConfig: (callback) => {
       if (windowConfig.windowName !== "default") {
-          // 如果配置已更新，直接返回
+          // Return immediately if the configuration has been updated
           callback(windowConfig);
       } else {
-          // 如果配置未更新，监听更新事件
+          // Otherwise listen for the configuration update event
           const handler = (event) => {
               callback(event.detail);
               window.removeEventListener('window-config-updated', handler);
@@ -122,7 +122,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setVMCConfig: (cfg) => ipcRenderer.invoke('set-vmc-config', cfg),
   getVMCConfig: () => ipcRenderer.invoke('get-vmc-config'),
   onVMCConfigChanged: (cb) => ipcRenderer.on('vmc-config-changed', (_, cfg) => cb(cfg)),
-  captureDesktop: () => ipcRenderer.invoke('capture-desktop'), // 👈 桌面截图
+  captureDesktop: () => ipcRenderer.invoke('capture-desktop'), // Desktop capture
   toggleWindowSize: (width, height) => ipcRenderer.invoke('toggle-window-size', { width, height }),
   setAlwaysOnTop: (flag) => ipcRenderer.invoke('set-always-on-top', flag),
   showNotification: (title, body) => ipcRenderer.invoke('show-notification', title, body),
@@ -167,12 +167,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startWorkspaceWatch: (dirPath) => ipcRenderer.invoke('start-workspace-watch', dirPath),
   stopWorkspaceWatch: () => ipcRenderer.invoke('stop-workspace-watch'),
   onWorkspaceChanged: (callback) => {
-    // 先移除可能存在的旧监听，防止组件重复挂载导致多次触发
+    // Remove any old listener first to prevent repeated callbacks after remounting
     ipcRenderer.removeAllListeners('workspace-changed');
     ipcRenderer.on('workspace-changed', (_, data) => callback(data));
   },
 
-  // 多账户管理
+  // Multi-account management
   accountsGetAll: () => ipcRenderer.invoke('accounts:get-all'),
   accountsGetCurrent: () => ipcRenderer.invoke('accounts:get-current'),
   accountsCreate: (name, dataPath, cloneFromRoot, setAsDefault) =>
@@ -187,13 +187,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('accounts:launch', { accountId }),
   accountsSwitch: (accountId) =>
     ipcRenderer.invoke('accounts:switch', { accountId }),
-  // 剪切板
+  // Clipboard
   clipboardRead: () => ipcRenderer.invoke('clipboard-read'),
   clipboardWrite: (text) => ipcRenderer.invoke('clipboard-write', text),
   clipboardReadImage: () => ipcRenderer.invoke('clipboard-read-image'),
   clipboardReadFilePaths: () => ipcRenderer.invoke('clipboard-read-file-paths'),
 
-  // 本地应用控制
+  // Local application control
   launchAppWithDebugging: (opts) => ipcRenderer.invoke('launch-app-with-debugging', opts),
   quitAppProcess: (opts) => ipcRenderer.invoke('quit-app-process', opts),
 });
@@ -219,22 +219,22 @@ contextBridge.exposeInMainWorld('vmcAPI', {
 });
 
 contextBridge.exposeInMainWorld('downloadAPI', {
-    // 监听下载事件
+    // Listen for download events
     onDownloadStarted: (cb) => ipcRenderer.on('download-started', (_, data) => cb(data)),
     onDownloadUpdated: (cb) => ipcRenderer.on('download-updated', (_, data) => cb(data)),
     onDownloadDone: (cb) => ipcRenderer.on('download-done', (_, data) => cb(data)),
     
-    // 发送控制指令
+    // Send control commands
     controlDownload: (id, action) => ipcRenderer.invoke('download-control', { id, action }),
     showItemInFolder: (path) => ipcRenderer.invoke('show-item-in-folder', path)
 });
 
-// 在文件末尾添加以下代码来接收主进程传递的配置
+// Receive configuration passed from the main process
 ipcRenderer.on('set-window-config', (event, config) => {
     Object.assign(windowConfig, config);
-    console.log('收到窗口配置:', windowConfig);
+    console.log('Received window configuration:', windowConfig);
     
-    // 添加：配置更新后发送事件通知页面
+    // Notify the page after the configuration changes
     window.dispatchEvent(new CustomEvent('window-config-updated', {
         detail: windowConfig
     }));
