@@ -34,8 +34,8 @@ if (isElectron) {
           
           // Use the preload interface to handle paths
           const filename = url.pathname.split('/uploaded_files/')[1];
-          const filePath = window.electronAPI.pathJoin(
-            window.electronAPI.getAppPath(), 
+          const filePath = await window.electronAPI.pathJoin(
+            await window.electronAPI.getAppPath(),
             'uploaded_files', 
             filename
           );

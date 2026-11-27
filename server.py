@@ -1300,7 +1300,6 @@ async def call_node_extension_tool(ext_id: str, tool_name: str, tool_params: dic
 
 async def dispatch_tool(tool_name: str, tool_params: dict, settings: dict,is_sub_agent:bool=False,force_allow: bool = False, approval_call_id: str | None = None) -> str | List | AsyncIterator[str] | None :
     global mcp_client_list,_TOOL_HOOKS,HA_client,ChromeMCP_client,sql_client, node_ext_mcp_clients, node_ext_mcp_tools
-    print("dispatch_tool",tool_name,tool_params)
     
     from py.utility_tools import time
     # ==================== 1. Tool mapping ====================
@@ -2944,7 +2943,6 @@ The application automatically hides data tags enclosed in angle brackets. Output
             content_append(request.messages, 'system',
                 "\n\n[Local application control enabled] No applications are connected. Scan and connect an application in the GUI first.")
 
-    print(f"System instructions:{request.messages[0]['content']}")
     return request
 
 def get_drs_stage(DRS_STAGE):
@@ -3719,7 +3717,6 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
             if settings["memorySettings"]["userName"]:
                 lore_content = lore_content.replace("{{user}}", settings["memorySettings"]["userName"])
             lore_content = lore_content.replace("{{char}}", cur_memory["name"])
-            print("Adding world lore (dynamic, injected into the user message):\n\n" + lore_content + "\n\nEnd of world lore.\n\n")
             dynamic_user_context += f"\n\n[World information]\n{lore_content}"
 
         # Memory retrieval based on current user input
@@ -4479,7 +4476,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 if settings.get("systemSettings", {}).get("contentSafety", False) and full_content:
                     is_safe, matched = await check_content_safety(full_content, min_cjk_chars=3)
                     if not is_safe:
-                        print(f"[content_safety] output blocked words: {matched}")
+                        print(f"[content_safety] output rejected content")
                         correction = {"choices": [{"delta": {"content": "[This response was replaced by the content safety filter.]", "_safety_filtered": True}}]}
                         yield f"data: {json.dumps(correction)}\n\n"
                         full_content = "[This response was replaced by the content safety filter.]"
@@ -5362,7 +5359,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     if settings.get("systemSettings", {}).get("contentSafety", False) and full_content:
                         is_safe, matched = await check_content_safety(full_content, min_cjk_chars=3)
                         if not is_safe:
-                            print(f"[content_safety] output blocked words: {matched}")
+                            print(f"[content_safety] output rejected content")
                             correction = {"choices": [{"delta": {"content": "[This response was replaced by the content safety filter.]", "_safety_filtered": True}}]}
                             yield f"data: {json.dumps(correction)}\n\n"
                             full_content = "[This response was replaced by the content safety filter.]"
@@ -5544,7 +5541,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                     "content": drs_msg,
                                 }
                             )
-                logger.info(f"all msg: {request.messages}")
+                logger.info("Chat stream completed (%d messages)", len(request.messages))
                 yield "data: [DONE]\n\n"
                 if not request.is_sub_agent:
                     try:
@@ -5611,7 +5608,6 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
 
                 return
             except Exception as e:
-                logger.error(f"{request.messages}")
                 # Catch exceptions and return structured errors
                 error_chunk = {
                     "choices": [{
@@ -5990,7 +5986,6 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             if settings["memorySettings"]["userName"]:
                 lore_content = lore_content.replace("{{user}}", settings["memorySettings"]["userName"])
             lore_content = lore_content.replace("{{char}}", cur_memory["name"])
-            print("Adding world lore (dynamic, injected into the user message):\n\n" + lore_content + "\n\nEnd of world lore.\n\n")
             dynamic_user_context += f"\n\n[World information]\n{lore_content}"
 
         # Memory retrieval based on current user input
@@ -6817,7 +6812,7 @@ async def chat_endpoint(request: ChatRequest, fastapi_request: Request):
                 all_text += " " + " ".join(item.get("text", "") for item in content if isinstance(item, dict) and item.get("type") == "text")
         is_safe, matched = await check_content_safety(all_text)
         if not is_safe:
-            print(f"[content_safety] input blocked words: {matched}")
+            print(f"[content_safety] input rejected content")
             return JSONResponse(
                 status_code=403,
                 content={"error": {"message": "Your input was blocked by the content safety policy.", "type": "content_safety", "code": 403}}
@@ -7125,7 +7120,7 @@ async def simple_chat_endpoint(request: ChatRequest):
             all_text += " " + _extract_text_content(msg.get("content", ""))
         is_safe, matched = await check_content_safety(all_text)
         if not is_safe:
-            print(f"[content_safety] blocked words: {matched}")
+            print(f"[content_safety] rejected content")
             return JSONResponse(
                 status_code=403,
                 content={"error": {"message": "Your input was blocked by the content safety policy.",
@@ -11227,7 +11222,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     if sys_prompt:
                         is_safe, matched = await check_content_safety(sys_prompt)
                         if not is_safe:
-                            print(f"[content_safety] ws save_settings blocked words: {matched}")
+                            print(f"[content_safety] ws save_settings rejected content")
                             await ws_manager.send_json({"type": "error", "message": "The system prompt was blocked by the content safety policy; settings were not saved."}, websocket)
                             break
                 from py.get_setting import deep_update
@@ -11263,14 +11258,14 @@ async def websocket_endpoint(websocket: WebSocket):
                                 if isinstance(content, str):
                                     is_safe, matched = await check_content_safety(content, min_cjk_chars=3)
                                     if not is_safe:
-                                        print(f"[content_safety] ws save_conversations blocked words: {matched}")
+                                        print(f"[content_safety] ws save_conversations rejected content")
                                         msg["content"] = "[This response was replaced by the content safety filter.]"
                                         msg["_safety_filtered"] = True
                                 elif isinstance(content, list):
                                     text = " ".join(item.get("text", "") for item in content if isinstance(item, dict) and item.get("type") == "text")
                                     is_safe, matched = await check_content_safety(text, min_cjk_chars=3)
                                     if not is_safe:
-                                        print(f"[content_safety] ws save_conversations blocked words: {matched}")
+                                        print(f"[content_safety] ws save_conversations rejected content")
                                         msg["content"] = "[This response was replaced by the content safety filter.]"
                                         msg["_safety_filtered"] = True
                 await save_covs(cov_data)
@@ -11335,7 +11330,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 if cur_settings.get("systemSettings", {}).get("contentSafety", False):
                     is_safe, matched = await check_content_safety(extension_system_prompt)
                     if not is_safe:
-                        print(f"[content_safety] ws set_system_prompt blocked words: {matched}")
+                        print(f"[content_safety] ws set_system_prompt rejected content")
                         await ws_manager.send_json({"type": "error", "message": "The system prompt was blocked by the content safety policy."}, websocket)
                         break
                 await ws_manager.broadcast({

@@ -449,7 +449,7 @@ def _process_pdf(content):
     """Process PDF content synchronously."""
     text = []
     try:
-        from PyPDF2 import PdfReader
+        from pypdf import PdfReader
         with BytesIO(content) as pdf_file:
             reader = PdfReader(pdf_file)
             for page in reader.pages:

@@ -2015,7 +2015,6 @@ formatMessage(content, index) {
       }
       else {
         this.system_prompt = this.agents[agent].system_prompt;
-        console.log(this.system_prompt);
       }
       this.syncSystemPromptToMessages(this.system_prompt);
     },
@@ -2594,7 +2593,6 @@ formatMessage(content, index) {
       if (this.messages[0]?.role === 'system') {
         // Update system content
         this.messages[0].content = newPrompt;
-        console.log('Updated system message:', this.messages[0]);
         return;
       }
   
@@ -2604,7 +2602,6 @@ formatMessage(content, index) {
         role: 'system',
         content: newPrompt
       });
-      console.log('Added system message:', this.messages[0]);
       await this.autoSaveSettings();
     },
 
@@ -5552,7 +5549,6 @@ formatMessage(content, index) {
     // Main model provider selection
     async selectMainProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
-      console.log(provider)
       if (provider) {
         console.log("provider")
         this.settings.model = provider.modelId;
@@ -5564,7 +5560,6 @@ formatMessage(content, index) {
 
     async selectFastProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
-      console.log(provider)
       if (provider) {
         console.log("provider")
         this.fastSettings.model = provider.modelId;
@@ -15306,13 +15301,9 @@ clearSegments() {
   }, 
 
     async openExtension(extension) {
-      const url = await this.getExtensionURL(extension);   // Resolve URL asynchronously
-      console.log('Open extension', String(this.partyURL) + url);
-      if (isElectron) {
-        window.electronAPI.openExternal(`${this.partyURL}${url}`);
-      } else {
-        window.open(url, '_blank');
-      }
+      if (isElectron) return this.openExtensionInWindow(extension);
+      const url = await this.getExtensionURL(extension);
+      window.open(url, '_blank');
     },
     // Delete extension
     async removeExtension(ext) {

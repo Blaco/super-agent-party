@@ -1,6 +1,4 @@
-const { contextBridge, shell, ipcRenderer, webFrame } = require('electron');
-const path = require('path');
-const { remote } = require('@electron/remote/main')
+const { contextBridge, ipcRenderer, webFrame } = require('electron');
 
 
 // Cache the most recent VMC configuration (disabled by default)
@@ -47,10 +45,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onNewTab: (callback) => ipcRenderer.on('create-tab', (_, url) => callback(url)),
   saveScreenshotDirect: (buffer) => ipcRenderer.invoke('save-screenshot-direct', { buffer }),
   // System functions
-  openExternal: (url) => shell.openExternal(url),
-  openPath: (filePath) => shell.openPath(filePath),
+  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
+  openPath: (filePath) => ipcRenderer.invoke('shell:open-path', filePath),
   getAppPath: () => ipcRenderer.invoke('get-app-path'),
-  getPath: () => remote.app.getPath('downloads'),
   // Window controls
   windowAction: (action) => ipcRenderer.invoke('window-action', action),
   onWindowState: (callback) => ipcRenderer.on('window-state', callback),
@@ -60,7 +57,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openImageDialog: () => ipcRenderer.invoke('open-image-dialog'),
   readFile: (filePath) => ipcRenderer.invoke('readFile', filePath),
   // Path handling
-  pathJoin: (...args) => path.join(...args),
+  pathJoin: (...args) => ipcRenderer.invoke('shell:join-path', args),
   sendLanguage: (lang) => ipcRenderer.send('set-language', lang),
   // Global zoom (font/interface scaling)
   setZoomFactor: (factor) => {

@@ -1,4 +1,3 @@
-const remoteMain = require('@electron/remote/main')
 const { app, BrowserWindow, ipcMain, screen, shell, dialog, Tray, Menu, session,globalShortcut} = require('electron')
 const { clipboard, nativeImage,desktopCapturer  } = require('electron')
 const { autoUpdater } = require('electron-updater')
@@ -231,6 +230,7 @@ let backendProcess = null
 const HOST = '127.0.0.1'
 let PORT = 3456 // Mutable active port
 const desktopSessionToken = randomBytes(32).toString('hex');
+const extensionWindows = new Map();
 
 function authorizeDesktopRequests(electronSession) {
   electronSession.webRequest.onBeforeSendHeaders(
@@ -252,6 +252,17 @@ function authorizeDesktopRequests(electronSession) {
         const sameFrame = frameUrl === origin || frameUrl.startsWith(origin + '/');
         if ((firstNavigation || sameFrame) &&
             (!details.initiatorOrigin || details.initiatorOrigin === origin || firstNavigation)) {
+          headers['X-SAP-Session'] = desktopSessionToken;
+        }
+      }
+      const extensionPath = extensionWindows.get(details.webContentsId);
+      if (extensionPath && url.origin === origin &&
+          (url.pathname.startsWith(extensionPath.assets) || url.pathname.startsWith(extensionPath.node))) {
+        const source = details.frame?.url;
+        if (details.resourceType === 'mainFrame' ||
+            (source && new URL(source).origin === origin &&
+             (new URL(source).pathname.startsWith(extensionPath.assets) ||
+              new URL(source).pathname.startsWith(extensionPath.node)))) {
           headers['X-SAP-Session'] = desktopSessionToken;
         }
       }
@@ -688,23 +699,26 @@ async function showAccountSelectionWindow(registry) {
       show: false,
       icon: path.join(__dirname, 'static/source/icon.png'),
       webPreferences: {
-        nodeIntegration: true,
-        sandbox: false,
-        contextIsolation: false,
+        nodeIntegration: false,
+        sandbox: true,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'static/js/account-preload.js'),
       }
     });
 
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, char =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
     const accountsHtml = registry.accounts.map(acc => {
       const typeLabel = acc.type === 'root' ? 'Root' : 'User';
       const lastLaunch = acc.lastLaunched
         ? new Date(acc.lastLaunched).toLocaleString()
         : 'Never launched';
       const isDefault = acc.id === registry.defaultAccountId ? 'default' : '';
-      return `<div class="account-item ${isDefault}" data-id="${acc.id}">
+      return `<div class="account-item ${isDefault}" data-id="${escapeHtml(acc.id)}">
         <div class="acc-icon">${acc.type === 'root' ? '👑' : '👤'}</div>
         <div class="acc-info">
-          <div class="acc-name">${acc.name} <span class="acc-type-badge ${acc.type}">${typeLabel}</span></div>
-          <div class="acc-path">${acc.dataPath}</div>
+          <div class="acc-name">${escapeHtml(acc.name)} <span class="acc-type-badge ${acc.type}">${typeLabel}</span></div>
+          <div class="acc-path">${escapeHtml(acc.dataPath)}</div>
           <div class="acc-last">Last launched: ${lastLaunch}</div>
         </div>
       </div>`;
@@ -797,12 +811,11 @@ async function showAccountSelectionWindow(registry) {
     <label><input type="checkbox" id="rememberChoice"> Remember my selection (set as default account)</label>
   </div>
   <script>
-    const { ipcRenderer } = require('electron');
     document.querySelectorAll('.account-item').forEach(item => {
       item.addEventListener('click', () => {
         const accountId = item.dataset.id;
         const remember = document.getElementById('rememberChoice').checked;
-        ipcRenderer.send('account-selected', { accountId, remember });
+        window.accountPicker.select(accountId, remember);
       });
     });
   </script>
@@ -811,7 +824,7 @@ async function showAccountSelectionWindow(registry) {
 
     win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
 
-    ipcMain.once('account-selected', (event, { accountId, remember }) => {
+    win.webContents.ipc.once('account-selected', (event, { accountId, remember }) => {
       const account = registry.accounts.find(a => a.id === accountId);
       if (remember && account) {
         const data = loadAccounts();
@@ -847,17 +860,15 @@ function createSkeletonWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'static/js/preload.js'),
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true,
       enableRemoteModule: false,
-      webSecurity: false,
       devTools: isDev,
       partition: 'persist:main-session',
       webviewTag: true,
     }
   })
 
-  remoteMain.enable(mainWindow.webContents)
   
   // Load splash page
   mainWindow.loadFile(path.join(__dirname, 'static/skeleton.html'))
@@ -1465,6 +1476,27 @@ app.whenReady().then(async () => {
         }
     }
 
+    function requireAppFrame(event) {
+      const origin = `http://127.0.0.1:${PORT}`;
+      if (event.senderFrame !== event.sender.mainFrame || event.senderFrame.origin !== origin) {
+        throw new Error('SAP desktop IPC requires the app frame');
+      }
+    }
+    ipcMain.handle('shell:open-external', (event, value) => {
+      requireAppFrame(event);
+      const url = new URL(value);
+      if (!['https:', 'http:'].includes(url.protocol)) throw new Error('Unsupported link protocol');
+      return shell.openExternal(url.href);
+    });
+    ipcMain.handle('shell:open-path', (event, value) => {
+      requireAppFrame(event);
+      return shell.openPath(value);
+    });
+    ipcMain.handle('shell:join-path', (event, segments) => {
+      requireAppFrame(event);
+      return path.join(...segments);
+    });
+
     ipcMain.handle('get-app-path', () => {
       return app.getAppPath();
     });
@@ -1841,7 +1873,17 @@ app.whenReady().then(async () => {
 
     // Handlers inside app.whenReady().then(async () => { ... })
 
-    ipcMain.handle('open-extension-window', async (_, { url, extension }) => {
+    ipcMain.handle('open-extension-window', async (event, { url, extension }) => {
+      requireAppFrame(event);
+      const target = new URL(url);
+      const origin = `http://127.0.0.1:${PORT}`;
+      const id = encodeURIComponent(extension.id);
+      const assets = `/ext/${id}/`;
+      const node = `/api/extensions/${id}/node/`;
+      if (target.origin !== origin ||
+          !(target.pathname.startsWith(assets) || target.pathname.startsWith(node))) {
+        throw new Error('Invalid extension entry point');
+      }
       const { width, height } = screen.getPrimaryDisplay().workAreaSize;
       
       // Determine window properties from extension configuration
@@ -1851,11 +1893,9 @@ app.whenReady().then(async () => {
         webPreferences: {
           contextIsolation: true,
           nodeIntegration: false,
-          sandbox: false,
-          webSecurity: false,
-          webviewTag: true,
+          sandbox: true,
           devTools: isDev,
-          preload: path.join(__dirname, 'static/js/preload.js')
+          partition: `sap-extension-${randomBytes(16).toString('hex')}`,
         }
       };
 
@@ -1881,11 +1921,25 @@ app.whenReady().then(async () => {
 
       const extensionWindow = new BrowserWindow(windowConfig);
       
-      // Enable remote module
-      remoteMain.enable(extensionWindow.webContents);
-      
-      // Load URL
-      await extensionWindow.loadURL(url);
+      const contents = extensionWindow.webContents;
+      const contentsId = contents.id;
+      authorizeDesktopRequests(contents.session);
+      extensionWindows.set(contentsId, { assets, node });
+      contents.once('destroyed', () => extensionWindows.delete(contentsId));
+      const keepExtensionNavigationScoped = navigation => {
+        const destination = new URL(navigation.url);
+        if (destination.origin !== origin || !(destination.pathname.startsWith(assets) || destination.pathname.startsWith(node))) {
+          navigation.preventDefault();
+        }
+      };
+      contents.on('will-navigate', keepExtensionNavigationScoped);
+      contents.on('will-redirect', keepExtensionNavigationScoped);
+      try {
+        await extensionWindow.loadURL(target.href);
+      } catch (error) {
+        extensionWindow.destroy();
+        throw error;
+      }
       
       // Configure special behavior for transparent window
       if (extension.transparent) {
@@ -1923,14 +1977,12 @@ app.whenReady().then(async () => {
         webPreferences: {
           contextIsolation: true,
           nodeIntegration: false,
-          sandbox: false,
-          webSecurity: false,
+          sandbox: true,
           devTools: isDev,
           preload: path.join(__dirname, 'static/js/preload.js')
         }
       });
 
-      remoteMain.enable(minimalWindow.webContents);
       await minimalWindow.loadURL(`http://${HOST}:${PORT}/minimal.html`);
 
       minimalWindow.on('closed', () => {
@@ -1989,14 +2041,12 @@ app.whenReady().then(async () => {
         webPreferences: {
           contextIsolation: true,
           nodeIntegration: false,
-          sandbox: false,
-          webSecurity: false,
+          sandbox: true,
           devTools: isDev,
           preload: path.join(__dirname, 'static/js/preload.js')
         }
       });
 
-      remoteMain.enable(dynamicIslandWindow.webContents);
 
       dynamicIslandWindow.webContents.on('render-process-gone', (event, details) => {
         console.error('[Island] Render process gone:', details.reason, details.exitCode);
@@ -2099,9 +2149,8 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
         backgroundColor: 'rgba(0, 0, 0, 0)',
         webPreferences: {
           contextIsolation: true,
-          nodeIntegration: true,
-          enableRemoteModule: true,
-          sandbox: false,
+          nodeIntegration: false,
+          sandbox: true,
           webgl: true,
           devTools: isDev,
           webAudio: true,
@@ -2234,9 +2283,8 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
         backgroundColor: 'rgba(0, 0, 0, 0)',
         webPreferences: {
           contextIsolation: true,
-          nodeIntegration: true,
-          enableRemoteModule: true,
-          sandbox: false,
+          nodeIntegration: false,
+          sandbox: true,
           devTools: isDev,
           webAudio: true,
           autoplayPolicy: 'no-user-gesture-required',
@@ -2311,9 +2359,8 @@ ipcMain.handle('upload-to-workspace', async (event, { targetDirPath, sourceFileP
         backgroundColor: 'rgba(0, 0, 0, 0)',
         webPreferences: {
           contextIsolation: true,
-          nodeIntegration: true,
-          enableRemoteModule: true,
-          sandbox: false,
+          nodeIntegration: false,
+          sandbox: true,
           webgl: true,
           devTools: isDev,
           webAudio: true,
@@ -3161,10 +3208,36 @@ function updatecontextMenu() {
 // });
 
 app.on('web-contents-created', (event, contents) => {
+  contents.on('will-attach-webview', (event, preferences, params) => {
+    let target;
+    try { target = new URL(params.src); } catch { event.preventDefault(); return; }
+    if (contents !== mainWindow?.webContents || params.partition !== 'persist:party-browser-session' ||
+        !['https:', 'http:', 'about:'].includes(target.protocol) ||
+        (target.protocol === 'about:' && target.href !== 'about:blank')) {
+      event.preventDefault();
+      return;
+    }
+    delete preferences.preload;
+    preferences.preload = path.join(__dirname, 'static/js/webview-preload.js');
+    Object.assign(preferences, { nodeIntegration: false, nodeIntegrationInSubFrames: false,
+      contextIsolation: true, sandbox: true, webSecurity: true, allowRunningInsecureContent: false });
+  });
+
+  const keepAppNavigationScoped = event => {
+    if (contents === mainWindow?.webContents || contents === minimalWindow?.webContents ||
+        contents === dynamicIslandWindow?.webContents ||
+        [...vrmWindows, ...thaWindows, ...soulxWindows].some(window => !window.isDestroyed() && window.webContents === contents)) {
+      if (new URL(event.url).origin !== `http://127.0.0.1:${PORT}`) event.preventDefault();
+    }
+  };
+  contents.on('will-navigate', keepAppNavigationScoped);
+  contents.on('will-redirect', keepAppNavigationScoped);
+
   // Intercept new-window requests, including webview window.open and target="_blank"
   contents.setWindowOpenHandler((details) => {
     const { url } = details;
-    
+    if (!['http:', 'https:'].includes(new URL(url).protocol)) return { action: 'deny' };
+
     // If main window exists, ask its Vue frontend to create a tab
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('create-tab', url);
