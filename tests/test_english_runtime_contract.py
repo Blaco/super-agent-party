@@ -33,6 +33,39 @@ class EnglishRuntimeContractTests(unittest.TestCase):
                 ast.parse(source, filename=relative)
                 self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
 
+    def test_file_loader_english_and_schema_contract(self):
+        relative = "py/load_files.py"
+        source = (ROOT / relative).read_text(encoding="utf-8")
+        tree = ast.parse(source, filename=relative)
+        self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
+        assignments = {
+            node.targets[0].id: node.value
+            for node in tree.body
+            if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)
+        }
+        context = {
+            name: ast.literal_eval(assignments[name])
+            for name in ("BASE_OFFICE_EXTS", "PLATFORM_SPECIFIC_EXTS",
+                         "ALLOWED_EXTENSIONS", "ALLOWED_IMAGE_EXTENSIONS")
+        }
+        from types import SimpleNamespace
+        for platform in ("win32", "darwin", "linux"):
+            with self.subTest(platform=platform):
+                scope = dict(context, sys=SimpleNamespace(platform=platform))
+                for name in ("FILE_FILTERS", "office_extensions"):
+                    scope[name] = eval(compile(ast.Expression(assignments[name]), relative, "eval"), scope)
+                expected = set(context["BASE_OFFICE_EXTS"] +
+                               context["PLATFORM_SPECIFIC_EXTS"].get(platform, []))
+                self.assertEqual(scope["office_extensions"], expected)
+        for var, function, parameter in (
+            ("file_tool", "get_file_content", "file_url"),
+            ("image_tool", "get_image_content", "image_url"),
+        ):
+            schema = eval(compile(ast.Expression(assignments[var]), relative, "eval"), context)
+            self.assertEqual(schema["function"]["name"], function)
+            self.assertEqual(schema["function"]["parameters"]["required"], [parameter])
+            self.assertTrue(schema["function"]["description"])
+
     def test_sleep_and_vts_integration_contracts(self):
         sleep_source = (ROOT / "py/sleep_guard.py").read_text(encoding="utf-8")
         vts_source = (ROOT / "py/vts_manager.py").read_text(encoding="utf-8")

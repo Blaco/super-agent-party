@@ -46,3 +46,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 
 - Source audit for `632a5f43fb530addb6dc53202dba172ab1079b8c` passed: https://github.com/Blaco/super-agent-party/actions/runs/45915297343. That checkpoint includes the regional Docker cleanup, English native MOSS default, alternate browser chat cleanup and corrected HTTP JSON samples.
 - This pass translates settings/data-path diagnostics, sleep prevention and VTube Studio integration comments and logs. These three modules have no remaining Han characters in a precommit text scan. Automated source checks for this pass are pending; Windows runtime and the full repository language inventory remain outstanding. No new package was requested or produced.
+
+## Follow-up source checkpoint — file and image tools
+
+- The document and image ingestion schemas, parser errors, file headers, category labels and comments in py/load_files.py are now English. File extensions, parser logic, user content, and existing tool contracts remain intact. Full language inventory and runtime file-format tests remain outstanding. No new package was requested.

@@ -9,11 +9,11 @@ import asyncio
 from urllib.parse import urlparse
 from py.get_setting  import get_host,get_port,BLOCKLIST
 import zipfile
-# 平台检测
+# Platform detection
 IS_WINDOWS = sys.platform == 'win32'
 IS_MAC = sys.platform == 'darwin'
 
-# 动态文件类型配置
+# Dynamic file-type configuration
 BASE_OFFICE_EXTS = ['doc', 'docx', 'pptx', 'xls', 'xlsx', 'pdf', 'rtf', 'odt', 'epub']
 PLATFORM_SPECIFIC_EXTS = {
     'win32': ['ppt'],
@@ -22,11 +22,11 @@ PLATFORM_SPECIFIC_EXTS = {
 
 FILE_FILTERS = [
     { 
-        'name': '办公文档', 
+        'name': 'Office documents', 
         'extensions': BASE_OFFICE_EXTS + PLATFORM_SPECIFIC_EXTS.get(sys.platform, [])
     },
     { 
-        'name': '编程开发', 
+        'name': 'Programming and development', 
         'extensions': [
             'js', 'ts', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'go', 'rs',
             'swift', 'kt', 'dart', 'rb', 'php', 'html', 'css', 'scss',
@@ -35,12 +35,12 @@ FILE_FILTERS = [
         ]
     },
     {
-        'name': '数据配置',
+        'name': 'Data and configuration',
         'extensions': ['csv', 'tsv', 'txt', 'md', 'log', 'conf', 'ini', 'env', 'toml']
     }
 ]
 
-office_extensions = {ext for group in FILE_FILTERS if group['name'] == '办公文档' for ext in group['extensions']}
+office_extensions = {ext for group in FILE_FILTERS if group['name'] == 'Office documents' for ext in group['extensions']}
 
 import socket
 import ipaddress
@@ -48,34 +48,34 @@ from urllib.robotparser import RobotFileParser
 from urllib.parse import urljoin
 
 USER_AGENT = "Mozilla/5.0 (compatible; MyOpenSourceBot/1.0)"
-ROBOTS_CACHE = {} # 缓存 robots.txt 避免重复请求
+ROBOTS_CACHE = {} # Cache robots.txt to avoid repeated requests
 
 def is_private_ip(hostname):
-    """检测是否为私有/内网IP，放行代理软件的 Fake-IP"""
+    """Check for private or internal IP addresses, allowing proxy Fake-IP addresses."""
     if not hostname:
         return False
     
     try:
-        # 解析域名获取 IP
+        # Resolve the hostname to IP addresses
         addr_info = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
         
-        # 代理软件 Fake-IP 的标准网段 (198.18.0.0/15)
+        # Standard Fake-IP range used by proxy software (198.18.0.0/15)
         fake_ip_net = ipaddress.ip_network('198.18.0.0/15')
 
         for item in addr_info:
             ip_str = item[4][0]
             ip_obj = ipaddress.ip_address(ip_str)
             
-            # 1. 核心逻辑：如果 IP 在代理软件的 Fake-IP 段内，直接判定为【安全】并放行
+            # 1. Allow addresses in the proxy Fake-IP range
             if ip_obj in fake_ip_net:
                 return False 
             
-            # 2. 正常的内网/本地回环地址检查 (10.x, 172.16.x, 192.168.x, 127.x)
+            # 2. Check ordinary private and loopback addresses (10.x, 172.16.x, 192.168.x, 127.x)
             if ip_obj.is_private or ip_obj.is_loopback:
                 return True
                 
     except Exception as e:
-        # 解析失败（如 DNS 不通）不判定为内网，让后续 aiohttp 请求自然失败
+        # If resolution fails (such as DNS failure), leave the failure to the subsequent aiohttp request
         return False
         
     return False
@@ -84,10 +84,10 @@ def get_domain(url: str) -> str:
     return urlparse(url).netloc.lower()
 
 async def check_robots_txt(url):
-    """异步检查 robots.txt 合规性"""
+    """Check robots.txt compliance asynchronously."""
     domain = get_domain(url)
 
-    # 先看黑名单
+    # Check the blocklist first
     if domain in BLOCKLIST:
         return False
 
@@ -108,42 +108,42 @@ async def check_robots_txt(url):
                 else:
                     rp.allow_all = True
     except:
-        rp.allow_all = True # 无法获取robots.txt时，默认允许
+        rp.allow_all = True # Allow access by default if robots.txt cannot be retrieved
         
     ROBOTS_CACHE[base_url] = rp
     return rp.can_fetch(USER_AGENT, url)
 
 def sanitize_url(input_url: str, default_base: str = "", endpoint: str = "",force_netloc: str = "") -> str:
     """
-    通用 URL 安全过滤与重构函数
-    1. 显式解析并验证协议
-    2. 重新构造 URL 以消除 SSRF 污点警告
-    3. 允许内网 IP 访问以兼容 Ollama/本地服务
+    General URL validation and reconstruction function
+    1. Parse the URL and validate its scheme explicitly
+    2. Reconstruct the URL to address SSRF taint warnings
+    3. Allow internal IP addresses for compatibility with Ollama and local services
     """
-    # 处理空值
+    # Handle empty values
     raw_url = str(input_url or default_base).rstrip("/")
     
-    # 1. 解析 URL
+    # 1. Parse the URL
     parsed = urlparse(raw_url)
     
-    # 2. 验证协议 (强制 http/https)
+    # 2. Validate the scheme (intended to require HTTP or HTTPS)
     if not parsed.scheme or not parsed.scheme.startswith("http"):
-        raise HTTPException(status_code=400, detail="仅支持 http 或 https 协议")
+        raise HTTPException(status_code=400, detail="Only HTTP or HTTPS URLs are supported")
     
     if not parsed.netloc:
-        raise HTTPException(status_code=400, detail="无效的 URL 域名或 IP")
+        raise HTTPException(status_code=400, detail="Invalid URL hostname or IP address")
     if force_netloc:
         parsed = parsed._replace(netloc=force_netloc)
 
-    # 3. 重新构造 URL (这是消除安全报错的关键动作)
-    # 我们只拿解析出来的部分进行手动拼接，不直接使用用户传入的原始长字符串
+    # 3. Reconstruct the URL from parsed components
+    # Assemble only the parsed components instead of using the original input string directly
     safe_base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
     
-    # 确保 endpoint 格式正确
+    # Ensure the endpoint has the correct format
     clean_endpoint = endpoint if endpoint.startswith("/") else f"/{endpoint}"
     final_url = f"{safe_base_url.rstrip('/')}{clean_endpoint}"
 
-    # 可选：如果是内网 IP，打印审计日志（无需拦截）
+    # Log access to internal IP addresses without blocking it
     if is_private_ip(parsed.hostname):
         logger.info(f"Open-source Logic: Accessing internal service -> {final_url}")
 
@@ -151,16 +151,16 @@ def sanitize_url(input_url: str, default_base: str = "", endpoint: str = "",forc
 
 
 async def handle_url(url):
-    """重构后的 URL 处理：严格区分内网上传与外网爬取"""
+    """Handle internal uploads and external web requests separately."""
     parsed_url = urlparse(url)
     ext = os.path.splitext(parsed_url.path)[1].lstrip('.').lower()
 
-    # --- 1. 内部上传文件处理逻辑 ---
+    # --- 1. Internal uploaded-file handling ---
     if 'uploaded_files' in parsed_url.path or 'tool_temp' in parsed_url.path:
         HOST = '127.0.0.1'
         PORT = get_port()
         
-        # 使用 sanitize_url 强行重写域名部分
+        # Use sanitize_url to replace the host and port
         target_url = sanitize_url(url,force_netloc=f"{HOST}:{PORT}")
         
         async with aiohttp.ClientSession() as session:
@@ -169,57 +169,57 @@ async def handle_url(url):
                     response.raise_for_status()
                     return await response.read(), ext
             except Exception as e:
-                raise RuntimeError(f"内部文件读取失败: {e}")
+                raise RuntimeError(f"Failed to read internal file: {e}")
 
-    # --- 2. 外部公网 URL 爬取逻辑 ---
+    # --- 2. External public URL retrieval ---
     else:
-        # A. SSRF 安全检查 (逻辑保持不变)
+        # A. SSRF check (existing logic)
         if is_private_ip(parsed_url.hostname):
-            raise PermissionError(f"安全拒绝: 不允许访问内部网络地址 ({parsed_url.hostname})")
+            raise PermissionError(f"Access denied: internal network addresses are not allowed ({parsed_url.hostname})")
 
-        # B. Robots.txt 检查
+        # B. robots.txt check
         if not await check_robots_txt(url):
-            raise PermissionError(f"合规拒绝: robots.txt 禁止访问")
+            raise PermissionError(f"Access denied: robots.txt prohibits retrieval")
 
-        # C. 【核心改动】使用 sanitize_url 清洗并生成全新的 safe_url
-        # 这会切断扫描器对原始 url 变量的追踪
+        # C. Reconstruct a new safe_url using sanitize_url
+        # This separates the reconstructed value from the original input for static analysis
         safe_url = sanitize_url(url)
 
-        # D. 执行外部请求
+        # D. Perform the external request
         async with aiohttp.ClientSession() as session:
             headers = {'User-Agent': USER_AGENT}
             try:
-                # 传入 safe_url，安全工具会认为该变量是“已清洗”的
+                # Pass the reconstructed URL to the request
                 async with session.get(safe_url, headers=headers, timeout=30) as response:
                     response.raise_for_status()
                     content = await response.read()
                     return content, ext
             except Exception as e:
-                raise RuntimeError(f"外部 URL 下载失败: {e}")
+                raise RuntimeError(f"Failed to download external URL: {e}")
                                
 async def handle_local_file(file_path):
-    """异步处理本地文件"""
+    """Handle local files asynchronously."""
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"文件不存在: {file_path}")
+        raise FileNotFoundError(f"File not found: {file_path}")
     loop = asyncio.get_event_loop()
     content = await loop.run_in_executor(None, _read_file, file_path)
     ext = os.path.splitext(file_path)[1].lstrip('.').lower()
     return content, ext
 
 def _read_file(file_path):
-    """同步读取文件内容"""
+    """Read file contents synchronously."""
     with open(file_path, 'rb') as f:
         return f.read()
 
 async def get_content(input_str):
-    """获取文件内容和扩展名"""
+    """Retrieve file contents and extension."""
     if input_str.startswith(('http://', 'https://')):
         return await handle_url(input_str)
     else:
         return await handle_local_file(input_str)
 
 def decode_text(content_bytes):
-    """通用文本解码（增加BOM处理）"""
+    """Decode text, including byte-order marks."""
     encodings = ['utf-8-sig', 'utf-16', 'gbk', 'iso-8859-1', 'latin-1']
     for enc in encodings:
         try:
@@ -229,7 +229,7 @@ def decode_text(content_bytes):
     return content_bytes.decode('utf-8', errors='replace')
 
 async def handle_office_document(content, ext):
-    """异步处理办公文档（带平台检测）"""
+    """Process office documents asynchronously with platform detection."""
     handler = {
         'pdf': handle_pdf,
         'docx': handle_docx,
@@ -238,10 +238,10 @@ async def handle_office_document(content, ext):
         'rtf': handle_rtf,
         'odt': handle_odt,
         'pptx': handle_pptx,
-        'epub': handle_epub,  # 添加epub处理
+        'epub': handle_epub,  # EPUB support
     }
     
-    # Windows平台扩展
+    # Windows-specific formats
     if IS_WINDOWS:
         handler['ppt'] = handle_ppt
         handler['doc'] = handle_doc
@@ -251,78 +251,78 @@ async def handle_office_document(content, ext):
     if handler_func:
         return await handler_func(content)
     
-    # Mac平台iWork格式处理
+    # macOS iWork formats
     if IS_MAC and ext in ['pages', 'numbers', 'key']:
-        raise NotImplementedError(f"iWork格式暂不支持自动解析，请手动导出为通用格式")
+        raise NotImplementedError(f"Automatic parsing of iWork files is not supported. Export to a common format first.")
     
-    raise NotImplementedError(f"暂不支持处理 {ext.upper()} 格式文件")
+    raise NotImplementedError(f"Processing {ext.upper()} files is not supported")
 
-# 添加EPUB处理函数
+# EPUB handling
 async def handle_epub(content):
-    """异步处理EPUB文件"""
+    """Process EPUB files asynchronously."""
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_epub, content)
 
-import posixpath  # 新增导入
+import posixpath  # Path handling for EPUB archives
 
 def _process_epub(content):
-    """同步处理EPUB内容，返回JSON格式的章节结构"""
+    """Process EPUB content synchronously and return a JSON chapter structure."""
     try:
         import xml.etree.ElementTree as ET
         chapters = []
-        processed_files = set()  # 用于记录已处理的文件路径
+        processed_files = set()  # Track files already processed
 
         with BytesIO(content) as epub_file:
             with zipfile.ZipFile(epub_file, 'r') as epub_zip:
-                # 解析容器文件获取OPF路径
+                # Parse the container file to obtain the OPF path
                 container_data = epub_zip.read('META-INF/container.xml')
                 container_root = ET.fromstring(container_data)
                 opf_path_element = container_root.find('.//{*}rootfile')
                 if opf_path_element is None:
-                    raise ValueError("OPF文件路径未找到")
+                    raise ValueError("OPF file path not found")
                 opf_path = opf_path_element.get('full-path')
 
-                # 解析OPF文件
+                # Parse the OPF file
                 opf_data = epub_zip.read(opf_path)
                 opf_root = ET.fromstring(opf_data)
                 opf_namespace = {'opf': 'http://www.idpf.org/2007/opf'}
                 
-                # 获取spine顺序（章节阅读顺序）
+                # Get the spine order (chapter reading order)
                 spine = opf_root.find('.//opf:spine', opf_namespace)
                 if spine is None:
-                    raise ValueError("spine元素未找到")
+                    raise ValueError("Spine element not found")
                 itemrefs = [item.get('idref') for item in spine.findall('opf:itemref', opf_namespace)]
                 
-                # 构建manifest映射 (id -> file路径)
+                # Build the manifest mapping (ID to file path)
                 manifest = {}
                 for item in opf_root.findall('.//opf:item', opf_namespace):
                     item_id = item.get('id')
                     href = item.get('href')
                     if item_id and href:
-                        # 使用posixpath处理路径
+                        # Normalize paths with posixpath
                         manifest[item_id] = posixpath.normpath(href)
                 
-                # OPF文件所在目录
+                # Directory containing the OPF file
                 opf_dir = posixpath.dirname(opf_path)
                 
-                # 按spine顺序处理每个章节
+                # Process chapters in spine order
                 for item_id in itemrefs:
                     if item_id not in manifest:
                         continue
                     
-                    # 使用posixpath拼接路径
+                    # Join paths with posixpath
                     rel_path = manifest[item_id]
                     abs_path = posixpath.join(opf_dir, rel_path) if opf_dir else rel_path
                     abs_path = posixpath.normpath(abs_path)
 
-                    # 查找实际存在的文件名（解决大小写敏感问题）
+                    # Find the actual filename to handle case differences
                     actual_path = None
                     for name in epub_zip.namelist():
                         if name.replace('\\', '/').lower() == abs_path.lower().replace('\\', '/'):
                             actual_path = name
                             break
                     
-                    # 如果文件已处理过，跳过
+                    # Skip files already processed
                     if actual_path in processed_files:
                         continue
                     
@@ -333,81 +333,81 @@ def _process_epub(content):
                             chapter_content = f"{chapter_title}\n\n{chapter_text}" if chapter_title else chapter_text
                             if chapter_content.strip():
                                 chapters.append(chapter_content)
-                            processed_files.add(actual_path)  # 标记为已处理
+                            processed_files.add(actual_path)  # Mark as processed
         
         return json.dumps({"chapters": chapters}, ensure_ascii=False)
     
     except Exception as e:
-        raise RuntimeError(f"EPUB解析失败: {str(e)}")
+        raise RuntimeError(f"EPUB parsing failed: {str(e)}")
 
 
 
 def _parse_epub_chapter(html_data):
-    """解析单个章节内容，返回(标题, 正文)"""
+    """Parse a chapter and return its title and body text."""
     try:
         import xml.etree.ElementTree as ET
         root = ET.fromstring(html_data)
         ns = {'xhtml': 'http://www.w3.org/1999/xhtml'}
         
-        # 1. 提取标题
+        # 1. Extract the title
         title = ""
         for level in range(1, 7):
             title_elem = root.find(f'.//xhtml:h{level}', ns)
             if title_elem is not None and title_elem.text:
                 title = title_elem.text.strip()
-                found_level = level  # 记录实际找到的标题级别
+                found_level = level  # Record the heading level found
                 break
         else:
-            found_level = 0  # 未找到标题
+            found_level = 0  # No heading found
         
-        # 2. 提取正文（精确控制提取范围）
+        # 2. Extract the body text with precise scope
         body_text = []
         
-        # 方案一：直接提取整个 body 内容（推荐）
+        # Approach 1: Extract the entire body (preferred)
         body_elem = root.find('.//xhtml:body', ns)
         if body_elem is not None:
-            # 提取所有文本（自动合并子元素）
+            # Extract all text, including child elements
             full_text = ''.join(body_elem.itertext()).strip()
             if full_text:
                 body_text.append(full_text)
         
-        # 3. 过滤标题内容（如果标题在 body 中）
+        # 3. Filter the title if it appears in the body
         final_text = []
         for text in body_text:
-            # 移除标题行（如果有）
+            # Remove the title line if present
             cleaned = text.replace(title, '', 1).strip()
             final_text.append(cleaned if cleaned else text)
         
         return title, '\n'.join(final_text).strip()
 
     except ET.ParseError:
-        # 备选方案：正则表达式处理
+        # Fallback: regular expression processing
         html_str = html_data.decode('utf-8', errors='replace')
         title_match = re.search(r'<h[1-6][^>]*>(.*?)</h[1-6]>', html_str, re.IGNORECASE)
         title = title_match.group(1).strip() if title_match else ""
         
-        # 提取 body 内容
+        # Extract the body content
         body_match = re.search(r'<body[^>]*>(.*?)</body>', html_str, re.DOTALL | re.IGNORECASE)
         body_content = body_match.group(1) if body_match else html_str
         
-        # 去除所有标签
+        # Remove all tags
         text = re.sub(r'<[^>]+>', '', body_content).strip()
         return title, text
 
 
 def _extract_text_from_xml_element(element):
-    """递归提取XML元素中的文本"""
+    """Recursively extract text from an XML element."""
     text_parts = []
     
-    # 添加元素的文本内容
+    # Add the element text
     if element.text and element.text.strip():
         text_parts.append(element.text.strip())
     
-    # 递归处理子元素
+    # Recursively process child elements
     for child in element:
         text_parts.append(_extract_text_from_xml_element(child))
     
-    # 添加元素的尾部文本
+    # Add the element's trailing text
     if element.tail and element.tail.strip():
         text_parts.append(element.tail.strip())
     
@@ -415,12 +415,12 @@ def _extract_text_from_xml_element(element):
 
 
 async def handle_odt(content):
-    """异步处理ODT文件"""
+    """Process ODT files asynchronously."""
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_odt, content)
 
 def _process_odt(content):
-    """同步处理ODT内容"""
+    """Process ODT content synchronously."""
     from odf.teletype import extractText
     
     try:
@@ -438,34 +438,34 @@ def _process_odt(content):
                 text_content.append("\t".join(row_data))
         return '\n'.join(text_content)
     except Exception as e:
-        raise RuntimeError(f"ODT文件解析失败: {str(e)}")
+        raise RuntimeError(f"ODT parsing failed: {str(e)}")
 
 async def handle_pdf(content):
-    """异步处理PDF文件（增加容错处理）"""
+    """Process PDF files asynchronously with error handling."""
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_pdf, content)
 
 def _process_pdf(content):
-    """同步处理PDF内容"""
+    """Process PDF content synchronously."""
     text = []
     try:
         from PyPDF2 import PdfReader
         with BytesIO(content) as pdf_file:
             reader = PdfReader(pdf_file)
             for page in reader.pages:
-                page_text = page.extract_text() or ""  # 处理无文本页面
+                page_text = page.extract_text() or ""  # Handle pages without text
                 text.append(page_text)
     except Exception as e:
-        raise RuntimeError(f"PDF解析失败: {str(e)}")
+        raise RuntimeError(f"PDF parsing failed: {str(e)}")
     return '\n'.join(text)
 
 async def handle_docx(content):
-    """异步处理DOCX文件"""
+    """Process DOCX files asynchronously."""
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_docx, content)
 
 def _process_docx(content):
-    """同步处理DOCX内容（增加表格处理）"""
+    """Process DOCX content synchronously, including tables."""
     from docx import Document
     doc = Document(BytesIO(content))
     text = []
@@ -477,52 +477,52 @@ def _process_docx(content):
     return '\n'.join(text)
 
 async def handle_excel(content):
-    """异步处理Excel文件（优化大文件处理）"""
+    """Process Excel files asynchronously, optimized for large files."""
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_excel, content)
 
 def _process_excel(content):
-    """同步处理Excel内容（支持多Sheet，兼容xlsx和xls）"""
+    """Process Excel content synchronously, supporting multiple sheets and XLSX/XLS."""
     text_content = []
     
-    # 1. 优先尝试使用 openpyxl (针对 .xlsx, .xlsm)
+    # 1. Try openpyxl first (for .xlsx and .xlsm)
     try:
         from openpyxl import load_workbook
-        # data_only=True 读取公式计算后的值而不是公式本身
+        # data_only=True reads cached formula values rather than formulas
         wb = load_workbook(filename=BytesIO(content), read_only=True, data_only=True)
         
         for sheet in wb:
-            # 添加 Sheet 名称作为分隔符，方便区分
+            # Add the sheet name as a separator
             sheet_data = [f"=== Sheet: {sheet.title} ==="]
             
-            # 判断 Sheet 是否隐藏（可选，根据需求保留或删除）
+            # Check whether the sheet is hidden (may be included or omitted as needed)
             if sheet.sheet_state == 'hidden':
                 continue
 
             row_count = 0
             for row in sheet.iter_rows(values_only=True):
-                # 过滤全空的行
+                # Skip entirely falsey rows
                 if not any(row):
                     continue
                 
-                # 处理单元格内容，None转为空字符串
+                # Convert cell values to text, using an empty string for None
                 row_text = '\t'.join(str(cell) if cell is not None else '' for cell in row)
                 sheet_data.append(row_text)
                 row_count += 1
             
-            # 只有当该 Sheet 有有效数据行时才添加
+            # Add the sheet only if it contains data rows
             if row_count > 0:
                 text_content.append('\n'.join(sheet_data))
                 
         return '\n\n'.join(text_content)
 
     except Exception as e_xlsx:
-        # 2. 如果 openpyxl 失败（通常是因为文件是 .xls 格式），尝试使用 xlrd
+        # 2. If openpyxl fails (often for .xls files), try xlrd
         try:
             import xlrd
-            # log: print(f"openpyxl 解析失败，尝试使用 xlrd 解析: {e_xlsx}")
+            # log: print(f"openpyxl parsing failed; trying xlrd: {e_xlsx}")
             
-            # formatting_info=True 可能会导致部分复杂文件读取失败，设为 False 更稳健
+            # formatting_info=True can fail for some complex files; False is more robust
             wb = xlrd.open_workbook(file_contents=content, formatting_info=False)
             
             for sheet in wb.sheets():
@@ -533,7 +533,7 @@ def _process_excel(content):
                     
                 for row_idx in range(sheet.nrows):
                     row = sheet.row_values(row_idx)
-                    # xlrd 读取的日期可能是浮点数，这里简单处理，如需精确日期需配合 xldate_as_tuple
+                    # xlrd may represent dates as floats; use xldate_as_tuple for precise date conversion if needed
                     row_text = '\t'.join(str(cell) for cell in row)
                     if row_text.strip():
                         sheet_data.append(row_text)
@@ -543,31 +543,31 @@ def _process_excel(content):
             return '\n\n'.join(text_content)
             
         except ImportError:
-            raise RuntimeError(f"检测到可能为 .xls 格式，但未安装 xlrd 库。请运行: pip install xlrd==1.2.0 (注意新版xlrd不支持xlsx，建议安装旧版处理xls或仅用于处理xls)")
+            raise RuntimeError(f"The file may be in XLS format, but xlrd is not installed. Install the project-compatible xlrd dependency (newer xlrd versions support XLS but not XLSX).")
         except Exception as e_xls:
-            # 如果两个库都失败了，抛出汇总异常
-            raise RuntimeError(f"Excel解析失败. xlsx模式错误: {e_xlsx}, xls模式错误: {e_xls}")
+            # If both libraries fail, raise a combined exception
+            raise RuntimeError(f"Excel parsing failed. XLSX error: {e_xlsx}; XLS error: {e_xls}")
 
 async def handle_rtf(content):
-    """异步处理RTF文件"""
+    """Process RTF files asynchronously."""
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_rtf, content)
 
 def _process_rtf(content):
-    """同步处理RTF内容"""
+    """Process RTF content synchronously."""
     try:
         from striprtf.striprtf import rtf_to_text
         return rtf_to_text(content.decode('utf-8', errors='replace'))
     except Exception as e:
-        raise RuntimeError(f"RTF解析失败: {str(e)}")
+        raise RuntimeError(f"RTF parsing failed: {str(e)}")
 
 async def handle_pptx(content):
-    """异步处理PPTX文件（优化内容提取）"""
+    """Process PPTX files asynchronously with optimized content extraction."""
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_pptx, content)
 
 def _process_pptx(content):
-    """同步处理PPTX内容"""
+    """Process PPTX content synchronously."""
     try:
         from pptx import Presentation
         prs = Presentation(BytesIO(content))
@@ -582,23 +582,23 @@ def _process_pptx(content):
                         text.append("\t".join(row_data))
         return '\n'.join(filter(None, text))
     except Exception as e:
-        raise RuntimeError(f"PPTX解析失败: {str(e)}")
+        raise RuntimeError(f"PPTX parsing failed: {str(e)}")
 
 async def handle_ppt(content):
-    """处理PPT文件（Windows平台专用）"""
+    """Process PPT files (Windows only)."""
     if not IS_WINDOWS:
-        raise NotImplementedError("PPT格式仅支持在Windows系统处理")
+        raise NotImplementedError("PPT processing is supported only on Windows")
     
     try:
         import win32com.client
     except ImportError:
-        raise RuntimeError("请安装pywin32依赖: pip install pywin32")
+        raise RuntimeError("Install the pywin32 dependency: pip install pywin32")
     
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_ppt, content)
 
 def _process_ppt(content):
-    """同步处理PPT内容（Windows COM API）"""
+    """Process PPT content synchronously using Windows COM."""
     import win32com.client
     import tempfile
     import pythoncom
@@ -620,15 +620,15 @@ def _process_ppt(content):
         powerpoint.Quit()
         return '\n'.join(filter(None, text))
     except Exception as e:
-        raise RuntimeError(f"PPT解析失败: {str(e)}")
+        raise RuntimeError(f"PPT parsing failed: {str(e)}")
     finally:
         pythoncom.CoUninitialize()
         os.unlink(tmp_path)
 
-# 2. 实现 handle_doc 函数
+# 2. Implement the handle_doc function
 async def handle_doc(content):
     if not IS_WINDOWS:
-        raise NotImplementedError("DOC格式仅支持在Windows系统处理")
+        raise NotImplementedError("DOC processing is supported only on Windows")
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_doc, content)
 
@@ -651,37 +651,37 @@ def _process_doc(content):
         word.Quit()
         return text.strip()
     except Exception as e:
-        raise RuntimeError(f"DOC解析失败: {str(e)}")
+        raise RuntimeError(f"DOC parsing failed: {str(e)}")
     finally:
         pythoncom.CoUninitialize()
         if 'tmp_path' in locals():
             os.unlink(tmp_path)
 
 async def get_file_content(file_url):
-    """异步获取文件内容（增加编码异常处理）"""
+    """Retrieve file content asynchronously with encoding error handling."""
     try:
         content, ext = await get_content(file_url)
         if ext in office_extensions:
             return await handle_office_document(content, ext)
         return decode_text(content)
     except Exception as e:
-        return f"文件解析错误: {str(e)}"
+        return f"File parsing error: {str(e)}"
 
 async def get_files_content(files_path_list):
-    """异步获取所有文件内容并拼接（增加错误隔离）"""
+    """Retrieve and combine file contents asynchronously, isolating errors."""
     tasks = [get_file_content(fp) for fp in files_path_list]
     contents = await asyncio.gather(*tasks, return_exceptions=True)
     results = []
     for fp, content in zip(files_path_list, contents):
         if isinstance(content, Exception):
-            results.append(f"文件 {fp} 解析失败: {str(content)}")
+            results.append(f"Failed to parse file {fp}: {str(content)}")
         else:
-            results.append(f"文件 {fp} 内容：\n{content}")
+            results.append(f"File {fp} contents:\n{content}")
     return "\n\n".join(results)
 
 async def get_files_json(files_list):
-    """异步获取所有文件内容并拼接为JSON格式（增加错误隔离）
-    输入
+    """Retrieve file contents asynchronously as JSON, isolating errors.
+    Input:
     files_list: [{'path': 'path/to/file', 'name': 'file_name'}]
     """
     tasks = [get_file_content(files["path"]) for files in files_list]
@@ -692,17 +692,17 @@ async def get_files_json(files_list):
     return results
 
 ALLOWED_EXTENSIONS = [
-  # 办公文档
+  # Office documents
     'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'pages', 
     'numbers', 'key', 'rtf', 'odt', 'epub',
   
-  # 编程开发
+  # Programming and development
   'js', 'ts', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'go', 'rs',
   'swift', 'kt', 'dart', 'rb', 'php', 'html', 'css', 'scss', 'less',
   'vue', 'svelte', 'jsx', 'tsx', 'json', 'xml', 'yml', 'yaml', 
   'sql', 'sh',
   
-  # 数据配置
+  # Data and configuration
   'csv', 'tsv', 'txt', 'md', 'log', 'conf', 'ini', 'env', 'toml'
 ]
 
@@ -712,13 +712,13 @@ file_tool = {
     "type": "function",
     "function": {
         "name": "get_file_content",
-        "description": f"获取给定的文件URL中的内容，无论是公网URL还是服务器内部URL（内部URL只支持查看/uploaded_files路由下的文件），由于工具调用结果会被缓存在服务器中，本工具也可以通过工具调用结果的URL用来查看工具调用结果，支持格式：{', '.join(ALLOWED_EXTENSIONS)}",
+        "description": f"Retrieve content from a file URL, either public or internal. Internal file URLs are limited to uploaded files and cached tool results. Use a tool result URL to retrieve its cached content. Supported formats: {', '.join(ALLOWED_EXTENSIONS)}",
         "parameters": {
             "type": "object",
             "properties": {
                 "file_url": {
                     "type": "string",
-                    "description": "文件URL或者工具调用结果的URL",
+                    "description": "File URL or cached tool result URL",
                 }
             },
             "required": ["file_url"],
@@ -730,13 +730,13 @@ image_tool = {
     "type": "function",
     "function": {
         "name": "get_image_content",
-        "description": f"获取给定的图片URL中的内容，无论是公网URL还是服务器内部URL（内部URL只支持查看/uploaded_files路由下的图片），支持格式：{', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
+        "description": f"Retrieve content from an image URL, either public or an internal uploaded image URL. Supported formats: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}",
         "parameters": {
             "type": "object",
             "properties": {
                 "image_url": {
                     "type": "string",
-                    "description": "图片URL",
+                    "description": "Image URL",
                 }
             },
             "required": ["image_url"],
