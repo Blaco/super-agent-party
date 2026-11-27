@@ -1,23 +1,23 @@
-/* styles.css 完整优化方案 */
+/* Stylesheet overview */
 :root {
   --transition-duration: 0.3s;
   --transition-function: cubic-bezier(0.4, 0, 0.2, 1);
   --progress: 0%;
-  /* 缩放系统：JS 同步写入这两个变量 */
-  --app-zoom: 1;   /* 全局界面缩放 */
-  --code-zoom: 1;  /* 代码块独立缩放 */
+  /* Scaling system: JavaScript synchronizes these two variables */
+  --app-zoom: 1;   /* Global interface scale */
+  --code-zoom: 1;  /* Independent code block scale */
 }
 
 /* =========================================
-   亮色主题：Alabaster Studio - 暖灰基底 + 沉稳青碧 (iOS + Notion 融合)
+   Light theme: Alabaster Studio - warm gray base with muted teal
    ========================================= */
 [data-theme="light"] {
-  /* 基础颜色 - 暖调纸质感 */
+  /* Base colors: warm paper-like tones */
   --bg-color: #fcfcfa;
   --text-color: #1c1c1a;
   --border-color: #e4e3de;
   
-  /* 主色调：沉稳青碧 (介于 iOS Teal 与 Linear Navy 之间) */
+  /* Primary color: muted teal between iOS Teal and Linear Navy */
   --el-color-primary: #17827a; 
   --el-color-primary-light-3: #3e9f98;
   --el-color-primary-light-5: #6fbbb5;
@@ -30,11 +30,11 @@
   --el-border-color: var(--border-color) !important;
   --el-border-color-light: #eae9e4 !important;
 
-  /* 组件颜色 */
+  /* Component colors */
   --el-button-bg-color: var(--el-color-primary) !important;
   --el-input-bg-color: #f2f1ed !important;
   
-  /* 页面底色：暖灰基底，衬托卡片悬浮层次 */
+  /* Page background: warm gray base for layered floating cards */
   --el-bg-color-page: #f3f2ed !important; 
   --el-tabs-bg-color: #f3f2ed !important;
   
@@ -42,17 +42,17 @@
   --el-table-bg-color: var(--bg-color) !important;
   --el-tag-bg-color: #efeeea !important;
   
-  /* 状态颜色 - iOS 式克制饱和 */
+  /* Status colors with restrained saturation */
   --el-color-success: #3d8f5e !important;
   --el-color-warning: #d4913a !important;
   --el-color-danger: #c95050 !important;
   --el-color-info: #6e6dc4 !important;
   
-  /* 文字层级 */
+  /* Text hierarchy */
   --el-text-color-regular: #585753 !important;
   --el-text-color-secondary: #878682 !important;
   
-  /* 弥散空气感阴影 */
+  /* Soft diffuse shadows */
   --el-box-shadow-light: 0 8px 24px rgba(0, 0, 0, 0.03), 0 2px 6px rgba(0, 0, 0, 0.02) !important;
   --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 
@@ -62,20 +62,20 @@
   --el-input-hover-border-color: var(--el-color-primary-light-3);
   --el-input-focus-border-color: var(--el-color-primary);
 
-  /* 代码块 */
+  /* Code blocks */
   --code-bg: #f3f2ee;
   --code-border: #e4e3de;
 }
 
 /* =========================================
-   暗色主题：Noir Copper - Claude 暖铜 + iOS 深度黑层次
+   Dark theme: Noir Copper - warm copper and layered deep blacks
    ========================================= */
 [data-theme="dark"] {
   --bg-color: #212124;
   --text-color: #e4e4e7;
   --border-color: #363639;
   
-  /* 主色调：温润古铜 (Claude-inspired warmth) */
+  /* Primary color: warm antique copper */
   --el-color-primary: #c8815a; 
   --el-color-primary-light-3: #d49b7a;
   --el-color-primary-light-5: #dfb49a;
@@ -91,7 +91,7 @@
   --el-button-bg-color: #2c2c30 !important;
   --el-input-bg-color: #19191d !important;
   
-  /* 页面底色：更深的基底，制造卡片悬浮深度 */
+  /* Deeper page background for floating card depth */
   --el-bg-color-page: #161618 !important; 
   --el-tabs-bg-color: #161618 !important;
   
@@ -99,17 +99,17 @@
   --el-table-bg-color: #212124 !important;
   --el-tag-bg-color: rgba(200, 129, 90, 0.12) !important;
 
-  /* 状态颜色 - iOS 深色模式风格 */
+  /* Dark-mode status colors */
   --el-color-success: #3d9a6d !important;
   --el-color-warning: #d9a03c !important;
   --el-color-danger: #d94a4a !important;
   --el-color-info: #7c7dd4 !important;
 
-  /* 文字层级 */
+  /* Text hierarchy */
   --el-text-color-regular: #b0b0b6 !important;
   --el-text-color-secondary: #808086 !important;
 
-  /* 深色层次阴影 */
+  /* Layered dark shadows */
   --el-box-shadow-light: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
   --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
 
@@ -124,7 +124,7 @@
   --code-bg: #19191d;
   --code-border: #363639;
 
-  /* 中性填充色 */
+  /* Neutral fill colors */
   --el-fill-color-blank: #212124 !important;
   --el-fill-color-extra-light: #1c1c1f !important;
   --el-fill-color-lighter: #242428 !important;
@@ -136,13 +136,13 @@
   --el-text-color-disabled: #484850 !important;
 }
 
-/* Deep Azure - iOS 深蓝 + 精准靛青主色 */
+/* Deep Azure - deep blue and precise indigo */
 [data-theme="midnight"] {
   --bg-color: #0c1424;
   --text-color: #e6ebf4;
   --border-color: #253248;
 
-  /* 主色调：Azure Blue (修复原 RGB 与 hex 不一致的问题) */
+  /* Primary color: Azure Blue; matching RGB and hex values */
   --el-color-primary: #4d94f0;
   --el-color-primary-light-3: #74aef5;
   --el-color-primary-light-5: #9bc7f8;
@@ -197,7 +197,7 @@
   --el-text-color-disabled: #3e4e64 !important;
 }
 
-/* 配套代码高亮 - Deep Azure */
+/* Code highlighting for Deep Azure */
 [data-theme="midnight"] {
   --hljs-text: #e6ebf4;
   --hljs-bg: #101c30;
@@ -215,13 +215,13 @@
   --hljs-attr: #3daa70;
 }
 
-/* Synthwave Glass - 霓虹克制版：深邃紫晶基底 + 电光玫红 */
+/* Synthwave Glass - restrained neon with amethyst and electric magenta */
 [data-theme="neon"] {
   --bg-color: #140a2e;
   --text-color: #f0eeff;
   --border-color: #4a3588;
 
-  /* 主色调：电光玫红 (降饱和、保留能量) */
+  /* Primary color: electric magenta with reduced saturation */
   --el-color-primary: #e04090;
   --el-color-primary-light-3: #e668a8;
   --el-color-primary-light-5: #ec90c0;
@@ -278,7 +278,7 @@
   --el-text-color-disabled: #6858a0 !important;
 }
 
-/* 配套代码高亮 - Synthwave */
+/* Code highlighting for Synthwave */
 [data-theme="neon"] {
   --hljs-text: #f0eeff;
   --hljs-bg: #1f1040;
@@ -296,20 +296,20 @@
   --hljs-attr: #40c8e8;
 }
 
-/* Soft Blush - iOS 浅色柔光：樱花粉 + 薄荷蓝双色调 */
+/* Soft Blush - soft light theme with pink and mint */
 [data-theme="marshmallow"] {
   --bg-color: #f6f9fc;
   --text-color: #322e3a;
   --border-color: #d8e0e8;
 
-  /* 主色调：山茶花粉 (更克制的樱花色) */
+  /* Primary color: muted camellia pink */
   --el-color-primary: #e29aaa !important;
   --el-color-primary-light-3: #e9b0bc;
   --el-color-primary-light-5: #f0c6cf;
   --el-color-primary-light-7: #f6dce2;
   --el-color-primary-rgb: 226, 154, 170 !important;
   
-  /* 辅助色：冰薄荷 */
+  /* Accent color: ice mint */
   --el-color-info: #7ec8d0 !important;
   --el-color-info-light-3: #9ed6dc;
   --el-color-info-light-5: #bee4e8;
@@ -350,7 +350,7 @@
   --code-border: #f0e4ec;
 }
 
-/* 配套代码高亮 - Soft Blush */
+/* Code highlighting for Soft Blush */
 [data-theme="marshmallow"] {
   --hljs-text: #4a3c54;
   --hljs-bg: #fefafa;
@@ -369,7 +369,7 @@
 }
 
 /* =========================================
-   RAINBOW - Holographic Prism：全息棱镜升级
+   RAINBOW - Holographic Prism
    ========================================= */
 
 [data-theme="rainbow"] {
@@ -382,7 +382,7 @@
   --border-color: rgba(255, 255, 255, 0.6);
   --border-gradient: linear-gradient(to right, #8878d0 0%, #f0a8c8 100%);
 
-  /* 核心主色：鸢尾紫 */
+  /* Primary color: iris purple */
   --el-color-primary: #7a5cc0; 
   --el-color-primary-light-3: #9678d4;
   --el-color-primary-light-5: #b098e0;
@@ -421,10 +421,10 @@
 }
 
 /* -----------------------------------
-   Rainbow 主题专属样式覆盖
+   Rainbow theme overrides
    ----------------------------------- */
 
-/* 1. 全局背景动画效果 */
+/* 1. Global background animation */
 [data-theme="rainbow"] body {
   background: 
     radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), 
@@ -441,7 +441,7 @@
   background-attachment: fixed;
 }
 
-/* 2. 侧边栏：磨砂玻璃 */
+/* 2. Sidebar: frosted glass */
 [data-theme="rainbow"] .sidebar {
   background: rgba(255, 255, 255, 0.7) !important;
   backdrop-filter: blur(20px) saturate(180%);
@@ -449,7 +449,7 @@
   border-right: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
-/* 3. 卡片系统：浮光效果 */
+/* 3. Card system: floating glow */
 [data-theme="rainbow"] .provider-card, 
 [data-theme="rainbow"] .vendor-card,
 [data-theme="rainbow"] .settings-form,
@@ -462,7 +462,7 @@
               0 0 0 1px rgba(255, 255, 255, 0.5) inset !important;
 }
 
-/* 卡片悬停：彩虹光晕 */
+/* Card hover: rainbow glow */
 [data-theme="rainbow"] .provider-card:hover,
 [data-theme="rainbow"] .vendor-card:hover {
   transform: translateY(-5px);
@@ -471,7 +471,7 @@
   border-color: #c850a8 !important;
 }
 
-/* 4. 按钮：流光渐变 */
+/* 4. Buttons: animated gradient */
 [data-theme="rainbow"] .el-button--primary {
   background-image: linear-gradient(to right, #7a5cc0 0%, #a898d8 51%, #7a5cc0 100%) !important;
   background-size: 200% auto !important;
@@ -486,7 +486,7 @@
   transform: scale(1.02);
 }
 
-/* 5. 用户消息气泡：全息色彩 */
+/* 5. User message bubbles: holographic colors */
 [data-theme="rainbow"] .message.user .message-content {
   background: var(--rainbow-gradient) !important;
   color: white !important;
@@ -494,7 +494,7 @@
   border: none !important;
 }
 
-/* 6. AI 消息气泡：纯净白 + 炫彩边框 */
+/* 6. AI message bubbles: white with colorful border */
 [data-theme="rainbow"] .message.assistant .message-content {
   background: #ffffff !important;
   border: 1px solid transparent !important;
@@ -504,20 +504,20 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
 }
 
-/* 7. 选中状态优化 */
+/* 7. Selected state */
 [data-theme="rainbow"] .el-menu-item.is-active {
   background: var(--el-color-primary-light-9) !important;
   color: var(--el-color-primary) !important;
 }
 
-/* 8. 滚动条：细长的彩虹 */
+/* 8. Scrollbars: thin rainbow style */
 [data-theme="rainbow"] ::-webkit-scrollbar-thumb {
   background-image: linear-gradient(to bottom, #7a5cc0, #f09850);
   border-radius: 10px;
 }
 
 /* =========================================
-   Rainbow 主题代码高亮 (Light Elegant)
+   Rainbow theme code highlighting (Light Elegant)
    ========================================= */
 [data-theme="rainbow"] {
   --hljs-text: #3c3a58;
@@ -537,13 +537,13 @@
 }
 
 
-/* Terracotta Dune - 沙漠暖色调：陶土赤陶 + 沙丘金层次 */
+/* Terracotta Dune - warm desert tones with terracotta and dune gold */
 [data-theme="desert"] {
     --bg-color: #faf6ed;
     --text-color: #4a3020;
     --border-color: #dcc8a0;
     
-    /* 主色调：陶土赤陶 */
+    /* Primary color: terracotta */
     --el-color-primary: #c4784a;
     --el-color-primary-light-3: #d0946e;
     --el-color-primary-light-5: #dcb092;
@@ -591,27 +591,27 @@
     --cactus-green: #7a8c46;
 }
 
-/* Festival Gold - 派对升级：金橙 + 靛蓝撞色 */
+/* Festival Gold - celebratory gold-orange and indigo contrast */
 [data-theme="party"] {
   --bg-color: #fffcf4;
   --text-color: #2d2a34;
   --border-color: #e8e4d8;
 
-  /* 主色调：庆典金橙 */
+  /* Primary color: festive gold-orange */
   --el-color-primary: #e08a20 !important;
   --el-color-primary-light-3: #e8a44c;
   --el-color-primary-light-5: #f0be78;
   --el-color-primary-light-7: #f6d8a4;
   --el-color-primary-rgb: 224, 138, 32 !important;
   
-  /* 次要色调：靛蓝深海 */
+  /* Secondary color: deep indigo */
   --el-color-info: #3b6ea0 !important;
   --el-color-info-light-3: #5c8cc0;
   --el-color-info-light-5: #80aad8;
   --el-color-info-light-7: #a8c8e8;
   --el-color-info-rgb: 59, 110, 160 !important;
 
-  /* 辅助色调：暖棕 */
+  /* Accent color: warm brown */
   --el-color-warning: #cc8020 !important;
   --el-color-warning-light-3: #dc9838;
   --el-color-warning-light-5: #e8b058;
@@ -655,7 +655,7 @@
   --code-border: #e8e4d8;
 }
 
-/* 配套代码高亮 - Festival Gold */
+/* Code highlighting for Festival Gold */
 [data-theme="party"] {
   --hljs-text: #2d2a34;
   --hljs-bg: #faf4e6;
@@ -674,7 +674,7 @@
 }
 
 
-/* 沙漠主题代码高亮 */
+/* Desert theme code highlighting */
 [data-theme="desert"] {
     --hljs-text: #4a3020;
     --hljs-bg: #f2e8d4;
@@ -693,7 +693,7 @@
 }
 
 :root {
-    /* 水墨风基础变量 */
+    /* Ink-style base variables */
     --ink-primary: #2a3b4c;
     --ink-secondary: #556678;
     --ink-accent: #788898;
@@ -707,13 +707,13 @@
                         linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px);
 }
 
-/* Sumi Brush - 水墨升级版：靛青墨 + 宣纸质感 */
+/* Sumi Brush - indigo ink and textured paper */
 [data-theme="ink"] {
     --bg-color: #f4f6f8;
     --text-color: #1e2d3c;
     --border-color: #d0d8e0;
     
-    /* 主色调：靛青墨 (比原版更有层次) */
+    /* Primary color: layered indigo ink */
     --el-color-primary: var(--ink-primary);
     --el-color-primary-light-3: #465a6e;
     --el-color-primary-light-5: #5e748c;
@@ -766,7 +766,7 @@
         transparent 100%);
 }
 
-/* 配套代码高亮 - Sumi Brush */
+/* Code highlighting for Sumi Brush */
 [data-theme="ink-wash"] {
     --hljs-text: var(--text-color);
     --hljs-bg: #ffffff;
@@ -785,14 +785,14 @@
 }
 
 
-/* 修改默认按钮基础样式 */
+/* Default button base styles */
 .el-button--default {
-  /* 通用样式 */
+  /* Common styles */
   background-color: var(--bg-color) !important;
   border-color: var(--border-color) !important;
   color: var(--text-color) !important;
 
-  /* 悬停状态 */
+  /* Hover state */
   &:hover {
     background-color: var(--hover-bg) !important;
     border-color: var(--hover-border) !important;
@@ -800,19 +800,19 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   }
 
-  /* 激活状态 */
+  /* Active state */
   &:active {
     transform: translateY(0);
     box-shadow: none;
   }
 
-  /* 禁用状态 */
+  /* Disabled state */
   &.is-disabled {
     opacity: 0.6;
     filter: grayscale(0.3);
   }
 
-  /* 图标样式 */
+  /* Icon styles */
   .el-icon {
     transition: transform 0.2s;
     font-size: 18px;
@@ -847,7 +847,7 @@ body {
   flex-direction: column;
 }
 
-/* 按钮 */
+/* Buttons */
 .el-button {
   transition: all var(--transition-duration) !important;
 }
@@ -874,7 +874,7 @@ body {
   background: var(--el-menu-hover-bg-color) !important;
 }
 
-/* 输入系统全局适配 */
+/* Global input system styling */
 .el-input {
 --el-input-bg-color: var(--bg-color)!important;
 --el-input-text-color: var(--text-color)!important;
@@ -902,7 +902,7 @@ body {
   }
 }
 
-/* 下拉菜单适配 */
+/* Dropdown styling */
 .el-select {
   --el-select-input-focus-border-color: var(--primary-color)!important;
 
@@ -919,7 +919,7 @@ body {
   }
 }
 }
-/* 下拉菜单内部适配 */
+/* Dropdown contents */
 .el-select-dropdown {
   --el-select-dropdown-border-color: var(--border-color)!important;
   --el-select-dropdown-bg-color: var(--bg-color)!important;
@@ -965,13 +965,13 @@ body {
   --el-alert-text-color: var(--text-color) !important;
 }
 
-/* 开关控件适配 */
+/* Switch control styling */
 .el-switch {
 --el-switch-on-color: var(--primary-color);
 --el-switch-off-color: var(--border-color);
 }
 
-/* 弹窗适配 */
+/* Dialog styling */
 .el-dialog {
 
 
@@ -988,12 +988,12 @@ body {
 }
 
 .knowledge-dialog-content {
-    /* 隐藏横向滚动条 */
+    /* Hide horizontal scrollbar */
   overflow-x: hidden;
   
 }
 
-/* 滑动条深度适配 */
+/* Slider styling */
 .el-slider {
 --el-slider-main-bg-color: var(--primary-color);
 --el-slider-runway-bg-color: color-mix(in srgb, var(--border-color) 30%, transparent);
@@ -1004,38 +1004,38 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 }
-/* 表格 */
+/* Tables */
 .el-table {
   --el-table-header-bg-color: var(--el-bg-color-page);
   --el-table-tr-bg-color: var(--el-bg-color);
   --el-table-border-color: var(--el-border-color);
 }
-/* 代码块 */
+/* Code blocks */
 .code-block {
   background-color: var(--code-bg-color) !important;
   border: 1px solid var(--el-border-color) !important;
 }
 [data-theme="light"] {
-  /* 基础三要素 */
+  /* Three basic elements */
   --hljs-text: #24292e; 
   --hljs-bg: #f6f8fa;
   --hljs-border: rgba(27,31,36,0.15);
-  /* 核心语法 */
+  /* Core syntax */
   --hljs-keyword: #d73a49;      
   --hljs-string: #032f62;      
   --hljs-number: #005cc5;      
   --hljs-comment: #6a737d;   
-  /* 结构类元素 */
+  /* Structural elements */
   --hljs-title: #2f6f9d;        
   --hljs-built_in: #6f42c1;    
   --hljs-literal: #cf222e;       
   --hljs-class: #8250df;         
   --hljs-function: #6639ba;    
-  /* 辅助元素 */
+  /* Supporting elements */
   --hljs-params: #24292e;       
   --hljs-attr: #116329;        
 }
-/* 深色模式覆盖 */
+/* Dark-mode overrides */
 [data-theme="dark"] {
   --hljs-text: #e1e4e8;
   --hljs-bg: #2d333b;
@@ -1054,9 +1054,9 @@ body {
 }
 .hljs {
   color: var(--hljs-text) !important;
-  background: var(--code-bg-color) !important; /* 与主题色一致 */
+  background: var(--code-bg-color) !important; /* Match theme color */
   padding: 1em !important;
-  border-radius: 8px; /* 添加圆角 */
+  border-radius: 8px; /* Add rounded corners */
   transition: color 0.3s;
 }
 
@@ -1134,18 +1134,18 @@ body {
   font-style: italic;
 }
 
-/* 文件列表 */
+/* File list */
 .compact-file-item {
   background-color: var(--file-bg-color) !important;
   border: 1px solid var(--el-border-color) !important;
 }
-/* 卡片系统 */
+/* Card system */
 .provider-card {
   background-color: var(--card-bg-color) !important;
   border: 1px solid var(--el-border-color) !important;
   box-shadow: var(--el-box-shadow-light) !important;
 }
-/* 切换按钮 */
+/* Toggle buttons */
 .el-switch__core {
   background-color: var(--el-border-color) !important;
   border-color: var(--el-border-color) !important;
@@ -1154,7 +1154,7 @@ body {
   background-color: var(--el-color-primary) !important;
   border-color: var(--el-color-primary) !important;
 }
-/* 滚动条 */
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   background-color: var(--el-bg-color-page);
@@ -1163,7 +1163,7 @@ body {
   background-color: var(--el-border-color);
   border-radius: 3px;
 }
-/* Markdown内容 */
+/* Markdown content */
 .markdown-body {
   color: var(--el-text-color-primary) !important;
 }
@@ -1175,8 +1175,8 @@ body {
 }
 
 .markdown-body table::-webkit-scrollbar {
-  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
-  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+  width: 5px; /* Horizontal scrollbar width, when present */
+  height: 5px; /* Vertical scrollbar dimensions for consistent styling */
 }
 
 .markdown-body table th {
@@ -1204,22 +1204,22 @@ body {
 }
 
 .markdown-body code::-webkit-scrollbar {
-  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
-  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+  width: 5px; /* Horizontal scrollbar width, when present */
+  height: 5px; /* Vertical scrollbar dimensions for consistent styling */
 }
 .markdown-body th {
   background-color: var(--el-color-primary-light-9) !important;
 }
-/* 状态标签 */
+/* Status labels */
 .el-tag {
   background-color: var(--el-tag-bg-color) !important;
   border-color: var(--el-color-primary-light-7) !important;
 }
-/* 加载动画 */
+/* Loading animation */
 .loading-spinner {
   color: var(--el-color-primary) !important;
 }
-/* 工具提示 */
+/* Tooltips */
 .el-tooltip__popper {
   background-color: var(--el-bg-color) !important;
   border: 1px solid var(--el-border-color) !important;
@@ -1229,7 +1229,7 @@ body {
 
 
 
-/* 顶部栏样式 */
+/* Top bar styles */
 .top-bar {
   background-color: var(--el-bg-color-page);
   padding: 0 16px !important;
@@ -1266,7 +1266,7 @@ body {
   background-color: var(--el-color-primary-light-3) !important;
 }
 
-/* 主容器样式 */
+/* Main container styles */
 .main-container {
   flex: 1;
   overflow: hidden;
@@ -1277,7 +1277,7 @@ body {
 }
 
 
-/* 侧边栏样式 */
+/* Sidebar styles */
 .sidebar {
   background-color: var(--el-bg-color-page) !important;
   border-right: 1px solid var(--el-border-color-light);
@@ -1297,10 +1297,10 @@ body {
   width: 200px;
 }
 
-/* 内容区样式 */
+/* Content area styles */
 .content {
   padding: 20px;
-  overflow-y: scroll; /* 强制显示滚动条，以便我们可以隐藏它 */
+  overflow-y: scroll; /* Force scrollbar display so it can be hidden */
   -ms-overflow-style: none;  /* Internet Explorer 10+ */
   scrollbar-width: none; /* Firefox */
   background-color: var(--el-bg-color-page);
@@ -1310,7 +1310,7 @@ body {
   display: none; /* Safari and Chrome */
 }
 
-/* 聊天容器样式 */
+/* Chat container styles */
 .chat-container {
   display: flex;
   flex-direction: column;
@@ -1341,32 +1341,32 @@ body {
   scrollbar-width: 2px;
   overflow-anchor: none; 
 }
-/* Chrome, Edge, Safari 等 */
+/* Chrome, Edge, Safari and similar browsers */
 .messages-container::-webkit-scrollbar {
-  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
-  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+  width: 5px; /* Horizontal scrollbar width, when present */
+  height: 5px; /* Vertical scrollbar dimensions for consistent styling */
 }
 
 .messages-container::-webkit-scrollbar-thumb {
-  border-radius: 2px; /* 滚动条 thumb 圆角 */
+  border-radius: 2px; /* Rounded scrollbar thumb */
 }
-/* 修复消息容器布局 */
+/* Message container layout fix */
 .message {
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
 }
 
-/* 修复用户消息换行问题 */
+/* User message wrapping fix */
 .message.user {
-  align-items: flex-end; /* 原设置正确，但需要配合子元素宽度 */
+  align-items: flex-end; /* Original setting requires matching child widths */
 }
 
 .message.assistant {
   align-items: flex-start;
 }
 
-/* 消息内容基础样式 */
+/* Base message content styles */
 .system-content {
   padding: 12px;
   border-radius: 12px;
@@ -1388,7 +1388,7 @@ body {
   scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
 }
 
-/* Webkit 浏览器平滑动画 */
+/* Smooth animation in WebKit browsers */
 .scroll-on-hover::-webkit-scrollbar {
   width: 8px;
   transition: all 0.3s ease;
@@ -1437,7 +1437,7 @@ body {
 .system .message-content {
   background-color: var(--el-bg-color) !important;
   border: 1px solid var(--el-border-color-lighter) !important;
-  color: var(--el-text-color-primary) !important; /* 增加文字颜色定义 */
+  color: var(--el-text-color-primary) !important; /* Define text color */
   border-radius: 12px;
   padding: 5px;
   box-shadow: var(--el-box-shadow)!important;
@@ -1447,16 +1447,16 @@ body {
 .assistant .message-content {
   background-color: var(--el-bg-color-page);
   border: 1px solid var(--el-border-color-light);
-  color: var(--el-text-color-primary) !important; /* 增加文字颜色定义 */
+  color: var(--el-text-color-primary) !important; /* Define text color */
   border-radius: 12px 12px 12px 0;
   box-shadow: var(--el-box-shadow)!important;
   max-width: 100%;
 }
 
-/* 增强AI消息样式 */
+/* Enhanced AI message styles */
 .assistant-message-content {
   max-width: 85%;
-  width: fit-content; /* 确保动态宽度 */
+  width: fit-content; /* Allow dynamic width */
   white-space: pre-line;
 }
 
@@ -1468,14 +1468,14 @@ body {
   margin-bottom: 0;
 }
 
-/* 光扫动效：挂在气泡本身，而不是 markdown 文字层 */
+/* Light sweep animation belongs on the bubble, not the Markdown text layer */
 .assistant .message-content.typing {
   position: relative;
-  overflow: hidden;                /* 裁掉光带多余部分 */
-  border-radius: 12px 12px 12px 0; /* 与气泡圆角一致 */
+  overflow: hidden;                /* Clip excess light strip */
+  border-radius: 12px 12px 12px 0; /* Match bubble corner radius */
 }
 
-/* ===== 现代光带 ===== */
+/* ===== Modern light strip ===== */
 .assistant .message-content.typing::before {
   content: '';
   position: absolute;
@@ -1484,7 +1484,7 @@ body {
   right: 0;
   height: 2px;
 
-  /* 两段渐变拼成“亮-暗-亮”波带 */
+  /* Two gradients form a bright-dark-bright band */
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -1493,18 +1493,18 @@ body {
     var(--el-color-primary-light-7) 82%,
     transparent 100%
   );
-  background-size: 60px 100%;   /* 光带固定 60 px 宽 */
+  background-size: 60px 100%;   /* Fixed 60 px light strip width */
   background-repeat: no-repeat;
   animation: modern-shine 1.6s linear infinite;
 }
 
 @keyframes modern-shine {
-  0%   { background-position: -60px 0; } /* 起点：藏在左边外 */
-  100% { background-position: calc(100% + 60px) 0; } /* 终点：完全跑出右边 */
+  0%   { background-position: -60px 0; } /* Start outside the left edge */
+  100% { background-position: calc(100% + 60px) 0; } /* End outside the right edge */
 }
 
 
-/* 添加Markdown正文样式 */
+/* Markdown body styles */
 .markdown-body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -1524,20 +1524,20 @@ body {
 
 .button-group {
   display: flex;
-  flex-wrap: wrap; /* 允许换行 */
+  flex-wrap: wrap; /* Allow wrapping */
   justify-content: flex-start;
 }
 
-/* 移动端适配 */
+/* Mobile layout */
 @media (max-width: 768px) {
   .button-group {
-    row-gap: 8px; /* 行间距 */
-    column-gap: 6px; /* 列间距 */
+    row-gap: 8px; /* Row spacing */
+    column-gap: 6px; /* Column spacing */
   }
   
   .button-group .el-button {
-    flex-shrink: 0; /* 防止按钮缩小 */
-    margin: 2px !important; /* 覆盖可能存在的边距 */
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+    margin: 2px !important; /* Override existing margins */
   }
 
   .el-main {
@@ -1560,7 +1560,7 @@ body {
     margin: 0px!important;
   }
 }
-/* 打字指示器样式 */
+/* Typing indicator styles */
 .typing-indicator {
   display: flex;
   gap: 4px;
@@ -1592,7 +1592,7 @@ body {
   }
 }
 
-/* 设置表单样式 */
+/* Settings form styles */
 .settings-form {
   max-width: 100%;
   margin: 40px auto;
@@ -1637,7 +1637,7 @@ body {
   font-size: 16px;
 }
 
-/* 响应式调整 */
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .settings-form {
     max-width: 100%;
@@ -1657,20 +1657,20 @@ body {
 
 .form-item-align {
   display: flex;
-  align-items: center; /* 垂直居中 */
-  justify-content: space-between; /* 左右两端对齐 */
+  align-items: center; /* Center vertically */
+  justify-content: space-between; /* Align to left and right ends */
 }
 
 .el-form-item__label, .el-form-item__content {
-  text-align: center; /* 标签文字左对齐 */
+  text-align: center; /* Left-align label text */
 }
 
-/* 确保输入控件宽度合适 */
+/* Ensure suitable input width */
 .full-width-input {
   width: 100%;
 }
 
-/* 可选：为了让所有标签的横向中心点对齐，可以给标签设定固定的宽度 */
+/* Optional fixed label width for aligned horizontal centers */
 .el-form-item__label {
   width: auto;
   display: inline-block;
@@ -1688,7 +1688,7 @@ body {
   margin-bottom: 30px;
 }
 
-/* 添加表格样式 */
+/* Table styles */
 .model-table {
   margin-top: 20px;
   border: 1px solid var(--el-border-color);
@@ -1749,7 +1749,7 @@ body {
   background: #ff5252;
 }
 
-/* 工具界面样式 */
+/* Tool interface styles */
 .tool-item {
   border: 1px solid var(--bg-color);
   border-radius: 4px;
@@ -1775,7 +1775,7 @@ body {
   box-shadow: 0 2px 12px var(--el-box-shadow-light);
 }
 
-/* 拖拽/点击区域样式 */
+/* Drag-and-click area styles */
 .drop-zone {
   border: 2px dashed rgba(var(--el-color-primary-rgb), 0.2);
   border-radius: 8px;
@@ -1819,8 +1819,8 @@ body {
   padding: 10px;
 }
 
-/* 更新css/styles.css */
-/* 紧凑型文件列表 */
+/* Update css/styles.css */
+/* Compact file list */
 .compact-file-list {
   display: flex;
   flex-wrap: wrap;
@@ -1830,7 +1830,7 @@ body {
   overflow-y: scroll;
   padding: 8px 0;
 }
-/* 不显示滚动条 */
+/* Hide scrollbar */
 .compact-file-list::-webkit-scrollbar {
   display: none;
 }
@@ -1841,12 +1841,12 @@ body {
   align-items: center;
   background: #f0f4ff;
   border-radius: 12px;
-  padding: 4px 36px 4px 12px; /* 增加右侧padding */
+  padding: 4px 36px 4px 12px; /* Increase right padding */
   max-width: 240px;
   transition: all 0.2s;
   overflow-y: scroll;
 }
-/* 不显示滚动条 */
+/* Hide scrollbar */
 .compact-file-item::-webkit-scrollbar {
   display: none;
 }
@@ -1860,20 +1860,20 @@ body {
 }
 
 .delete-icon {
-  background-color: transparent !important;/* 透明 */
-  border: none !important; /* 去掉边框 */
+  background-color: transparent !important;/* Transparent */
+  border: none !important; /* Remove border */
   position: absolute;
-  right: 0px; /* 增加右侧间距 */
+  right: 0px; /* Increase right spacing */
   top: 50%;
   transform: translateY(-50%);
   padding: 3px !important;
-  width: 10px; /* 缩小尺寸 */
+  width: 10px; /* Reduce size */
   height: 10px;
 }
 .delete-icon .el-icon {
-  font-size: 12px; /* 缩小图标 */
+  font-size: 12px; /* Reduce icon size */
 }
-/* 调整hover状态 */
+/* Adjust hover state */
 .delete-icon:hover {
   color: var(--el-color-danger) !important;
   transform: translateY(-50%) scale(1.1);
@@ -1884,14 +1884,14 @@ body {
   box-shadow: 0 2px 6px rgba(64,158,255,0.1);
 }
 
-/* 文件链接样式 */
+/* File link styles */
 .file-links {
   margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-/* 单个文件链接 */
+/* Individual file link */
 .file-link {
   display: inline-flex;
   align-items: center;
@@ -1903,7 +1903,7 @@ body {
   text-decoration: none;
   transition: all 0.2s;
   max-width: 240px;
-  white-space: nowrap; /* 禁止链接文字换行 */
+  white-space: nowrap; /* Prevent link text wrapping */
   overflow: hidden;
 }
 
@@ -1913,12 +1913,12 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Markdown表格样式 */
+/* Markdown table styles */
 .markdown-body table {
-  width: 100% !important; /* 强制继承父级宽度 */
-  min-width: 100%; /* 防止内容不足时收缩 */
-  display: table; /* 恢复表格特性 */
-  box-shadow: none; /* 移除阴影避免视觉干扰 */
+  width: 100% !important; /* Inherit parent width */
+  min-width: 100%; /* Prevent shrinking when content is short */
+  display: table; /* Restore table behavior */
+  box-shadow: none; /* Remove distracting shadow */
   overflow-x: auto;
   max-width: 100%;
 }
@@ -1939,7 +1939,7 @@ body {
   background-color: var(--el-fill-color-lighter);
 }
 
-/* 代码块样式 */
+/* Code block styles */
 .code-block {
   position: relative;
   margin: 1em 0;
@@ -1948,8 +1948,8 @@ body {
   max-width: 100%;
 }
 .code-block::-webkit-scrollbar {
-  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
-  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+  width: 5px; /* Horizontal scrollbar width, when present */
+  height: 5px; /* Vertical scrollbar dimensions for consistent styling */
 }
 .code-header {
   display: flex;
@@ -1968,10 +1968,10 @@ body {
   margin-right: auto;
 }
 
-/* 设置按钮组的样式 */
+/* Button group styles */
 .code-actions {
   display: flex;
-  gap: 5px; /* 按钮之间的间距 */
+  gap: 5px; /* Spacing between buttons */
 }
 
 .copy-button, .preview-button{
@@ -1994,32 +1994,32 @@ body {
   transition: all 0.2s;
 }
 
-/* 在样式表中添加覆盖规则 */
+/* Stylesheet override rules */
 .code-block pre {
   background-color: transparent !important;
   padding: 0;
 }
 
 
-/* 钥匙箱主容器 */
+/* Key store main container */
 .keybox-container {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
   background: var(--bg-color);
-  min-height: calc(100vh - 64px); /* 根据导航栏高度调整 */
+  min-height: calc(100vh - 64px); /* Adjust for navigation bar height */
   box-shadow: var(--el-box-shadow-light);
   border-radius: 8px;
 }
-/* 网格布局系统 */
+/* Grid layout system */
 .provider-grid {
   display: grid;
   gap: 1.5rem;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   padding: 0;
-  margin: 0 -0.75rem; /* 抵消卡片边距 */
+  margin: 0 -0.75rem; /* Offset card margins */
 }
-/* 磁贴卡片系统 */
+/* Tile card system */
 .provider-card {
   --card-border: 1px solid #e2e8f0;
   --card-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -2041,7 +2041,7 @@ body {
   --card-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.05);
   transform: translateY(-2px);
 }
-/* 卡片头部 */
+/* Card header */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -2049,35 +2049,35 @@ body {
   margin-bottom: 1rem;
   position: relative;
 }
-/* 卡片操作按钮组 */
-/* 调整卡片操作按钮组样式 */
+/* Card action buttons */
+/* Card action button styling */
 .card-actions {
   display: flex;
   gap: 0.5rem;
-  position: relative; /* 改为相对定位 */
+  position: relative; /* Use relative positioning */
   top: 0;
   right: 0;
-  background: transparent; /* 去掉背景色 */
+  background: transparent; /* Remove background color */
   padding: 0;
-  box-shadow: none; /* 去掉阴影 */
+  box-shadow: none; /* Remove shadow */
 }
 
-/* 调整输入框容器布局 */
+/* Adjust input container layout */
 .input-group {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-top: 1rem; /* 增加上边距 */
+  margin-top: 1rem; /* Increase top margin */
 }
 
-/* 确保输入框可见 */
+/* Keep input visible */
 .el-input {
   width: 100%;
-  min-width: 100%; /* 防止收缩 */
+  min-width: 100%; /* Prevent shrinking */
 }
 
-/* 调整模型选择容器 */
+/* Adjust model selection container */
 .model-container {
   margin-top: 1rem;
   display: flex;
@@ -2085,13 +2085,13 @@ body {
   flex-wrap: wrap;
 }
 
-/* 确保选择框宽度 */
+/* Ensure selector width */
 .model-select {
   flex: 1;
   min-width: 120px;
 }
 
-/* 添加新卡片 */
+/* Add new card */
 .add-tile {
   --dash-color: #cbd5e1;
   
@@ -2115,7 +2115,7 @@ body {
 .add-tile:hover .el-icon {
   transform: scale(1.1);
 }
-/* 对话框增强样式 */
+/* Enhanced dialog styles */
 .el-dialog__header {
   border-bottom: 1px solid var(--el-button-bg-color);
   margin-bottom: 1rem;
@@ -2135,7 +2135,7 @@ body {
   box-shadow: var(--el-box-shadow-light) !important;
 }
 
-/* 选项文字颜色和hover背景 */
+/* Option text color and hover background */
 .el-select-dropdown__item {
   color: var(--el-text-color-primary) !important;
   &:hover {
@@ -2146,13 +2146,13 @@ body {
   }
 }
 
-/* 禁用状态的选项 */
+/* Disabled options */
 .el-select-dropdown__item.is-disabled {
   color: var(--el-text-color-placeholder) !important;
 }
 
 
-/* 供应商选项样式 */
+/* Provider option styles */
 .provider-option {
   display: flex;
   justify-content: space-between;
@@ -2176,22 +2176,22 @@ body {
 }
 
 
-/* 添加这些样式 */
+/* Additional styles */
 .alert-content {
   line-height: 1.8;
-  color: var(--el-color-info); /* 保持与警告组件颜色一致 */
+  color: var(--el-color-info); /* Match warning component color */
 }
 .font-medium {
   font-weight: 500;
 }
 .el-link {
-  vertical-align: baseline; /* 保持文字对齐 */
+  vertical-align: baseline; /* Keep text aligned */
 }
 .el-link:hover {
-  text-decoration: underline !important; /* 悬停时显示下划线 */
+  text-decoration: underline !important; /* Underline on hover */
 }
 
-/* 知识库磁贴样式 */
+/* Knowledge base tile styles */
 .knowledge-card {
   min-height: 160px;
 }
@@ -2201,7 +2201,7 @@ body {
   font-size: 1.2em;
 }
 
-/* 在 css/styles.css 中添加 */
+/* Add to css/styles.css */
 .loading-spinner {
   animation: spin 1s linear infinite;
   margin-right: 8px;
@@ -2218,10 +2218,10 @@ body {
   color: var(--el-color-info);
 }
 
-/* 添加样式 */
+/* Additional styles */
 .kb-content {
   padding: 12px;
-  height: calc(100% - 40px); /* 留出头部空间 */
+  height: calc(100% - 40px); /* Reserve header space */
 }
 
 .kb-header {
@@ -2279,7 +2279,7 @@ body {
   background-color: var(--el-bg-color)!important;
 }
 
-/* 添加样式 */
+/* Additional styles */
 .advanced-settings {
   --el-collapse-header-height: 48px;
   .el-collapse-item {
@@ -2328,7 +2328,7 @@ body {
   }
 }
 
-/* 激活状态旋转图标 */
+/* Rotate active-state icon */
 .el-collapse-item.is-active .collapse-title .el-icon {
   transform: rotate(90deg);
 }
@@ -2432,7 +2432,7 @@ body {
   margin-left: auto;
 }
 
-/* MCP服务器磁贴样式 */
+/* MCP server tile styles */
 
 .mcp-container .kb-header {
   display: flex;
@@ -2477,9 +2477,9 @@ body {
   color: var(--el-color-primary);
 }
 
-/* 侧边栏Logo样式 */
+/* Sidebar logo styles */
 .sidebar-logo {
-  /* 侧边栏最底部 */
+  /* Bottom of sidebar */
   position: absolute;
   bottom: 0;
   width: 100%;
@@ -2499,7 +2499,7 @@ body {
   bottom: 0;
 }
 
-/* 开源声明页面 */
+/* Open-source notices page */
 .logo-container {
   padding: 2rem;
   max-width: 800px;
@@ -2677,26 +2677,26 @@ body {
   padding: 20px;
   text-align: center;
 }
-/* 隐藏原始代码内容 */
+/* Hide original source content */
 .code-content[style*="display: none"] {
   display: none !important;
 }
 
-/* 更新按钮容器样式 */
+/* Update button container styles */
 .top-bar-btn.update-btn {
-  /* 保持原有基本样式 */
+  /* Preserve base styles */
   width: auto;
-  padding: 4px 12px !important; /* 增加水平内边距 */
-  display: inline-flex; /* 确保按钮依据内容调整大小 */
-  white-space: nowrap; /* 防止文字换行 */
+  padding: 4px 12px !important; /* Increase horizontal padding */
+  display: inline-flex; /* Size buttons to content */
+  white-space: nowrap; /* Prevent text wrapping */
   transition: all 0.2s ease;
 }
-/* 更新按钮图标样式 */
+/* Update button icon styles */
 .update-btn .el-icon {
-  margin-right: 8px !important; /* 增加图标右边距 */
-  flex-shrink: 0; /* 防止图标被压缩 */
+  margin-right: 8px !important; /* Add right icon margin */
+  flex-shrink: 0; /* Prevent icon compression */
 }
-/* 成功状态按钮 */
+/* Success-state button */
 .update-btn.success {
   background-color: var(--el-color-success) !important;
   padding: 4px 12px !important;
@@ -2718,8 +2718,8 @@ body {
     }
 
     .value-input {
-      align-items: center; /* 保持垂直居中 */
-      justify-content: center; /* 水平居中 */
+      align-items: center; /* Keep vertically centered */
+      justify-content: center; /* Center horizontally */
 
       > * { 
         flex: 1; 
@@ -2731,7 +2731,7 @@ body {
       }
 
       .el-switch {
-        /* 水平居中 */
+        /* Center horizontally */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2779,25 +2779,25 @@ body {
   margin-left: auto;
 }
 .param-header {
-    display: flex; /* 使用 flexbox */
-    justify-content: space-between; /* 左右对齐 */
-    align-items: center; /* 垂直居中对齐 */
-    background-color: var(--el-bg-color-page); /* 背景颜色 */
-    padding: 10px; /* 内边距 */
-    margin-bottom: 20px; /* 底部外边距 */
+    display: flex; /* Use flexbox */
+    justify-content: space-between; /* Align left and right */
+    align-items: center; /* Center vertically */
+    background-color: var(--el-bg-color-page); /* Background color */
+    padding: 10px; /* Padding */
+    margin-bottom: 20px; /* Bottom margin */
     border: 2px solid var(--card-border);
-    box-shadow: 2px 2px 5px var(--card-shadow); /* 阴影效果 */
-    border-radius: 8px; /* 圆角 */
+    box-shadow: 2px 2px 5px var(--card-shadow); /* Shadow */
+    border-radius: 8px; /* Rounded corners */
 }
 
 .action-row {
     display: flex;
-    justify-content: flex-end; /* 按钮靠右对齐 */
-    gap: 8px; /* 按钮之间的间距 */
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 8px; /* Spacing between buttons */
 }
 
 .param-header span {
-    font-size: 18px; /* 字体大小 */
+    font-size: 18px; /* Font size */
     font-weight: bold; /* 加粗 */
     color: var(--el-text-color);
 }
@@ -3467,7 +3467,7 @@ body {
   font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
 }
 
-/* 移动端适配 */
+/* Mobile layout */
 @media (max-width: 680px) {
   .add-provider-body {
     flex-direction: column;
@@ -3550,7 +3550,7 @@ body {
 @media (max-width: 768px) {
   .suite-content {
     padding: 10px;
-    /* 隐藏横向滚动条 */
+    /* Hide horizontal scrollbar */
     overflow-x: hidden;
   }
   .suite-sidebar {
@@ -3695,7 +3695,7 @@ body {
 
 .server-item {
   display: flex;
-  align-items: center; /* 垂直居中 */
+  align-items: center; /* Center vertically */
   gap: 8px; /* 元素间距 */
   width: 100%; /* 占满父容器宽度 */
   margin-bottom: 8px; /* 项间距 */
@@ -3931,8 +3931,8 @@ body {
 }
 /* 滚动条样式 */
 .highlight-block table::-webkit-scrollbar {
-  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
-  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+  width: 5px; /* Horizontal scrollbar width, when present */
+  height: 5px; /* Vertical scrollbar dimensions for consistent styling */
 }
 
 .highlight-block-error {
@@ -3965,8 +3965,8 @@ body {
 }
 /* 滚动条样式 */
 .highlight-block-reasoning table::-webkit-scrollbar {
-  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
-  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+  width: 5px; /* Horizontal scrollbar width, when present */
+  height: 5px; /* Vertical scrollbar dimensions for consistent styling */
 }
 /* 进度条容器样式 */
 .progress-container {
@@ -4844,7 +4844,7 @@ body {
 
 .plugin-button-group {
   display: flex;
-  gap: 10px; /* 按钮之间的间距 */
+  gap: 10px; /* Spacing between buttons */
 }
 
 .plugins-container {
@@ -6220,7 +6220,7 @@ hr.footnotes-sep {
 .markdown-body th, 
 .markdown-body td {
   min-width: 60px;               /* 最小宽度 */
-  word-break: break-word;        /* 允许换行 */
+  word-break: break-word;        /* Allow wrapping */
   white-space: normal;
   transition: background-color 0.2s; /* 仅颜色过渡，不过渡宽高 */
 }
@@ -8046,7 +8046,7 @@ hr.footnotes-sep {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  white-space: normal; /* 允许换行 */
+  white-space: normal; /* Allow wrapping */
   text-overflow: ellipsis;
   width: 100%;
 }
@@ -8673,7 +8673,7 @@ hr.footnotes-sep {
 /* 每一行的布局 */
 .event-row-item {
   display: flex;         /* 启用弹性布局 */
-  align-items: center;   /* 垂直居中 */
+  align-items: center;   /* Center vertically */
   margin-bottom: 16px;   /* 重要：每个输入框之间的间隔 */
   gap: 12px;             /* 输入框和删除按钮之间的间隔 */
 }
@@ -9153,7 +9153,7 @@ hr.footnotes-sep {
 
 /* 7. 布局微调：确保按钮组里的图标对齐 */
 .unified-input-wrapper .button-group {
-  gap: 4px !important; /* 按钮之间的间距 */
+  gap: 4px !important; /* Spacing between buttons */
   padding: 8px 12px 2px 12px !important; /* 调整底部间距，让它离输入框更近 */
 }
 
@@ -10397,7 +10397,7 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* 垂直居中 */
+  justify-content: center; /* Center vertically */
   height: 100%;
   padding: 0 20px;
   box-sizing: border-box;
@@ -11035,8 +11035,8 @@ code {
   /* 1. 让弹窗容器（遮罩层）变为 Flex 布局 */
   .el-overlay-dialog {
     display: flex !important;
-    align-items: center !important;   /* 垂直居中 */
-    justify-content: center !important; /* 水平居中 */
+    align-items: center !important;   /* Center vertically */
+    justify-content: center !important; /* Center horizontally */
     padding: 12px !important;         /* 视口四周留一点间距，防止贴边 */
   }
 

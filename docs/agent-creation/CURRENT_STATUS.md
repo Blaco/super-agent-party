@@ -160,3 +160,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — MOSS speech internals
 
 - Localized all 192 remaining Han-flagged lines in the MOSS robustness normalizer and runtime. Translate developer documentation and runtime diagnostics; encode the existing multilingual test fixtures using equivalent Unicode escapes rather than changing their inputs/expected results. Preserve all punctuation rules, regexes, audio preprocessing, caching, resampling and ONNX execution. Added AST and representative normalization regression checks. No change to speech model, English default, voice selection or permissions. CI and live speech remain to be verified. No package built.
+
+## Follow-up source checkpoint — main stylesheet, first pass
+
+- Translated 235 distinct comment occurrences (235 flagged lines) in static/css/styles.css, covering themes, components, chat, navigation, file tables, model and knowledge cards. All CSS outside comments is byte-identical to the previous version; line count unchanged. 1544 Han-flagged stylesheet lines remain. No selectors, declarations or behavior changed. Further comment localization and residual regional selector review pending. No build.

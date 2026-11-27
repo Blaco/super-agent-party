@@ -454,3 +454,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Localize MOSS speech normalization and runtime internals
 
 - Parent 7e39091160cea13c4eae3299e5ffc628d054ecc6. Address 119 Han-flagged lines in py/moss/tts_robust_normalizer_single_script.py and 73 in py/moss/tts_runtime.py. Preserve multilingual test fixtures via equivalent Python Unicode escapes, retain normalization regexes and punctuation including ideographic output punctuation, audio processing and model execution. Translate comments/docstrings and diagnostics only. Add regression tests for AST, English source and representative normalization. Static coverage checked; CI and actual MOSS inference pending. Revert for rollback.
+
+## 2026-11-26 — Main stylesheet English comment pass 1
+
+- Parent cc1b28c417a895c7f9b2ec0428381d7d67d2b0eb. Translate the first 220 flagged comment entries and matching duplicate comments elsewhere in static/css/styles.css (235 total occurrences, 235 flagged lines). Compare complete non-comment text for exact equality and retain line count. 1544 flagged lines remain. No CSS rule changes. Further audit, CI and live visual validation pending. Revert for rollback.
