@@ -57,3 +57,7 @@ MOSS remains KEEP, with the existing Ava English voice selected by default for n
 ## Source localization acceptance checkpoint — 2026-11-26
 
 First-party UI, backend source, bundled skill text and inherited design documents: translated and zero Han findings in source audit 45928289260. Regional runtime cleanup passed audit 45928480135. Retired upstream promotional assets removed; optional Western bots, generic service adapters, local model/speech/avatar features and legal notices remain. First-party text/path gate and asset-reference regression checks now enforce the source acceptance criteria. This is not evidence of complete Windows runtime functionality or a binary-artwork language audit.
+
+## Template reliability — 2026-11-26
+
+All 28 formerly self-closing Element Plus switches in the main desktop template use explicit closing tags; associated memory, voice, vision, automation and optional livestream controls retain their existing KEEP/HIDE dispositions, bindings and handlers. Regression smoke guard added; Windows UI interaction still unverified.

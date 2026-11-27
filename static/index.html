@@ -3332,7 +3332,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                               </el-link>
                             </span>
                           </div>
-                          <el-switch v-model="memorySettings.is_memory" @click.stop @change="changeMemory"/>
+                          <el-switch v-model="memorySettings.is_memory" @click.stop @change="changeMemory"></el-switch>
                         </div>
                         <div class="tool-content">
                           <el-form-item :label="t('memoryResultCount')" class="form-item-align">
@@ -5268,7 +5268,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           v-model="behaviorSettings.enabled" 
                           @change="resetCycleTimers();autoSaveSettings()"
                           style="--el-switch-on-color: #13ce66;"
-                        />
+                        ></el-switch>
                       </div>
                     </div>
                   </div>
@@ -5553,7 +5553,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('desktopVision') }}
                         </span>
                       </div>
-                      <el-switch v-model="visionSettings.desktopVision" @click.stop @change="autoSaveSettings"/>
+                      <el-switch v-model="visionSettings.desktopVision" @click.stop @change="autoSaveSettings"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-alert
@@ -5633,7 +5633,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                               {{ t('affectionSystem') }}
                             </span>
                           </div>
-                          <el-switch v-model="loveSettings.enabled" @change="autoSaveSettings"/>
+                          <el-switch v-model="loveSettings.enabled" @change="autoSaveSettings"></el-switch>
                         </div>
                         
                         <div class="tool-content">
@@ -6911,7 +6911,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('fastModelConfiguration') }}
                         </span>
                       </div>
-                      <el-switch v-model="fastSettings.enabled" @click.stop @change="autoSaveSettings"/>
+                      <el-switch v-model="fastSettings.enabled" @click.stop @change="autoSaveSettings"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('provider')" class="form-item-align">
@@ -7240,7 +7240,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('reasonerConfig') }}
                         </span>
                       </div>
-                      <el-switch v-model="reasonerSettings.enabled" @click.stop @change="autoSaveSettings"/>
+                      <el-switch v-model="reasonerSettings.enabled" @click.stop @change="autoSaveSettings"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('reasoningProvider')" class="form-item-align">
@@ -7374,7 +7374,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('visionSettings') }}
                         </span>
                       </div>
-                      <el-switch v-model="visionSettings.enabled" @click.stop @change="handleVisionEnableToggle(visionSettings.enabled)"/>
+                      <el-switch v-model="visionSettings.enabled" @click.stop @change="handleVisionEnableToggle(visionSettings.enabled)"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('visionProvider')" class="form-item-align">
@@ -7473,7 +7473,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('imgModel') }}
                         </span>
                       </div>
-                      <el-switch v-model="text2imgSettings.enabled" @click.stop @change="autoSaveSettings"/>
+                      <el-switch v-model="text2imgSettings.enabled" @click.stop @change="autoSaveSettings"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('imgEngine')" class="form-item-align">
@@ -7681,7 +7681,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('asrModel') }}
                         </span>
                       </div>
-                      <el-switch v-model="asrSettings.enabled" @click.stop @change="handleASRchange"/>
+                      <el-switch v-model="asrSettings.enabled" @click.stop @change="handleASRchange"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('asrEngine')" class="form-item-align">
@@ -7960,7 +7960,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('ttsModel') }}
                         </span>
                       </div>
-                      <el-switch v-model="ttsSettings.enabled" @click.stop @change="changeTTSstatus" />
+                      <el-switch v-model="ttsSettings.enabled" @click.stop @change="changeTTSstatus" ></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('ttsEngine')" class="form-item-align">
@@ -9155,7 +9155,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           </el-link>
                         </span>
                       </div>
-                      <el-switch v-model="HASettings.enabled" @click.stop @change="changeHAEnabled"/>
+                      <el-switch v-model="HASettings.enabled" @click.stop @change="changeHAEnabled"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('baseURL')" class="form-item-align">
@@ -9247,7 +9247,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           </el-link>
                         </span>
                       </div>
-                      <el-switch v-model="chromeMCPSettings.enabled" @click.stop @change="changeChromeMCPEnabled"/>
+                      <el-switch v-model="chromeMCPSettings.enabled" @click.stop @change="changeChromeMCPEnabled"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('browserType')"  v-if="isElectron">
@@ -9359,7 +9359,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('localAppControl') }}
                         </span>
                       </div>
-                      <el-switch v-model="localAppControlSettings.enabled" @click.stop @change="toggleLocalAppControl"/>
+                      <el-switch v-model="localAppControlSettings.enabled" @click.stop @change="toggleLocalAppControl"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('appVision')" class="form-item-align" label-position="left">
@@ -9471,7 +9471,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           </el-link>
                         </span>
                       </div>
-                      <el-switch v-model="sqlSettings.enabled" @click.stop @change="changeSqlEnabled"/>
+                      <el-switch v-model="sqlSettings.enabled" @click.stop @change="changeSqlEnabled"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('sqlEngine')" class="form-item-align">
@@ -9581,7 +9581,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('interpreter') }}
                         </span>
                       </div>
-                      <el-switch v-model="codeSettings.enabled" @click.stop @change="handleInterpreterToggle"/>
+                      <el-switch v-model="codeSettings.enabled" @click.stop @change="handleInterpreterToggle"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('codeEngine')" class="form-item-align">
@@ -9676,7 +9676,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('visionControl') }}
                         </span>
                       </div>
-                      <el-switch v-model="visionControlSettings.enabled" @click.stop @change="handleVisionControlEnableToggle(visionControlSettings.enabled)"/>
+                      <el-switch v-model="visionControlSettings.enabled" @click.stop @change="handleVisionControlEnableToggle(visionControlSettings.enabled)"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-alert
@@ -9698,19 +9698,19 @@ function updateElement(el, rawMarkdown, formatFn) {
                         </template>
                       </el-alert>
                       <el-form-item :label="t('mouseControl')" class="form-item-align" label-position="left">
-                        <el-switch v-model="visionControlSettings.mouse" @click.stop @change="autoSaveSettings"/>
+                        <el-switch v-model="visionControlSettings.mouse" @click.stop @change="autoSaveSettings"></el-switch>
                       </el-form-item>
                       <el-form-item :label="t('keyboardControl')" class="form-item-align" label-position="left">
-                        <el-switch v-model="visionControlSettings.keyboard" @click.stop @change="autoSaveSettings"/>
+                        <el-switch v-model="visionControlSettings.keyboard" @click.stop @change="autoSaveSettings"></el-switch>
                       </el-form-item>
                       <el-form-item :label="t('realtimeDesktopVision')" class="form-item-align" label-position="left">
-                        <el-switch v-model="visionControlSettings.desktopVision" @click.stop @change="autoSaveSettings"/>
+                        <el-switch v-model="visionControlSettings.desktopVision" @click.stop @change="autoSaveSettings"></el-switch>
                       </el-form-item>
                       <el-form-item :label="t('onlyNewScreen')" class="form-item-align" label-position="left">
-                        <el-switch v-model="visionControlSettings.onlyNewScreen" @click.stop @change="autoSaveSettings"/>
+                        <el-switch v-model="visionControlSettings.onlyNewScreen" @click.stop @change="autoSaveSettings"></el-switch>
                       </el-form-item>
                       <el-form-item :label="t('isEnableGrid')" class="form-item-align" label-position="left">
-                        <el-switch v-model="visionControlSettings.isEnableGrid" @click.stop @change="autoSaveSettings"/>
+                        <el-switch v-model="visionControlSettings.isEnableGrid" @click.stop @change="autoSaveSettings"></el-switch>
                       </el-form-item>
                       <el-form-item :label="t('isFullScreen')" class="form-item-align" label-position="left">
                         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
@@ -9757,7 +9757,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                             {{ t('CLItool') }}
                           </span>
                         </div>
-                        <el-switch v-model="CLISettings.enabled" @click.stop @change="handleEnableToggle"/>
+                        <el-switch v-model="CLISettings.enabled" @click.stop @change="handleEnableToggle"></el-switch>
                       </div>
                       <div class="tool-content">
                         <el-form-item :label="t('CLIEngine')" class="form-item-align">
@@ -10410,7 +10410,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           {{ t('webSearch') }}
                         </span>
                       </div>
-                      <el-switch v-model="webSearchSettings.enabled" @click.stop @change="handleWebSearchToggle"/>
+                      <el-switch v-model="webSearchSettings.enabled" @click.stop @change="handleWebSearchToggle"></el-switch>
                     </div>
                     <div class="tool-content">
                       <el-form-item :label="t('searchEngine')" class="form-item-align">
@@ -10523,7 +10523,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                         <el-switch
                           v-model="webSearchSettings.searxng_is_select"
                           @change="autoSaveSettings"
-                        />
+                        ></el-switch>
                       </el-form-item>
                       <el-form-item 
                         v-show="webSearchSettings.searxng_is_select"
@@ -11979,7 +11979,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                                     v-model="tool.enabled" 
                                     @change="autoSaveSettings"
                                     size="small"
-                                  />
+                                  ></el-switch>
                               </div>
                           </div>
                           
@@ -14126,7 +14126,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                           </el-form-item>
 
                           <el-form-item :label="t('soulxTransparentBg')" class="form-item-align" label-position="left">
-                            <el-switch v-model="SoulxConfig.transparentBg" @change="autoSaveSettings" />
+                            <el-switch v-model="SoulxConfig.transparentBg" @change="autoSaveSettings" ></el-switch>
                           </el-form-item>
 
                           <el-form-item :label="t('soulxRefImage')" class="form-item-align">
@@ -15717,7 +15717,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                               <el-switch
                                 v-model="liveConfig.youtube_enabled"
                                 @change="autoSaveSettings"
-                              />
+                              ></el-switch>
                             </div>
 
                             <div class="tool-content">
@@ -15832,7 +15832,7 @@ function updateElement(el, rawMarkdown, formatFn) {
                               <el-switch
                                 v-model="liveConfig.twitch_enabled"
                                 @change="autoSaveSettings"
-                              />
+                              ></el-switch>
                             </div>
 
                             <div class="tool-content">

@@ -234,3 +234,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 
 - Build 45930156315 completed successfully with packaged-backend smoke and uploaded artifact 15168327479. Its source is 92c6c936; it predates the latest hardening.
 - Three storage read/delete endpoints now share flat-name containment validation, with regression tests and packaged synthetic HTTP checks. CI/Windows execution pending. Local-file import authorization, authentication, other file endpoints and tool path permissions remain separate tasks.
+
+## SAP-NG template reliability checkpoint
+
+- Correct 28 self-closing Element Plus switches in the main in-DOM template and add a smoke guard covering desktop, browser-chat and minimal HTML. No change to switch settings or event handlers. Static invariants passed; CI and Windows interaction checks pending. No new build requested. NG backend reuse and session authentication remain separate compatibility reviews.

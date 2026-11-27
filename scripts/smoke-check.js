@@ -68,6 +68,21 @@ function checkJavaScript(file) {
   }
 });
 
+// In-DOM Vue templates are parsed as HTML before Vue compiles them.
+// A self-closing custom switch can absorb later siblings into its slot.
+[
+  'static/index.html',
+  'static/chat.html',
+  'static/minimal.html',
+].forEach(file => {
+  if (!checkExists(file)) return;
+  const source = fs.readFileSync(rel(file), 'utf8');
+  const selfClosingSwitch = /<el-switch(?=[\s/>])(?:[^"'<>]|"[^"]*"|'[^']*')*?\/>/gi;
+  if ([...source.matchAll(selfClosingSwitch)].length > 0) {
+    failures.push(file + ': use explicit closing tags for Element Plus switches');
+  }
+});
+
 if (failures.length > 0) {
   console.error('Smoke check failed:');
   for (const failure of failures) {

@@ -55,3 +55,9 @@ Review scope: README, SECURITY.md, the named Python modules and test file, and t
 ### First targeted storage adaptation
 
 At the same SAP-NG pin, reviewed py/routers/files.py (read/delete containment) and py/auth.py (path_under). Our existing UI lists only top-level uploaded files, so use a separately implemented flat filename validator with canonical containment, link rejection and Windows special-name handling. No NG module copied. Preserve valid ordinary file operations and add unit plus packaged HTTP regression checks.
+
+### Template parsing and startup/authentication follow-up
+
+- SAP-NG AGPL-3.0 S328, `7d17be98dcf96a6f63049b0e0d9476d6de6cf325`: explicit closing tags prevent the HTML parser from swallowing later siblings in custom Element Plus switches. Our current main template contains 28 self-closing switches, all inspected; adapt the standard HTML markup correction without importing NG templates or regional content. Other custom elements are outside this narrowly scoped pass.
+- Reject the same commit's health-only reuse of port 3456 as written. Our independent account data directories require process/profile identity and verified endpoint ownership, not merely a successful health response. A TCP bind/reuse review can be pursued separately.
+- Rechecked NG py/auth.py at `cfcd88aaeea41b65c3bb42cfa5ee0b453e5364a2` against our server.py. Origin/Host guards and token concepts merit further evaluation, but do not accept broad filename-extension exemptions, default token-free external APIs or query-string credentials as-is. Preserve deliberate local-file imports and enumerate Electron, extension, HTTP, WebSocket and optional LAN client contracts before changing authentication. No auth code imported or access policy changed.
