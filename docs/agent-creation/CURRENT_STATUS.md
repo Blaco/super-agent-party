@@ -152,3 +152,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — remaining small UI and image-host modules
 
 - Localized 150 flagged lines in the minimal chat, live chat and subtitle overlays, service worker, macOS entitlements comments, image-host helper and three CSS files. Removed Chinese shortcut aliases from the minimal interface, preserving English commands; no network, layout, permission or image-host behavior changes intended. JSON/JavaScript-related checks passed where applicable. Main stylesheet and remaining MOSS/skill/documentation findings still need work. No new build.
+
+## Follow-up source checkpoint — bundled extension creator
+
+- Localized all 30 Han-flagged lines across the bundled extension-creator skill, package spec and static/Node starter templates. New templates ship English only, with no bilingual toggle or regional repository fallback example. Retain MCP registration, theme, extension lifecycle, API and user content support. Both template scripts parsed; actual generated extension runtime is unverified. Main stylesheet, MOSS text normalization, inherited planning documentation and binary asset review remain open.

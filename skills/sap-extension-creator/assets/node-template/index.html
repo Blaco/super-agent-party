@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en-US">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -152,12 +152,11 @@ body.compact #clearBtn { display: none; }
 </style>
 </head>
 <body>
-  <button class="compact-close-btn" onclick="closeWindow()" title="关闭窗口"><i class="fa-solid fa-xmark"></i></button>
+  <button class="compact-close-btn" onclick="closeWindow()" title="Close window"><i class="fa-solid fa-xmark"></i></button>
 
   <header>
     <div class="logo"><i class="fa-solid fa-robot"></i><span id="header-title">My SAP Node Extension</span></div>
     <div class="header-actions">
-      <button class="lang-btn" id="langBtn" onclick="toggleLanguage()">EN</button>
       <button onclick="toggleDarkMode()" title="Toggle theme"><i class="fa-solid fa-moon" id="darkIcon"></i></button>
     </div>
   </header>
@@ -189,36 +188,19 @@ let MY_EXT_ID = '';
 
 /* ---- i18n ---- */
 const i18n = {
-  zh: {
-    title: '我的 Node 扩展',
-    empty: '暂无消息',
-    placeholder: '输入消息…',
-    darkMode: '切换深色模式',
-    langSwitch: '切换到英文',
-    clear: '清空消息'
-  },
   en: {
     title: 'My Node Extension',
     empty: 'No messages yet',
     placeholder: 'Send a message…',
     darkMode: 'Toggle dark mode',
-    langSwitch: 'Switch to Chinese',
     clear: 'Clear messages'
   }
 };
-let lang = localStorage.getItem('myext_lang') || 'zh';
-function t(k) { return i18n[lang]?.[k] || i18n.zh[k] || k; }
-function toggleLanguage() {
-  lang = lang === 'zh' ? 'en' : 'zh';
-  localStorage.setItem('myext_lang', lang);
-  updateAllTexts();
-}
+function t(k) { return i18n.en[k] || k; }
 function updateAllTexts() {
   $('#header-title').textContent = t('title');
   $('#empty-text').textContent = t('empty');
   $('#userInput').placeholder = t('placeholder');
-  $('#langBtn').textContent = lang === 'zh' ? 'EN' : '中';
-  $('#langBtn').title = t('langSwitch');
   $('#darkIcon').parentElement.title = t('darkMode');
   $('#clearBtn').title = t('clear');
 }
@@ -329,11 +311,11 @@ function registerMcpTools() {
         // TODO: customize or remove this example tool
         {
           name: `${MY_EXT_ID}_example_tool`,
-          description: lang === 'zh' ? '示例工具：处理参数' : 'Example tool: process a parameter',
+          description: 'Example tool: process a parameter',
           parameters: {
             type: 'object',
             properties: {
-              param: { type: 'string', description: lang === 'zh' ? '一个参数' : 'A parameter' }
+              param: { type: 'string', description: 'A parameter' }
             },
             required: ['param']
           }

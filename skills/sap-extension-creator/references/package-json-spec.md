@@ -8,11 +8,11 @@ Complete reference for Super Agent Party extension `package.json`.
 |-------|------|----------|---------|-------------|
 | `name` | string | ✅ | — | Extension display name |
 | `version` | string | ✅ | `"1.0.0"` | Semantic version |
-| `description` | string | — | `"无描述"` | Short description |
-| `author` | string | — | `"未知"` | Author name |
+| `description` | string | — | `"No description"` | Short description |
+| `author` | string | — | `"Unknown"` | Author name |
 | `systemPrompt` | string | — | `""` | Custom system prompt injected for this extension |
 | `repository` | string | — | `""` | GitHub/GitLab repo URL (for updates) |
-| `backupRepository` | string | — | `""` | Backup repo (e.g., Gitee), used when GitHub unreachable |
+| `backupRepository` | string | — | `""` | Legacy metadata field; leave empty. The fork does not automatically use it. |
 | `category` | string | — | `""` | Category for plugin marketplace |
 | `transparent` | boolean | — | `false` | Whether the extension window is transparent |
 | `width` | number | — | `800` | Default window width |
@@ -128,7 +128,7 @@ Avoid relative paths like `../../fontawesome/css/all.min.css` — they may work 
 
 All extensions should implement:
 - **Dark/Light mode** via CSS variables on `:root` and `body.dark`, persisted to localStorage
-- **Chinese/English i18n** with a language toggle, also persisted to localStorage
+- **English interface text** for shipped labels and tool descriptions
 
 Each extension defines its own theme colors (do NOT hardcode SAP's colors). See the templates for complete implementations.
 
@@ -142,9 +142,9 @@ Each extension defines its own theme colors (do NOT hardcode SAP's colors). See 
   "version": "1.0.0",
   "description": "A chat frontend example",
   "author": "your-name",
-  "systemPrompt": "你是一个智能助手",
+  "systemPrompt": "You are a helpful assistant.",
   "repository": "https://github.com/user/sap-example",
-  "backupRepository": "https://gitee.com/user/sap-example",
+  "backupRepository": "",
   "category": "Example"
 }
 ```
@@ -157,9 +157,9 @@ Each extension defines its own theme colors (do NOT hardcode SAP's colors). See 
   "version": "1.0.0",
   "description": "Full-stack extension with Express",
   "author": "your-name",
-  "systemPrompt": "你是一个智能助手",
+  "systemPrompt": "You are a helpful assistant.",
   "repository": "https://github.com/user/my-node-extension",
-  "backupRepository": "https://gitee.com/user/my-node-extension",
+  "backupRepository": "",
   "category": "Tools",
   "main": "index.js",
   "nodePort": 0,
@@ -178,7 +178,7 @@ Each extension defines its own theme colors (do NOT hardcode SAP's colors). See 
   "description": "Music player controller overlay",
   "author": "your-name",
   "repository": "https://github.com/user/sap-lx-music",
-  "backupRepository": "https://gitee.com/user/sap-lx-music",
+  "backupRepository": "",
   "category": "Utility",
   "transparent": true,
   "width": 280,
@@ -190,7 +190,7 @@ Each extension defines its own theme colors (do NOT hardcode SAP's colors). See 
 
 1. **Install**: SAP reads `dependencies` and runs `npm install --production`
 2. **Tool registration**: `systemPrompt` is injected into the AI context
-3. **Updates**: `repository` and `backupRepository` are used to pull new versions
+3. **Updates**: `repository` is used to pull new versions; the optional user-configured GitHub proxy is supported
 4. **Marketplace**: `name`, `description`, `author`, `category` appear in the plugin list
 5. **Window creation**: `width`, `height`, `transparent` control how `BrowserWindow` is created (see `main.js` `open-extension-window`)
 6. **VRM sizing**: When `enableVrmWindowSize: true`, the window may be dynamically resized by VRM data

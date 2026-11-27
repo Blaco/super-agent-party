@@ -446,3 +446,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — English minimal mode, overlays and supporting modules
 
 - Parent a7f20890759ac91488fa42cf275d15fd4b7c8282. Translate 150 Han-flagged lines in py/image_host.py, static/minimal.html, static/danmaku_overlay.html, static/subtitle_overlay.html, static/sw.js, entitlements.mac.plist, static/css/transition.css, static/css/vrm.css, static/css/island.css. Preserve selectors, declarations, overlay event handlers, cache logic and entitlements; remove only Chinese shortcut aliases and a regional UI comparison. Preserve image hosting configuration and behavior. JavaScript syntax checked; Python and live GUI validation pending. Revert for rollback.
+
+## 2026-11-26 — English bundled extension creator and starter templates
+
+- Parent eaf00e7f92b4ab99a29c83a830480b3b2e6286d4. Translate all 30 flagged lines in the four bundled extension-creator files; remove Chinese locale table/default and toggle from both templates, replace the obsolete Gitee example values with empty legacy metadata, correct documentation about update behavior, and refer to maintained bundled templates instead of unreviewed upstream extensions. Preserve existing protocol names, theme, user text and static/Node integration. Inline scripts parse; live installation and MCP integration remain unverified. Revert for rollback.

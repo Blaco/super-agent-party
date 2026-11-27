@@ -66,7 +66,7 @@ See `references/package-json-spec.md` for the complete field reference. Minimum:
   "description": "What it does",
   "author": "your-name",
   "repository": "https://github.com/user/repo",
-  "backupRepository": "https://gitee.com/user/repo",
+  "backupRepository": "",
   "category": "Tools"
 }
 ```
@@ -102,7 +102,7 @@ The HTML page is rendered inside an Electron BrowserWindow (either directly or v
   ```
   Avoid relative paths like `../../fontawesome/` — these may work for static extensions but break for Node.js extensions (different serving paths).
 - **Dark/Light mode**: Always support both (see "Theme & i18n" section below).
-- **i18n (Chinese/English)**: Always support bilingual UI (see "Theme & i18n" section below).
+- **English UI**: Use English for all shipped interface text (see "Theme & i18n" section below).
 - **WebSocket connection**: Connect to `ws://host/ws` for messaging and MCP.
 - **Extension ID**: Parse `window.location.pathname` for `/extensions/{ext_id}/`.
 - **Message rendering**: Listen for `messages_update` and `broadcast_messages` events.
@@ -186,9 +186,9 @@ See `sap-lx-music/index.html` for a complete real-world MCP implementation examp
 
 ---
 
-## Theme & i18n (Dark/Light Mode + Bilingual)
+## Theme & i18n (Dark/Light Mode + English)
 
-Every extension should support **dark/light mode** and **Chinese/English bilingual** UI. Do NOT hardcode a single theme color scheme — use CSS variables so each extension can have its own identity.
+Every extension should support **dark/light mode** and an **English-only** shipped UI. Do NOT hardcode a single theme color scheme — use CSS variables so each extension can have its own identity.
 
 ### CSS Variable Pattern
 
@@ -239,33 +239,20 @@ function toggleDarkMode() {
 }
 ```
 
-### i18n Pattern
+### English Text Pattern
 
 ```js
 const i18n = {
-  zh: {
-    welcome: '欢迎使用我的扩展',
-    send: '发送',
-    // ... all UI strings
-  },
   en: {
     welcome: 'Welcome to My Extension',
-    send: 'Send',
-    // ...
+    send: 'Send'
   }
 };
 
-let lang = localStorage.getItem('myext_lang') || 'zh';
-function t(k) { return i18n[lang]?.[k] || i18n.zh[k] || k; }
-
-function toggleLanguage() {
-  lang = lang === 'zh' ? 'en' : 'zh';
-  localStorage.setItem('myext_lang', lang);
-  updateAllTexts();  // re-render all i18n-dependent UI
-}
+function t(k) { return i18n.en[k] || k; }
 ```
 
-When registering MCP tools, set `description` and `parameters` in the current user's language for better AI interaction.
+Use English for shipped tool descriptions, parameter descriptions, labels and defaults. User-authored content is not translated or restricted.
 
 ---
 
@@ -412,7 +399,7 @@ The close button HTML must be placed at the body level (not nested inside contai
 
 ```html
 <body>
-  <button class="compact-close-btn" onclick="closeWindow()" title="关闭窗口">
+  <button class="compact-close-btn" onclick="closeWindow()" title="Close window">
     <i class="fa-solid fa-xmark"></i>
   </button>
   <!-- rest of content -->
@@ -498,7 +485,7 @@ const res = await fetch('/simple_chat', { ... });
 {
   "messages": [
     { "role": "system", "content": "You are a professional translator." },
-    { "role": "user", "content": "Translate 'Hello world' to Chinese." }
+    { "role": "user", "content": "Rewrite 'Hello world' as a friendly greeting." }
   ],
   "stream": false,
   "temperature": 0.7
@@ -526,7 +513,7 @@ Returns a standard **OpenAI-compatible ChatCompletion JSON object**:
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "你好世界"
+        "content": "Hello, world!"
       },
       "finish_reason": "stop"
     }
@@ -547,8 +534,8 @@ Returns **NDJSON** (one JSON object per line), matching OpenAI's streaming forma
 
 ```
 {"id":"chatcmpl-xxx","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}
-{"id":"chatcmpl-xxx","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"你好"},"finish_reason":null}]}
-{"id":"chatcmpl-xxx","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"世界"},"finish_reason":null}]}
+{"id":"chatcmpl-xxx","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello, "},"finish_reason":null}]}
+{"id":"chatcmpl-xxx","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"world!"},"finish_reason":null}]}
 {"id":"chatcmpl-xxx","object":"chat.completion.chunk","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
 ```
 
@@ -581,7 +568,7 @@ async function simpleChat(messages, temperature = 0.7) {
 // ---------- Practical Examples ----------
 
 // Translation
-async function translate(text, targetLang = 'Chinese') {
+async function translate(text, targetLang = 'English') {
   const res = await simpleChat([
     { role: 'system', content: `You are a translator. Translate to ${targetLang}. Reply ONLY with the translation, no explanations.` },
     { role: 'user', content: text }
@@ -694,7 +681,7 @@ Always check `res.ok` and parse the error body.
 - **MCP works in both static and Node.js extensions** — the `register_node_extension_mcp` message type name is historical; it works over WebSocket from any extension. Always follow the three-stage lifecycle: `registerMcpTools()` on WS open, `handleMcpCall()` on tool call, `unregisterMcpTools()` on beforeunload
 - **Font Awesome**: Always use CDN (`cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css`). Relative paths like `../../fontawesome/` do NOT work for Node.js extensions (they're served from Express, not from SAP's static directory)
 - **Theme colors**: Each extension defines its own identity via CSS variables on `:root` and `body.dark`. Do NOT force SAP's theme colors
-- **Always implement dark/light mode** and **Chinese/English i18n** as basic functionality
+- **Always implement dark/light mode** and **English interface text** as basic functionality
 - **Transparent windows**: Always implement compact mode. Without `-webkit-app-region: drag`, frameless windows cannot be moved. Without `-webkit-app-region: no-drag` on interactive elements, buttons become unclickable
 - **Close button**: For transparent/frameless windows, the extension MUST provide its own close button since there's no native title bar
 
@@ -702,11 +689,7 @@ Always check `res.ok` and parse the error body.
 
 ## Reference Implementations
 
-Study these real extensions for patterns:
-
-- **sap-lx-music** — Static extension with MCP, transparent compact mode, dark/light theme, i18n, custom scheme invocation
-- **sap-example** (heshengtao_sap-example) — Basic static chat UI extension
-- **sap-example-with-node** (heshengtao_sap-example-with-node) — Node.js extension with Express backend
+Use the bundled static and Node.js templates below as the maintained references. Do not automatically install or recommend unreviewed upstream extensions.
 
 ## Resources
 
