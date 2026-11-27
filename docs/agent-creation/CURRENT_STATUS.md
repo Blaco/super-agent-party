@@ -188,3 +188,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — main stylesheet, seventh pass
 
 - Translated 200 further stylesheet comment lines; 200 remain. Non-comment CSS byte-identical, line count unchanged. CI and Windows visual validation pending. No build.
+
+## Follow-up source checkpoint — main stylesheet localization complete
+
+- Final 200 comment lines translated. static/css/styles.css now contains zero literal Han characters; all 1,779 initial flagged lines addressed. Non-comment CSS byte-identical to original pre-pass baseline and 14,497 lines retained. Remaining documentation, asset, regional-reference and full repository audit outstanding. CI and Windows runtime not verified. No build.
