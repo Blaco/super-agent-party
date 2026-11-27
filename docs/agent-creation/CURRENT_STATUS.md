@@ -164,3 +164,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — main stylesheet, first pass
 
 - Translated 235 distinct comment occurrences (235 flagged lines) in static/css/styles.css, covering themes, components, chat, navigation, file tables, model and knowledge cards. All CSS outside comments is byte-identical to the previous version; line count unchanged. 1544 Han-flagged stylesheet lines remain. No selectors, declarations or behavior changed. Further comment localization and residual regional selector review pending. No build.
+
+## Follow-up source checkpoint — main stylesheet, second pass
+
+- Translated 259 additional Han-flagged stylesheet comment lines; 1285 remain. All non-comment CSS is byte-identical and the line count is unchanged. Further localization, residual regional references, CI and Windows validation remain outstanding. No build.
