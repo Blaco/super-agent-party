@@ -257,6 +257,15 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         self.assertIn("modalities", image)
         self.assertIn("![Image name](image URL)", image)
 
+    def test_model_managers_and_dify_adapter_are_english(self):
+        for relative in ("py/dify_openai.py", "py/sherpa_model_manager.py",
+                         "py/moss_model_manager.py", "py/ebd_model_manager.py",
+                         "py/minilm_router.py"):
+            path = ROOT / relative
+            source = path.read_text(encoding="utf-8")
+            ast.parse(source, filename=str(path))
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

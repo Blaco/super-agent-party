@@ -112,3 +112,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — web search and image tools
 
 - Completed the remaining English source conversion of py/web_search.py (67 flagged lines) and py/pollinations.py (31 flagged lines). Search changes are comments/docstrings; image changes include agent-facing schema descriptions, examples and developer comments. Preserve provider configuration, robots checks, network behavior, tool names, Markdown rendering and image processing. Static line coverage and zero literal Han checks passed. Added AST and source regression coverage; Python CI and live providers remain unverified. No package requested.
+
+## Follow-up source checkpoint — model management and Dify adapter
+
+- Completed the remaining English conversion of py/dify_openai.py, py/sherpa_model_manager.py, py/moss_model_manager.py, py/ebd_model_manager.py and py/minilm_router.py (89 flagged lines). Only documentation, comments and a missing-model error message changed; original download sources, progress contracts, paths, acceleration provider order and fallback behavior remain intact. Added AST and zero-Han regression coverage. Static line coverage verified; full Python CI, model downloads and inference still require validation. No package requested.

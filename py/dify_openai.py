@@ -16,8 +16,8 @@ from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice, Choic
 
 class DifyOpenAIAsync:
     """
-    纯 httpx 封装的 Dify → OpenAI 适配器
-    外部接口完全对齐 OpenAI 官方 SDK 的 async 调用方式
+    Dify-to-OpenAI adapter implemented using httpx.
+    The external interface follows the asynchronous OpenAI SDK calling convention.
     """
 
     def __init__(self, *, api_key: str, base_url: str = "https://api.dify.ai/v1"):
@@ -29,7 +29,7 @@ class DifyOpenAIAsync:
         await self._client.aclose()
 
     # --------------------------------------------------
-    # 内部工具
+    # Internal helpers
     # --------------------------------------------------
     @staticmethod
     def _extract_conv_id_from_messages(messages: List[ChatCompletionMessageParam]) -> str | None:
@@ -41,7 +41,7 @@ class DifyOpenAIAsync:
         return None
 
     # --------------------------------------------------
-    # 对外的 chat.completions.create
+    # Public chat.completions.create interface
     # --------------------------------------------------
     class Completions:
         def __init__(self, outer: "DifyOpenAIAsync"):
@@ -55,7 +55,7 @@ class DifyOpenAIAsync:
             stream: bool = False,
             **_,
         ):
-            # ---------- 构造 Dify 所需参数 ----------
+            # ---------- Construct Dify request parameters ----------
             query = messages[-1]["content"] or ""
             inputs: Dict[str, Any] = {}
             for m in messages[:-1]:
@@ -73,7 +73,7 @@ class DifyOpenAIAsync:
                 "user": "super-agent-party",
             }
 
-            # ---------- 发起 HTTP 请求 ----------
+            # ---------- Send HTTP request ----------
             headers = {
                 "Authorization": f"Bearer {self._outer._api_key}",
                 "Content-Type": "application/json",
@@ -124,7 +124,7 @@ class DifyOpenAIAsync:
                         except json.JSONDecodeError:
                             continue
 
-                        # 我们只关心 event == "message"
+                        # Only handle event == "message"
                         if event.get("event") not in ["message", "agent_message"]:
                             continue
 
@@ -149,7 +149,7 @@ class DifyOpenAIAsync:
                             ],
                         )
 
-                    # 结束帧
+                    # Final frame
                     yield ChatCompletionChunk(
                         id="super-agent-party",
                         object="chat.completion.chunk",

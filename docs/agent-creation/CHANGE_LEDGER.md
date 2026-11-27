@@ -406,3 +406,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Complete search and image-tool localization
 
 - Parent `777bde3f659ddc0e5ff9d3579d9d7d3602ecbb2d`. Translate 67 flagged lines in py/web_search.py and 31 in py/pollinations.py. Preserve executable search logic, provider URLs, quotas/configuration, request/response schemas, image size/model defaults, modalities fallback and URL processing. English image prompts retain original Markdown formatting requirements; examples changed to neutral English subjects. No new dependencies or permission changes. Both files retain original line counts and contain zero literal Han characters. Added regression tests; Python execution, CI and live services outstanding. Revert for rollback. No build requested.
+
+## 2026-11-26 — English model management and Dify adapter source
+
+- Parent `17dd825844a51286c124e28addd5494ead31a170`. Translate 8 lines in py/dify_openai.py, 40 in py/sherpa_model_manager.py, 5 in py/moss_model_manager.py, 14 in py/ebd_model_manager.py and 22 in py/minilm_router.py. Preserve executable behavior, API endpoints, progress records, dependencies, acceleration provider ordering, paths, and default configuration. Only comments/docstrings and the MiniLM missing-model diagnostic changed. Retain exact line counts; no literal Han characters remain in the five files. Added AST/full-file regression tests. Python CI and live model downloads/inference unverified. Revert for rollback. No build requested.

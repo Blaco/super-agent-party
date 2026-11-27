@@ -9,13 +9,13 @@ from pydantic import BaseModel
 
 from py.get_setting import DEFAULT_EBD_DIR
 
-# ----------------- 延迟导入占位符 -----------------
+# ----------------- Lazy import placeholders -----------------
 ort = None
 AutoTokenizer = None
 np = None
 
 def _lazy_load_deps():
-    """只有在真正用到模型时，才在子线程/函数内加载重型库"""
+    """Load heavyweight libraries only when the model is needed, inside the worker thread or function."""
     global ort, AutoTokenizer, np
     if ort is None:
         import onnxruntime as ort
@@ -31,10 +31,10 @@ MODEL_PATH = os.path.join(DEFAULT_EBD_DIR, MODEL_NAME)
 class MiniLMOnnxPredictor:
     def __init__(self, model_dir: str, use_gpu: bool = True):
         """
-        :param use_gpu: 是否尝试启用 GPU 硬件加速。默认为 True。
-                       如果为 True，代码将自动根据当前 OS 和显卡类型选择最佳加速方案并支持回退。
+        :param use_gpu: Whether to attempt GPU hardware acceleration. Defaults to True.
+                       When enabled, select an appropriate provider for the operating system and hardware, with fallback.
         """
-        _lazy_load_deps()  # 确保库已加载
+        _lazy_load_deps()  # Ensure dependencies are loaded
         self.model_dir = model_dir
         self.is_loaded = False
         
@@ -42,56 +42,56 @@ class MiniLMOnnxPredictor:
             return
             
         try:
-            # 自动识别 [UNK] 还是 <unk>
+            # Detect whether the unknown-token marker is [UNK] or <unk>
             self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
             
-            # --- 寻找模型文件 ---
+            # --- Locate model files ---
             model_path_o4 = os.path.join(model_dir, "model_O4.onnx")
             model_path_std = os.path.join(model_dir, "model.onnx")
             target_model = model_path_o4 if os.path.exists(model_path_o4) else model_path_std
             
             if not os.path.exists(target_model):
-                raise FileNotFoundError(f"未找到模型文件: {target_model}")
+                raise FileNotFoundError(f"Model file not found: {target_model}")
 
-            # --- 智能多系统、多显卡 Provider 排队机制 ---
+            # --- Prioritized execution providers for different platforms and GPUs ---
             priority_providers = []
 
             if use_gpu:
                 available_providers = ort.get_available_providers()
                 print(f"[ONNX] Registered providers in runtime: {available_providers}")
 
-                # 1. Windows 平台的跨显卡方案（DirectML：支持 N卡/A卡/I卡）
+                # 1. Windows: DirectML supports NVIDIA, AMD and Intel GPUs
                 if sys.platform == "win32":
                     if "DmlExecutionProvider" in available_providers:
                         priority_providers.append("DmlExecutionProvider")
 
-                # 2. macOS 平台的硬件加速方案（CoreML：支持 M系列 NPU/GPU）
+                # 2. macOS: CoreML supports Apple Silicon NPU/GPU acceleration
                 elif sys.platform == "darwin":
                     if "CoreMLExecutionProvider" in available_providers:
                         priority_providers.append("CoreMLExecutionProvider")
 
-                # 3. 通用 NVIDIA GPU 加速方案 (Linux / Windows 如果装了 CUDA 且环境匹配)
+                # 3. NVIDIA CUDA acceleration when installed and compatible on Linux or Windows
                 if "CUDAExecutionProvider" in available_providers:
                     priority_providers.append("CUDAExecutionProvider")
 
-            # 4. 绝对保底方案
+            # 4. CPU fallback
             priority_providers.append("CPUExecutionProvider")
 
-            # --- 逐个尝试加载，隔离 DLL / SO 缺失导致的崩溃风险 ---
+            # --- Attempt providers individually to isolate failures from missing native libraries ---
             self.session = None
             loaded_provider = None
 
             for provider in priority_providers:
                 try:
-                    # 单独尝试一个加速器，并以 CPU 保底
+                    # Try one accelerator with CPU fallback
                     test_providers = [provider]
                     if provider != "CPUExecutionProvider":
                         test_providers.append("CPUExecutionProvider")
 
-                    # 尝试初始化 InferenceSession
+                    # Attempt to initialize InferenceSession
                     session = ort.InferenceSession(target_model, providers=test_providers)
                     
-                    # 确保确实启用了我们期望的 Provider
+                    # Confirm the requested provider is actually enabled
                     active_providers = session.get_providers()
                     if provider in active_providers:
                         self.session = session
@@ -100,7 +100,7 @@ class MiniLMOnnxPredictor:
                 except Exception as ex:
                     print(f"[ONNX] Provider '{provider}' initialization failed: {ex}. Trying fallback...")
 
-            # 如果前面的高级加速全失败了，使用最终的 CPU 物理保底
+            # Use CPU if all preceding acceleration attempts fail
             if self.session is None:
                 print("[ONNX] All hardware accelerators failed. Falling back to CPUExecutionProvider...")
                 self.session = ort.InferenceSession(target_model, providers=["CPUExecutionProvider"])
@@ -154,7 +154,7 @@ class MiniLMOnnxPredictor:
         embeddings = self.mean_pooling(outputs[0], inputs["attention_mask"])
         return self.normalize(embeddings).astype(np.float32)
 
-# ---------- 池子管理 ----------
+# ---------- Model pool management ----------
 class MiniLMPool:
     def __init__(self, model_dir: str, use_gpu: bool = True):
         self.model_dir = model_dir
@@ -169,7 +169,7 @@ class MiniLMPool:
             if self._predictor and self._predictor.is_loaded:
                 return self._predictor
             
-            # 使用更安全的自适应加速
+            # Use adaptive hardware acceleration
             predictor = MiniLMOnnxPredictor(self.model_dir, self.use_gpu)
             if not predictor.is_loaded:
                 raise RuntimeError("Model failed to load")
@@ -180,8 +180,8 @@ class MiniLMPool:
         with self._lock:
             self._predictor = None
 
-# 默认开启 use_gpu=True。
-# 因为有了上面的自检测回退逻辑，即使宿主机没有任何显卡或驱动，它也会极其安全地回退到 CPU，绝不会报错。
+# Enable use_gpu=True by default.
+# The provider detection and fallback logic attempts CPU execution when compatible GPU acceleration is unavailable.
 minilm_pool = MiniLMPool(MODEL_PATH, use_gpu=True)
 
 # ---------- FastAPI Router ----------

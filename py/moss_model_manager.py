@@ -13,7 +13,7 @@ HF_REPOS =[
     "OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX",
     "OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX"
 ]
-# 两个仓库总计大小约为 784 MB
+# The two repositories total approximately 784 MB
 TARGET_TOTAL_BYTES = 784 * 1024 * 1024  
 
 download_status = {
@@ -36,7 +36,7 @@ def is_model_ready() -> bool:
     )
 
 def get_dir_size(path: Path) -> int:
-    """递归计算目录下的文件总大小（涵盖 SDK 下载时的临时文件）"""
+    """Recursively calculate directory size, including temporary SDK download files."""
     total = 0
     if not path.exists():
         return total
@@ -59,7 +59,7 @@ def _download_sync(source: str):
             for repo_id in HF_REPOS:
                 repo_name = repo_id.split("/")[-1]
                 target_dir = str(base_dir / repo_name)
-                # 关键：设置 local_dir_use_symlinks=False 才能让进度扫描精确生效
+                # Disable local_dir_use_symlinks so progress scanning measures the downloaded files
                 snapshot_download(repo_id=repo_id, local_dir=target_dir)
                 
         download_status["done"] = True
@@ -74,10 +74,10 @@ def status():
     if is_model_ready():
         percent = 100
     elif download_status["is_downloading"]:
-        # 实时计算当前文件夹大小
+        # Calculate current directory size
         current_bytes = get_dir_size(get_moss_base_dir())
         percent = int((current_bytes / TARGET_TOTAL_BYTES) * 100)
-        # 限制在 0-99 之间，直到最后由 is_model_ready 判定为 100
+        # Cap progress at 99 until is_model_ready confirms completion
         percent = max(0, min(99, percent))
         
     return {
