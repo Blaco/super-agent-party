@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="en-US" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>极简模式</title>
+  <title>Minimal mode</title>
   <link rel="stylesheet" href="fontawesome/css/all.min.css">
   <link rel="stylesheet" href="css/github-markdown.min.css">
   <link rel="stylesheet" href="css/github.min.css">
@@ -30,7 +30,7 @@
       padding: 16px 20px 12px 20px;
     }
 
-    /* 消息瀑布流 — contain 解决透明窗口下气泡层不跟随滚动的问题 */
+    /* Message layout: containment keeps bubbles aligned with scrolling in transparent windows */
     #message-area {
       -webkit-app-region: no-drag;
       flex: 0 1 auto;
@@ -96,7 +96,7 @@
     .msg-bubble table { font-size: 12px; border-collapse: collapse; width: 100%; }
     .msg-bubble th, .msg-bubble td { padding: 4px 8px; border: 1px solid var(--el-border-color-lighter); }
 
-    /* 媒体类气泡：图片、代码块、表格直接填充满整个气泡（无边框、无内边距、贴边） */
+    /* Media bubbles: images, code blocks and tables fill the bubble without borders or padding */
     .msg-bubble--fill,
     .msg-bubble:has(> pre:only-child),
     .msg-bubble:has(> table:only-child),
@@ -127,7 +127,7 @@
       line-height: 1.5;
       border-radius: inherit;
     }
-    /* 仅图片/视频包裹层去除行高造成的底部缝隙 */
+    /* Remove the bottom gap caused by line height in image and video wrappers */
     .msg-bubble--fill > p,
     .msg-bubble--fill > a,
     .msg-bubble--fill > div,
@@ -302,28 +302,28 @@
   <div id="app">
     <div id="message-area" class="empty"></div>
     <div class="input-container">
-      <button id="close-btn" title="关闭"><i class="fa-solid fa-xmark"></i></button>
+      <button id="close-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
       <div id="shortcut-menu" class="shortcut-menu" style="display:none;"></div>
       <div class="hero-input-wrapper">
         <div>
           <textarea id="user-input"
-            placeholder="输入消息，Enter 发送，Shift+Enter 换行"
+            placeholder="Enter a message; Enter to send, Shift+Enter for a new line"
             rows="1"
             style="border:none!important;box-shadow:none!important;background:transparent!important;font-size:16px;padding:16px 32px 8px 24px;color:var(--el-text-color-primary);line-height:1.6;outline:none;resize:none;width:100%;box-sizing:border-box;font-family:inherit;"></textarea>
         </div>
         <div class="hero-input-footer" style="display:flex;justify-content:space-between;align-items:center;">
-          <button id="new-chat-btn" title="新会话"
+          <button id="new-chat-btn" title="New conversation"
             style="background:transparent;border:none;color:var(--el-text-color-secondary);font-size:15px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.15s;">
             <i class="fa-solid fa-comment-medical"></i>
           </button>
-          <button id="tts-btn" title="语音合成">
+          <button id="tts-btn" title="Text to speech">
             <i class="fa-solid fa-volume-xmark"></i>
           </button>
           <div id="drag-bar"></div>
-          <button id="ptt-btn" title="按住说话">
+          <button id="ptt-btn" title="Hold to talk">
             <i class="fa-solid fa-microphone"></i>
           </button>
-          <button id="send-btn" disabled title="发送 (Enter)">
+          <button id="send-btn" disabled title="Send (Enter)">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </div>
@@ -396,12 +396,12 @@
         var imgs = bubble.querySelectorAll('img, video');
         var pres = bubble.querySelectorAll('pre');
         var tables = bubble.querySelectorAll('table');
-        // 纯图片/视频：无文字、仅一个媒体（忽略 <p>/<a>/<div> 等任意包裹层）
+        // Media only: one image or video without text, ignoring wrapper elements
         if (!text && imgs.length === 1 && pres.length === 0 && tables.length === 0) {
           bubble.classList.add('msg-bubble--fill');
           return;
         }
-        // 单独的代码块或表格
+        // Standalone code block or table
         var kids = meaningfulChildren(bubble);
         if (kids.length === 1 && kids[0].nodeType === 1) {
           var tag = kids[0].tagName;
@@ -520,7 +520,7 @@
             var raw = typeof bk.content === 'string' ? bk.content : '';
 
             if (bk.role === 'assistant' && raw.trim()) {
-              // Assistant speech -> render as QQ bubbles
+              // Assistant speech: render as chat bubbles
               if (appendBubbles(raw, wrapper)) hasContent = true;
             } else if (bk.role === 'tool' || bk.role === 'tool_result') {
               var think = document.createElement('div');
@@ -647,7 +647,7 @@
         } else { window.close(); }
       }
 
-      // ===== TTS 开关：远程控制主界面的语音合成开关 =====
+      // ===== TTS toggle: remotely control speech synthesis in the main interface =====
       function updateTtsButton() {
         var icon = ttsBtn.querySelector('i');
         if (ttsEnabled) {
@@ -668,7 +668,7 @@
         ws.send(JSON.stringify({ type: 'save_settings', data: cachedSettings, correlationId: genId() }));
       }
 
-      // ===== 语音识别 PTT（按住说话）=====
+      // ===== Push-to-talk speech recognition=====
       var asrWs = null;
       var asrReconnTimer = null;
       var isPttRecording = false;
@@ -843,15 +843,15 @@
         return new Blob([buffer], { type: 'audio/wav' });
       }
 
-      // ===== 快捷指令弹出菜单 =====
+      // ===== Shortcut command menu =====
       var SHORTCUT_COMMANDS = [
-        { cmd: '/help', aliases: ['/帮助', '/?'], mode: 'run', desc: '列出所有可用的快捷指令' },
-        { cmd: '/new', aliases: ['/reset', '/重启', '/新建'], mode: 'run', desc: '清空当前对话并开始新的会话' },
-        { cmd: '/stop', aliases: ['/停止'], mode: 'run', desc: '停止当前正在进行的回复' },
-        { cmd: '/retry', aliases: ['/重试'], mode: 'run', desc: '重新生成上一条回复' },
-        { cmd: '/model', aliases: ['/模型'], mode: 'fill', desc: '切换当前模型' },
-        { cmd: '/personality', aliases: ['/角色'], mode: 'fill', desc: '切换角色卡 / 人格' },
-        { cmd: '/skills', aliases: ['/技能'], mode: 'run', desc: '查看可用技能列表' }
+        { cmd: '/help', aliases: ['/?'], mode: 'run', desc: 'List available shortcuts' },
+        { cmd: '/new', aliases: ['/reset'], mode: 'run', desc: 'Clear the current conversation and start a new one' },
+        { cmd: '/stop', aliases: [], mode: 'run', desc: 'Stop the current response' },
+        { cmd: '/retry', aliases: [], mode: 'run', desc: 'Regenerate the previous response' },
+        { cmd: '/model', aliases: [], mode: 'fill', desc: 'Switch the current model' },
+        { cmd: '/personality', aliases: [], mode: 'fill', desc: 'Switch character card or personality' },
+        { cmd: '/skills', aliases: [], mode: 'run', desc: 'List available skills' }
       ];
       var shortcutMenuEl = document.getElementById('shortcut-menu');
       var shortcutItems = [];

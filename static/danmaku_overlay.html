@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8">
-    <title>灵动悬浮弹幕</title>
+    <title>Floating live chat overlay</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
         
         body { 
             margin: 0; 
             padding: 0; 
-            /* 浅奶油色背景，非透明 */
+            /* Opaque light cream background */
             background-color: #FAF9F6; 
             overflow: hidden; 
             font-family: 'Noto Sans SC', sans-serif; 
@@ -17,11 +17,11 @@
 
         #danmaku-container {
             position: absolute;
-            /* 激活时距离顶部 50px */
+            /* Position 50px from the top when active */
             top: 50px; 
             left: 50%;
             
-            /* 初始状态：向上位移并缩小，带有轻微旋转 */
+            /* Initial state: move upward, scale down and rotate slightly */
             transform: translate(-50%, -250px) scale(0.5) rotate(-5deg);
             transform-origin: center center;
             
@@ -29,18 +29,18 @@
             min-width: 480px;
             max-width: 85vw;
             
-            /* 马卡龙粉配色 */
+            /* Pastel pink color scheme */
             background: #FFF0F5; 
             color: #6D5D6E;
             padding: 25px 50px;
             
-            /* 完整的圆角矩形 */
+            /* Rounded rectangle */
             border-radius: 40px; 
             border: 6px solid #FFFFFF;
             
-            /* 底部装饰条改为悬浮感阴影装饰 */
+            /* Decorative bottom shadow */
             box-shadow: 
-                0 15px 0px #FFB7CE, /* 模拟厚度感 */
+                0 15px 0px #FFB7CE, /* Simulate thickness */
                 0 25px 50px rgba(255, 183, 206, 0.4);
             
             display: flex;
@@ -48,20 +48,20 @@
             align-items: center;
             justify-content: center;
             
-            /* 极具弹性的过渡曲线 */
+            /* Spring-like transition curve */
             transition: all 0.8s cubic-bezier(0.34, 1.7, 0.64, 1);
             opacity: 0;
             z-index: 999;
             pointer-events: none;
         }
 
-        /* 激活状态：弹入并恢复正常大小 */
+        /* Active state: bounce in and restore normal size */
         #danmaku-container.show {
             transform: translate(-50%, 0) scale(1) rotate(0deg);
             opacity: 1;
         }
 
-        /* 顶部小标签 */
+        /* Small top label */
         .header-tag {
             background: #FFB7CE;
             color: white;
@@ -80,11 +80,11 @@
             line-height: 1.4;
             text-align: center;
             color: #5F5F5F;
-            /* 文字微小阴影增加立体感 */
+            /* Subtle text shadow adds depth */
             text-shadow: 2px 2px 0px #FFFFFF;
             word-break: break-all;
             
-            /* 内部轻微呼吸动画 */
+            /* Subtle breathing animation */
             animation: floating-text 3s ease-in-out infinite;
         }
 
@@ -93,7 +93,7 @@
             50% { transform: translateY(-3px); }
         }
 
-        /* 这里的伪元素增加一点马卡龙可爱的装饰（可选） */
+        /* Optional decorative pseudo-element */
         #danmaku-container::after {
             content: "✨";
             position: absolute;
@@ -133,7 +133,7 @@
                         contentEl.textContent = msg.data.content || '';
                         container.classList.add('show');
                     } else if (msg.action === 'clear') {
-                        // 消失时可以先缩小再隐藏
+                        // Scale down before hiding
                         container.classList.remove('show');
                     }
                 } catch (e) {}

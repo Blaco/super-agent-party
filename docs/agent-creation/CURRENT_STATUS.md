@@ -148,3 +148,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up checkpoint — verified lockfile and CI repair
 
 - GitHub Actions resolver run 45925158544 completed successfully at 6a84ebf0a9385e279957d5a272e2eb3dcf8507c1. Downloaded artifact, verified SHA-256 355ee7240ad0ca9e3a34a9f6fb3216275a11d707773bacc90cfa993d2b398466; 413 package records, no retired packages or unexpected sources. The committed lock blob is byte-identical to the candidate (Git blob 304b6fafc5ab4f1f5faba05b46ef70ff2e47af89). Removed the leading UTF-8 BOM in py/dynamic_island.py that caused the otherwise passing English runtime contract suite to error. Source audit run 45925158378 examined 2,773 text files; 2,409 project-source Han-flagged lines, 30 bundled-skill lines, with 1,779 in styles.css. Binary review remains pending. No package built in this commit.
+
+## Follow-up source checkpoint — remaining small UI and image-host modules
+
+- Localized 150 flagged lines in the minimal chat, live chat and subtitle overlays, service worker, macOS entitlements comments, image-host helper and three CSS files. Removed Chinese shortcut aliases from the minimal interface, preserving English commands; no network, layout, permission or image-host behavior changes intended. JSON/JavaScript-related checks passed where applicable. Main stylesheet and remaining MOSS/skill/documentation findings still need work. No new build.

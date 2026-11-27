@@ -1,4 +1,4 @@
-/* OpenRunde 字体 */
+/* OpenRunde font */
 @font-face {
   font-family: 'OpenRunde';
   src: url('../source/fonts/OpenRunde-Regular.woff') format('woff');
@@ -20,7 +20,7 @@
   font-weight: 700; font-style: normal;
 }
 
-/* 大型模式点击关闭层 */
+/* Click-to-close layer in large mode */
 .large-dismiss-shield {
   position: fixed; top: 0; left: 0;
   width: 100vw; height: 100vh;
@@ -29,7 +29,7 @@
   background: transparent;
 }
 
-/* 全屏容器 */
+/* Full-screen container */
 #island-container {
   position: fixed; top: 0; left: 0;
   width: 100vw; height: 100vh;
@@ -37,7 +37,7 @@
   pointer-events: none;
 }
 
-/* 岛主体 */
+/* Island body */
 #island {
   position: absolute;
   top: 10px;
@@ -72,7 +72,7 @@
   transform: translateX(-50%) scale(1.03);
 }
 
-/* --- Still 静止态 --- */
+/* --- Still state --- */
 .still-content {
   display: flex; align-items: center; justify-content: center;
   width: 100%; height: 100%;
@@ -83,7 +83,7 @@
   pointer-events: none;
 }
 
-/* --- Quick 悬停态 --- */
+/* --- Quick hover state --- */
 #island.quick {
   width: 310px;
   justify-content: flex-start;
@@ -95,7 +95,7 @@
   gap: 2px;
 }
 
-/* Quick 天气图标 */
+/* Quick weather icon */
 .quick-weather {
   display: flex; align-items: center; gap: 4px;
   flex-shrink: 0; font-size: 12px; color: rgba(255,255,255,0.7);
@@ -110,7 +110,7 @@
   white-space: nowrap;
 }
 
-/* Quick 时间 */
+/* Quick time */
 .quick-time {
   font-size: 14px; font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -118,7 +118,7 @@
   padding: 0 4px;
 }
 
-/* 音乐全宽 跑马灯（占满整个 quick 矩形） */
+/* Full-width music marquee in quick mode */
 .music-full {
   gap: 8px;
   padding: 0 4px;
@@ -130,7 +130,7 @@
   flex: 1;
 }
 
-/* Quick 左边：封面 + 跑马灯（已废弃，保留兼容） */
+/* Quick left area: cover and marquee (retained for compatibility) */
 .quick-left {
   display: flex; align-items: center; gap: 6px;
   flex: 1; min-width: 0; overflow: hidden;
@@ -145,7 +145,7 @@
   font-size: 12px; color: rgba(255,255,255,0.6);
 }
 
-/* 跑马灯 */
+/* Marquee */
 .marquee-box {
   flex: 1; min-width: 0; height: 40px; line-height: 40px;
   overflow: hidden;
@@ -162,7 +162,7 @@
   flex-shrink: 0;
 }
 
-/* Quick 日期 */
+/* Quick date */
 .quick-date {
   font-size: 11px; font-weight: 400;
   color: rgba(255,255,255,0.5);
@@ -174,7 +174,7 @@
   padding: 0 4px;
 }
 
-/* Quick 主题切换按钮 */
+/* Quick theme toggle */
 .quick-theme-btn {
   background: none; border: none;
   color: rgba(255,255,255,0.35);
@@ -190,7 +190,7 @@
   background: rgba(255,200,80,0.1);
 }
 
-/* Quick 关闭按钮 */
+/* Quick close button */
 .quick-close-btn {
   background: none; border: none;
   color: rgba(255,255,255,0.35);
@@ -206,7 +206,7 @@
   background: rgba(255,107,107,0.12);
 }
 
-/* Quick 极简模式按钮 */
+/* Quick minimal-mode button */
 .quick-minimal-btn {
   background: none; border: none;
   color: rgba(255,255,255,0.35);
@@ -222,7 +222,7 @@
   background: rgba(111,255,123,0.1);
 }
 
-/* 右侧按钮区 */
+/* Right-side controls */
 .quick-right {
   display: flex; align-items: center; flex-shrink: 0;
   gap: 2px;
@@ -237,7 +237,7 @@
 }
 .ctrl-btn-sm:hover { background: rgba(255,255,255,0.12); }
 
-/* --- Large 展开态 --- */
+/* --- Large expanded state --- */
 #island.large {
   width: 380px; height: 360px;
   border-radius: 30px;
@@ -247,7 +247,7 @@
   cursor: default;
 }
 
-/* 面板滑动容器 */
+/* Sliding panel container */
 .panels-wrapper {
   width: 100%; flex: 1;
   overflow: hidden;
@@ -266,7 +266,7 @@
   padding: 0 20px 10px;
 }
 
-/* 面板指示器 */
+/* Panel indicators */
 .panel-indicator {
   display: flex; gap: 2px;
   padding: 4px 0 10px;
@@ -293,7 +293,7 @@
   background: rgba(255,255,255,0.12);
 }
 
-/* === 面板1: 天气/时间 === */
+/* === Panel 1: weather and time === */
 .weather-panel {
   gap: 6px;
 }
@@ -357,7 +357,7 @@
   font-size: 13px; color: rgba(255,255,255,0.45);
 }
 
-/* === 面板2: 音乐 === */
+/* === Panel 2: music === */
 .music-panel {
   gap: 8px;
   perspective: 600px;
@@ -425,7 +425,7 @@
   background: #fff; cursor: pointer;
 }
 
-/* 禁止拖动 */
+/* Disable dragging */
 .ctrl-btn-sm, .ctrl-btn-lg, .vol-slider-lg {
   -webkit-app-region: no-drag;
 }
@@ -438,7 +438,7 @@
   opacity: 0;
 }
 
-/* === 提醒态（覆盖在 still/quick 上） === */
+/* === Reminder state over still and quick modes === */
 .alert-content {
   display: flex; align-items: center; gap: 8px;
   width: 100%; height: 100%;
@@ -484,7 +484,7 @@
   background: linear-gradient(135deg, #1a1a1a, #2c0a30) !important;
   border: 1px solid rgba(255, 200, 80, 0.4);
 }
-/* 大视图下告警为顶部浮动条 */
+/* Large-view alerts appear as a floating top bar */
 #island.large .alert-content {
   position: absolute; top: 8px; left: 10px; right: 10px;
   width: auto; height: auto;
@@ -501,7 +501,7 @@
   border: inherit !important;
 }
 
-/* === 面板3: 任务 === */
+/* === Panel 3: tasks === */
 .tasks-panel {
   gap: 8px;
   justify-content: flex-start !important;
@@ -711,7 +711,7 @@
   text-align: center;
 }
 
-/* === 面板4: 日历 === */
+/* === Panel 4: calendar === */
 .calendar-panel {
   gap: 4px;
   justify-content: flex-start !important;
@@ -997,7 +997,7 @@
 }
 .cal-month-close:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
-/* === 持久任务提醒（日历触发） === */
+/* === Persistent task reminders triggered by the calendar === */
 .reminder-content {
   display: flex; flex-direction: column; gap: 4px;
   width: 100%; height: 100%;
@@ -1048,7 +1048,7 @@
   border: 1px solid rgba(150, 120, 255, 0.35);
 }
 
-/* === 番茄钟 quick 模式显示 === */
+/* === Pomodoro quick-mode display === */
 .pomo-quick {
   display: flex; align-items: center; gap: 6px;
   width: 100%; height: 100%;
@@ -1082,7 +1082,7 @@
   border: 1px solid rgba(255, 107, 107, 0.3);
 }
 
-/* === 面板5: 番茄钟 === */
+/* === Panel 5: Pomodoro === */
 .pomodoro-panel {
   gap: 0;
   justify-content: flex-start !important;
@@ -1256,7 +1256,7 @@
   color: rgba(255,255,255,0.35);
 }
 
-/* === 面板6: 任务中心 === */
+/* === Panel 6: task center === */
 .taskcenter-panel {
   gap: 6px;
   justify-content: flex-start !important;
@@ -1342,7 +1342,7 @@
   margin-bottom: 4px; padding: 0 4px;
 }
 
-/* === 面板7: 剪切板 === */
+/* === Panel 7: clipboard === */
 .clipboard-panel {
   gap: 4px;
   justify-content: flex-start !important;
@@ -1473,7 +1473,7 @@
 .clip-act-btn.del:hover { color: #ff6b6b; background: rgba(255,107,107,0.12); }
 .clip-act-btn.copy:hover { color: #6fff7b; background: rgba(111,255,123,0.1); }
 
-/* === 面板8: 翻译 === */
+/* === Panel 8: translation === */
 .translate-panel {
   gap: 8px;
   justify-content: flex-start !important;
@@ -1610,7 +1610,7 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
-/* === 热力图面板 === */
+/* === Heatmap panel === */
 .heatmap-panel {
   padding: 16px 18px;
   display: flex; flex-direction: column; gap: 12px;
@@ -1717,7 +1717,7 @@
   color: rgba(82,197,128,0.50);
 }
 
-/* === 浅色主题覆盖 === */
+/* === Light theme overrides === */
 html[data-theme="light"] #island {
   background: #ffffff !important;
   box-shadow: 0 0 24px rgba(0,0,0,0.08);
@@ -1726,7 +1726,7 @@ html[data-theme="light"] #island.has-alert {
   background: linear-gradient(135deg, #f5f0ff, #fff0f0) !important;
   border: 1px solid rgba(200,160,80,0.35);
 }
-/* --- 全局图标和文字 --- */
+/* --- Global icons and text --- */
 html[data-theme="light"] #island,
 html[data-theme="light"] #island i,
 html[data-theme="light"] #island span,
@@ -1744,7 +1744,7 @@ html[data-theme="light"] #island .quick-minimal-btn { color: rgba(0,0,0,0.3); }
 html[data-theme="light"] #island .quick-minimal-btn:hover { color: #3ba33b; background: rgba(59,163,59,0.1); }
 html[data-theme="light"] #island .quick-weather i { color: rgba(0,0,0,0.5); }
 html[data-theme="light"] #island .quick-weather-city { color: rgba(0,0,0,0.3); }
-/* --- 告警 --- */
+/* --- Alerts --- */
 html[data-theme="light"] #island .alert-close { opacity: 0.4; }
 html[data-theme="light"] #island .alert-action-btn {
   border-color: rgba(0,0,0,0.2);
@@ -1752,10 +1752,10 @@ html[data-theme="light"] #island .alert-action-btn {
   color: rgba(0,0,0,0.75);
 }
 html[data-theme="light"] #island .alert-action-btn:hover { background: rgba(0,0,0,0.12); }
-/* --- 提醒 --- */
+/* --- Reminders --- */
 html[data-theme="light"] #island .reminder-content { color: rgba(0,0,0,0.8); }
 html[data-theme="light"] #island .reminder-hint { color: rgba(0,0,0,0.35); }
-/* --- 面板卡片/背景 --- */
+/* --- Panel cards and background --- */
 html[data-theme="light"] #island .pomo-card,
 html[data-theme="light"] #island .tasks-empty,
 html[data-theme="light"] #island .clip-empty {
@@ -1763,7 +1763,7 @@ html[data-theme="light"] #island .clip-empty {
   border-color: rgba(0,0,0,0.06);
   color: rgba(0,0,0,0.45);
 }
-/* --- 任务中心 --- */
+/* --- Task center --- */
 html[data-theme="light"] #island .tc-title,
 html[data-theme="light"] #island .tasks-title,
 html[data-theme="light"] #island .clip-title { color: rgba(0,0,0,0.78); }
@@ -1773,7 +1773,7 @@ html[data-theme="light"] #island .clip-count { color: rgba(0,0,0,0.35); }
 html[data-theme="light"] #island .tc-empty i,
 html[data-theme="light"] #island .tasks-empty i,
 html[data-theme="light"] #island .clip-empty i { color: rgba(0,0,0,0.2); }
-/* --- 输入框 --- */
+/* --- Input fields --- */
 html[data-theme="light"] #island .clip-search-input,
 html[data-theme="light"] #island .clip-search-input:focus,
 html[data-theme="light"] #island .tasks-input,
@@ -1791,7 +1791,7 @@ html[data-theme="light"] #island .cal-add-input:focus {
 html[data-theme="light"] #island .clip-search-input::placeholder,
 html[data-theme="light"] #island .tasks-input::placeholder,
 html[data-theme="light"] #island .cal-add-input::placeholder { color: rgba(0,0,0,0.25); }
-/* --- 剪切板列表 --- */
+/* --- Clipboard list --- */
 html[data-theme="light"] #island .clip-row:hover { background: rgba(0,0,0,0.03); }
 html[data-theme="light"] #island .clip-text { color: rgba(0,0,0,0.75); }
 html[data-theme="light"] #island .clip-time,
@@ -1808,7 +1808,7 @@ html[data-theme="light"] #island .clip-refresh-btn,
 html[data-theme="light"] #island .clip-clear-btn { color: rgba(0,0,0,0.25); }
 html[data-theme="light"] #island .clip-refresh-btn:hover { color: #3b6ecc; }
 html[data-theme="light"] #island .clip-clear-btn:hover { color: #cc3b3b; }
-/* --- 任务列表 --- */
+/* --- Task list --- */
 html[data-theme="light"] #island .task-row:hover { background: rgba(0,0,0,0.03); }
 html[data-theme="light"] #island .task-text { color: rgba(0,0,0,0.75); }
 html[data-theme="light"] #island .task-due,
@@ -1820,7 +1820,7 @@ html[data-theme="light"] #island .task-del:hover { color: #cc3b3b; background: r
 html[data-theme="light"] #island .task-check { color: rgba(0,0,0,0.3); }
 html[data-theme="light"] #island .tasks-history-toggle { color: rgba(0,0,0,0.3); }
 html[data-theme="light"] #island .tasks-history-toggle:hover { color: rgba(0,0,0,0.6); }
-/* --- 日历 --- */
+/* --- Calendar --- */
 html[data-theme="light"] #island .cal-nav-btn { color: rgba(0,0,0,0.3); }
 html[data-theme="light"] #island .cal-nav-btn:hover { color: rgba(0,0,0,0.6); background: rgba(0,0,0,0.04); }
 html[data-theme="light"] #island .cal-month-close { color: rgba(0,0,0,0.25); }
@@ -1851,13 +1851,13 @@ html[data-theme="light"] #island .cal-month-dot.pomo { background: #ff9eb5; }
 html[data-theme="light"] #island .cal-day-dot { background: rgba(0,0,0,0.2); }
 html[data-theme="light"] #island .cal-day-dot.pomo { background: #ff9eb5; }
 html[data-theme="light"] #island .cal-pomo-stats { color: rgba(210,100,130,0.8); }
-/* --- 任务中心 --- */
+/* --- Task center --- */
 html[data-theme="light"] #island .tc-task-row { background: rgba(0,0,0,0.02); }
 html[data-theme="light"] #island .tc-task-row:hover { background: rgba(0,0,0,0.04); }
 html[data-theme="light"] #island .tc-task-name { color: rgba(0,0,0,0.75); }
 html[data-theme="light"] #island .tc-agent-type { color: rgba(0,0,0,0.3); }
 html[data-theme="light"] #island .tc-completed-header { color: rgba(0,0,0,0.35); }
-/* --- 番茄钟 --- */
+/* --- Pomodoro --- */
 html[data-theme="light"] #island .pomo-card { background: rgba(0,0,0,0.02); border-color: rgba(0,0,0,0.05); }
 html[data-theme="light"] #island .pomo-phase-label { color: rgba(0,0,0,0.4); }
 html[data-theme="light"] #island .pomo-time { color: rgba(0,0,0,0.8); }
@@ -1879,29 +1879,29 @@ html[data-theme="light"] #island .pomo-slider::-webkit-slider-thumb {
   background: rgba(0,0,0,0.7);
 }
 html[data-theme="light"] #island .pomo-ring-bg { stroke: rgba(0,0,0,0.05); }
-/* --- 音乐 --- */
+/* --- Music --- */
 html[data-theme="light"] #island .large-title { color: rgba(0,0,0,0.75); }
 html[data-theme="light"] #island .large-artist { color: rgba(0,0,0,0.4); }
 html[data-theme="light"] #island .vol-icon-lg { color: rgba(0,0,0,0.2); }
 html[data-theme="light"] #island .artwork-wrap { background: rgba(0,0,0,0.04); }
 html[data-theme="light"] #island .artwork-wrap i { color: rgba(0,0,0,0.3); }
-/* --- 面板导航 --- */
+/* --- Panel navigation --- */
 html[data-theme="light"] #island .panel-nav-btn { color: rgba(0,0,0,0.25); }
 html[data-theme="light"] #island .panel-nav-btn:hover { color: rgba(0,0,0,0.55); background: rgba(0,0,0,0.04); }
 html[data-theme="light"] #island .panel-nav-btn.active { color: rgba(0,0,0,0.85); background: rgba(0,0,0,0.08); }
-/* --- 告警浮层 --- */
+/* --- Floating alerts --- */
 html[data-theme="light"] #island.large .alert-content {
   background: #ffffff;
   border: 1px solid rgba(0,0,0,0.1);
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
-/* --- Select 元素 --- */
+/* --- Select elements --- */
 html[data-theme="light"] #island .cal-time-sel {
   background: rgba(0,0,0,0.03);
   border-color: rgba(0,0,0,0.1);
   color: rgba(0,0,0,0.7);
 }
-/* --- 天气面板文字 --- */
+/* --- Weather panel text --- */
 html[data-theme="light"] #island .weather-desc { color: rgba(0,0,0,0.5); }
 html[data-theme="light"] #island .weather-city-btn { color: rgba(0,0,0,0.35); }
 html[data-theme="light"] #island .weather-city-btn:hover { color: rgba(0,0,0,0.6); background: rgba(0,0,0,0.04); }
@@ -1915,20 +1915,20 @@ html[data-theme="light"] #island .weather-temp { color: rgba(0,0,0,0.8); }
 html[data-theme="light"] #island .weather-time { color: rgba(0,0,0,0.7); }
 html[data-theme="light"] #island .weather-date { color: rgba(0,0,0,0.45); }
 html[data-theme="light"] #island .weather-divider { background: rgba(0,0,0,0.08); }
-/* --- 滚动条 --- */
+/* --- Scrollbars --- */
 html[data-theme="light"] #island .clip-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
 html[data-theme="light"] #island .tasks-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
 /* --- pomodoro quick --- */
 html[data-theme="light"] #island .pomo-quick-time { color: rgba(0,0,0,0.7); }
 html[data-theme="light"] #island .pomo-quick-stop { color: rgba(0,0,0,0.35); }
 html[data-theme="light"] #island .pomo-quick-stop:hover { background: rgba(0,0,0,0.05); }
-/* --- 任务中心进度条 --- */
+/* --- Task center progress bar --- */
 html[data-theme="light"] #island .tc-progress-bar { background: rgba(0,0,0,0.06); }
-/* --- 背景 --- */
+/* --- Background --- */
 html[data-theme="light"] #island .clip-icon,
 html[data-theme="light"] #island .tasks-icon,
 html[data-theme="light"] #island .tc-icon { color: rgba(0,0,0,0.35); }
-/* --- 音乐面板控件 --- */
+/* --- Music panel controls --- */
 html[data-theme="light"] #island .music-controls button { color: rgba(0,0,0,0.4); }
 html[data-theme="light"] #island .music-controls button:hover { color: rgba(0,0,0,0.7); }
 html[data-theme="light"] #island .vol-slider-lg {
@@ -1937,7 +1937,7 @@ html[data-theme="light"] #island .vol-slider-lg {
 html[data-theme="light"] #island .vol-slider-lg::-webkit-slider-thumb {
   background: rgba(0,0,0,0.7);
 }
-/* --- 翻译面板 --- */
+/* --- Translation panel --- */
 html[data-theme="light"] #island .translate-title { color: rgba(0,0,0,0.78); }
 html[data-theme="light"] #island .translate-icon { color: rgba(0,0,0,0.35); }
 html[data-theme="light"] #island .translate-source {
@@ -1972,7 +1972,7 @@ html[data-theme="light"] #island .translate-result-text {
 html[data-theme="light"] #island .translate-result-empty { color: rgba(0,0,0,0.2); }
 html[data-theme="light"] #island .translate-act-btn { color: rgba(0,0,0,0.35); background: rgba(0,0,0,0.04); }
 html[data-theme="light"] #island .translate-act-btn:hover { color: rgba(0,0,0,0.7); background: rgba(0,0,0,0.08); }
-/* --- 热力图浅色 --- */
+/* --- Light heatmap theme --- */
 html[data-theme="light"] #island {
   --heatmap-0: rgba(0,0,0,0.08);
   --heatmap-1: rgba(68,184,110,0.32);

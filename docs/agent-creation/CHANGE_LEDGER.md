@@ -442,3 +442,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Commit resolver output and correct Dynamic Island source encoding
 
 - Parent 6a84ebf0a9385e279957d5a272e2eb3dcf8507c1. Use the successful resolver artifact from run 45925158544, uv 0.13.10; 421 to 413 package records, six retired direct SDKs absent and no unexpected source findings. Independently verify artifact checksum and exact Git blob identity before advancing branch. Remove one leading BOM from py/dynamic_island.py to fix ast.parse failure in audit 45925158378; no executable change. Updated documentation and recorded remaining CSS/skills inventory. New CI and Windows runtime unverified.
+
+## 2026-11-26 — English minimal mode, overlays and supporting modules
+
+- Parent a7f20890759ac91488fa42cf275d15fd4b7c8282. Translate 150 Han-flagged lines in py/image_host.py, static/minimal.html, static/danmaku_overlay.html, static/subtitle_overlay.html, static/sw.js, entitlements.mac.plist, static/css/transition.css, static/css/vrm.css, static/css/island.css. Preserve selectors, declarations, overlay event handlers, cache logic and entitlements; remove only Chinese shortcut aliases and a regional UI comparison. Preserve image hosting configuration and behavior. JavaScript syntax checked; Python and live GUI validation pending. Revert for rollback.

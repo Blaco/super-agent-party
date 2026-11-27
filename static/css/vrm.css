@@ -1,4 +1,4 @@
-/* VMC 对话框自定义样式 */
+/* Custom VMC dialog styles */
 .vmc-dialog {
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15) !important;
@@ -17,7 +17,7 @@
     padding: 15px 20px 20px !important;
 }
 
-/* 控制面板按钮样式优化 */
+/* Control panel button styles */
 #control-panel > div {
     background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(10px) !important;
@@ -30,7 +30,7 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* 工具提示样式 */
+/* Tooltip styles */
 #control-tooltip {
     background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(30, 30, 30, 0.9)) !important;
     backdrop-filter: blur(12px) !important;
