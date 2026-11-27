@@ -1,3 +1,4 @@
+import httpx
 import asyncio
 import base64
 import io
@@ -15,6 +16,7 @@ from discord.ext import commands, tasks
 from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 
+from py.session_permissions import internal_session_headers
 from py.behavior_engine import BehaviorItem, BehaviorSettings, global_behavior_engine
 from py.get_setting import convert_to_opus_simple, get_port, load_settings
 
@@ -270,7 +272,7 @@ class DiscordClient(discord.Client):
 
         # Request the LLM
         settings = await load_settings()
-        client = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{get_port()}/v1")
+        client = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{get_port()}/v1", default_headers=internal_session_headers(), http_client=httpx.AsyncClient(trust_env=False, follow_redirects=False))
         
         state = {"text_buffer": "", "image_buffer": "", "image_cache": [], "audio_buffer": []}
         full_response = []
@@ -383,7 +385,7 @@ class DiscordClient(discord.Client):
         form = aiohttp.FormData()
         form.add_field("audio", io.BytesIO(audio_bytes), filename=filename, content_type="audio/ogg")
         async with aiohttp.ClientSession() as s:
-            async with s.post(f"http://127.0.0.1:{get_port()}/asr", data=form) as r:
+            async with s.post(f"http://127.0.0.1:{get_port()}/asr", headers=internal_session_headers(), allow_redirects=False, data=form) as r:
                 if r.status == 200:
                     res = await r.json()
                     return res.get("text") if res.get("success") else None
@@ -408,7 +410,7 @@ class DiscordClient(discord.Client):
         clean_t = self.clean_markdown(text)
         payload = {"text": clean_t, "voice": "default", "ttsSettings": settings.get("ttsSettings", {}), "index": 0, "mobile_optimized": True, "format": "opus"}
         async with aiohttp.ClientSession() as s:
-            async with s.post(f"http://127.0.0.1:{get_port()}/tts", json=payload) as r:
+            async with s.post(f"http://127.0.0.1:{get_port()}/tts", headers=internal_session_headers(), allow_redirects=False, json=payload) as r:
                 if r.status == 200:
                     file = discord.File(io.BytesIO(await r.read()), filename="voice.opus")
                     await (msg.channel.send(file=file) if hasattr(msg, 'channel') else msg.send(file=file))
@@ -433,7 +435,7 @@ class DiscordClient(discord.Client):
         if cid not in self.memory: self.memory[cid] = []
         messages = self.memory[cid] + [{"role": "user", "content": f"[system]: {prompt}"}]
         try:
-            client = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{get_port()}/v1")
+            client = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{get_port()}/v1", default_headers=internal_session_headers(), http_client=httpx.AsyncClient(trust_env=False, follow_redirects=False))
             response = await client.chat.completions.create(model=self.config.llm_model, messages=messages, stream=False, extra_body={"is_app_bot": True, "platform": "discord", "behavior_trigger": True})
             reply = response.choices[0].message.content
             if reply:

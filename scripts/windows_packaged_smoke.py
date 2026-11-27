@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import socket
+import secrets
 import subprocess
 import tempfile
 import time
@@ -20,10 +21,13 @@ from urllib.parse import urlencode
 from urllib.request import ProxyHandler, Request, build_opener
 
 from websockets.sync.client import connect
+from websockets.exceptions import InvalidStatus
 
 
 HANDSHAKE = re.compile(r"REAL_PORT_FOUND:(\d+)")
 HTTP = build_opener(ProxyHandler({}))
+SESSION_TOKEN = secrets.token_urlsafe(32)
+HTTP.addheaders = [("X-SAP-Session", SESSION_TOKEN)]
 CONVERSATION = {
     "id": "ci-packaged-smoke-conversation",
     "name": "Packaged smoke test",
@@ -75,6 +79,7 @@ def child_environment(profile, home):
         path.mkdir(parents=True, exist_ok=True)
     env.update({
         "SUPER_AGENT_PARTY_DATA_DIR": str(profile),
+        "SAP_DESKTOP_SESSION_TOKEN": SESSION_TOKEN,
         "HOME": str(home),
         "USERPROFILE": str(home),
         "APPDATA": str(roaming),
@@ -235,11 +240,23 @@ def run(executable, log_dir, timeout):
         root = Path(folder)
         profile, home = root / "profile", root / "home"
         with running_backend(executable, profile, home, log_dir / "first-start.log", timeout) as port:
+            unauthenticated = build_opener(ProxyHandler({}))
+            try:
+                unauthenticated.open(f"http://127.0.0.1:{port}/api/system/data-path", timeout=5)
+                raise AssertionError("Private HTTP route accepted an anonymous request")
+            except HTTPError as error:
+                require(error.code == 403, "Anonymous HTTP request did not receive 403")
+            try:
+                with connect(f"ws://127.0.0.1:{port}/ws", proxy=None, open_timeout=10):
+                    raise AssertionError("WebSocket accepted an anonymous connection")
+            except InvalidStatus as error:
+                require(error.response.status_code == 403, "Anonymous WebSocket did not receive 403")
+            checks.append("anonymous-http-and-websocket-rejected")
             check_http(port, profile)
             checks.append("clean-profile-http-and-packaged-english-assets")
             check_upload_storage(port, profile)
             checks.append("upload-storage-read-delete-containment")
-            with connect(f"ws://127.0.0.1:{port}/ws", proxy=None, open_timeout=10) as ws:
+            with connect(f"ws://127.0.0.1:{port}/ws", proxy=None, open_timeout=10, additional_headers={"X-SAP-Session": SESSION_TOKEN}) as ws:
                 settings = receive_type(ws, "settings")["data"]
                 check_safe_defaults(settings)
                 require(not settings.get("conversations"), "Fresh profile has conversation history")
@@ -258,7 +275,7 @@ def run(executable, log_dir, timeout):
         require((profile / "conversations.db").is_file(), "Conversation DB was not created")
         with running_backend(executable, profile, home, log_dir / "restart.log", timeout) as port:
             check_http(port, profile)
-            with connect(f"ws://127.0.0.1:{port}/ws", proxy=None, open_timeout=10) as ws:
+            with connect(f"ws://127.0.0.1:{port}/ws", proxy=None, open_timeout=10, additional_headers={"X-SAP-Session": SESSION_TOKEN}) as ws:
                 settings = receive_type(ws, "settings")["data"]
                 check_safe_defaults(settings)
                 require(settings["systemSettings"]["theme"] == "dark",

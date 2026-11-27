@@ -1,6 +1,8 @@
+import httpx
 import asyncio, aiohttp, io, base64, json, logging, re, time
 from typing import Dict, List, Any, Optional
 from openai import AsyncOpenAI
+from py.session_permissions import internal_session_headers
 from py.behavior_engine import BehaviorItem
 from py.get_setting import convert_to_opus_simple, get_port, load_settings
 
@@ -203,7 +205,7 @@ class TelegramClient:
         self.memoryList[chat_id].append(user_msg)
 
         settings = await load_settings()
-        client = AsyncOpenAI(api_key="super-secret-key", base_url=f"http://127.0.0.1:{get_port()}/v1")
+        client = AsyncOpenAI(api_key="super-secret-key", base_url=f"http://127.0.0.1:{get_port()}/v1", default_headers=internal_session_headers(), http_client=httpx.AsyncClient(trust_env=False, follow_redirects=False))
         state = {"text_buffer": "", "image_cache": [], "audio_buffer": []}
         full_response = []
 
@@ -332,7 +334,7 @@ class TelegramClient:
         clean_t = self.clean_markdown(text)
         payload = {"text": clean_t, "voice": "default", "ttsSettings": settings.get("ttsSettings", {}), "index": 0, "mobile_optimized": True, "format": "opus"}
         async with aiohttp.ClientSession() as sess:
-            async with sess.post(f"http://127.0.0.1:{self.port}/tts", json=payload) as resp:
+            async with sess.post(f"http://127.0.0.1:{self.port}/tts", headers=internal_session_headers(), allow_redirects=False, json=payload) as resp:
                 if resp.status != 200: return
                 opus_data = await resp.read()
         url = f"https://api.telegram.org/bot{self.bot_token}/sendVoice"
@@ -352,7 +354,7 @@ class TelegramClient:
     async def _transcribe(self, audio_bytes: bytes) -> Optional[str]:
         form = aiohttp.FormData()
         form.add_field("audio", io.BytesIO(audio_bytes), filename="v.ogg")
-        async with self.session.post(f"http://127.0.0.1:{self.port}/asr", data=form) as resp:
+        async with self.session.post(f"http://127.0.0.1:{self.port}/asr", headers=internal_session_headers(), allow_redirects=False, data=form) as resp:
             if resp.status == 200:
                 res = await resp.json()
                 return res.get("text") if res.get("success") else None
@@ -374,7 +376,7 @@ class TelegramClient:
         self.memoryList.setdefault(cid, [])
         messages = self.memoryList[cid] + [{"role": "user", "content": f"[system]: {prompt}"}]
         try:
-            client = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{self.port}/v1")
+            client = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{self.port}/v1", default_headers=internal_session_headers(), http_client=httpx.AsyncClient(trust_env=False, follow_redirects=False))
             resp = await client.chat.completions.create(model=self.TelegramAgent, messages=messages, stream=False, extra_body={"is_app_bot": True, "platform": "telegram", "behavior_trigger": True})
             reply = resp.choices[0].message.content
             if reply:

@@ -1,3 +1,4 @@
+import httpx
 import asyncio
 import base64
 import io
@@ -15,6 +16,7 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 
 from openai import AsyncOpenAI
 from pydantic import BaseModel
+from py.session_permissions import internal_session_headers
 from py.get_setting import get_port, load_settings
 
 # ------------------ Configuration model ------------------
@@ -237,7 +239,7 @@ class SlackBotManager:
         reply_ts = initial_resp["ts"]
 
         settings = await load_settings()
-        client_ai = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{get_port()}/v1")
+        client_ai = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{get_port()}/v1", default_headers=internal_session_headers(), http_client=httpx.AsyncClient(trust_env=False, follow_redirects=False))
 
         try:
             stream = await client_ai.chat.completions.create(
@@ -329,7 +331,7 @@ class SlackBotManager:
             if not clean_text.strip(): return
             payload = {"text": clean_text[:300], "voice": "default", "ttsSettings": settings.get("ttsSettings", {}), "index": 0, "mobile_optimized": False, "format": "mp3"}
             async with aiohttp.ClientSession() as s:
-                async with s.post(f"http://127.0.0.1:{get_port()}/tts", json=payload) as r:
+                async with s.post(f"http://127.0.0.1:{get_port()}/tts", headers=internal_session_headers(), allow_redirects=False, json=payload) as r:
                     if r.status == 200:
                         await web_client.files_upload_v2(channel=cid, file=await r.read(), filename="voice.mp3", title="Voice reply")
         except: pass
@@ -347,7 +349,7 @@ class SlackBotManager:
         if cid not in self.memory: self.memory[cid] = []
         messages = self.memory[cid] + [{"role": "user", "content": f"[system]: {prompt}"}]
         try:
-            client_ai = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{get_port()}/v1")
+            client_ai = AsyncOpenAI(api_key="sk", base_url=f"http://127.0.0.1:{get_port()}/v1", default_headers=internal_session_headers(), http_client=httpx.AsyncClient(trust_env=False, follow_redirects=False))
             response = await client_ai.chat.completions.create(model=self.config.llm_model, messages=messages, stream=False, extra_body={"is_app_bot": True, "platform": "slack", "behavior_trigger": True})
             reply = response.choices[0].message.content
             if reply:

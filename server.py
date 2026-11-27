@@ -18,6 +18,7 @@ from py.cli_tool import read_file_tool_local
 from py.task_tools import query_task_progress
 from py.companion_defaults import resolve_generic_system_prompt
 from py.ws_manager import ws_manager
+from py.session_permissions import DESKTOP_SESSION_TOKEN, PendingToolApprovals, SessionPermissions
 
 # === Pre-load heavy tool modules at startup to avoid blocking first request ===
 from py.web_search import (
@@ -1072,6 +1073,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+pending_tool_approvals = PendingToolApprovals()
 
 app.add_middleware(
     CORSMiddleware,
@@ -1296,7 +1298,7 @@ async def call_node_extension_tool(ext_id: str, tool_name: str, tool_params: dic
         if call_id in mcp_call_results:
             del mcp_call_results[call_id]
 
-async def dispatch_tool(tool_name: str, tool_params: dict, settings: dict,is_sub_agent:bool=False,force_allow: bool = False) -> str | List | AsyncIterator[str] | None :
+async def dispatch_tool(tool_name: str, tool_params: dict, settings: dict,is_sub_agent:bool=False,force_allow: bool = False, approval_call_id: str | None = None) -> str | List | AsyncIterator[str] | None :
     global mcp_client_list,_TOOL_HOOKS,HA_client,ChromeMCP_client,sql_client, node_ext_mcp_clients, node_ext_mcp_tools
     print("dispatch_tool",tool_name,tool_params)
     
@@ -1433,6 +1435,9 @@ async def dispatch_tool(tool_name: str, tool_params: dict, settings: dict,is_sub
         _TOOL_HOOKS["DDGsearch"] = DDGsearch
         _TOOL_HOOKS["pollinations_image"] = pollinations_image
     
+    if tool_name.startswith("multi_tool_use."):
+        tool_name = tool_name.removeprefix("multi_tool_use.")
+
     # ==================== 3. Permission interception (human-in-the-loop) ====================
     # Define controlled sensitive tools
     # Check permissions (.agents/config.json or global settings) before execution
@@ -1505,8 +1510,14 @@ async def dispatch_tool(tool_name: str, tool_params: dict, settings: dict,is_sub
         if not is_allowed:
             # Return the frontend JSON structure that opens the approval UI
             print(f"[Permission] Blocked '{tool_name}', requesting approval.")
+            if not approval_call_id:
+                return "Permission denied. Run this tool through an interactive approval session."
+            approval_token = pending_tool_approvals.issue(approval_call_id, tool_name, tool_params, cwd)
+            if approval_token is None:
+                return "Tool approval is unavailable because too many approvals are pending."
             return json.dumps({
                 "type": "approval_required",
+                "approval_token": approval_token,
                 "tool_name": tool_name,
                 "tool_params": tool_params,
                 "permission_mode": permission_mode,
@@ -1515,9 +1526,6 @@ async def dispatch_tool(tool_name: str, tool_params: dict, settings: dict,is_sub
 
     # ==================== 4. Standard tool handling ====================
 
-    if "multi_tool_use." in tool_name:
-        tool_name = tool_name.replace("multi_tool_use.", "")
-        
     if "custom_http_" in tool_name:
         tool_name = tool_name.replace("custom_http_", "")
         print(tool_name)
@@ -4769,7 +4777,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                     res = f"{response_content.name}tool has been successfully launched. It will take some time to run, and the results will be provided in the next round of conversation."
                                     all_results_for_this_call.append(res)
                                 else:
-                                    _tool_task = asyncio.create_task(dispatch_tool(response_content.name, arg_item, settings, request.is_sub_agent))
+                                    _tool_task = asyncio.create_task(dispatch_tool(response_content.name, arg_item, settings, request.is_sub_agent, approval_call_id=tc.id))
                                     while True:
                                         _done, _ = await asyncio.wait([_tool_task], timeout=30)
                                         if _tool_task in _done:
@@ -4886,6 +4894,8 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                     "reasoning_content": "",
                                 }
                             )
+                        if has_approval_required:
+                            break
                     # If a reasoning model is enabled
                     if settings['reasoner']['enabled'] or enable_thinking:
                         if tools:
@@ -6317,77 +6327,43 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 )
         reasoner_messages = copy.deepcopy(request.messages)
         while (response.choices[0].message and response.choices[0].message.tool_calls) or search_not_done:
-            if response.choices[0].message and response.choices[0].message.tool_calls:
-                assistant_message = response.choices[0].message
-                response_content = assistant_message.tool_calls[0].function
-                print(response_content.name)
-                modified_data = '[' + response_content.arguments.replace('}{', '},{') + ']'
-                # Parse the modified string as a list using json.loads
-                data_list = json.loads(modified_data)
-                # Store results
-                results = []
-                for data in data_list:
-                    result = await dispatch_tool(response_content.name, data,settings) # Append the result to the results list
-                    if isinstance(results, AsyncIterator):
-                        buffer = []
-                        async for chunk in results:
-                            buffer.append(chunk)
-                        results = "".join(buffer)
-                    if result is not None:
-                        # Append the result to the results list
-                        results.append(json.dumps(result))
-                # Concatenate all results into one string
-                combined_results = ''.join(results)
-                if combined_results:
-                    results = combined_results
-                else:
-                    results = None
-                if results is None:
-                    break
-                if response_content.name in ["query_knowledge_base"]:
-                    if settings["KBSettings"]["is_rerank"]:
-                        results = await rerank_knowledge_base(user_prompt,results)
-                    results = json.dumps(results, ensure_ascii=False, indent=4)
-                request.messages.append(
-                    {
-                        "tool_calls": [
-                            {
-                                "id": assistant_message.tool_calls[0].id,
-                                "function": {
-                                    "arguments": response_content.arguments,
-                                    "name": response_content.name,
-                                },
-                                "type": assistant_message.tool_calls[0].type,
-                            }
-                        ],
-                        "role": "assistant",
-                        "content": "",
-                        "reasoning_content": "",
-                    }
-                )
-                request.messages.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": assistant_message.tool_calls[0].id,
-                        "name": response_content.name,
-                        "content": str(results),
-                    }
-                )
-            if settings['webSearch']['when'] == 'after_thinking' or settings['webSearch']['when'] == 'both':
-                content_append(request.messages, 'user',  f"\nIf the web search results do not provide enough information to answer the question, search for the missing necessary information. If they are sufficient, answer the question directly.")
-            reasoner_messages.append(
-                {
+            assistant_message = response.choices[0].message
+            calls = assistant_message.tool_calls if assistant_message else None
+            if calls:
+                call_ids = [call.id for call in calls]
+                if not all(isinstance(call_id, str) and call_id for call_id in call_ids) or len(set(call_ids)) != len(call_ids):
+                    raise ValueError("Tool call IDs must be nonempty and unique")
+                arguments_by_call = [json.loads(call.function.arguments) for call in calls]
+                if not all(isinstance(arguments, dict) for arguments in arguments_by_call):
+                    raise ValueError("Tool arguments must be JSON objects")
+                request.messages.append({
                     "role": "assistant",
-                    "content": str(response_content),
-                    "reasoning_content": "",
-                }
-            )
-            reasoner_messages.append(
-                {
-                    "role": "user",
-                    "content": f"{response_content.name} tool result: "+str(results),
-                }
-            )
+                    "content": assistant_message.content or "",
+                    "tool_calls": [
+                        {"id": call.id, "type": call.type, "function": {
+                            "name": call.function.name, "arguments": call.function.arguments,
+                        }}
+                        for call in calls
+                    ],
+                })
+                for call, arguments in zip(calls, arguments_by_call):
+                    function = call.function
+                    result = await dispatch_tool(function.name, arguments, settings)
+                    if isinstance(result, AsyncIterator):
+                        result = "".join([str(chunk) async for chunk in result])
+                    if function.name == "query_knowledge_base" and settings["KBSettings"]["is_rerank"]:
+                        result = await rerank_knowledge_base(user_prompt, result)
+                    content = result if isinstance(result, str) else json.dumps(result, ensure_ascii=False)
+                    request.messages.append({
+                        "role": "tool", "tool_call_id": call.id, "name": function.name, "content": content,
+                    })
+                    reasoner_messages.extend([
+                        {"role": "assistant", "content": str(function), "reasoning_content": ""},
+                        {"role": "user", "content": f"{function.name} tool result: {content}"},
+                    ])
+            if settings["webSearch"]["when"] in ("after_thinking", "both"):
+                content_append(request.messages, "user",
+                    "\nIf the web search results are sufficient, answer the question directly. Otherwise, look for the information still needed.")
             if settings['reasoner']['enabled'] or enable_thinking:
                 if tools:
                     content_append(reasoner_messages, 'system',  f"Available tools:{json.dumps(tools)}")
@@ -6587,14 +6563,19 @@ async def execute_tool_manually(request: Request):
     """
     try:
         data = await request.json()
-        tool_name = data.get("tool_name")
-        tool_params = data.get("tool_params") or {}
-        approval_type = data.get("approval_type") # 'once' or 'always'
-        
-        # Get current configuration
+        approval_type = data.get("approval_type")
+        if approval_type not in ("once", "always", "deny"):
+            return JSONResponse({"detail": "Invalid approval decision"}, status_code=400)
+
         settings = await load_settings()
         cwd = settings.get("CLISettings", {}).get("cc_path")
-        
+        approved = pending_tool_approvals.consume(data.get("approval_token"), data.get("tool_call_id"), cwd)
+        if approved is None:
+            return JSONResponse({"detail": "Approval is stale, already used, or does not match the pending call"}, status_code=409)
+        tool_name, tool_params = approved
+        if approval_type == "deny":
+            return {"result": f"User denied the execution of tool '{tool_name}'."}
+
         # ==================== Handle the Always permission allowlist ====================
         if approval_type == "always":
             if cwd:
@@ -11723,6 +11704,8 @@ app.mount("/ext", StaticFiles(directory=EXT_DIR), name="ext")
 app.mount("/", StaticFiles(directory=os.path.join(base_path, "static"), html=True), name="static")
 
 # Main entry point
+app.add_middleware(SessionPermissions, token=DESKTOP_SESSION_TOKEN)
+
 if __name__ == "__main__":
     import uvicorn
 

@@ -4,6 +4,7 @@ import httpx
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
+from py.session_permissions import internal_session_headers
 from py.task_center import get_task_center, TaskStatus
 from py.get_setting import load_settings, get_port
 # Required imports: include all relevant Pydantic models
@@ -57,7 +58,7 @@ class SubAgentExecutor:
         conversation_history.append({"role": "user", "content": f"Execute this task:\n\n{task.description}\n\nWhen finished, call finish_task with the final output to mark the task complete."})
         
         try:
-            async with httpx.AsyncClient(timeout=600.0) as http_client:
+            async with httpx.AsyncClient(timeout=600.0, headers=internal_session_headers(), trust_env=False) as http_client:
                 while iteration < max_iterations:
 
                     latest_task = await task_center.get_task(task_id)

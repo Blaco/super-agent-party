@@ -3516,22 +3516,22 @@ formatMessage(content, index) {
                                 } catch (e) { }
                             }
 
-                            // Approval handling
                             if (isApproval && approvalData) {
-                                const b = getBlock('approval', toolCallId, toolName);
-                                b.data = approvalData;
-                                this.approvalMap[toolCallId] = approvalData;
-
-                                // Update backend_content directly without generating HTML
-                                currentMsg.backend_content.push({ role: 'tool', tool_call_id: toolCallId, name: toolName, content: "{}" });
-                                currentMsg.backend_content.push({ role: 'assistant', content: '' });
-                                this.requestScrollToBottom();
-
-                                // Stop receiving the stream as soon as an approval block arrives; wait for user action
-                                if (this.abortController) {
-                                    this.abortController.abort();
+                                const originalId = delta.tool_call_id;
+                                const hasOriginalCall = currentMsg.backend_content.some(message =>
+                                    message.tool_calls?.some(call => call.id === originalId));
+                                if (!originalId || !hasOriginalCall || !approvalData.approval_token) {
+                                    showNotification('This tool call could not be matched to a pending approval.', 'error');
+                                    continue;
                                 }
-                                break; // Exit stream-reading loop
+                                const block = getBlock('approval', originalId, toolName);
+                                block.data = null;
+                                this.approvalMap[originalId] = approvalData;
+                                currentMsg.backend_content.push({
+                                    role: 'tool', tool_call_id: originalId, name: toolName,
+                                    content: 'Tool execution is waiting for user approval.'
+                                });
+                                this.requestScrollToBottom();
                             }
                             else if (tool.type === 'tool_result_stream' && tool.title === "tool_result_stream") {
                                 const targetBlock = getBlock('tool_result', toolCallId, toolName);
@@ -3899,9 +3899,14 @@ formatMessage(content, index) {
     async processToolApproval(toolCallId, action) {
         const currentMsg = this.messages[this.messages.length - 1];
         if (!currentMsg) return;
-        currentMsg.generationFinished = false; 
         const data = this.approvalMap[toolCallId];
-        const toolName = data?.tool_name || data?.name || 'Tool';
+        if (!data?.approval_token || this.isSending) return;
+        const pendingResult = currentMsg.backend_content?.find(item =>
+            item.role === 'tool' && item.tool_call_id === toolCallId);
+        if (!pendingResult) return;
+        delete this.approvalMap[toolCallId];
+        currentMsg.generationFinished = false;
+        const toolName = data.tool_name;
         const blockId = `approval-${toolCallId}`;
 
         // Locate approval block and prepare to convert it into a result block
@@ -3942,30 +3947,15 @@ formatMessage(content, index) {
         try {
             let resultText = "";
             
-            if (action === 'deny') {
-                resultText = `User denied the execution of tool '${toolName}'.`;
-                
-                // Update result content
-                if (targetIdx !== -1) {
-                    currentMsg.displayBlocks[targetIdx].content = resultText;
-                    currentMsg.displayBlocks[targetIdx].type = 'error';
-                    currentMsg.displayBlocks[targetIdx].name = this.t('tool_deny');
-                }
-            } else {
-                // 1. Safely extract and normalize arguments
-                let toolParams = data?.tool_params || data?.arguments || data?.params || data?.tool_args || {};
-                if (typeof toolParams === 'string') {
-                    try { toolParams = JSON.parse(toolParams); } catch (e) {}
-                }
-
+            {
                 // 2. Send HTTP request
                 const response = await fetch('/execute_tool_manually', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        tool_name: toolName, 
-                        tool_params: toolParams,
-                        approval_type: action 
+                        approval_token: data.approval_token,
+                        tool_call_id: toolCallId,
+                        approval_type: action
                     }),
                     signal: this.abortController.signal
                 });
@@ -4029,17 +4019,7 @@ formatMessage(content, index) {
                     }
                 }
 
-                // 5. Synchronize result into AI backend_content
-                const cleanedForAI = this.truncateForAI(resultText);
-                if (currentMsg.backend_content) {
-                    for (let i = currentMsg.backend_content.length - 1; i >= 0; i--) {
-                        const item = currentMsg.backend_content[i];
-                        if (item.role === 'tool' && item.tool_call_id === toolCallId) {
-                            item.content = cleanedForAI;
-                            break;
-                        }
-                    }
-                } 
+                pendingResult.content = this.truncateForAI(resultText);
             }
 
             // Update HTML compatibility backup block
@@ -4054,6 +4034,11 @@ formatMessage(content, index) {
             this.updateUIBlock(currentMsg, blockId, resultHtml);
 
             // 6. Continue AI generation after tool streaming completes
+            if (currentMsg.displayBlocks?.some(block => block.type === 'approval')) {
+                this.isSending = false;
+                this.isTyping = false;
+                return;
+            }
             await this.generateAIResponse(this.mainAgent, currentMsg.agentName, true);
 
         } catch (e) {
@@ -4107,39 +4092,7 @@ formatMessage(content, index) {
 
     // === Helpers ===
 
-    // Helper: call manual execution endpoint
-    async executeToolBackend(name, params, type) {
-        try {
-            const res = await fetch('/execute_tool_manually', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    tool_name: name, 
-                    tool_params: params,
-                    approval_type: type 
-                })
-            });
-            
-            // Read raw text first
-            const rawText = await res.text();
-            
-            // Return raw error text for unsuccessful HTTP responses without JSON parsing
-            if (!res.ok) {
-                return `Server Error (${res.status}): ${rawText}`;
-            }
-            
-            // Attempt JSON parsing
-            try {
-                const json = JSON.parse(rawText);
-                return json.result || JSON.stringify(json);
-            } catch (jsonErr) {
-                // Display original text when JSON parsing fails
-                return rawText || `No response from tool execution.`;
-            }
-        } catch (e) {
-            return `System Error: ${e.message}`;
-        }
-    },
+
     
 
     // 1. Truncated tool result display

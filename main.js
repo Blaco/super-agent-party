@@ -4,6 +4,7 @@ const { clipboard, nativeImage,desktopCapturer  } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { spawn } = require('child_process')
+const { randomBytes } = require('crypto')
 const { exec, execSync } = require('child_process');
 const { download } = require('electron-dl');
 const fs = require('fs')
@@ -229,6 +230,35 @@ const ENABLE_AUTO_UPDATES = false
 let backendProcess = null
 const HOST = '127.0.0.1'
 let PORT = 3456 // Mutable active port
+const desktopSessionToken = randomBytes(32).toString('hex');
+
+function authorizeDesktopRequests(electronSession) {
+  electronSession.webRequest.onBeforeSendHeaders(
+    { urls: ['http://127.0.0.1/*', 'ws://127.0.0.1/*'] },
+    (details, callback) => {
+      const url = new URL(details.url);
+      const origin = `http://127.0.0.1:${PORT}`;
+      const managedWindows = [
+        mainWindow, minimalWindow, dynamicIslandWindow, shotOverlay,
+        ...vrmWindows, ...thaWindows, ...soulxWindows,
+      ];
+      const window = managedWindows.find(item =>
+        item && !item.isDestroyed() && item.webContents.id === details.webContentsId);
+      const headers = { ...details.requestHeaders };
+      if (window && url.host === `127.0.0.1:${PORT}`) {
+        const frameUrl = details.frame?.url || window.webContents.getURL();
+        const firstNavigation = details.resourceType === 'mainFrame' &&
+          (!frameUrl || frameUrl === 'about:blank' || frameUrl.startsWith('file:'));
+        const sameFrame = frameUrl === origin || frameUrl.startsWith(origin + '/');
+        if ((firstNavigation || sameFrame) &&
+            (!details.initiatorOrigin || details.initiatorOrigin === origin || firstNavigation)) {
+          headers['X-SAP-Session'] = desktopSessionToken;
+        }
+      }
+      callback({ requestHeaders: headers });
+    },
+  );
+}
 const DEFAULT_PORT = 3456 // Default port
 const isDev = process.env.NODE_ENV === 'development'
 const locales = {
@@ -886,6 +916,7 @@ async function startBackend(startPort = DEFAULT_PORT, dataDir = null) {
           ELECTRON_NPM_CLI: npmCliPath,
           ELECTRON_RESOURCES_PATH: app.isPackaged ? process.resourcesPath : path.join(__dirname),
           ELECTRON_ACPM_PATH: getAcpxPath(),
+          SAP_DESKTOP_SESSION_TOKEN: desktopSessionToken,
         }
       };
 
@@ -1362,6 +1393,8 @@ app.whenReady().then(async () => {
     });
     // Wait for backend readiness
     await waitForBackend()
+    authorizeDesktopRequests(session.fromPartition('persist:main-session'));
+    authorizeDesktopRequests(session.defaultSession);
 
     // Load full content after backend is ready
     console.log(`Backend server is running at http://${HOST}:${PORT}`)
@@ -1513,7 +1546,7 @@ app.whenReady().then(async () => {
         // not Electron userData, which may differ.
         let sourceDataPath = currentAccount.dataPath;
         try {
-          const resp = await fetch(`http://${HOST}:${PORT}/api/system/data-path`);
+          const resp = await fetch(`http://${HOST}:${PORT}/api/system/data-path`, { headers: { "X-SAP-Session": desktopSessionToken } });
           if (resp.ok) {
             const json = await resp.json();
             if (json.path && fs.existsSync(json.path)) {
@@ -3000,7 +3033,8 @@ app.on('before-quit', async (event) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000); // Two-second timeout
 
-        await fetch(`http://${HOST}:${PORT}/sys/shutdown`, { 
+        await fetch(`http://${HOST}:${PORT}/sys/shutdown`, {
+          headers: { "X-SAP-Session": desktopSessionToken },
           method: 'POST',
           signal: controller.signal
         });

@@ -6,6 +6,7 @@ import datetime
 
 import httpx
 
+from py.session_permissions import internal_session_headers
 from py.get_setting import get_port, load_settings, save_settings
 from py.diary_system import append_diary_entry, DEFAULT_BOOK_ID
 from py.diary_chat_integration import summarize_and_save_buffers
@@ -328,7 +329,7 @@ class DiaryEngine:
             port = get_port()
             url = f"http://127.0.0.1:{port}/start_HA"
             payload = {"data": {"api_key": api_key, "url": ha_url}}
-            async with httpx.AsyncClient(timeout=15.0) as client:
+            async with httpx.AsyncClient(timeout=15.0, headers=internal_session_headers(), trust_env=False) as client:
                 resp = await client.post(url, json=payload)
                 if resp.status_code == 200:
                     logging.info("[DiaryEngine] Smart-home MCP client initialized")
@@ -494,7 +495,7 @@ class DiaryEngine:
             "enable_web_search": action == "webSearch",
         }
         try:
-            async with httpx.AsyncClient(timeout=300.0) as client:
+            async with httpx.AsyncClient(timeout=300.0, headers=internal_session_headers(), trust_env=False) as client:
                 resp = await client.post(url, json=payload)
                 resp.raise_for_status()
                 data = resp.json()

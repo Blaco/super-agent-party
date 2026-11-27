@@ -3,6 +3,7 @@ import logging
 import datetime
 import httpx
 
+from py.session_permissions import internal_session_headers
 from py.get_setting import get_port, load_settings
 from py.diary_system import append_diary_entry, DEFAULT_BOOK_ID
 
@@ -91,7 +92,7 @@ async def summarize_and_save_buffers(idle_minutes: int = 15):
                 "platform": "diary",
                 "enable_tools": [],
             }
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=120.0, headers=internal_session_headers(), trust_env=False) as client:
                 resp = await client.post(url, json=payload)
                 resp.raise_for_status()
                 data = resp.json()
