@@ -709,7 +709,8 @@ async function showAccountSelectionWindow(registry) {
     const escapeHtml = value => String(value).replace(/[&<>"']/g, char =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
     const accountsHtml = registry.accounts.map(acc => {
-      const typeLabel = acc.type === 'root' ? 'Root' : 'User';
+      const typeClass = acc.type === 'root' ? 'root' : 'user';
+      const typeLabel = typeClass === 'root' ? 'Root' : 'User';
       const lastLaunch = acc.lastLaunched
         ? new Date(acc.lastLaunched).toLocaleString()
         : 'Never launched';
@@ -717,7 +718,7 @@ async function showAccountSelectionWindow(registry) {
       return `<div class="account-item ${isDefault}" data-id="${escapeHtml(acc.id)}">
         <div class="acc-icon">${acc.type === 'root' ? '👑' : '👤'}</div>
         <div class="acc-info">
-          <div class="acc-name">${escapeHtml(acc.name)} <span class="acc-type-badge ${acc.type}">${typeLabel}</span></div>
+          <div class="acc-name">${escapeHtml(acc.name)} <span class="acc-type-badge ${typeClass}">${typeLabel}</span></div>
           <div class="acc-path">${escapeHtml(acc.dataPath)}</div>
           <div class="acc-last">Last launched: ${lastLaunch}</div>
         </div>
@@ -824,21 +825,22 @@ async function showAccountSelectionWindow(registry) {
 
     win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
 
-    win.webContents.ipc.once('account-selected', (event, { accountId, remember }) => {
-      const account = registry.accounts.find(a => a.id === accountId);
-      if (remember && account) {
+    const selectAccount = (event, selection) => {
+      if (!event.senderFrame || event.senderFrame !== win.webContents.mainFrame) return;
+      const account = registry.accounts.find(a => a.id === selection?.accountId);
+      if (!account) return;
+      win.webContents.ipc.removeListener('account-selected', selectAccount);
+      if (selection.remember === true) {
         const data = loadAccounts();
-        data.defaultAccountId = accountId;
+        data.defaultAccountId = account.id;
         saveAccounts(data);
       }
-      if (!win.isDestroyed()) win.close();
-      resolve(account);
-    });
+      win.hide();
+      resolve({ account, window: win });
+    };
+    win.webContents.ipc.on('account-selected', selectAccount);
 
-    win.on('close', () => {
-      if (!win.isDestroyed()) win.destroy();
-      resolve(null);
-    });
+    win.once('closed', () => resolve(null));
 
     win.once('ready-to-show', () => {
       win.show();
@@ -1278,6 +1280,7 @@ app.whenReady().then(async () => {
     // Determine which account to launch
     // ============================================================
     let accountData = null;
+    let accountPickerWindow = null;
 
     if (launchAccountId) {
       // Launch account specified by --account=<id>
@@ -1323,12 +1326,14 @@ app.whenReady().then(async () => {
       } else {
         // Show account picker when multiple accounts have no default
         console.log('[Accounts] Multiple accounts without a default: showing account chooser');
-        accountData = await showAccountSelectionWindow(registry);
-        if (!accountData) {
+        const selection = await showAccountSelectionWindow(registry);
+        if (!selection) {
           console.log('[Accounts] Account chooser closed by user; quitting');
           app.quit();
           return;
         }
+        accountData = selection.account;
+        accountPickerWindow = selection.window;
       }
     }
 
@@ -1424,6 +1429,7 @@ app.whenReady().then(async () => {
     });
     // Create splash window
     createSkeletonWindow()
+    if (accountPickerWindow && !accountPickerWindow.isDestroyed()) accountPickerWindow.close();
     if (global.vmcCfg.receive.enable) startVMCReceiver(global.vmcCfg);
     // Start backend with account port and data directory
     await startBackend(startPort, currentAccountDataPath)
