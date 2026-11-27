@@ -13,7 +13,6 @@ async def fetch_custom_http(method, url, headers=None, body=None):
     if headers is None or headers == "":
         headers = {}
     elif isinstance(headers, str):
-        print(f'headers: {headers}')
         headers = safe_json_loads(headers)
 
     # Handle Content-Type automatically, defaulting to application/json
@@ -34,9 +33,7 @@ async def fetch_custom_http(method, url, headers=None, body=None):
         async with aiohttp.ClientSession() as session:
             async with session.request(method, url, **kwargs) as response:
                 print(f'Status: {response.status}')
-                response_text = await response.text()
-                print(f'Response: {response_text}')
-                return response_text
+                return await response.text()
     except Exception as e:
-        print(f'Error: {e}')
+        print(f'Custom HTTP request failed ({type(e).__name__})')
         return f'Error: {e}'

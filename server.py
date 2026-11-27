@@ -7427,9 +7427,8 @@ async def extension_proxy(request: Request, url: str):
                 }
             }
             
-            # Return a 403 response body for frontend diagnostics
             if resp.status_code == 403:
-                print(f"[Proxy Warning] Target returned 403. Body sample: {resp.content[:100]}")
+                print("[Proxy Warning] Target returned 403")
 
             return Response(
                 content=resp.content,
@@ -7533,7 +7532,6 @@ async def asr_websocket_endpoint(websocket: WebSocket):
                             from py.sherpa_asr import sherpa_recognize
                             # Handle Sherpa
                             result = await sherpa_recognize(audio_bytes)
-                            print(f"Sherpa result: {result}")
                             await websocket.send_json({
                                 "type": "transcription",
                                 "id": frame_id,

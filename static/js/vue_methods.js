@@ -1604,7 +1604,7 @@ formatMessage(content, index) {
         const lang = button.dataset.lang;
         const codeContent = codeBlock.querySelector('code')?.textContent?.trim();
         if (!codeContent) {
-          console.warn('Empty code content', codeBlock);
+          console.warn('Empty code content');
           this.showErrorToast('Code is empty');
           return;
         }
@@ -3340,7 +3340,7 @@ formatMessage(content, index) {
                         try {
                             parsed = JSON.parse(jsonStr);
                         } catch (parseErr) {
-                            console.warn('SSE parse error, skipping chunk:', parseErr.message, jsonStr.slice(0, 200));
+                            console.warn('Skipping an invalid SSE chunk');
                             continue;
                         }
                         const delta = parsed.choices?.[0]?.delta;
@@ -8561,7 +8561,6 @@ handleCreateSlackSeparator(val) {
           }
           
           if (this.isPttMode || this.waitingForPttResult) {
-            console.log("PTT recognition finished; submitting:", data.text);
             this.sendMessage(); 
             this.userInput = ''; // Clear after submission
             this.waitingForPttResult = false; // Reset flag
@@ -10048,7 +10047,6 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
                         mimeType: audioChunk.mimeType
                     };
 
-                    console.log(`Sending audio chunk ${currentIndex} to VRM with metadata:`, metadata);
                     // VRM starts playback immediately in sync with muted browser playback
                     this.sendBinaryToVRM(metadata, audioChunk.buffer);
                 }
@@ -10057,7 +10055,6 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
                 
                 if (isVrmSilent) {
                     lastMessage._currentAudio.volume = 1.0; // Livestream audio plays in the browser
-                    console.log("Playing livestream message:", audioChunk.text);
                 } else {
                     lastMessage._currentAudio.volume = this.vrmOnline ? 0.0000001 : 1.0; // AI audio plays through VRM when available
                 }
@@ -11589,7 +11586,6 @@ copyIslandEndpoint(){
             return;
         }
 
-        console.log('Processing livestream message:', oldestDanmu.content);
         this.lastProcessedContent = oldestDanmu.content;
         
         // Save message temporarily for TTS queue injection
@@ -13765,7 +13761,6 @@ stopTTSActivities() {
         this.stopGenerate()
       }
       if (b.action.type === 'prompt' && b.action.prompt) {
-        console.log('Prompt:', b.action.prompt)
         this.userInput= '[system]:'+ b.action.prompt
         // Send prompt to the model
         this.sendMessage();
@@ -14615,7 +14610,7 @@ isTargetPlatform(behavior, platformKey) {
         // Do not show an error for user cancellation
         console.log('System prompt generation was aborted');
       } else {
-        console.error('System prompt generation failed:', e);
+        console.error('System prompt generation failed');
         showNotification(this.t('genFailed') + ': ' + e.message, 'error');
       }
     } finally {

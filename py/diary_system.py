@@ -127,7 +127,7 @@ async def append_diary_entry(entry_type: str, content: str, title: str = "", pus
     }
     data["entries"].append(entry)
     await save_diary_data(data, book_id)
-    print(f"📔 [Diary] Added entry [{book_id}/{entry_type}]: {(title or content)[:30]}")
+    print("[Diary] Added entry")
     return entry
 
 
