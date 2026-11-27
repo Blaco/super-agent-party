@@ -238,3 +238,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## SAP-NG template reliability checkpoint
 
 - Correct 28 self-closing Element Plus switches in the main in-DOM template and add a smoke guard covering desktop, browser-chat and minimal HTML. No change to switch settings or event handlers. Static invariants passed; CI and Windows interaction checks pending. No new build requested. NG backend reuse and session authentication remain separate compatibility reviews.
+
+## Conversation context checkpoint
+
+- SAP-NG comparison confirms inherited default and named-group requests are clipped to 12 non-system entries before provider selection. Add content-free truncation diagnostics and regression test without changing current request data. The actual context-window fix is outstanding; plan provider-specific authorized history and budget accounting, complete tool groups and preservation of the latest real user request before increasing limits. No cloud scope change or build requested.

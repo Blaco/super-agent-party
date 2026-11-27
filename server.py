@@ -1836,7 +1836,16 @@ def _build_group_memory_prompt(group: dict, memories: list[dict]) -> str:
 def _trim_request_messages(messages: List[Dict], recent_count: int = 12) -> List[Dict]:
     system_messages = [copy.deepcopy(m) for m in messages if m.get("role") == "system"]
     dialog_messages = [copy.deepcopy(m) for m in messages if m.get("role") != "system"]
-    return system_messages + dialog_messages[-recent_count:]
+    retained = dialog_messages[-recent_count:]
+    if len(retained) < len(dialog_messages):
+        # Counts and role flags only: never log the discarded conversation or tool output.
+        logging.getLogger("app").info(
+            "[MsgTrim] dialog=%d retained=%d dropped=%d user_retained=%s starts_with_tool=%s",
+            len(dialog_messages), len(retained), len(dialog_messages) - len(retained),
+            any(m.get("role") == "user" for m in retained),
+            bool(retained and retained[0].get("role") == "tool"),
+        )
+    return system_messages + retained
 
 async def _apply_group_memory_context(request: ChatRequest) -> dict:
     request.conversation_id = _normalize_entity_id(request.conversation_id) or None

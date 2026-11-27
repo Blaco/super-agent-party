@@ -61,3 +61,7 @@ First-party UI, backend source, bundled skill text and inherited design document
 ## Template reliability — 2026-11-26
 
 All 28 formerly self-closing Element Plus switches in the main desktop template use explicit closing tags; associated memory, voice, vision, automation and optional livestream controls retain their existing KEEP/HIDE dispositions, bindings and handlers. Regression smoke guard added; Windows UI interaction still unverified.
+
+## Conversation context visibility — 2026-11-26
+
+Chat streaming and persistence remain KEEP. The inherited 12-entry request cap is a confirmed source limitation, not an intentional final character-memory design. Counts-only diagnostics are added; provider-specific budget management, tool-chain continuity, history authorization and local inference testing remain outstanding. No changes to storage or history sent to providers.

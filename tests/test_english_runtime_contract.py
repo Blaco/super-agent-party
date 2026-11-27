@@ -8,6 +8,35 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class EnglishRuntimeContractTests(unittest.TestCase):
+    def test_request_trim_reports_counts_without_conversation_content(self):
+        # Compile only the helper; importing server.py would start application services.
+        import copy
+        import logging
+        from typing import Dict, List
+
+        source = (ROOT / "server.py").read_text(encoding="utf-8")
+        tree = ast.parse(source, filename="server.py")
+        helper = next(node for node in tree.body
+                      if isinstance(node, ast.FunctionDef) and node.name == "_trim_request_messages")
+        scope = {"copy": copy, "logging": logging, "List": List, "Dict": Dict}
+        exec(compile(ast.Module(body=[helper], type_ignores=[]), "server.py", "exec"), scope)
+        trim = scope["_trim_request_messages"]
+        messages = [{"role": "system", "content": "private persona"},
+                    {"role": "user", "content": "private original question"}]
+        messages += [{"role": "tool", "content": "private tool result"} for _ in range(12)]
+        original = copy.deepcopy(messages)
+        with self.assertLogs("app", level="INFO") as logs:
+            result = trim(messages)
+        self.assertEqual(result, [messages[0]] + messages[-12:])
+        self.assertEqual(messages, original)
+        self.assertIsNot(result[0], messages[0])
+        line = " ".join(logs.output)
+        self.assertIn("dialog=13 retained=12 dropped=1", line)
+        self.assertIn("user_retained=False starts_with_tool=True", line)
+        self.assertNotIn("private", line)
+        with self.assertNoLogs("app", level="INFO"):
+            self.assertEqual(trim(messages[:2]), messages[:2])
+
     def test_backend_locale(self):
         data = json.loads((ROOT / "config/locales.json").read_text(encoding="utf-8"))
         self.assertEqual(set(data), {"en-US"})
