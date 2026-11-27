@@ -172,3 +172,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — main stylesheet, third pass
 
 - Translated 125 more Han-flagged stylesheet comments; 1160 remain. All non-comment CSS remains byte-identical and line count unchanged. Further localization, CI and Windows visual testing remain outstanding. No build.
+
+## Follow-up source checkpoint — main stylesheet, fourth pass
+
+- Translated 260 more stylesheet comment lines; 900 remain. Non-comment CSS byte-identical and line count unchanged. CI and Windows visual validation pending. No build.

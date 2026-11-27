@@ -466,3 +466,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Main stylesheet English comment pass 3
 
 - Parent 372ce771bce50382c10fcdeba3f774e784a505c3. Translate 125 remaining flagged comment lines in static/css/styles.css, covering A2UI form controls, Markdown footnotes, streamed message layout and browser tabs, including one scrollbar comment left over from pass 2. All non-comment CSS is byte-identical; original line count retained. Han-flagged lines decrease from 1285 to 1160. No behavior, selectors, declarations, dependencies or permissions changed. No external implementation required. Full CI and Windows visual validation pending. Revert for rollback.
+
+## 2026-11-26 — Main stylesheet English comment pass 4
+
+- Parent ebfd8e03d7fa6b2092197a06f5a435bea16a0d8a. Translate 260 comment lines in static/css/styles.css covering browser, notifications, IM/group chat, attachments and tool approval cards. Preserve non-comment CSS byte-for-byte and line count; 900 flagged lines remain. No runtime behavior or dependency changes. CI and Windows visual validation pending. Revert for rollback.

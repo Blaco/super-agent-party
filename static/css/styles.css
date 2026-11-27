@@ -6536,17 +6536,17 @@ hr.footnotes-sep {
 }
 
 
-/* --- 浏览器主体 --- */
+/* --- Browser body --- */
 .browser-body {
-    flex: 1;              /* 占据剩余垂直空间 */
-    position: relative;   /* 关键：为内部绝对定位做基准 */
+    flex: 1;              /* Occupy remaining vertical space */
+    position: relative;   /* Key: provide a reference for absolute positioning inside */
     width: 100%;
-    height: 0;            /* 关键技巧：配合 flex:1 使用，防止被内部内容撑大导致滚动条 */
+    height: 0;            /* Key trick: combine with flex:1 to prevent inner content from expanding the container and causing scrollbars */
     background: var(--el-bg-color);
     overflow: hidden;
 }
 
-/* --- 极简欢迎页 (适配版) --- */
+/* --- Minimal welcome page (adapted) --- */
 .browser-welcome-page {
     width: 100%;
     height: 100%;
@@ -6557,9 +6557,9 @@ hr.footnotes-sep {
     position: relative;
 }
 
-/* 3. Webview 包装器：使用绝对定位强制铺满 */
+/* 3. Webview wrapper: fill using absolute positioning */
 .webview-wrapper {
-    position: absolute;   /* 脱离文档流，强制拉伸 */
+    position: absolute;   /* Remove from document flow and stretch */
     top: 0;
     left: 0;
     right: 0;
@@ -6567,32 +6567,32 @@ hr.footnotes-sep {
     width: 100%;
     height: 100%;
     z-index: 1;
-    display: flex;        /* 确保内部 webview 能利用 flex 属性 */
+    display: flex;        /* Ensure inner webview can use flex properties */
     flex-direction: column;
 }
 
-/* 4. Webview 标签本身 */
+/* 4. Webview element itself */
 .webview-element {
     flex: 1;
     width: 100% !important;
     height: 100% !important;
     border: none;
-    display: inline-flex; /* Electron webview 推荐的 display 属性 */
+    display: inline-flex; /* Recommended display property for Electron webview */
 }
 
-/* 5. 欢迎页也需要绝对定位铺满，否则可能会被挤压 */
+/* 5. Welcome page must also fill using absolute positioning to avoid compression */
 .browser-welcome-page {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 2;           /* 确保在 webview 上层（如果有重叠的话，虽然 v-if 控制了） */
+    z-index: 2;           /* Ensure it is above webview if they overlap, although v-if controls this */
     background: var(--el-bg-color-page);
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow-y: auto;     /* 允许欢迎页内容过多时滚动 */
+    overflow-y: auto;     /* Allow scrolling when welcome page content is too long */
 }
 
 .ios-welcome-container {
@@ -6608,7 +6608,7 @@ hr.footnotes-sep {
 .ios-title {
     font-size: 48px;
     font-weight: 700;
-    /* 标题渐变：从主文本色到次文本色 */
+    /* Title gradient: primary to secondary text color */
     background: linear-gradient(135deg, var(--el-text-color-primary) 0%, var(--el-text-color-secondary) 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -6617,25 +6617,25 @@ hr.footnotes-sep {
     letter-spacing: -1px;
 }
 
-/* 搜索框容器 */
+/* Search box container */
 .ios-search-wrapper {
     width: 100%;
     height: 60px;
-    /* 搜索框背景：使用覆盖层背景(通常是纯色) + 透明度 */
+    /* Search background: overlay background (usually solid) plus transparency */
     background: var(--bg-color)!important;
     border: 1px solid var(--el-border-color-lighter);
     border-radius: 20px;
-    /* 阴影适配 */
+    /* Adapt shadow */
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05), 0 2px 10px rgba(0,0,0,0.01);
     display: flex;
     align-items: center;
     padding: 0 16px;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
-    z-index: 500; /* 确保下拉菜单不被遮挡 */
+    z-index: 500; /* Ensure dropdown is not obscured */
 }
 
-/* 悬停和聚焦效果 */
+/* Hover and focus effects */
 .ios-search-wrapper:hover {
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0,0,0,0.03);
     transform: translateY(-1px);
@@ -6644,18 +6644,18 @@ hr.footnotes-sep {
 
 .ios-search-wrapper.focused {
     border-color: var(--el-color-primary);
-    /* 光晕使用主色，降低透明度 */
+    /* Use primary color for glow with reduced opacity */
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--el-color-primary) 15%, transparent), 
                 0 15px 50px rgba(0, 0, 0, 0.1);
 }
 
-/* 引擎选择器 */
+/* Engine selector */
 .engine-selector {
     position: relative;
     height: 100%;
     display: flex;
     align-items: center;
-    /* 增加 padding 让热区变大一点 */
+    /* Increase padding to enlarge hit area */
     padding-right: 12px;
     padding-left: 4px; 
     border-right: 1px solid var(--el-border-color-lighter);
@@ -6682,10 +6682,10 @@ hr.footnotes-sep {
     color: var(--el-text-color-secondary);
 }
 
-/* 下拉菜单 */
+/* Dropdown menu */
 .engine-dropdown {
     position: absolute;
-    /* 1. 改为 calc 方式定位，不使用 margin-top */
+    /* 1. Position using calc instead of margin-top */
     top: calc(100% + 10px); 
     left: 0;
     width: 140px;
@@ -6696,18 +6696,18 @@ hr.footnotes-sep {
     border: 1px solid var(--el-border-color-light);
     padding: 6px;
     z-index: 1000;
-    /* margin-top: 10px;  <-- 2. 删掉这一行，因为我们用 top: calc() 代替了 */
+    /* margin-top: 10px;  <-- 2. Remove this line because top: calc() replaces it */
     animation: dropdownFade 0.2s ease-out;
 }
 .engine-dropdown::before {
     content: '';
     position: absolute;
-    /* 向上延伸 10px，填补与按钮之间的空隙 */
+    /* Extend upward 10px to fill the gap to the button */
     top: -10px; 
     left: 0;
     width: 100%;
     height: 10px;
-    background: transparent; /* 透明，不可见但可交互 */
+    background: transparent; /* Transparent, invisible but interactive */
 }
 
 @keyframes dropdownFade {
@@ -6732,7 +6732,7 @@ hr.footnotes-sep {
     background: var(--el-color-primary-light-9);
 }
 
-/* 输入框 */
+/* Input */
 .ios-search-input {
     flex: 1;
     border: none;
@@ -6749,14 +6749,14 @@ hr.footnotes-sep {
     font-weight: 300;
 }
 
-/* 搜索按钮 */
+/* Search button */
 .ios-search-btn {
     width: 36px;
     height: 36px;
     border-radius: 50%;
     background: var(--el-color-primary);
     border: none;
-    color: #fff; /* 按钮文字固定白色 */
+    color: #fff; /* Button text always white */
     font-size: 14px;
     cursor: pointer;
     display: flex;
@@ -6774,13 +6774,13 @@ hr.footnotes-sep {
 }
 
 .ios-search-btn:hover {
-    /* 悬停加深颜色：混合黑色 */
+    /* Darken on hover by blending black */
     background: color-mix(in srgb, var(--el-color-primary) 90%, black);
     transform: scale(1.1);
 }
 
 
-/* ================= 集成浏览器条样式 ================= */
+/* ================= Integrated browser bar styles ================= */
 
 .integrated-browser-bar {
   display: flex;
@@ -6790,24 +6790,24 @@ hr.footnotes-sep {
   margin-top: 2px;
   height: 100%;
   gap: 8px;
-  -webkit-app-region: no-drag; /* 只有这部分不可拖拽 */
-  /* margin-left 已在 HTML 中内联设置，利用父级 top-bar 的 drag 属性实现左侧拖拽区域 */
+  -webkit-app-region: no-drag; /* Only this part is not draggable */
+  /* margin-left is set inline in HTML; use parent top-bar drag property for the left drag area */
 }
 
-/* 1. 地址栏 */
+/* 1. Address bar */
 .integrated-address-bar {
   height: 26px;
   margin-top: 2px;
   display: flex;
   align-items: center;
-  width: 160px; /* 稍微调窄一点，给右边留空间 */
+  width: 160px; /* Slightly narrower to leave room on the right */
   flex-shrink: 0;
   transition: width 0.3s;
 }
 .integrated-address-bar:focus-within {
   width: 220px; 
 }
-/* 输入框样式 */
+/* Input styles */
 .ib-input .el-input__wrapper {
   background-color: var(--el-fill-color-light);
   border-radius: 15px;
@@ -6821,18 +6821,18 @@ hr.footnotes-sep {
   height: 24px;
 }
 
-/* 2. 标签栏容器 (位于中间) */
+/* 2. Tab bar container (center) */
 .integrated-tabs-container {
   flex: 1;
-  min-width: 0; /* 允许容器被压缩 */
+  min-width: 0; /* Allow container to shrink */
   height: 100%;
   display: flex;
   align-items: center;
-  overflow-x: auto; /* 关键：开启横向滚动 */
+  overflow-x: auto; /* Key: enable horizontal scrolling */
   overflow-y: hidden;
-  /* 隐藏滚动条 (Chrome/Electron) */
+  /* Hide scrollbar (Chrome/Electron) */
   scrollbar-width: none; 
-  /* 两侧渐变遮罩 */
+  /* Gradient masks on both sides */
   mask-image: linear-gradient(to right, transparent, black 20px, black 90%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
 }
@@ -6844,32 +6844,32 @@ hr.footnotes-sep {
   align-items: center;
   gap: 4px;
   padding: 0 10px;
-  /* 关键：宽度根据内容自适应，但至少要填满容器 */
+  /* Key: width adapts to content but must at least fill container */
   width: max-content; 
   min-width: 100%; 
 }
 
-/* 单个标签 */
+/* Individual tab */
 .ib-tab {
   display: flex;
   align-items: center;
   justify-content: space-between;
   
-  /* 1. 宽度策略：实现自动伸缩 */
-  width: 150px;       /* 默认理想宽度 */
-  min-width: 80px;    /* 关键：压到 80px 就不再压了，开始触发父容器滚动 */
+  /* 1. Width strategy: automatic resizing */
+  width: 150px;       /* Default ideal width */
+  min-width: 80px;    /* Key: stop shrinking at 80px and trigger parent scrolling */
   max-width: 180px;
   
-  /* 2. 弹性策略 */
-  flex-shrink: 0;     /* 这里有个权衡：*/
-  /* 如果设为 1：标签会一直挤压直到 min-width，然后才滚动（符合你的要求）*/
-  /* 如果设为 0：标签完全不挤压，直接滚动 */
-  /* 建议设为 0，因为配合边缘滚动，固定宽度的标签更容易点击 */
-  /* 但如果你一定要“先挤压后滚动”，请改为 flex-shrink: 1; */
+  /* 2. Flex strategy */
+  flex-shrink: 0;     /* There is a tradeoff here:*/
+  /* If set to 1: tabs shrink to min-width before scrolling (as requested)*/
+  /* If set to 0: tabs do not shrink and scroll immediately */
+  /* Recommend 0 because fixed-width tabs are easier to click with edge scrolling */
+  /* For shrink-then-scroll behavior, change to flex-shrink: 1; */
   
   height: 26px;
   margin-top: 4px;
-  /* 其他样式不变... */
+  /* Other styles unchanged... */
   background-color: transparent;
   border-radius: 6px;
   padding: 0 6px;
@@ -6877,7 +6877,7 @@ hr.footnotes-sep {
   user-select: none;
   font-size: 12px;
   color: var(--el-text-color-regular);
-  transition: background-color 0.2s, width 0.2s; /* 加个过渡动画更顺滑 */
+  transition: background-color 0.2s, width 0.2s; /* Add a transition for smoother movement */
 }
 
 .ib-tab.active {
@@ -6926,12 +6926,12 @@ hr.footnotes-sep {
   color: var(--el-color-danger);
 }
 
-/* 3. 右侧控制组 (新建标签 + 导航) */
+/* 3. Right control group (new tab and navigation) */
 .browser-controls-group {
     display: flex;
     align-items: center;
     gap: 2px;
-    flex-shrink: 0; /* 防止被挤压 */
+    flex-shrink: 0; /* Prevent compression */
     background: var(--bg-color);
     border-radius: 12px;
     padding: 0 4px;
@@ -6939,7 +6939,7 @@ hr.footnotes-sep {
     margin-right: 10px;
 }
 
-/* 垂直分割线 */
+/* Vertical divider */
 .ib-divider {
     width: 1px;
     height: 14px;
@@ -6954,7 +6954,7 @@ hr.footnotes-sep {
   cursor: pointer;
   padding: 0;
   border-radius: 4px;
-  font-size: 13px; /* 稍微大一点点 */
+  font-size: 13px; /* Slightly larger */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6970,13 +6970,13 @@ hr.footnotes-sep {
   cursor: not-allowed;
 }
 
-/* 新建标签按钮特殊样式 (可选) */
+/* Special new-tab button styles (optional) */
 .new-tab-plus {
-    /* 如果想让它突出一点，可以加这个 */
+    /* Add this to make it stand out */
     color: var(--el-color-primary); 
 }
 
-/* 包装器，用于相对定位 */
+/* Wrapper for relative positioning */
 .download-manager-wrapper {
     position: relative;
     display: flex;
@@ -6984,7 +6984,7 @@ hr.footnotes-sep {
     height: 100%;
 }
 
-/* 按钮上的小红点 */
+/* Small red dot on button */
 .download-badge {
     position: absolute;
     top: 4px;
@@ -6996,15 +6996,15 @@ hr.footnotes-sep {
     box-shadow: 0 0 2px rgba(0,0,0,0.3);
 }
 
-/* --- iOS 风格下拉面板 --- */
+/* --- iOS-style dropdown panel --- */
 .ios-dropdown-panel {
     position: absolute;
-    top: 34px; /* 按钮高度下方 */
-    right: -10px; /* 稍微靠右对齐 */
+    top: 34px; /* Below button height */
+    right: -10px; /* Align slightly to the right */
     width: 320px;
     max-height: 400px;
     background: var(--bg-color);
-    backdrop-filter: blur(20px); /* 核心：毛玻璃效果 */
+    backdrop-filter: blur(20px); /* Key: frosted glass effect */
     -webkit-backdrop-filter: blur(20px);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0,0,0,0.05);
@@ -7019,17 +7019,17 @@ hr.footnotes-sep {
 .ios-dropdown-panel::before {
     content: '';
     position: absolute;
-    /* 向上延伸，填补按钮和面板之间的空隙 */
+    /* Extend upward to fill the gap between button and panel */
     top: -20px; 
-    /* 占满整个宽度 */
+    /* Fill entire width */
     left: 0;
     width: 100%;
-    /* 高度要足够覆盖空隙，比如 gap 是 10px，这里设 20px 确保重叠 */
+    /* Height must cover the gap, e.g. 20px for a 10px gap to ensure overlap */
     height: 20px; 
-    /* 透明背景 */
+    /* Transparent background */
     background: transparent; 
     
-    /* 调试时可以把下面这行解开，看看桥在哪 */
+    /* Uncomment the following line during debugging to see the bridge */
     /* background: rgba(255, 0, 0, 0.3); */
 }
 
@@ -7038,7 +7038,7 @@ hr.footnotes-sep {
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* 头部 */
+/* Header */
 .dropdown-header {
     display: flex;
     justify-content: space-between;
@@ -7058,7 +7058,7 @@ hr.footnotes-sep {
     opacity: 0.8;
 }
 
-/* 列表区 */
+/* List area */
 .download-list {
     overflow-y: auto;
     max-height: 350px;
@@ -7072,7 +7072,7 @@ hr.footnotes-sep {
     border-radius: 2px;
 }
 
-/* 空状态 */
+/* Empty state */
 .empty-state {
     padding: 40px 0;
     text-align: center;
@@ -7085,7 +7085,7 @@ hr.footnotes-sep {
     opacity: 0.5;
 }
 
-/* 单个下载项 */
+/* Individual download item */
 .download-item {
     display: flex;
     align-items: center;
@@ -7104,7 +7104,7 @@ hr.footnotes-sep {
     background: rgba(255,255,255,0.05);
 }
 
-/* 文件图标 */
+/* File icon */
 .file-icon {
     width: 32px;
     height: 32px;
@@ -7118,10 +7118,10 @@ hr.footnotes-sep {
     flex-shrink: 0;
 }
 
-/* 信息区 */
+/* Information area */
 .file-info {
     flex: 1;
-    min-width: 0; /* 允许文本截断 */
+    min-width: 0; /* Allow text truncation */
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -7141,7 +7141,7 @@ hr.footnotes-sep {
     color: var(--el-text-color-secondary);
 }
 
-/* 进度条 */
+/* Progress bar */
 .progress-bar-bg {
     height: 3px;
     width: 100%;
@@ -7158,7 +7158,7 @@ hr.footnotes-sep {
     transition: width 0.2s;
 }
 
-/* 操作按钮 */
+/* Action buttons */
 .item-actions {
     display: flex;
     gap: 4px;
@@ -7183,13 +7183,13 @@ hr.footnotes-sep {
     color: var(--el-color-primary);
 }
 .action-btn.delete:hover {
-    background: rgba(245, 108, 108, 0.1); /* 浅红色 */
+    background: rgba(245, 108, 108, 0.1); /* Light red */
     color: var(--el-color-danger);
 }
 .success-text { color: var(--el-color-success); }
 .error-text { color: var(--el-color-danger); }
 
-/* Vue 动画 transition */
+/* Vue animation transition */
 .dropdown-fade-enter-active,
 .dropdown-fade-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -7201,81 +7201,81 @@ hr.footnotes-sep {
   transform: translateY(-5px);
 }
 
-/* --- AI Browser 侧边栏切换手柄 --- */
+/* --- AI Browser sidebar toggle handle --- */
 .browser-toggle-handle {
     position: absolute;
     top: 50%;
-    right: 0; /* 紧贴右侧边缘 */
+    right: 0; /* Flush with right edge */
     transform: translateY(-50%);
     width: 24px;
     height: 60px;
-    background: var(--el-color-primary); /* 使用主题色 */
-    color: #ffffff; /* 确保图标是白色 */
-    border-radius: 12px 0 0 12px; /* 左侧圆角，右侧直角贴合边缘 */
+    background: var(--el-color-primary); /* Use theme color */
+    color: #ffffff; /* Ensure icon is white */
+    border-radius: 12px 0 0 12px; /* Rounded left corners, square right corners flush with edge */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 100; /* 确保层级高于 WebView */
+    z-index: 100; /* Ensure stacking above WebView */
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0.6; /* 默认半透明，减少对浏览内容的干扰 */
+    opacity: 0.6; /* Translucent by default to minimize interference with browser content */
     font-size: 12px;
 }
 
-/* 鼠标悬停效果 */
+/* Mouse hover effect */
 .browser-toggle-handle:hover {
     opacity: 1;
-    width: 32px; /* 变宽 */
+    width: 32px; /* Widen */
     padding-right: 4px;
     background: var(--el-color-primary-light-3);
 }
 
-/* 适配不同主题的图标颜色 */
+/* Adapt icon color to different themes */
 [data-theme="dark"] .browser-toggle-handle,
 [data-theme="midnight"] .browser-toggle-handle {
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
 }
 
-/* --- AI Browser 侧边栏切换手柄（反向，紧贴左侧）--- */
+/* --- AI Browser sidebar toggle handle (reversed, flush left) --- */
 .browser-toggle-handle--left {
     position: absolute;
     top: 50%;
-    left: 0;               /* 紧贴左侧边缘 */
+    left: 0;               /* Flush with left edge */
     transform: translateY(-50%);
     width: 24px;
     height: 60px;
     background: var(--el-color-primary);
     color: #ffffff;
-    border-radius: 0 12px 12px 0; /* 右侧圆角，左侧直角贴合边缘 */
+    border-radius: 0 12px 12px 0; /* Rounded right corners, square left corners flush with edge */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 9999;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15); /* 阴影方向相反 */
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15); /* Reverse shadow direction */
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0.6;
     font-size: 12px;
 }
 
-/* 鼠标悬停效果 */
+/* Mouse hover effect */
 .browser-toggle-handle--left:hover {
     opacity: 1;
     width: 32px;
-    padding-left: 4px;     /* 左侧内边距，保持图标居中 */
+    padding-left: 4px;     /* Left padding keeps icon centered */
     background: var(--el-color-primary-light-3);
 }
 
-/* 适配不同主题的图标颜色 */
+/* Adapt icon color to different themes */
 [data-theme="dark"] .browser-toggle-handle--left,
 [data-theme="midnight"] .browser-toggle-handle--left {
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
 }
 
-/* --- 收藏夹功能样式 --- */
+/* --- Bookmark styles --- */
 
-/* 1. 允许标题被点击 */
+/* 1. Allow title to be clicked */
 .ios-title {
     cursor: pointer;
     user-select: none;
@@ -7291,7 +7291,7 @@ hr.footnotes-sep {
     transform: scale(0.98);
 }
 
-/* 提示用户可以点击的小标识 (可选) */
+/* Small indicator that title is clickable (optional) */
 .ios-title::after {
     content: 'Click to toggle favorites';
     position: absolute;
@@ -7311,16 +7311,16 @@ hr.footnotes-sep {
     opacity: 0.6;
 }
 
-/* 2. 收藏夹容器 */
+/* 2. Bookmark container */
 .ios-favorites-wrapper {
     width: 100%;
     max-width: 680px;
     margin-top: 40px;
-    /* 动画过渡容器高度和透明度 */
+    /* Animate container height and opacity */
     transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     overflow: hidden;
     opacity: 1;
-    max-height: 500px; /* 足够展示两行图标的高度 */
+    max-height: 500px; /* Enough height for two rows of icons */
 }
 
 .ios-favorites-wrapper.hidden {
@@ -7329,7 +7329,7 @@ hr.footnotes-sep {
     margin-top: 0;
 }
 
-/* 3. 图标网格 */
+/* 3. Icon grid */
 .ios-favorites-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -7337,7 +7337,7 @@ hr.footnotes-sep {
     padding: 10px;
 }
 
-/* 4. 单个收藏项 */
+/* 4. Individual bookmark */
 .fav-item {
     display: flex;
     flex-direction: column;
@@ -7369,46 +7369,46 @@ hr.footnotes-sep {
     margin-top: 0;
 }
 
-/* 3. 网格布局：固定宽度，防止变形 */
+/* 3. Grid layout: fixed width to prevent distortion */
 .ios-favorites-grid {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 25px; /* 间距拉开，防止视觉拥挤 */
+    gap: 25px; /* Increase spacing to avoid crowding */
     padding: 20px;
 }
 
-/* 4. 单个图标项：去掉背景框，只留纯净图标 */
+/* 4. Individual icon item: remove background frame, leaving clean icon */
 .fav-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 70px; /* 固定宽度 */
+    width: 70px; /* Fixed width */
     text-decoration: none;
     position: relative;
 }
 
-/* 图标容器 */
+/* Icon container */
 .fav-icon-box {
     width: 54px;
     height: 54px;
-    background: var(--el-primary-color) !important; /* 强制纯白，因为99%的网页图标是为白色背景设计的 */
+    background: var(--el-primary-color) !important; /* Intended white background, since most website icons are designed for white */
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 极细阴影 */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Subtle shadow */
     transition: all 0.3s ease;
     border: 1px solid rgba(0,0,0,0.05);
     overflow: hidden;
 }
 
-/* 图片：铺满盒子但留一点内边距 */
+/* Image: fill box but leave some padding */
 .fav-icon-box img {
     width: 80%;
     height: 80%;
     object-fit: contain;
-    image-rendering: -webkit-optimize-contrast; /* 锐化渲染 */
+    image-rendering: -webkit-optimize-contrast; /* Sharpen rendering */
 }
 
 .fav-item:hover .fav-icon-box {
@@ -7417,7 +7417,7 @@ hr.footnotes-sep {
     border-color: var(--el-color-primary);
 }
 
-/* 标题文字 */
+/* Title text */
 .fav-title {
     font-size: 12px;
     color: var(--el-text-color-regular);
@@ -7434,7 +7434,7 @@ hr.footnotes-sep {
     color: var(--el-text-color-primary);
 }
 
-/* 删除按钮 (悬停显示) */
+/* Delete button (visible on hover) */
 .fav-remove-btn {
     position: absolute;
     top: -6px;
@@ -7461,12 +7461,12 @@ hr.footnotes-sep {
     opacity: 1;
 }
 
-/* 地址栏收藏按钮激活状态 */
+/* Active address-bar bookmark button */
 .ib-btn.is-favorite {
-    color: #f5a623; /* 星星黄色 */
+    color: #f5a623; /* Yellow star */
 }
 
-/* 容器微调 */
+/* Container adjustments */
 .current-engine {
     display: flex;
     align-items: center;
@@ -7480,78 +7480,78 @@ hr.footnotes-sep {
     color: var(--el-text-color-placeholder);
 }
 
-/* AI Browser 侧边栏基础样式 */
+/* AI Browser sidebar base styles */
 .browser-copilot-sidebar {
-  width: 450px; /* 默认展开宽度 */
+  width: 450px; /* Default expanded width */
   border-left: 1px solid var(--el-border-color);
   background: var(--el-bg-color);
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden; /* 关键：隐藏收起时的内部内容 */
+  overflow: hidden; /* Key: hide inner content when collapsed */
   
-  /* 关键动画属性 */
+  /* Key animation properties */
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
               opacity 0.2s ease,
-              border-left-width 0.1s; /* 边框也需要过渡，否则最后会留一条线 */
+              border-left-width 0.1s; /* Transition border too, otherwise a line will remain at the end */
   
   opacity: 1;
-  flex-shrink: 0; /* 防止被左侧挤压 */
+  flex-shrink: 0; /* Prevent compression from left */
 }
 
-/* 收起状态的样式 */
+/* Collapsed state styles */
 .browser-copilot-sidebar.sidebar-collapsed {
   width: 0 !important;
-  border-left-width: 0 !important; /* 收起时去掉边框 */
+  border-left-width: 0 !important; /* Remove border when collapsed */
   opacity: 0;
-  pointer-events: none; /* 收起后禁止点击交互 */
+  pointer-events: none; /* Disable clicks when collapsed */
 }
 
-/* --- 新建标签页按钮 (Chrome 风格) --- */
+/* --- New tab button (Chrome style) --- */
 .new-tab-inline {
   display: flex;
   align-items: center;
   justify-content: center;
   
-  /* 尺寸与位置适配 */
+  /* Adapt size and position */
   width: 28px;
-  height: 26px;      /* 与 .ib-tab 高度保持一致 */
-  margin-top: 4px;   /* 与 .ib-tab 的 margin-top 保持一致 */
-  margin-left: 2px;  /* 与最后一个标签保持微小间距 */
+  height: 26px;      /* Match .ib-tab height */
+  margin-top: 4px;   /* Match .ib-tab margin-top */
+  margin-left: 2px;  /* Keep a small gap from final tab */
   
-  /* 基础样式 */
+  /* Base styles */
   background: transparent;
   border: none;
-  border-radius: 6px; /* 与标签圆角一致 */
+  border-radius: 6px; /* Match tab corner radius */
   color: var(--el-text-color-regular);
   cursor: pointer;
-  flex-shrink: 0;    /* 关键：防止标签过多时按钮被挤压 */
+  flex-shrink: 0;    /* Key: prevent button compression when many tabs are open */
   transition: background-color 0.2s, color 0.2s;
   font-size: 12px;
 }
 
-/* 悬停效果 */
+/* Hover effect */
 .new-tab-inline:hover {
-  background-color: var(--el-fill-color-dark); /* 也就是 hover 时的浅灰色背景 */
-  color: var(--el-color-primary); /* 可选：悬停时图标变色 */
+  background-color: var(--el-fill-color-dark); /* Light gray hover background */
+  color: var(--el-color-primary); /* Optional: change icon color on hover */
 }
 
-/* 适配移动端或触摸 */
+/* Adapt for mobile or touch */
 .new-tab-inline:active {
   background-color: var(--el-fill-color-darker);
 }
 
-/* 进度条外层容器 */
+/* Outer progress bar container */
 .omni-progress-wrapper {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1;       /* 占据剩余空间 */
-  min-width: 120px; /* 强制给一个最小宽度 */
+  flex: 1;       /* Occupy remaining space */
+  min-width: 120px; /* Enforce minimum width */
   margin: 0 10px;
 }
 
-/* 强制显示进度条轨道 */
+/* Force progress track to be visible */
 .omni-progress-wrapper :deep(.el-slider) {
   height: 20px;
   display: flex;
@@ -7561,18 +7561,18 @@ hr.footnotes-sep {
 .omni-progress-wrapper :deep(.el-slider__runway) {
   flex: 1;
   height: 4px !important;
-  background-color: rgba(0, 0, 0, 0.1) !important; /* 轨道背景色 */
+  background-color: rgba(0, 0, 0, 0.1) !important; /* Track background color */
   border-radius: 2px;
 }
 
 .omni-progress-wrapper :deep(.el-slider__bar) {
   height: 4px !important;
-  background-color: var(--el-color-primary) !important; /* 进度填充色 */
+  background-color: var(--el-color-primary) !important; /* Progress fill color */
   border-radius: 2px;
 }
 
 .omni-progress-wrapper :deep(.el-slider__button-wrapper) {
-  top: -14px; /* 调整滑块圆圈的位置 */
+  top: -14px; /* Adjust slider circle position */
 }
 
 .tts-status-time {
@@ -7592,66 +7592,66 @@ hr.footnotes-sep {
    ========================================= */
 
 .notification {
-  /* 定位：右上角悬浮 */
+  /* Position: floating at upper right */
   position: fixed;
   top: 24px;
   right: 24px;
-  left: auto; /* 重置之前的居中设置 */
+  left: auto; /* Reset previous centering */
   
-  /* 初始状态：完全位移到屏幕右侧外，透明 */
+  /* Initial state: fully offscreen to the right and transparent */
   transform: translateX(120%);
   opacity: 0;
   
-  /* 布局 */
+  /* Layout */
   display: flex;
   align-items: flex-start;
   gap: 14px;
   padding: 16px 20px;
   
-  /* 尺寸限制 */
+  /* Size constraints */
   min-width: 320px;
   max-width: 400px;
   
-  /* 视觉风格：保持不变 (磨砂 + 高级阴影) */
+  /* Visual style: unchanged (frosted glass and refined shadow) */
   background: var(--el-bg-color-overlay, rgba(255, 255, 255, 0.95));
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   
-  /* 边框与圆角 */
+  /* Border and corner radius */
   border: 1px solid var(--el-border-color-light, rgba(0,0,0,0.1));
   border-radius: 12px;
   
-  /* 阴影：侧边弹出更适合稍重的左侧阴影 */
+  /* Shadow: a slightly heavier left shadow suits a side popup */
   box-shadow: 
     -5px 5px 20px -5px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
-  /* 字体 */
+  /* Font */
   color: var(--el-text-color-primary);
   font-family: var(--el-font-family, system-ui, sans-serif);
   font-size: 14px;
   line-height: 1.5;
   
-  /* 动画过渡：使用这种贝塞尔曲线会有“快速进入，缓慢刹车”的高级感 */
+  /* Transition: this Bezier curve creates a fast entrance and gradual stop */
   transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
   z-index: 10000;
-  pointer-events: auto; /* 右上角通常允许点击关闭，保持可交互 */
+  pointer-events: auto; /* Keep interactive since upper-right notifications usually allow closing */
   overflow: hidden;
 }
 
-/* 激活状态：滑入屏幕 */
+/* Active state: slide onto screen */
 .notification.show {
   opacity: 1;
   transform: translateX(0);
 }
 
-/* 离开状态：滑出屏幕 */
+/* Leaving state: slide offscreen */
 .notification.hide {
   opacity: 0;
   transform: translateX(120%);
 }
 
-/* --- 下面的样式保持不变 (图标、内容、进度条、主题适配) --- */
+/* --- Following styles unchanged (icon, content, progress bar, theme adaptation) --- */
 
 .notif-icon-box {
   flex-shrink: 0;
@@ -7680,10 +7680,10 @@ hr.footnotes-sep {
 .notif-desc {
   color: var(--el-text-color-secondary, #666);
   font-size: 13px;
-  word-break: break-word; /* 防止长单词撑破布局 */
+  word-break: break-word; /* Prevent long words from breaking the layout */
 }
 
-/* 进度条 */
+/* Progress bar */
 .notif-progress {
   position: absolute;
   bottom: 0;
@@ -7702,7 +7702,7 @@ hr.footnotes-sep {
   transform: scaleX(1);
 }
 
-/* ================= 主题颜色适配 (保持不变) ================= */
+/* ================= Theme color adaptation (unchanged) ================= */
 .notification.success { border-left: 4px solid var(--el-color-success); background: var(--el-bg-color-page) !important; color: var(--el-text-color-primary) !important;}
 .notification.success .notif-icon-box { color: var(--el-color-success); }
 .notification.success .notif-progress { background: var(--el-color-success); }
@@ -7719,8 +7719,8 @@ hr.footnotes-sep {
 .notification.info .notif-icon-box { color: var(--el-color-primary); }
 .notification.info .notif-progress { background: var(--el-color-primary); }
 
-/* ================= 移动端适配 ================= */
-/* 手机屏幕很窄，右上角弹出显示不全，强制改回顶部居中 */
+/* ================= Mobile adaptation ================= */
+/* Narrow phone screens cannot show upper-right popups fully; force top-center positioning */
 @media (max-width: 768px) {
   .notification {
     top: 16px;
@@ -7728,7 +7728,7 @@ hr.footnotes-sep {
     right: auto;
     width: 90%;
     min-width: auto;
-    /* 手机端改成向下弹出 */
+    /* Slide downward on mobile */
     transform: translateX(-50%) translateY(-150%);
     border-radius: 12px;
   }
@@ -7744,70 +7744,70 @@ hr.footnotes-sep {
 
 
 /* =========================================================
-   特殊覆盖：Warning 和 Error 使用实色背景 + 白色文字
+   Special override: Warning and Error use solid backgrounds and white text
    ========================================================= */
 
-/* --- 1. Error (Danger) 红色实底模式 --- */
+/* --- 1. Error (Danger) solid red mode --- */
 .notification.error {
-  /* 强制背景为红色 (使用变量或默认色) */
+  /* Force red background (variable or default color) */
   background: var(--el-color-danger) !important;
-  /* 去掉磨砂玻璃的半透明边框 */
+  /* Remove translucent frosted glass border */
   border: 1px solid transparent !important;
-  /* 强制主标题文字为白色 */
+  /* Force title text white */
   color: #ffffff !important;
-  /* 稍微增加一点深色投影，增加立体感 */
+  /* Add slightly darker shadow for depth */
   box-shadow: 0 8px 16px rgba(245, 108, 108, 0.3) !important;
 }
 
-/* --- 2. Warning 橙色实底模式 --- */
+/* --- 2. Warning solid orange mode --- */
 .notification.warning {
-  /* 强制背景为橙色 */
+  /* Force orange background */
   background: var(--el-color-warning) !important;
   border: 1px solid transparent !important;
   color: #ffffff !important;
   box-shadow: 0 8px 16px rgba(230, 162, 60, 0.3) !important;
 }
 
-/* --- 3. 统一修正这两个模式下的内部元素颜色 --- */
+/* --- 3. Correct inner element colors in both modes --- */
 
-/* 修正描述文字 (notif-desc) */
+/* Correct description text (notif-desc) */
 .notification.error .notif-desc,
 .notification.warning .notif-desc {
-  /* 使用 90% 透明度的白色，既保持清晰又有层次感 */
+  /* Use white at 90% opacity for clarity and visual hierarchy */
   color: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* 修正图标颜色 */
+/* Correct icon color */
 .notification.error .notif-icon-box,
 .notification.warning .notif-icon-box {
-  /* 图标改为纯白 */
+  /* Use pure white icon */
   color: #ffffff !important;
 }
 
-/* 修正左侧装饰线 (因为背景已经是彩色了，左侧线可以去掉或者改成白色) */
+/* Correct left decorative line (remove or make white because background is already colored) */
 .notification.error,
 .notification.warning {
-  border-left: none !important; /* 建议去掉左侧条，因为整体已经是彩色了 */
-  /* 或者如果你想保留左侧条，可以改成深色一点的：
+  border-left: none !important; /* Recommend removing left strip because background is already colored */
+  /* Alternatively, retain left strip with a darker color:
      border-left: 4px solid rgba(0,0,0,0.2) !important; 
   */
 }
 
-/* 修正底部进度条颜色 */
+/* Correct bottom progress bar color */
 .notification.error .notif-progress,
 .notification.warning .notif-progress {
-  /* 进度条改为半透明白色 */
+  /* Make progress bar translucent white */
   background: rgba(255, 255, 255, 0.4) !important;
 }
 
 
 /* ====================================================
-   修复版 IM 风格与 单/群聊 模式兼容样式
-   (只改布局，不改气泡形状)
+   Fixed IM-style compatibility with individual and group chat modes
+   (Layout changes only, not bubble shapes)
    ==================================================== */
 
-/* 1. 全局消息容器重置 */
-/* 引入 im-content-wrapper 后，我们需要确保它是透明的布局容器 */
+/* 1. Reset global message container */
+/* With im-content-wrapper, ensure it is a transparent layout container */
 .im-content-wrapper {
   display: flex;
   flex-direction: column;
@@ -7815,82 +7815,82 @@ hr.footnotes-sep {
   position: relative;
 }
 
-/* 2. 单聊/群聊 User 样式 */
+/* 2. Individual/group chat User styles */
 .message.user .im-content-wrapper {
-  align-items: flex-end; /* 强制靠右，且宽度收缩 */
+  align-items: flex-end; /* Force right alignment and shrink width */
 }
 
-/* 3. 单聊/群聊 Assistant 样式 */
+/* 3. Individual/group chat Assistant styles */
 .message.assistant .im-content-wrapper {
-  align-items: flex-start; /* 强制靠左，宽度收缩 */
+  align-items: flex-start; /* Force left alignment and shrink width */
 }
 
-/* 4. 单聊/群聊 System 样式 */
+/* 4. Individual/group chat System styles */
 .message.system .im-content-wrapper {
-  align-items: stretch; /* 拉伸占满宽度 */
+  align-items: stretch; /* Stretch to fill width */
   width: 100%;
 }
 
-/* 5. 修复助手按钮对齐 (关键：让按钮跟随气泡左对齐) */
+/* 5. Fix assistant button alignment (key: left-align buttons with bubble) */
 .message.assistant .message-actions,
 .message.assistant .tts-controls {
   justify-content: flex-start !important;
   width: 100%;
 }
 
-/* 用户操作栏保持靠右 */
+/* Keep user action bar right-aligned */
 .message.user .message-actions {
   justify-content: flex-end !important;
 }
 
-/* 6. 修复气泡宽度逻辑 */
+/* 6. Fix bubble width logic */
 .im-content-wrapper .message-content {
   width: fit-content; 
   max-width: 100%; 
   box-sizing: border-box;
-  /* 这里不再修改 border-radius，沿用全局样式，保持只有一个直角 */
+  /* Do not modify border-radius here; use global style to retain a single square corner */
 }
 
-/* 系统消息内容占满 */
+/* System message content fills width */
 .message.system .im-content-wrapper .message-content {
   width: 100%;
 }
 
 /* ====================================================
-   群聊模式专属布局 (.is-group-mode)
+   Group-chat-specific layout (.is-group-mode)
    ==================================================== */
 
-/* 1. 布局改为横向，以便放入头像 */
+/* 1. Use horizontal layout to accommodate avatar */
 .message.is-group-mode {
   flex-direction: row !important;
   align-items: flex-start !important;
-  gap: 12px; /* 头像与气泡的间距 */
+  gap: 12px; /* Gap between avatar and bubble */
 }
 
-/* 2. 用户消息整体靠右 */
+/* 2. Align entire user message to right */
 .message.is-group-mode.user {
   justify-content: flex-end;
 }
 
-/* 3. 系统消息在群聊下依然保持纵向占满 */
+/* 3. System messages remain vertical and full width in group chat */
 .message.is-group-mode.system {
   flex-direction: column !important;
 }
 
-/* 4. 限制群聊模式下气泡的最大宽度，留出头像空间，防止挤压 */
+/* 4. Limit maximum bubble width in group chat to reserve avatar space and prevent compression */
 .message.is-group-mode .im-content-wrapper {
-  max-width: calc(100% - 48px); /* 减去头像宽度+间距 */
+  max-width: calc(100% - 48px); /* Subtract avatar width plus gap */
 }
 
-/* 系统消息不受限 */
+/* System messages unrestricted */
 .message.is-group-mode.system .im-content-wrapper {
   max-width: 100%;
 }
 
-/* 5. 头像样式 */
+/* 5. Avatar styles */
 .im-avatar {
   flex-shrink: 0;
-  margin-top: 0; /* 对齐气泡顶部 */
+  margin-top: 0; /* Align with bubble top */
 }
 
 .im-avatar img {
@@ -7902,7 +7902,7 @@ hr.footnotes-sep {
   background-color: #fff;
 }
 
-/* 6. 名字标签 */
+/* 6. Name label */
 .im-name-tag {
   font-size: 12px;
   color: var(--el-text-color-secondary);
@@ -7912,7 +7912,7 @@ hr.footnotes-sep {
 }
 
 /* ====================================================
-   移动端适配
+   Mobile adaptation
    ==================================================== */
 @media (max-width: 768px) {
   .message.is-group-mode {
@@ -7931,7 +7931,7 @@ hr.footnotes-sep {
    Unified Input & Attachment (Seamless & Thumbnail Files)
    ========================================= */
 
-/* 1. 外层包裹器：伪装成一个完整的输入框 */
+/* 1. Outer wrapper: appear as one complete input box */
 .unified-input-wrapper {
   display: flex;
   flex-direction: column;
@@ -7943,14 +7943,14 @@ hr.footnotes-sep {
   overflow: hidden;
 }
 
-/* 聚焦高亮 */
+/* Focus highlight */
 .unified-input-wrapper:focus-within {
   border-color: var(--el-color-primary);
   box-shadow: 0 0 0 1px var(--el-color-primary) inset;
   background-color: var(--el-bg-color);
 }
 
-/* 2. 附件列表：透明、无边框、横向滚动 */
+/* 2. Attachment list: transparent, borderless, horizontal scrolling */
 .attachment-preview-list {
   display: flex;
   gap: 8px;
@@ -7967,18 +7967,18 @@ hr.footnotes-sep {
   display: none;
 }
 
-/* 3. 附件项通用容器 */
+/* 3. Common attachment container */
 .attachment-item {
   flex-shrink: 0;
-  height: 80px; /* 统一高度 */
+  height: 80px; /* Consistent height */
   position: relative;
   margin-bottom: 4px;
 }
 
-/* 4. 图片预览盒子 (自适应宽度，保持比例) */
+/* 4. Image preview box (adaptive width, preserve ratio) */
 .preview-image-box {
   height: 100%;
-  width: auto;       /* 宽度自适应 */
+  width: auto;       /* Adaptive width */
   min-width: 40px;
   border-radius: 8px;
   overflow: hidden;
@@ -7997,50 +7997,50 @@ hr.footnotes-sep {
   display: block;
 }
 
-/* 5. 文件卡片盒子 (样式重制：改为缩略图风格) */
+/* 5. File card box (redesigned thumbnail style) */
 .file-card-box {
   height: 100%;
-  width: 80px;        /* 固定宽度，做成正方形或竖长方形 */
+  width: 80px;        /* Fixed width for square or vertical rectangle */
   
-  /* 布局改为纵向：图标在上，文字在下 */
+  /* Use vertical layout: icon above text */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
   
-  background-color: rgba(128, 128, 128, 0.05); /* 统一底色 */
+  background-color: rgba(128, 128, 128, 0.05); /* Consistent background color */
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   padding: 6px;
   box-sizing: border-box;
-  position: relative; /* 为遮罩层定位 */
+  position: relative; /* Position overlay relative to this */
   transition: all 0.2s;
 }
 
-/* 文件图标调整 */
+/* File icon adjustments */
 .file-card-box .file-icon {
   font-size: 28px;
   color: var(--el-color-primary);
-  margin-right: 0; /* 去掉之前的右边距 */
+  margin-right: 0; /* Remove previous right margin */
   margin-bottom: 2px;
   height: auto;
   width: auto;
 }
 
-/* 文件名调整 */
+/* Filename adjustments */
 .file-card-box .file-info {
   width: 100%;
   text-align: center;
-  display: block; /* 覆盖之前的 flex */
+  display: block; /* Override previous flex */
 }
 
 .file-card-box .file-name {
-  font-size: 10px; /* 字体缩小 */
+  font-size: 10px; /* Smaller font */
   color: var(--el-text-color-regular);
   line-height: 1.2;
   
-  /* 限制显示两行，超出省略 */
+  /* Limit to two lines with ellipsis */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -8051,40 +8051,40 @@ hr.footnotes-sep {
   width: 100%;
 }
 
-/* 6. 统一的遮罩层 (Overlay) 样式 */
-/* 图片的遮罩层 */
+/* 6. Shared overlay styles */
+/* Image overlay */
 .preview-image-box .overlay,
-/* 文件的遮罩层 (复用之前的 .remove-btn div) */
+/* File overlay (reuse previous .remove-btn div) */
 .file-card-box .remove-btn {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   
-  background: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
-  backdrop-filter: blur(2px);     /* 可选：轻微模糊背景 */
+  background: rgba(0, 0, 0, 0.5); /* Translucent black background */
+  backdrop-filter: blur(2px);     /* Optional: slight background blur */
   
   display: flex;
   align-items: center;
   justify-content: center;
   
-  opacity: 0; /* 默认隐藏 */
+  opacity: 0; /* Hidden by default */
   transition: opacity 0.2s ease;
   z-index: 10;
-  border-radius: 8px; /* 跟随父级圆角 */
+  border-radius: 8px; /* Match parent corner radius */
   
-  /* 覆盖之前 remove-btn 可能存在的文字样式 */
+  /* Override previous remove-btn text styles if present */
   color: white;
   font-size: 16px;
   cursor: pointer;
 }
 
-/* 悬停显示遮罩 */
+/* Show overlay on hover */
 .preview-image-box:hover .overlay,
 .file-card-box:hover .remove-btn {
   opacity: 1;
 }
 
-/* 7. 删除按钮图标样式优化 */
-/* 让文件卡片里的 xmark 图标看起来像一个红色按钮 */
+/* 7. Refine delete button icon styles */
+/* Make xmark icon in file card look like a red button */
 .file-card-box .remove-btn i {
   background-color: var(--el-color-danger);
   color: white;
@@ -8103,7 +8103,7 @@ hr.footnotes-sep {
   transform: scale(1.1);
 }
 
-/* 8. 输入框本身：彻底透明化 */
+/* 8. Input itself: fully transparent */
 .input-box-transparent {
   width: 100%;
 }
@@ -8116,30 +8116,30 @@ hr.footnotes-sep {
   padding: 8px 12px 12px 12px !important;
 }
 
-/* 如果有附件，调整输入框上边距 */
+/* Adjust input top margin when attachments exist */
 .attachment-preview-list + .input-box-transparent .el-textarea__inner {
   padding-top: 4px !important;
 }
 /* =========================================
-   Ultimate Tool Approval Card (iOS/Mac 质感版)
+   Ultimate Tool Approval Card (iOS/Mac appearance)
    ========================================= */
 
 .approval-card {
-    /* 卡片底色使用干净的背景，脱离原本廉价的黄色背景 */
+    /* Use a clean card background instead of the previous yellow background */
     background-color: var(--el-bg-color);
     border: 1px solid var(--el-border-color-light);
     border-radius: 16px;
     margin: 16px 0;
     overflow: hidden;
     
-    /* 采用你全局设定的现代悬浮阴影 */
+    /* Use the globally defined modern floating shadow */
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
     font-family: var(--el-font-family);
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
 }
 
-/* 顶部警戒色发光条 (代替原本笨重的左侧粗边框) */
+/* Top warning-color glow strip (replaces previous heavy left border) */
 .approval-card::before {
     content: '';
     position: absolute;
@@ -8149,14 +8149,14 @@ hr.footnotes-sep {
     opacity: 0.9;
 }
 
-/* 悬停物理反馈 */
+/* Hover interaction feedback */
 .approval-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
     border-color: var(--el-color-warning-light-5);
 }
 
-/* --- Header 区域 --- */
+/* --- Header area --- */
 .approval-header {
     display: flex;
     align-items: center;
@@ -8183,7 +8183,7 @@ hr.footnotes-sep {
     border: 1px solid color-mix(in srgb, var(--el-color-warning) 25%, transparent);
 }
 
-/* --- Body 区域 --- */
+/* --- Body area --- */
 .approval-body {
     padding: 0 20px 12px;
     font-size: 14px;
@@ -8197,7 +8197,7 @@ hr.footnotes-sep {
     color: var(--el-text-color-regular);
 }
 
-/* 工具名称像代码高亮标签一样 */
+/* Tool name styled like a syntax-highlighted label */
 .tool-name-badge {
     font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
     background-color: var(--el-fill-color-light);
@@ -8209,10 +8209,10 @@ hr.footnotes-sep {
     border: 1px solid var(--el-border-color-lighter);
 }
 
-/* --- 参数展示区域 (终端风格) --- */
+/* --- Parameter display area (terminal style) --- */
 .approval-params-wrapper {
     margin: 0 20px 16px;
-    /* 继承你在主题中写好的代码块背景色 */
+    /* Inherit code block background defined in theme */
     background-color: var(--code-bg);
     border-radius: 10px;
     border: 1px solid var(--code-border);
@@ -8236,7 +8236,7 @@ hr.footnotes-sep {
     overflow-y: auto;
     font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
     font-size: 13px;
-    /* 继承高亮字体颜色 */
+    /* Inherit highlighted text color */
     color: var(--hljs-text, var(--el-text-color-regular));
     line-height: 1.5;
 }
@@ -8249,7 +8249,7 @@ hr.footnotes-sep {
     border-radius: 3px;
 }
 
-/* --- 底部操作栏 (Actions) --- */
+/* --- Bottom action bar (Actions) --- */
 .approval-actions {
     display: flex;
     justify-content: space-between;
@@ -8283,7 +8283,7 @@ hr.footnotes-sep {
     transform: scale(0.95);
 }
 
-/* 1. 拒绝 (低视噪的幽灵按钮) */
+/* 1. Deny (low-contrast ghost button) */
 .btn-deny {
     background-color: transparent !important;
     color: var(--el-color-danger) !important;
@@ -8293,7 +8293,7 @@ hr.footnotes-sep {
     background-color: color-mix(in srgb, var(--el-color-danger) 10%, transparent) !important;
 }
 
-/* 2. 始终允许 (次级线框按钮) */
+/* 2. Always allow (secondary outlined button) */
 .btn-allow-always {
     background-color: var(--el-bg-color) !important;
     color: var(--el-text-color-regular) !important;
