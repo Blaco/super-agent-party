@@ -1,6 +1,6 @@
 const urlParams = new URLSearchParams(window.location.search);
-const isRenderMode = urlParams.get('mode') === 'render'; // 是否是渲染模式（OBS采集用）
-// --- 全景渲染专用变量 ---
+const isRenderMode = urlParams.get('mode') === 'render'; // Render mode (for OBS capture)
+// --- Variables for panoramic rendering ---
 let cubeCamera, cubeRenderTarget, panoMesh, panoCamera, panoShaderMaterial;
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -16,19 +16,19 @@ let idleAction = null;
 let breathAction = null;
 let blinkAction = null;
 
-// 鼠标悬停自动隐藏模型相关变量
+// Variables for automatically hiding the model on mouse hover
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
-let isAutoHideEnabled = false;           // 自动隐藏功能开关
-let isModelHiddenByHover = false;        // 模型当前是否因悬停而隐藏
-let hoverCheckTimeout = null;            // 防抖定时器
-let mixerTimeScaleBeforeHide = 1;        // 隐藏前的动画速度
-let animationsPausedForHide = false;     // 标记是否因隐藏暂停动画
-const HOVER_CHECK_INTERVAL = 33;         // 检测间隔（毫秒），约30fps
-const FADE_DURATION = 120;               // 渐变动画时长（毫秒），缩短以降低残留
-let hideTransitionTimer = null;          // 记录隐藏计时器，避免交叉覆盖
+let isAutoHideEnabled = false;           // Auto-hide feature toggle
+let isModelHiddenByHover = false;        // Whether hover currently hides the model
+let hoverCheckTimeout = null;            // Debounce timer
+let mixerTimeScaleBeforeHide = 1;        // Animation speed before hiding
+let animationsPausedForHide = false;     // Whether animations were paused for hiding
+const HOVER_CHECK_INTERVAL = 33;         // Check interval (milliseconds), approximately 30 fps
+const FADE_DURATION = 120;               // Fade duration (milliseconds), shortened to reduce residual visibility
+let hideTransitionTimer = null;          // Track the hide timer to prevent overlapping transitions
 
-// 在隐藏期间暂停/恢复动画播放，避免隐藏时继续消耗资源
+// Pause and resume animations while hidden to avoid wasting resources
 function pauseModelAnimationsForHide() {
     if (!animationsPausedForHide && currentMixer) {
         mixerTimeScaleBeforeHide = currentMixer.timeScale ?? 1;
@@ -45,20 +45,20 @@ function resumeModelAnimationsAfterHide() {
 }
 
 // renderer
-// 检测运行环境
+// Detect the runtime environment
 const isElectron = typeof require !== 'undefined' || navigator.userAgent.includes('Electron');
 
-// 根据环境添加 class
+// Add a class according to the environment
 document.body.classList.add(isElectron ? 'electron' : 'web');
 
-// 优化渲染器设置
+// Optimize renderer settings
 const renderer = new THREE.WebGLRenderer();
-// 添加性能优化设置
+// Add performance optimization settings
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.max(1, window.devicePixelRatio));
 renderer.setClearColor(0x00000000, 0);
 renderer.xr.enabled = true;
-// 用fetch查询/cur_language的值
+// Fetch the value from /cur_language
 async function fetchLanguage() {
     try {
         const http_protocol = window.location.protocol;
@@ -75,7 +75,7 @@ async function t(key) {
     const currentLanguage = await fetchLanguage();
     return translations[currentLanguage]?.[key] || translations['en-US']?.[key] || key;
 }
-// 用fetch查询/cur_language的值
+// Fetch the value from /cur_language
 async function fetchVRMConfig() {
     try {
         const http_protocol = window.location.protocol;
@@ -97,11 +97,11 @@ async function fetchVRMConfig() {
             name: 'default',
             enabledExpressions: false,
             enabledMotions: false,
-            selectedModelId: 'alice', // 默认选择Alice模型
-            defaultModels: [], // 存储默认模型
-            userModels: [],     // 存储用户上传的模型
-            defaultMotions: [], // 存储默认动作
-            userMotions: [],     // 存储用户上传的动作
+            selectedModelId: 'alice', // Select the Alice model by default
+            defaultModels: [], // Store default models
+            userModels: [],     // Store user-uploaded models
+            defaultMotions: [], // Store default motions
+            userMotions: [],     // Store user-uploaded motions
             selectedMotionIds: [],
             gaussDefaultScenes: [],   // GAUSS
             gaussUserScenes: [],      // GAUSS
@@ -128,18 +128,18 @@ function initMotionMap(config) {
                 motionUrl.host = window.location.host;
                 const finalUrl = motionUrl.toString();
 
-                // 1. 使用 ID 绑定（保证唯一性，用于系统内部逻辑）
+                // 1. Bind by unique ID for internal system logic
                 if (motion.id) {
                     motionUrlMap.set(motion.id, finalUrl);
                 }
 
-                // 2. 关键：使用显示名称（Name）绑定（用于 AI 语义化调用）
-                // 这样 AI 如果说 "点点头"，只要 display_name 是 "点点头"，就能匹配上
+                // 2. Bind by display name for semantic AI calls
+                // An AI request to nod matches a display_name with the same wording
                 if (motion.name) {
-                    // 如果名字里有空格或特殊字符，AI 可能会处理得不一致，可以考虑转小写或去空格
+                    // If names contain spaces or special characters, consider lowercasing or removing spaces for consistent matching
                     motionUrlMap.set(motion.name, finalUrl);
                     
-                    // 额外兼容：去掉后缀的名字（防止 AI 带了 .vrma 后缀）
+                    // Also support the name without its extension in case the AI includes .vrma
                     const nameWithoutExt = motion.name.replace(/\.[^/.]+$/, "");
                     if (nameWithoutExt !== motion.name) {
                         motionUrlMap.set(nameWithoutExt, finalUrl);
@@ -161,7 +161,7 @@ async function getVRMpath() {
     const modelId = vrmConfig.selectedModelId;
     const defaultModel = vrmConfig.defaultModels.find(model => model.id === modelId) || vrmConfig.userModels.find(model => model.id === modelId);
     if (defaultModel) {
-        // 替换defaultModel.path中的protocol和host
+        // Replace the protocol and host in defaultModel.path
         let defaultModelURL = new URL(defaultModel.path);
         defaultModelURL.protocol = window.location.protocol;
         defaultModelURL.host = window.location.host;
@@ -169,7 +169,7 @@ async function getVRMpath() {
     } else {
         const userModel = vrmConfig.userModels.find(model => model.id === modelId);
         if (userModel) {
-            // 替换userModel.path中的protocol和host
+            // Replace the protocol and host in userModel.path
             let userModelURL = new URL(userModel.path);
             userModelURL.protocol = window.location.protocol;
             userModelURL.host = window.location.host;
@@ -200,7 +200,7 @@ async function getVRMname() {
 
 const vrmPath = await getVRMpath();
 console.log(vrmPath);
-// 启用阴影（如果需要）
+// Enable shadows if needed
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -209,20 +209,20 @@ document.body.appendChild( renderer.domElement );
 // camera
 let camera;
 if (isRenderMode) {
-    // 全景模式：依然需要一个基础相机来驱动 renderer，但核心是 CubeCamera
+    // Panorama mode still needs a basic camera to drive the renderer, but uses CubeCamera for capture
     camera = new THREE.PerspectiveCamera(30.0, window.innerWidth / window.innerHeight, 0.1, 20.0);
     
-    // 初始化立方体渲染目标（分辨率建议 2048 以保证全景清晰度）
+    // Initialize the cube render target (2048 resolution recommended for clear panoramas)
     cubeRenderTarget = new THREE.WebGLCubeRenderTarget(2048, {
         format: THREE.RGBAFormat,
         generateMipmaps: true,
         magFilter: THREE.LinearFilter
     });
     cubeCamera = new THREE.CubeCamera(0.1, 1000, cubeRenderTarget);
-    // 相机高度设置在角色头部高度 (约1.5m)，位置稍微靠前 (1m) 获得最佳视角
+    // Place the camera at character head height (about 1.5 m) and slightly forward (1 m) for the best view
     cubeCamera.position.set(0, 1.5, 1);
 
-    // 全景转换着色器材质：将 6 面体映射为 2:1 平面
+    // Panorama conversion shader: map the six cube faces onto a 2:1 plane
     panoShaderMaterial = new THREE.ShaderMaterial({
         uniforms: {
             tCube: { value: cubeRenderTarget.texture }
@@ -241,9 +241,9 @@ if (isRenderMode) {
             #define PI 3.141592653589793
 
             void main() {
-                // --- 关键修改：将 UV.x 映射从 [0, 1] 改变偏移量 ---
-                // 原来是: vUv.x * 2.0 * PI - PI
-                // 修改为直接乘 2PI，这样 0.5 (中心) 对应的就是 PI (正前方 -Z)
+                // --- Key change: adjust the UV.x offset when mapping from [0, 1] ---
+                // Previously: vUv.x * 2.0 * PI - PI
+                // Multiply directly by 2PI so 0.5 (center) corresponds to PI (forward, -Z)
                 float longitude = vUv.x * 2.0 * PI; 
                 
                 float latitude = vUv.y * PI - PI / 2.0;
@@ -259,11 +259,11 @@ if (isRenderMode) {
         side: THREE.DoubleSide
     });
 
-    // 创建全屏覆盖平面和正交相机
+    // Create a full-screen overlay plane and orthographic camera
     panoMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), panoShaderMaterial);
     panoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 } else {
-    // 普通模式：维持原代码
+    // Normal mode: retain the original implementation
     camera = new THREE.PerspectiveCamera(30.0, window.innerWidth / window.innerHeight, 0.1, 20.0);
 }
 
@@ -284,10 +284,10 @@ const scene = new THREE.Scene();
 // light
 const light = new THREE.DirectionalLight( 0xffffff, Math.PI );
 light.position.set( 1, 3, 2 ).normalize();
-light.castShadow = true;                       // 关键
-light.shadow.mapSize.set( 2048, 2048 );        // 精度
+light.castShadow = true;                       // Enable shadow casting
+light.shadow.mapSize.set( 2048, 2048 );        // Shadow map resolution
 
-// 让阴影相机覆盖角色附近区域（根据你的场景大小调）
+// Cover the area near the character with the shadow camera; adjust for scene size
 const camSize = 4;
 light.shadow.camera.left   = -camSize;
 light.shadow.camera.right  =  camSize;
@@ -302,12 +302,12 @@ transformControl.addEventListener('change', () => {
     const obj = transformControl.object;
     if (transformControl.getMode() === 'scale' && obj) {
         
-        // 获取当前用户正在拖动的轴 (X, Y, Z)
+        // Get the axis currently being dragged (X, Y, Z)
         const axis = transformControl.axis; 
         
-        // 如果用户点击的是中心点或平面，axis 可能是 'XYZ' 或 'XY' 等
-        // 我们只处理单轴拖动的情况来实现强制等比例
-        let s = obj.scale.x; // 默认取值
+        // For center or plane handles, axis may be XYZ or XY
+        // Only handle single-axis dragging to enforce uniform scaling
+        let s = obj.scale.x; // Default scale value
 
         if (axis === 'X') {
             s = obj.scale.x;
@@ -316,40 +316,40 @@ transformControl.addEventListener('change', () => {
         } else if (axis === 'Z') {
             s = obj.scale.z;
         } else {
-            // 如果是中心缩放 (XYZ)，原本就是等比例的，不需要处理
+            // Center scaling (XYZ) is already uniform and needs no adjustment
             return;
         }
 
-        // 检查是否已经相等，避免多余的赋值操作
+        // Check for equality to avoid unnecessary assignments
         if (obj.scale.y !== s || obj.scale.z !== s || obj.scale.x !== s) {
             obj.scale.set(s, s, s);
         }
     }
 });
-// 当用户拖拽模型时，禁用轨道控制器（OrbitControls），防止相机乱转
+// Disable OrbitControls during model dragging to prevent unwanted camera rotation
 transformControl.addEventListener( 'dragging-changed', function ( event ) {
     controls.enabled = ! event.value;
 });
 
-// 默认设为 'translate' (移动模式)，也可以是 'rotate' 或 'scale'
+// Default to translate mode; rotate and scale are also supported
 transformControl.setMode('translate'); 
 
-scene.add( transformControl.getHelper() ); // 添加辅助线
+scene.add( transformControl.getHelper() ); // Add the transform control helper
 
-let currentSceneGroup = null;          // 当前场景根节点，方便整体卸载
+let currentSceneGroup = null;          // Current scene root group for unloading the entire scene
 
-/* 拉一次配置即可，外面已经 await fetchVRMConfig() 了，直接复用 */
+/* Reuse the configuration already loaded by await fetchVRMConfig() */
 async function loadGaussScene() {
-    /* ---------- 1. 读配置 ---------- */
+    /* ---------- 1. Read configuration ---------- */
     const cfg        = await fetchVRMConfig();
     const sceneId    = cfg.selectedGaussSceneId;
     const defaultArr = cfg.gaussDefaultScenes || [];
     const userArr    = cfg.gaussUserScenes    || [];
 
-    /* ---------- 2. 拼 URL ---------- */
+    /* ---------- 2. Construct URL ---------- */
     let sceneURL = null;
     if (sceneId === 'transparent') {
-        /* 透明场景 -> 不下载 spz */
+        /* Transparent scene: do not download an SPZ file */
         sceneURL = 'transparent';
     } else {
         const hit = [...defaultArr, ...userArr].find(s => s.id === sceneId);
@@ -357,7 +357,7 @@ async function loadGaussScene() {
             console.warn(`[SceneLoader] Scene id=${sceneId} not found; falling back to transparent`);
             sceneURL = 'transparent';
         } else {
-            // 把相对 path 拼成绝对地址
+            // Resolve the relative path to an absolute URL
             const url = new URL(hit.path);
             url.protocol = window.location.protocol;
             url.host     = window.location.host;
@@ -365,21 +365,21 @@ async function loadGaussScene() {
         }
     }
 
-    /* ---------- 3. 卸载旧场景 ---------- */
+    /* ---------- 3. Unload the old scene ---------- */
     if (currentSceneGroup) {
         scene.remove(currentSceneGroup);
         currentSceneGroup.traverse(o => {
-            if (o.dispose) o.dispose();      // SplatMesh 自带 dispose
+            if (o.dispose) o.dispose();      // SplatMesh provides its own dispose method
         });
         currentSceneGroup = null;
     }
 
-    /* ---------- 4. 构建新场景 ---------- */
+    /* ---------- 4. Construct the new scene ---------- */
     const group = new THREE.Group();
     group.name = `gaussScene_${sceneId}`;
 
     if (sceneURL === 'transparent') {
-        /* ------ 4.1 透明阴影地面 ------ */
+        /* ------ 4.1 Transparent shadow-receiving floor ------ */
         const groundGeo = new THREE.PlaneGeometry(20, 20);
         const shadowMat = new THREE.ShadowMaterial({ opacity: 0.4 });
         const ground    = new THREE.Mesh(groundGeo, shadowMat);
@@ -387,7 +387,7 @@ async function loadGaussScene() {
         ground.receiveShadow = true;
         group.add(ground);
     } else {
-        /* ------ 4.2 加载 .spz ------ */
+        /* ------ 4.2 Load .spz ------ */
         const splat = new SplatMesh({ url: sceneURL });
         let splat_height = 0;
         let splat_scale = 2;
@@ -399,7 +399,7 @@ async function loadGaussScene() {
             splat_height = 2.4;
             splat_scale = 4;
         }
-        // 统一先缩放/位移到脚底中心，具体数值可按模型微调
+        // Scale and position relative to the center of the feet first; fine-tune for each model
         splat.quaternion.set(1, 0, 0, 0);
         splat.position.set(0, splat_height, 2);
         splat.scale.set(splat_scale, splat_scale, splat_scale);
@@ -407,14 +407,14 @@ async function loadGaussScene() {
         group.add(splat);
     }
 
-    /* ---------- 5. 挂到场景 ---------- */
+    /* ---------- 5. Attach to the scene ---------- */
     scene.add(group);
     currentSceneGroup = group;
     console.log(`[SceneLoader] Scene ${sceneId} loaded`);
 }
 
 /* ------------------------------------------------------------------ */
-/* 初始化时调用一次                                                    */
+/* Call once during initialization */
 /* ------------------------------------------------------------------ */
 await loadGaussScene();
 
@@ -423,18 +423,18 @@ await loadGaussScene();
 const lookAtTarget = new THREE.Object3D();
 camera.add( lookAtTarget );
 
-// 添加环境光，让整体更柔和
+// Add ambient light for a softer overall appearance
 const ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
 scene.add( ambientLight );
 
 // gltf and vrm
 let currentVrm = undefined;
-let currentVrmWrapper = new THREE.Group(); // 新增：用于包裹 VRM 的组
-scene.add(currentVrmWrapper);              // 新增：一开始就加入场景
+let currentVrmWrapper = new THREE.Group(); // Group that wraps the VRM model
+scene.add(currentVrmWrapper);              // Attach the wrapper to the scene immediately
 const loader = new GLTFLoader();
 loader.crossOrigin = 'anonymous';
 
-// ---------------- 新增：解决部分模型 SpringBone 配置不规范导致的解析崩溃 ----------------
+// ---------------- Repair malformed SpringBone configurations that can cause parsing failures ----------------
 loader.register((parser) => {
     return {
         name: 'VRMSpringBoneBugFixPlugin',
@@ -442,7 +442,7 @@ loader.register((parser) => {
             const json = parser.json;
             if (!json || !json.extensions) return;
 
-            // 修复 VRM 1.0 SpringBone
+            // Repair VRM 1.0 SpringBone configuration
             if (json.extensions.VRMC_springBone) {
                 const sb = json.extensions.VRMC_springBone;
                 if (!sb.springs) sb.springs = [];
@@ -461,7 +461,7 @@ loader.register((parser) => {
                 });
             }
 
-            // 修复 VRM 0.0 动骨 (SecondaryAnimation)
+            // Repair VRM 0.0 secondary animation
             if (json.extensions.VRM && json.extensions.VRM.secondaryAnimation) {
                 const sa = json.extensions.VRM.secondaryAnimation;
                 if (!sa.boneGroups) sa.boneGroups = [];
@@ -493,39 +493,39 @@ loader.register( ( parser ) => {
     return new VRMAnimationLoaderPlugin( parser );
 } );
 
-// 设置自然姿势的函数
+// Set a natural pose
 function setNaturalPose(vrm) {
     if (!vrm.humanoid) return;
     let v = 1;
     if (!isVRM1){
         v = -1;
     }
-    // 1. 调整双臂：将 0.4 改为 0.45 让手臂更贴近身体，并增加 x 轴让手臂微向前倾，更放松
+    // 1. Adjust both arms: increase 0.4 to 0.45 to bring the arms closer to the body, and tilt them slightly forward on the X axis
     const leftArm = vrm.humanoid.getNormalizedBoneNode('leftUpperArm');
     if (leftArm) {
         leftArm.rotation.z = -0.45 * Math.PI * v; 
-        leftArm.rotation.x = 0.05; // 手臂微微前倾
+        leftArm.rotation.x = 0.05; // Tilt the arm slightly forward
     }
 
     const rightArm = vrm.humanoid.getNormalizedBoneNode('rightUpperArm');
     if (rightArm) {
         rightArm.rotation.z = 0.45 * Math.PI * v;
-        rightArm.rotation.x = 0.05; // 手臂微微前倾
+        rightArm.rotation.x = 0.05; // Tilt the arm slightly forward
     }
     
-    // 手腕保持原来的逻辑
+    // Keep the existing wrist logic
     const leftHand = vrm.humanoid.getNormalizedBoneNode('leftHand');
     if (leftHand) {
-        leftHand.rotation.z = 0.1 * v; // 手腕自然弯曲
+        leftHand.rotation.z = 0.1 * v; // Natural wrist bend
         leftHand.rotation.x = 0.05;
     }
     const rightHand = vrm.humanoid.getNormalizedBoneNode('rightHand');
     if (rightHand) {
-        rightHand.rotation.z = -0.1 * v; // 手腕自然弯曲
+        rightHand.rotation.z = -0.1 * v; // Natural wrist bend
         rightHand.rotation.x = 0.05;
     }
 
-    // 添加手指的自然弯曲（如果模型支持）
+    // Add natural finger curvature if supported by the model
     const fingerBones = [
         'leftThumbProximal', 'leftThumbIntermediate', 'leftThumbDistal',
         'leftIndexProximal', 'leftIndexIntermediate', 'leftIndexDistal',
@@ -542,25 +542,25 @@ function setNaturalPose(vrm) {
     fingerBones.forEach(boneName => {
         const bone = vrm.humanoid.getNormalizedBoneNode(boneName);
         if (bone) {
-            // 根据手指部位设置不同的弯曲度
+            // Set different bend amounts for each finger joint
             if (boneName.includes('Thumb')) {
-                // 拇指稍微向内
+                // Bend the thumb slightly inward
                 bone.rotation.y = boneName.includes('left') ? 0.35 : -0.35;
             } else if (boneName.includes('Proximal')) {
-                // 近端指骨轻微弯曲
+                // Slightly bend the proximal phalanx
                 bone.rotation.z = boneName.includes('left') ? -0.35 * v : 0.35 * v;
             } else if (boneName.includes('Intermediate')) {
-                // 中端指骨稍微弯曲
+                // Slightly bend the intermediate phalanx
                 bone.rotation.z = boneName.includes('left') ? -0.45 * v : 0.45 * v;
             } else if (boneName.includes('Distal')) {
-                // 远端指骨轻微弯曲
+                // Slightly bend the distal phalanx
                 bone.rotation.z = boneName.includes('left') ? -0.3 * v : 0.3 * v;
             }
         }
     });
 }
 
-// 闲置动作的时间偏移量，让各个动作不同步
+// Idle motion time offsets keep movements out of sync
 const idleOffsets = {
     body: Math.random() * Math.PI * 2,
     leftArm: Math.random() * Math.PI * 2,
@@ -569,45 +569,45 @@ const idleOffsets = {
     spine: Math.random() * Math.PI * 2
 };
 
-// 在全局变量区域添加 - 改进后的闲置动画管理
+// Improved idle animation management in global state
 let idleAnimations = [];
 let currentIdleAnimationIndex = 0;
 let idleAnimationAction = null;
 let isLoadingAnimations = false;
-let idleAnimationManager = null; // 新的闲置动画管理器
-let defaultPoseAction = null; // 默认姿势动作
-let useVRMAIdleAnimations = true; // 是否使用VRM-A的闲置动画
-let isIdleAnimationModeChanging = false; // 防止重复切换
+let idleAnimationManager = null; // Idle animation manager
+let defaultPoseAction = null; // Default pose action
+let useVRMAIdleAnimations = true; // Whether to use VRM-A idle animations
+let isIdleAnimationModeChanging = false; // Prevent duplicate mode changes
 
 
-// 完整的闲置动画管理器类 - 修复版本
+// Complete idle animation manager class (corrected version)
 class IdleAnimationManager {
     constructor(vrm, mixer) {
         this.vrm = vrm;
         this.mixer = mixer;
         
-        // 核心动作引用
-        this.currentIdleAction = null;      // VRMA 待机动作
-        this.defaultPoseAction = null;      // 默认 T-Pose/A-Pose 复位动作
-        this.proceduralIdleAction = null;   // 程序化呼吸/微动动作
-        this.currentOneShotAction = null;   // 当前正在播放的一次性动作 (新增)
+        // Core action references
+        this.currentIdleAction = null;      // VRMA idle action
+        this.defaultPoseAction = null;      // Default T-pose or A-pose reset action
+        this.proceduralIdleAction = null;   // Procedural breathing and subtle movement action
+        this.currentOneShotAction = null;   // Currently playing one-shot action
 
-        // 状态标识
+        // State flags
         this.isTransitioning = false;
         this.animationQueue = [];
         this.currentIndex = 0;
         
-        // 参数配置
-        this.transitionDuration = 0.5; // 标准过渡时间
+        // Parameter configuration
+        this.transitionDuration = 0.5; // Standard transition duration
         this.pauseBetweenAnimations = 1.5;
         this.idleWeight = 1.0; 
         this.isActive = false;
         this.currentMode = 'none'; // 'vrma', 'procedural', 'none'
         
-        // 监听器引用，用于发生冲突时移除旧的监听
+        // Listener references for removing old listeners when conflicts occur
         this._onOneShotFinished = null; 
 
-        // 初始化基础动作
+        // Initialize base actions
         this.createDefaultPoseAction();
         this.createProceduralIdleAction();
         
@@ -943,7 +943,7 @@ class IdleAnimationManager {
     }
 }
 
-// 切换闲置动画模式
+// Switch idle animation mode
 async function toggleIdleAnimationMode() {
     if (isIdleAnimationModeChanging || !idleAnimationManager) {
         return;
@@ -956,7 +956,7 @@ async function toggleIdleAnimationMode() {
     
     try {
         if (useVRMAIdleAnimations) {
-            // 切换到VRMA动画
+            // Switch to VRMA animation
             if (idleAnimations.length === 0) {
                 console.log('Loading VRMA animations...');
                 await loadIdleAnimations();
@@ -967,25 +967,25 @@ async function toggleIdleAnimationMode() {
                 idleAnimationManager.switchToVRMAMode();
             }
         } else {
-            // 切换到程序化动画
+            // Switch to procedural animation
             if (idleAnimationManager) {
                 idleAnimationManager.switchToProceduralMode();
             }
         }
         
-        // 更新按钮状态
+        // Update button state
         updateIdleAnimationButton();
         
     } catch (error) {
         console.error('Error switching idle animation mode:', error);
-        // 发生错误时回滚状态
+        // Restore state if an error occurs
         useVRMAIdleAnimations = !useVRMAIdleAnimations;
     } finally {
         isIdleAnimationModeChanging = false;
     }
 }
 
-// 更新闲置动画按钮状态
+// Update idle animation button state
 async function updateIdleAnimationButton() {
     const button = document.getElementById('idle-animation-handle');
     if (button) {
@@ -999,19 +999,19 @@ async function updateIdleAnimationButton() {
     }
 }
 
-// 获取动画目录下的所有VRMA文件
+// Get all VRMA files in the animation directory
 async function getAnimationFiles() {
   try {
     const cfg = await fetchVRMConfig();
     const motionPool = [...(cfg.defaultMotions || []), ...(cfg.userMotions || [])];
 
-    // 取出被选中的动作
+    // Get the selected motions
     const urls = (cfg.selectedMotionIds || [])
       .map(id => motionPool.find(m => m.id === id))
       .filter(Boolean)
       .map(item => {
         try {
-          // 核心修复点：传入 window.location.origin 处理相对路径
+          // Resolve relative paths using window.location.origin
           const urlObj = new URL(item.path, window.location.origin);
           urlObj.protocol = window.location.protocol;
           urlObj.host     = window.location.host;
@@ -1021,9 +1021,9 @@ async function getAnimationFiles() {
           return null;
         }
       })
-      .filter(u => u !== null); // 移除无效 URL
+      .filter(u => u !== null); // Remove invalid URLs
 
-    // 如果没有任何选中，返回默认的兜底动画
+    // If no motion is selected, return the default fallback animation
     if (urls.length === 0) {
       const base = `${window.location.protocol}//${window.location.host}/vrm/animations/`;
       const fallback = [
@@ -1044,7 +1044,7 @@ async function getAnimationFiles() {
   }
 }
 
-// 加载VRMA动画文件
+// Load a VRMA animation file
 async function loadVRMAAnimation(url) {
     return new Promise((resolve, reject) => {
         loader.load(
@@ -1068,7 +1068,7 @@ async function loadVRMAAnimation(url) {
     });
 }
 
-// 加载所有闲置动画
+// Load all idle animations
 async function loadIdleAnimations() {
     if (isLoadingAnimations) return;
     isLoadingAnimations = true;
@@ -1111,7 +1111,7 @@ async function startIdleAnimationLoop() {
     console.log(`Starting idle animation with mode: ${useVRMAIdleAnimations ? 'VRMA' : 'Procedural'}`);
     
     if (useVRMAIdleAnimations) {
-        // 使用VRMA动画
+        // Use VRMA animation
         if (idleAnimations.length === 0) {
             console.log('Loading VRMA animations...');
             await loadIdleAnimations();
@@ -1125,12 +1125,12 @@ async function startIdleAnimationLoop() {
             idleAnimationManager.switchToProceduralMode();
         }
     } else {
-        // 使用程序化动画
+        // Use procedural animation
         idleAnimationManager.switchToProceduralMode();
     }
 }
 
-// 程序化闲置动画（作为备用）
+// Procedural idle animation as fallback
 function useProceduralIdleAnimation() {
     if (!currentVrm) return;
     
@@ -1140,23 +1140,23 @@ function useProceduralIdleAnimation() {
     idleAction.play();
 }
 
-// 生成闲置动画 clip - 修复版本
+// Generate the idle animation clip (corrected version)
 function createIdleClip(vrm) {
     const tracks = [];
     const fps = 30;
     const duration = 600;
     const frameCount = duration * fps;
     
-    // 生成时间数组
+    // Generate the time array
     const times = [];
     for (let i = 0; i <= frameCount; i++) {
         times.push(i / fps);
     }
     
-    // VRM版本检测
+    // Detect the VRM version
     const v = (vrm.meta.metaVersion === '1') ? 1 : -1;
     
-    // 需要动画的骨骼列表
+    // List bones to animate
     const animatedBones = [
         'spine', 'chest', 'neck', 'head',
         'leftUpperArm', 'leftLowerArm', 'leftHand', 'leftShoulder',
@@ -1169,12 +1169,12 @@ function createIdleClip(vrm) {
         
         const values = [];
         
-        // 为每个时间点计算旋转值
+        // Calculate rotation values for each time point
         times.forEach(time => {
             let euler = new THREE.Euler(0, 0, 0);
             
-            // 使用周期性函数，确保在 t=0 和 t=duration 时值相同
-            const cycleTime = (time / duration) * 200 * Math.PI; // 0 到 2π
+            // Use periodic functions to ensure the same values at t=0 and t=duration
+            const cycleTime = (time / duration) * 200 * Math.PI; // 0 to 2 pi per cycle; multiplier determines the number of cycles
             
             switch (boneName) {
                 case 'spine':
@@ -1278,13 +1278,13 @@ function createIdleClip(vrm) {
                     break;
             }
             
-            // 将欧拉角转换为四元数并添加到值数组
+            // Convert Euler angles to quaternions and append them to the values array
             const quaternion = new THREE.Quaternion();
             quaternion.setFromEuler(euler);
             values.push(...quaternion.toArray());
         });
         
-        // 创建四元数关键帧轨道
+        // Create quaternion keyframe tracks
         const track = new THREE.QuaternionKeyframeTrack(
             bone.name + '.quaternion',
             times,
@@ -1294,14 +1294,14 @@ function createIdleClip(vrm) {
         tracks.push(track);
     });
     
-    // 创建并返回动画剪辑
+    // Create and return the animation clip
     return new THREE.AnimationClip('idle', duration, tracks);
 }
 
 
 function createBreathClip(vrm) {
     const tracks = [];
-    const duration = 4; // 4秒一个呼吸周期
+    const duration = 4; // One breathing cycle every 4 seconds
     const fps = 30;
     const frameCount = duration * fps;
     
@@ -1310,10 +1310,10 @@ function createBreathClip(vrm) {
         times.push(i / fps);
     }
     
-    // 呼吸缩放动画
+    // Breathing scale animation
     const scaleValues = [];
     times.forEach(time => {
-        const breathScale = 1 + Math.sin(time * Math.PI / 2) * 0.006; // 更自然的呼吸节奏
+        const breathScale = 1 + Math.sin(time * Math.PI / 2) * 0.006; // More natural breathing rhythm
         scaleValues.push(breathScale, breathScale, breathScale);
     });
     
@@ -1331,7 +1331,7 @@ function createBlinkClip(vrm) {
     if (!vrm.expressionManager) return null;
     
     const tracks = [];
-    const duration = 6; // 6秒周期，包含随机间隔
+    const duration = 6; // 6-second cycle with random intervals
     const fps = 30;
     const frameCount = duration * fps;
     
@@ -1340,17 +1340,17 @@ function createBlinkClip(vrm) {
         times.push(i / fps);
     }
     
-    // 创建眨眼模式：在随机时间点眨眼
+    // Create a blink pattern with blinks at selected times
     const blinkValues = [];
     times.forEach(time => {
         let blinkValue = 0;
         
-        // 在第1.5秒单次眨眼
+        // Single blink at 1.5 seconds
         if (time >= 1.5 && time <= 1.6) {
             const progress = (time - 1.5) / 0.2;
             blinkValue = Math.sin(progress * Math.PI);
         }
-        // 在第4秒双次眨眼
+        // Double blink at 4 seconds
         else if (time >= 3.8 && time <= 4.4) {
             const localTime = time - 3.8;
             if (localTime < 0.15) {
@@ -1374,8 +1374,8 @@ function createBlinkClip(vrm) {
 }
 
 /**
- * 停止指定语音块的动画和音频
- * @param {string|number} chunkId 语音块的ID
+ * Stop animation and audio for a specified speech chunk
+ * @param {string|number} chunkId Speech chunk ID
  */
 function stopChunkAnimation(chunkId) {
     const chunkState = chunkAnimations.get(chunkId);
@@ -1388,7 +1388,7 @@ function stopChunkAnimation(chunkId) {
     }
     if (chunkState.audio) {
         chunkState.audio.pause();
-        chunkState.audio.removeAttribute('src'); // 彻底释放资源
+        chunkState.audio.removeAttribute('src'); // Fully release resources
         chunkState.audio.load();
     }
     if (chunkState.audioSource) {
@@ -1397,7 +1397,7 @@ function stopChunkAnimation(chunkId) {
 
     chunkAnimations.delete(chunkId);
 
-    // 如果所有语音块都已结束，则重置表情
+    // Reset expressions if all speech chunks have finished
     if (chunkAnimations.size === 0 && currentVrm && currentVrm.expressionManager) {
         console.log('All speech chunks finished; resetting expression.');
         currentVrm.expressionManager.resetValues();
@@ -1406,7 +1406,7 @@ function stopChunkAnimation(chunkId) {
 }
 
 /**
- * 停止所有正在播放的语音动画
+ * Stop all currently playing speech animations
  */
 function stopAllChunkAnimations() {
     console.log('Stopping all lip-sync animations.');
@@ -1421,8 +1421,8 @@ function stopAllChunkAnimations() {
 }
 
 /**
- * 最终修复版：基于共振峰 (Formants F1/F2) 的科学口型同步
- * 通过查找频谱中的两个主要能量峰值 (F1, F2) 在元音三角形中的位置来确定口型
+ * Lip synchronization based on formants F1 and F2 (corrected version)
+ * Determine mouth shape from the positions of the two main spectral energy peaks (F1 and F2) in the vowel triangle
  */
 function startChunkAnimation(chunkId, chunkState) {
     if (!chunkState || !chunkState.isPlaying || !chunkState.analyser) {
@@ -1430,22 +1430,22 @@ function startChunkAnimation(chunkId, chunkState) {
     }
 
     const analyser = chunkState.analyser;
-    // 增加 FFT 精度，共振峰检测需要更高的频率分辨率
-    analyser.fftSize = 1024; // 之前是 256，太小了，分不清 F1/F2
+    // Increase FFT precision because formant detection requires higher frequency resolution
+    analyser.fftSize = 1024; // The previous size of 256 was too small to distinguish F1 and F2
     
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     const sampleRate = currentAudioContext.sampleRate;
     
-    // 平滑插值变量
+    // Smoothing interpolation variables
     let currentBlends = { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 };
     
-    // 灵敏度设置 (根据麦克风/TTS音量调整)
-    const SENSITIVITY = 1.0; // 如果嘴巴动静太小，调大这个数
-    const NOISE_GATE = 15;   // 底噪门限
+    // Sensitivity settings (adjust for microphone or TTS volume)
+    const SENSITIVITY = 1.0; // Increase this value if mouth movement is too small
+    const NOISE_GATE = 15;   // Noise floor threshold
 
     function getFormant(minFreq, maxFreq) {
-        // 将频率转换为数组索引
+        // Convert frequency to an array index
         const nyquist = sampleRate / 2;
         const startIndex = Math.floor((minFreq / nyquist) * bufferLength);
         const endIndex = Math.floor((maxFreq / nyquist) * bufferLength);
@@ -1453,7 +1453,7 @@ function startChunkAnimation(chunkId, chunkState) {
         let maxAmp = -Infinity;
         let maxIndex = -1;
         
-        // 在指定频率范围内找最强峰值
+        // Find the strongest peak in the specified frequency range
         for (let i = startIndex; i <= endIndex; i++) {
             if (dataArray[i] > maxAmp) {
                 maxAmp = dataArray[i];
@@ -1461,7 +1461,7 @@ function startChunkAnimation(chunkId, chunkState) {
             }
         }
         
-        // 返回峰值对应的频率和强度
+        // Return the frequency and strength of the peak
         return {
             freq: (maxIndex / bufferLength) * nyquist,
             amp: maxAmp
@@ -1471,7 +1471,7 @@ function startChunkAnimation(chunkId, chunkState) {
     function animateChunk() {
         const currentState = chunkAnimations.get(chunkId);
         if (!currentState || !currentState.isPlaying) {
-            // 停止时归零
+            // Reset to zero when stopped
             if (currentVrm && currentVrm.expressionManager) {
                 ['aa', 'ih', 'ou', 'ee', 'oh'].forEach(v => currentVrm.expressionManager.setValue(v, 0));
             }
@@ -1480,67 +1480,67 @@ function startChunkAnimation(chunkId, chunkState) {
 
         currentState.animationId = requestAnimationFrame(animateChunk);
 
-        // 1. 获取频域数据
+        // 1. Get frequency-domain data
         analyser.getByteFrequencyData(dataArray);
 
-        // 2. 检测共振峰
-        // F1 范围: 200Hz - 1000Hz (决定开口大小)
-        // F2 范围: 1000Hz - 3000Hz (决定舌位前后)
+        // 2. Detect formants
+        // F1 range: 200-1000 Hz (mouth opening)
+        // F2 range: 1000-3000 Hz (front/back tongue position)
         const f1 = getFormant(200, 1000);
         const f2 = getFormant(1000, 3000);
 
-        // 3. 计算总音量 (用于控制开口幅度)
-        // 只计算人声主要频段 (200-4000Hz) 的平均能量
+        // 3. Calculate overall volume to control mouth opening
+        // Calculate average energy only in the main speech band (200-4000 Hz)
         let vocalEnergy = 0;
         const startBin = Math.floor((200 / (sampleRate/2)) * bufferLength);
         const endBin = Math.floor((4000 / (sampleRate/2)) * bufferLength);
         for(let i=startBin; i<endBin; i++) vocalEnergy += dataArray[i];
         const avgVol = vocalEnergy / (endBin - startBin);
 
-        // 4. 映射逻辑 (元音三角形)
+        // 4. Mapping logic (vowel triangle)
         let target = { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 };
         
         if (avgVol > NOISE_GATE) {
-            // 归一化强度
+            // Normalize intensity
             const intensity = Math.min(1.0, (avgVol / 255) * SENSITIVITY);
             
-            // --- 核心算法：根据 F1/F2 坐标判断元音 ---
-            // 数值基于一般人声统计学，可能需要微调
+            // --- Core algorithm: identify vowels from F1/F2 coordinates ---
+            // Values are based on general speech statistics and may need fine-tuning
             
             if (f1.freq > 600) {
-                // F1 很高 -> 大张嘴 -> A (aa)
-                // 类似 "啊"
+                // High F1: wide-open mouth, A (aa)
+                // Similar to the vowel ah
                 target.aa = intensity;
             } 
             else if (f1.freq < 450 && f2.freq > 1800) {
-                // F1 低 (闭嘴), F2 高 (舌前) -> I (ih)
-                // 类似 "一"
+                // Low F1 (closed mouth), high F2 (front tongue): I (ih)
+                // Similar to the vowel ee
                 target.ih = intensity;
-                // I 音通常也会带一点点 E
+                // The I vowel often includes a small amount of E
                 target.ee = intensity * 0.3; 
             }
             else if (f1.freq < 450 && f2.freq < 1100) {
-                // F1 低 (闭嘴), F2 低 (舌后) -> U (ou)
-                // 类似 "呜"
+                // Low F1 (closed mouth), low F2 (back tongue): U (ou)
+                // Similar to the vowel oo
                 target.ou = intensity;
             }
             else if (f2.freq > 1600) {
-                // 剩下的高 F2 -> E (ee)
-                // 类似 "耶"
+                // Remaining high F2: E (ee)
+                // Similar to the vowel in yes
                 target.ee = intensity;
                 target.ih = intensity * 0.2;
             }
             else {
-                // 剩下的 -> O (oh) 或 中性音
-                // 类似 "哦"
+                // Otherwise O (oh) or neutral vowel
+                // Similar to the vowel oh
                 target.oh = intensity;
                 target.ou = intensity * 0.3;
             }
         }
 
-        // 5. 应用到 VRM
+        // 5. Apply to VRM
         if (currentVrm && currentVrm.expressionManager) {
-            // 表情抑制逻辑
+            // Expression suppression logic
             const expression = chunkState.expression;
             let limit = 1.0;
             if (expression && ['happy', 'surprised'].includes(expression)) {
@@ -1548,16 +1548,16 @@ function startChunkAnimation(chunkId, chunkState) {
             }
 
             if (expression) {
-                // 常见的情绪列表（排除了 blink，以免干扰自动眨眼，除非明确需要）
+                // Common expressions exclude blink to avoid interfering with automatic blinking unless explicitly requested
                 const EMOTIONS = ['surprised', 'happy', 'angry', 'sad', 'neutral', 'relaxed'];
                 
-                // 如果当前指令是情绪表情，则将其设为 1.0，并将其他情绪归 0.0（防止表情混合变成鬼脸）
+                // For an emotional expression, set it to 1.0 and reset other emotions to 0.0 to prevent unintended mixed expressions
                 if (EMOTIONS.includes(expression)) {
                     EMOTIONS.forEach(exp => {
                         currentVrm.expressionManager.setValue(exp, exp === expression ? 1.0 : 0.0);
                     });
                 } else {
-                    // 如果是 blink 等特定表情，直接应用
+                    // Apply specific expressions such as blink directly
                     currentVrm.expressionManager.setValue(expression, 1.0);
                 }
             }
@@ -1565,7 +1565,7 @@ function startChunkAnimation(chunkId, chunkState) {
             ['aa', 'ih', 'ou', 'ee', 'oh'].forEach(v => {
                 const t = target[v] * limit;
                 const c = currentBlends[v];
-                // 动态平滑: 张嘴快(0.5), 闭嘴慢(0.1)
+                // Dynamic smoothing: fast opening (0.5), slow closing (0.1)
                 const smooth = t > c ? 0.5 : 0.1; 
                 currentBlends[v] = c + (t - c) * smooth;
                 
@@ -1579,14 +1579,14 @@ function startChunkAnimation(chunkId, chunkState) {
 }
 
 /**
- * 完整版：基于共振峰 (Formants F1/F2) 的口型同步播放函数
- * 已适配 Promise 队列逻辑，确保播放顺序并保留所有核心算法
+ * Complete playback function with formant-based F1/F2 lip synchronization
+ * Adapted to the Promise queue to preserve playback order and all core algorithms
  */
 async function startLipSyncForChunk(data) {
     return new Promise(async (resolve) => {
         const chunkId = data.chunkIndex;
 
-        // 1. 初始化 Web Audio 环境
+        // 1. Initialize Web Audio
         if (!currentAudioContext) {
             currentAudioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
@@ -1594,7 +1594,7 @@ async function startLipSyncForChunk(data) {
             await currentAudioContext.resume();
         }
 
-        // 2. 检查动作 ID (Motion ID)
+        // 2. Check motion ID
         const incomingExpressions = data.expressions || [];
         if (idleAnimationManager) {
             const foundMotionId = incomingExpressions.find(exp => motionUrlMap.has(exp));
@@ -1607,11 +1607,11 @@ async function startLipSyncForChunk(data) {
             }
         }
 
-        // 3. 处理表情逻辑 (Blend Shapes)
+        // 3. Process expressions (blend shapes)
         const ALLOW_EXPS = ['surprised','happy','angry','sad','neutral','relaxed','blink','blinkLeft','blinkRight'];
         const hitExpression = incomingExpressions.find(e => ALLOW_EXPS.includes(e));
 
-        // 4. 创建播放状态
+        // 4. Create playback state
         const chunkState = {
             isPlaying: true,
             animationId: null,
@@ -1624,21 +1624,21 @@ async function startLipSyncForChunk(data) {
 
         const { audio, analyser } = chunkState;
         
-        // 5. 设置分析器精度 (针对 F1/F2 优化)
+        // 5. Set analyzer resolution for F1/F2
         analyser.fftSize = 1024; 
         analyser.smoothingTimeConstant = 0.3;
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
         const sampleRate = currentAudioContext.sampleRate;
 
-        // 6. 音频连接
+        // 6. Connect audio
         audio.crossOrigin = 'anonymous';
         const audioSource = currentAudioContext.createMediaElementSource(audio);
         audioSource.connect(analyser);
         analyser.connect(currentAudioContext.destination);
         chunkState.audioSource = audioSource;
 
-        // 7. 内部函数：寻找共振峰
+        // 7. Internal function to find formants
         function getFormant(minFreq, maxFreq) {
             const nyquist = sampleRate / 2;
             const startIndex = Math.floor((minFreq / nyquist) * bufferLength);
@@ -1654,12 +1654,12 @@ async function startLipSyncForChunk(data) {
             return { freq: (maxIndex / bufferLength) * nyquist, amp: maxAmp };
         }
 
-        // 8. 内部变量：平滑插值
+        // 8. Internal smoothing interpolation variables
         let currentBlends = { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 };
         const SENSITIVITY = 1.0; 
         const NOISE_GATE = 15;
 
-        // 9. 动画循环 (核心算法)
+        // 9. Animation loop (core algorithm)
         function animateChunk() {
             const currentState = chunkAnimations.get(chunkId);
             if (!currentState || !currentState.isPlaying) {
@@ -1702,7 +1702,7 @@ async function startLipSyncForChunk(data) {
             }
 
             if (currentVrm && currentVrm.expressionManager) {
-                // 表情限制
+                // Expression constraints
                 const expression = currentState.expression;
                 let limit = (expression && ['happy', 'surprised'].includes(expression)) ? 0.5 : 1.0;
 
@@ -1727,19 +1727,19 @@ async function startLipSyncForChunk(data) {
             }
         }
 
-        // 10. 绑定音频事件
+        // 10. Bind audio events
         audio.onended = () => {
             stopChunkAnimation(chunkId);
-            resolve(); // 播放结束，触发 Promise 解决，队列进入下一项
+            resolve(); // Resolve the Promise when playback ends so the queue can advance
         };
 
         audio.onerror = (err) => {
             console.error(`Chunk ${chunkId} Playback error:`, err);
             stopChunkAnimation(chunkId);
-            resolve(); // 出错也必须 resolve，否则队列会卡死
+            resolve(); // Resolve even on error so the queue does not stall
         };
 
-        // 11. 开始播放与动画
+        // 11. Start playback and animation
         try {
             await audio.play();
             chunkState.animationId = requestAnimationFrame(animateChunk);
@@ -1762,27 +1762,27 @@ loader.load(
     ( gltf ) => {
 
         const vrm = gltf.userData.vrm;
-        currentMixer = new THREE.AnimationMixer(vrm.scene); // 创建动画混合器
+        currentMixer = new THREE.AnimationMixer(vrm.scene); // Create the animation mixer
         isVRM1 = vrm.meta.metaVersion === '1';
-        VRMUtils.rotateVRM0(vrm); // 旋转 VRM 使其面向正前方
+        VRMUtils.rotateVRM0(vrm); // Rotate the VRM to face forward
         // calling these functions greatly improves the performance
         // VRMUtils.removeUnnecessaryVertices( gltf.scene );
 
-        // 添加材质修复
+        // Add material fixes
         // gltf.scene.traverse((obj) => {
         // if (obj.isMesh && obj.material) {
-        //     // 解决透明材质黑边问题
+        //     // Correct black edges on transparent materials
         //     if (obj.material.transparent) {
         //         obj.material.alphaTest = 0.01;
         //         obj.material.depthWrite = true;
         //         obj.material.needsUpdate = true;
         //     }
             
-        //     // 确保正确混合模式
+        //     // Ensure the correct blending mode
         //     obj.material.blending = THREE.NormalBlending;
         //     obj.material.premultipliedAlpha = false;
             
-        //     // 设置渲染顺序
+        //     // Set rendering order
         //     obj.renderOrder = obj.material.transparent ? 1 : 0;
         // }
         // });
@@ -1790,10 +1790,10 @@ loader.load(
         // VRMUtils.combineSkeletons( gltf.scene );
         // VRMUtils.combineMorphs( vrm );
 
-        // 启用 Spring Bone 物理模拟
+        // Enable SpringBone physics simulation
         if (vrm.springBoneManager) {
             console.log('Spring Bone Manager found:', vrm.springBoneManager);
-            // Spring Bone 会在 vrm.update() 中自动更新
+            // SpringBone updates automatically in vrm.update()
         }
 
 
@@ -1807,22 +1807,22 @@ loader.load(
         vrm.lookAt.target = camera;
 
         if (vrm.lookAt.applier) {
-            vrm.lookAt.applier.yawLimit = 60.0;   // 左右转头最大 60 度
-            vrm.lookAt.applier.pitchLimit = 30.0; // 上下抬头最大 30 度
+            vrm.lookAt.applier.yawLimit = 60.0;   // Maximum horizontal head rotation: 60 degrees
+            vrm.lookAt.applier.pitchLimit = 30.0; // Maximum vertical head rotation: 30 degrees
         }
 
         currentVrm = vrm;
         console.log( vrm );
         currentVrmWrapper.add(vrm.scene); 
         
-        // 让模型投射阴影
+        // Allow the model to cast shadows
         vrm.scene.traverse((obj) => {
             if (obj.isMesh) {
                 obj.castShadow = true;
-                obj.receiveShadow = true;   // 如需让模型本身也接收阴影可保留
+                obj.receiveShadow = true;   // Keep this if the model should also receive shadows
             }
         });
-        // 设置自然姿势
+        // Set a natural pose
         setNaturalPose(vrm);
 
         if (vrm.expressionManager) {
@@ -1839,10 +1839,10 @@ loader.load(
         blinkAction.setLoop(THREE.LoopRepeat);
         blinkAction.play();
 
-        // 创建闲置动画管理器
+        // Create the idle animation manager
         idleAnimationManager = new IdleAnimationManager(vrm, currentMixer);
 
-        // 开始闲置动画循环
+        // Start the idle animation loop
         startIdleAnimationLoop();
 
         hideModelSwitchingIndicator();
@@ -1850,7 +1850,7 @@ loader.load(
 
     (progress) => {
         console.log('Loading model...', 100.0 * (progress.loaded / progress.total), '%');
-        // 可以在这里更新加载进度
+        // Loading progress can be updated here
         updateModelLoadingProgress(progress.loaded / progress.total);
     },
 
@@ -1858,10 +1858,10 @@ loader.load(
         console.error('Error loading model:', error);
         hideModelSwitchingIndicator();
         
-        // 如果加载失败，尝试回到之前的模型
+        // If loading fails, try returning to the previous model
         if (allModels.length > 1) {
             console.log('Attempting to load fallback model...');
-            // 尝试加载第一个模型作为备用
+            // Try loading the first model as fallback
             if (currentModelIndex !== 0) {
                 switchToModel(0);
             }
@@ -1870,16 +1870,16 @@ loader.load(
 
 );
 
-// 在全局变量区域添加字幕相关变量
+// Global subtitle state
 let subtitleElement = null;
 let currentSubtitleChunkIndex = -1;
 let subtitleTimeout = null;
-let isSubtitleEnabled = true; // 字幕默认开启
+let isSubtitleEnabled = true; // Subtitles enabled by default
 let isDraggingSubtitle = false;
 let subtitleOffsetX = 0;
 let subtitleOffsetY = 0;
 
-// 修改初始化字幕元素
+// Initialize the subtitle element
 function initSubtitleElement() {
     subtitleElement = document.createElement('div');
     subtitleElement.id = 'subtitle-container';
@@ -1910,7 +1910,7 @@ function initSubtitleElement() {
         width: max-content;
     `;
 
-    // 添加拖拽事件监听
+    // Add drag event listeners
     subtitleElement.addEventListener('mousedown', startDragSubtitle);
     document.addEventListener('mousemove', dragSubtitle);
     document.addEventListener('mouseup', endDragSubtitle);
@@ -1918,16 +1918,16 @@ function initSubtitleElement() {
     document.body.appendChild(subtitleElement);
 }
 
-// 改进拖拽功能
+// Improved drag handling
 function startDragSubtitle(e) {
     if (!isSubtitleEnabled) return;
     
     isDraggingSubtitle = true;
     
-    // 获取字幕元素的初始位置
+    // Get the subtitle element's initial position
     const rect = subtitleElement.getBoundingClientRect();
     
-    // 计算鼠标相对于字幕中心点的偏移量
+    // Calculate the mouse offset relative to the subtitle center
     subtitleOffsetX = e.clientX - (rect.left + rect.width / 2);
     subtitleOffsetY = e.clientY - rect.top;
     
