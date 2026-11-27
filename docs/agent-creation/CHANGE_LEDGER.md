@@ -490,3 +490,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Translate inherited calendar design records
 
 - Parent 0138d0774f343de79dc2642f3ab8d2a0a6cf6b94. Translate 118 Han-flagged lines across docs/superpowers/plans/2025-07-09-calendar-panel.md and docs/superpowers/specs/2025-07-09-calendar-panel-design.md. Preserve original historical design and tool schema names; translate sample UI strings/date formats and explicitly label historical weather default as superseded. Mark both records historical rather than current instructions. No runtime source or settings changed. Zero literal Han in both files; no runtime test required for docs-only change. Revert for rollback.
+
+## 2026-11-26 — Translate inherited Responses API design records
+
+- Parent a62a36fe005bbb32d8ce9c9b5a4e5bff7a0fed1c. Translate remaining 170 flagged lines across the historical Responses provider implementation plan and design spec. Preserve API contracts, provider IDs, code examples, upstream design rationale and historical dependency references; annotate superseded Chinese locale/comment/commit conventions and mark documents historical. Zero literal Han in both. Documentation only; no runtime change. Revert for rollback.

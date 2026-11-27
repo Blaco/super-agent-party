@@ -196,3 +196,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up checkpoint — inherited calendar documentation
 
 - Translated all 118 flagged lines in the calendar implementation plan and design spec. Both are explicitly historical; no runtime change. Remaining OpenAI Responses design records and asset/reference review outstanding.
+
+## Follow-up checkpoint — inherited Responses API documentation
+
+- Translated all 170 flagged lines in the historical provider plan and design spec. Together with the calendar documentation this addresses the final 288 project-source Han lines reported outside the main stylesheet. Current full inventory and regional/asset review remain pending. No build.

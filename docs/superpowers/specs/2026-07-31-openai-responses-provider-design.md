@@ -1,112 +1,114 @@
-# OpenAI Responses API 模型提供商接入设计
+# OpenAI Responses API Provider Integration Design
 
-日期: 2026-07-31
-状态: 已确认
+> Historical upstream design record, translated for the fork. Code excerpts, paths, dependency versions and implementation steps are not current instructions; use the Agent Creation work protocol and live source instead.
 
-## 背景与目标
+Date: 2026-07-31
+Status: Confirmed (historical upstream record)
 
-为模型提供商新增一个独立 vendor 类型,用于接入只提供 **OpenAI Responses API** 端点(`POST /responses`)的服务商,包括:
+## Background and goals
 
-1. 某些中转站/网关只实现了 `/responses` 端点,没有 Chat Completions 端点
-2. 官方 OpenAI 的 gpt-5/o3 等模型的新能力(如 reasoning 摘要、内置 web_search)依赖 Responses API
+Add a separate model-provider vendor type for services that provide only an **OpenAI Responses API** endpoint (`POST /responses`), including:
 
-实现要求:使用项目已有的 **litellm** 依赖(litellm>=1.83.7,当前锁定 1.83.13)。
+1. Relays or gateways that implement `/responses` but not Chat Completions.
+2. New capabilities of official OpenAI models such as gpt-5/o3 (e.g. reasoning summaries and built-in web_search) that rely on Responses API.
 
-## 技术背景
+Implementation requirement: use the existing **litellm** dependency (litellm>=1.83.7, historically locked to 1.83.13).
 
-litellm 1.83.13 内置 `responses_api_bridge`(`litellm/completion_extras/litellm_responses_transformation/`),当 `litellm.acompletion(model="openai/responses/<model>", ...)` 时自动:
+## Technical background
 
-> **注意:必须带 `openai/` 路由前缀。** litellm 1.83.13 的 `get_llm_provider` 无法解析裸 `responses/<model>` 的 provider(抛 BadRequestError);`openai/responses/<model>` 会先按 `openai/` 解析出 provider,路径剥成 `responses/<model>` 后命中 `responses_api_bridge`。
+litellm 1.83.13 includes `responses_api_bridge` (`litellm/completion_extras/litellm_responses_transformation/`), which automatically performs the following when calling `litellm.acompletion(model="openai/responses/<model>", ...)`:
 
-- 将 Chat Completions 请求转换为 Responses API 请求(`messages` → `input` items,含 tool 结果消息 → `function_call_output`)
-- `tools` 自动转换为 Responses 格式(`{type: "function", name, description, parameters}`)
+> **Note: the `openai/` routing prefix is required.** In litellm 1.83.13, `get_llm_provider` cannot resolve a provider from bare `responses/<model>` (BadRequestError). `openai/responses/<model>` resolves the provider via `openai/`, then the remaining `responses/<model>` triggers `responses_api_bridge`.
+
+- Convert Chat Completions requests to Responses API requests (`messages` → `input` items, tool result messages → `function_call_output`).
+- Convert `tools` automatically to Responses format (`{type: "function", name, description, parameters}`).
 - `max_tokens`/`max_completion_tokens` → `max_output_tokens`
 - `response_format` → `text.format`;`reasoning_effort` → `reasoning`
-- `web_search_options` → 内置 web_search 工具
-- 将 Responses API 响应转回 Chat Completions 格式:非流式 `ModelResponse`(含 `choices[0].message.tool_calls`、`usage`);流式 `CustomStreamWrapper` 产出标准 chat.completions 块(含 `delta.reasoning_content`、tool_calls、末尾 usage 块)
+- `web_search_options` → built-in web_search tool.
+- Convert Responses API output back to Chat Completions: non-streaming `ModelResponse` (including `choices[0].message.tool_calls`, `usage`); streaming `CustomStreamWrapper` yields standard chat.completions chunks (including `delta.reasoning_content`, tool_calls, final usage chunk).
 
-已验证(本机 `.venv` 中 litellm 1.83.13):`litellm.responses`/`aresponses` 存在,桥接 handler 与转换逻辑存在。
+Historically verified in local `.venv` with litellm 1.83.13: `litellm.responses`/`aresponses`, bridge handler and conversion logic exist.
 
-## 架构决策
+## Architecture decision
 
-### 方案选择
+### Options
 
-选 **方案 A:新适配器 + 新 vendor,走 litellm `openai/responses/` 前缀桥接**。
+Select **Option A: new adapter and vendor via the litellm `openai/responses/` prefix bridge**.
 
-- 方案 A:新建 `py/ResponsesAsOpenAI.py` 模拟 AsyncOpenAI 接口,内部 `litellm.acompletion(model="openai/responses/<model>", ...)`。代码量小(~150 行),格式转换全部由 litellm 维护,主聊天/推理/深度搜索/`/v1/chat/completions` 所有路径自动生效
-- 方案 B(弃):直接用 `litellm.aresponses()` 并在适配器内自行转换消息/工具/流格式,代码量 3-4 倍且易出兼容 bug
-- 方案 C(弃):改造现有 `custom` vendor 加开关,与现有 customAnthropic 模式不一致
+- Option A: create `py/ResponsesAsOpenAI.py` emulating AsyncOpenAI, internally using `litellm.acompletion(model="openai/responses/<model>", ...)`. Small implementation (~150 lines); litellm maintains format conversion; main chat, reasoning, deep search and `/v1/chat/completions` paths work automatically.
+- Option B (rejected): use `litellm.aresponses()` directly and convert messages/tools/streams inside adapter; three to four times more code and higher compatibility risk.
+- Option C (rejected): add a switch to existing `custom` vendor, inconsistent with existing customAnthropic pattern.
 
-### 架构图
+### Architecture diagram
 
 ```
-前端选择 vendor "OpenAIResponses" → 设置保存 (modelProviders[])
+Frontend selects vendor "OpenAIResponses" → settings saved (modelProviders[])
     ↓
-server.py get_client_class() 分发 → AsyncResponsesAsOpenAI (py/ResponsesAsOpenAI.py)
-    ↓ 模拟 AsyncOpenAI 接口 (chat.completions.create / models.list)
+server.py get_client_class() dispatch → AsyncResponsesAsOpenAI (py/ResponsesAsOpenAI.py)
+    ↓ Emulate AsyncOpenAI interface (chat.completions.create / models.list)
     ↓
 litellm.acompletion(model="openai/responses/<model>", api_base=url, ...)
     ↓ responses_api_bridge
     ↓
 litellm.aresponses() → POST {base}/responses
-    ↓ 桥接转回 chat.completions 格式 (流式/非流式)
+    ↓ Bridge converts back to chat.completions format (streaming/non-streaming)
     ↓
-现有 generate_stream_response / generate_complete_response 零改动
+Existing generate_stream_response / generate_complete_response unchanged
 ```
 
-## 实现细节
+## Implementation details
 
-### 1. 后端:新文件 `py/ResponsesAsOpenAI.py`
+### 1. Backend: new file `py/ResponsesAsOpenAI.py`
 
-类 `AsyncResponsesAsOpenAI`,仿照 `py/ClaudeAsOpenAI.py` 模式:
+Class `AsyncResponsesAsOpenAI`, following `py/ClaudeAsOpenAI.py` pattern:
 
-- `__init__(api_key, base_url=None, default_model=None, http_client=None, timeout=None, max_retries=None, **kwargs)` — 签名与 `AsyncClaudeAsOpenAI` 一致
-- `_litellm` 属性:懒加载 `import litellm` 并缓存
+- `__init__(api_key, base_url=None, default_model=None, http_client=None, timeout=None, max_retries=None, **kwargs)` — signature matches `AsyncClaudeAsOpenAI`.
+- `_litellm` property: lazily `import litellm` and cache it.
 - `chat.completions.create(model, messages, temperature, max_tokens, stream, top_p, stop, tools, tool_choice, **kwargs)`:
-  - model 前缀 `openai/responses/`(未带前缀时补全;`responses/x` 输入先改写为 `openai/responses/x`,litellm 剥掉 `openai/` 后按 `responses/` 触发桥接)
-  - 组装 kwargs:`model`、`messages`、`api_key`、`api_base=base_url`、`stream`、`temperature`、`max_tokens`、`top_p`、`stop`、`timeout`、`client=http_client`(复用全局代理客户端)
-  - `tools`、`tool_choice` 原样透传(桥接自动转换)
-  - 过滤 kwargs 中 `logprobs`、`top_logprobs`、`n` 三个桥接不支持的参数,其余(含 `response_format`、`reasoning_effort`)透传
+  - Model prefix `openai/responses/` (add if missing; rewrite `responses/x` to `openai/responses/x`; litellm strips `openai/` and triggers bridge via `responses/`).
+  - Assemble kwargs: `model`, `messages`, `api_key`, `api_base=base_url`, `stream`, `temperature`, `max_tokens`, `top_p`, `stop`, `timeout`, `client=http_client` (reuse shared proxy client).
+  - Pass through `tools` and `tool_choice` unchanged (bridge converts automatically).
+  - Filter three bridge-unsupported kwargs: `logprobs`, `top_logprobs`, `n`; pass through others (including `response_format`, `reasoning_effort`).
   - `return await litellm.acompletion(**completion_kwargs, **safe_kwargs)`
-- `models.list()`:`GET {base}/models`(base_url 以 `/v1` 结尾则直接拼 `/models`,否则拼 `/v1/models`),Bearer 认证,复用全局 http_client;失败打印警告并返回空列表兜底
+- `models.list()`: `GET {base}/models` (append `/models` when base_url ends with `/v1`, otherwise `/v1/models`), Bearer authentication, reuse shared http_client; on failure print warning and return empty list.
 
-### 2. 后端分发点 `server.py`
+### 2. Backend dispatch points in `server.py`
 
-| 位置 | 改动 |
+| Location | Change |
 |---|---|
-| `get_client_class()` 731-748 行 | 新增 `if vendor == 'OpenAIResponses': return AsyncResponsesAsOpenAI`;import `py/ResponsesAsOpenAI.py`(471-473 行附近) |
-| `/v1/providers/models` 7043-7072 行 | vendor 分发处新增 `OpenAIResponses` → 新适配器实例,拉取模型列表 |
+| `get_client_class()` lines 731-748 | Add `if vendor == 'OpenAIResponses': return AsyncResponsesAsOpenAI`; import `py/ResponsesAsOpenAI.py` (near lines 471-473) |
+| `/v1/providers/models` lines 7043-7072 | Dispatch `OpenAIResponses` to new adapter instance and retrieve models |
 
-### 3. 前端改动
+### 3. Frontend changes
 
-| 文件 | 改动 |
+| File | Change |
 |---|---|
-| `static/js/vue_data.js` 1943 行 `vendorValues` | 在 `'customAnthropic'` 后新增 `'OpenAIResponses'` |
-| `static/js/vue_methods.js` `handleVendorChange` 5596 行 | `value !== 'custom' && value !== 'customAnthropic'` 改为同时排除 `'OpenAIResponses'`(不预填默认 URL,由用户填端点) |
-| `static/js/vue_methods.js` `goToURL` 8596 行 | `customAnthropic` 分支同样处理 `OpenAIResponses`(打开用户填的 URL 作为 API 页) |
-| `static/js/renderer.js` `validProvider` 2011 行 | `custom`/`customAnthropic` 分支加入 `'OpenAIResponses'`(需以 http 开头的 URL 才有效) |
+| `static/js/vue_data.js` line 1943 `vendorValues` | Add `'OpenAIResponses'` after `'customAnthropic'` |
+| `static/js/vue_methods.js` `handleVendorChange` line 5596 | Extend `value !== 'custom' && value !== 'customAnthropic'` to exclude `'OpenAIResponses'` too (no default URL; user supplies endpoint) |
+| `static/js/vue_methods.js` `goToURL` line 8596 | Handle `OpenAIResponses` like `customAnthropic` (open user-supplied URL as API page) |
+| `static/js/renderer.js` `validProvider` line 2011 | Add `'OpenAIResponses'` to `custom`/`customAnthropic` branch (valid only with URL starting with http) |
 
-### 4. 错误处理
+### 4. Error handling
 
-- 网关不支持 Responses 端点时,litellm 桥接抛异常 → `_wrap_client_chat_with_retry`(751-784 行)按现有策略重试 429/5xx → 走现有错误上报流程,前端显示错误信息
-- 模型列表拉取失败 → 空列表,前端可手动输入模型名
+- If gateway lacks Responses endpoint, litellm bridge raises an exception → `_wrap_client_chat_with_retry` (lines 751-784) retries 429/5xx under existing policy → existing error reporting displays error in frontend.
+- Model list retrieval failure → empty list; frontend allows manual model name entry.
 
-### 5. 验证方式
+### 5. Validation
 
-无自动化测试(项目现状),手动验证:
+Historical project had no automated tests; manual validation:
 
-1. 设置页新增供应商,选 `OpenAIResponses` vendor,填中转站 URL + API Key
-2. 点"测试连接",确认模型列表能拉取或可手动输入
-3. 主聊天发送消息,确认流式输出正常(含 reasoning 模型时确认思考内容展示)
-4. 开启工具调用的对话,确认工具调用/工具结果回传正常
-5. 非流式路径(如深度搜索)抽测一轮
+1. Add provider on settings page, select `OpenAIResponses` vendor, enter relay URL and API Key.
+2. Click "Test connection"; verify model list is retrieved or manual entry is available.
+3. Send main-chat message; verify streaming output (including reasoning content when supported).
+4. Enable tool calls in conversation; verify tool calls and returned results.
+5. Spot-check non-streaming path (e.g. deep search).
 
-## 范围
+## Scope
 
-不做:
+Out of scope:
 
-- 不改现有 OpenAI/其他 vendor 行为
-- 不新增 Responses API 特有 UI(如 reasoning 展示开关)
-- 不升级 litellm 版本(1.83.13 已含桥接)
+- Changing existing OpenAI/other vendor behavior.
+- Adding Responses API-specific UI (e.g. reasoning display switch).
+- Upgrading litellm (1.83.13 already contains bridge).
 
-依赖:litellm>=1.83.7(已满足,当前 1.83.13,无需改 pyproject.toml)
+Dependency: litellm>=1.83.7 (already satisfied, historically 1.83.13; no pyproject.toml change required).

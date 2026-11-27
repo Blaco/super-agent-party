@@ -1,36 +1,38 @@
-# OpenAI Responses API 模型提供商接入 — 实现计划
+# OpenAI Responses API Provider Integration — Implementation Plan
+
+> Historical upstream design record, translated for the fork. Code excerpts, paths, dependency versions and implementation steps are not current instructions; use the Agent Creation work protocol and live source instead.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 新增 `OpenAIResponses` vendor 类型,通过 litellm 的 `openai/responses/` 前缀桥接接入 OpenAI Responses API 端点。
+**Goal:** Add the `OpenAIResponses` vendor type and connect to OpenAI Responses API endpoints through the litellm `openai/responses/` prefix bridge.
 
-**Architecture:** 新建 `py/ResponsesAsOpenAI.py` 适配器,完全模拟 `AsyncOpenAI` 接口(`chat.completions.create` / `models.list`),内部以 `model="openai/responses/<model>"` 调用 `litellm.acompletion()`。litellm 1.83.13 内置的 `responses_api_bridge` 自动完成 Chat Completions ↔ Responses API 双向转换(消息→input、tools、流式事件、usage、reasoning_content)。注意:必须带 `openai/` 路由前缀——裸 `responses/<model>` 无法在 `get_llm_provider` 解析 provider(抛 BadRequestError),`openai/responses/<model>` 剥掉 `openai/` 后剩 `responses/<model>` 才命中桥接。`server.py` 按 vendor 分发到新适配器,前端新增 vendor 选项。
+**Architecture:** Create `py/ResponsesAsOpenAI.py`, an adapter that emulates the `AsyncOpenAI` interface (`chat.completions.create` / `models.list`). Internally, call `litellm.acompletion()` with `model="openai/responses/<model>"`. The built-in `responses_api_bridge` in litellm 1.83.13 handles bidirectional Chat Completions ↔ Responses API conversion (messages to input, tools, streaming events, usage, reasoning_content). Note: the `openai/` routing prefix is required. A bare `responses/<model>` cannot resolve its provider in `get_llm_provider` (BadRequestError); `openai/responses/<model>` resolves the provider and leaves `responses/<model>` to trigger the bridge. `server.py` dispatches by vendor to the new adapter, and the frontend adds a vendor option.
 
-**Tech Stack:** Python 3.12, litellm>=1.83.7(当前 1.83.13,已含桥接), FastAPI, Vue 3(内联 JS), Electron。
+**Tech Stack:** Python 3.12, litellm>=1.83.7 (historically 1.83.13, which includes the bridge), FastAPI, Vue 3 (inline JS), Electron.
 
 ## Global Constraints
 
-- 项目**无 pytest** 测试框架:测试用纯 Python 脚本(`.venv/bin/python tests/xxx.py`),不用 pytest
-- litellm 版本**不升级**(1.83.13 已含 `responses_api_bridge`)
-- vendor 字符串固定为 `'OpenAIResponses'`,全仓一致
-- 不改变现有 OpenAI/其他 vendor 行为;不新增 Responses API 特有 UI
-- 代码风格:仿照 `py/ClaudeAsOpenAI.py`(中文注释、懒加载 litellm、模拟 AsyncOpenAI 接口)
-- 提交信息用中文 + conventional 前缀(如 `feat:`, `docs:`),见 git log 现有风格
+- The project historically had **no pytest** framework: tests use standalone Python scripts (`.venv/bin/python tests/xxx.py`), not pytest.
+- **Do not upgrade** litellm for this historical change (1.83.13 already contains `responses_api_bridge`).
+- Use the exact vendor string `'OpenAIResponses'` consistently throughout the repository.
+- Do not change existing OpenAI/other vendor behavior or add Responses API-specific UI.
+- Code style: follow `py/ClaudeAsOpenAI.py` (upstream originally specified Chinese comments; superseded by English comments in this fork, lazy litellm imports, emulated AsyncOpenAI interface).
+- Upstream originally specified Chinese commit messages with conventional prefixes (e.g. `feat:`, `docs:`); superseded by the fork's English commit convention.
 
 ---
 
-### Task 1: 后端适配器 `py/ResponsesAsOpenAI.py` + 冒烟测试
+### Task 1: Backend adapter `py/ResponsesAsOpenAI.py` and smoke test
 
 **Files:**
 - Create: `py/ResponsesAsOpenAI.py`
-- Create: `tests/test_responses_adapter.py`(纯脚本,无 pytest)
+- Create: `tests/test_responses_adapter.py` (standalone script, no pytest)
 
 **Interfaces:**
 - Produces: `AsyncResponsesAsOpenAI(api_key, base_url=None, default_model=None, http_client=None, timeout=None, max_retries=None, **kwargs)`
-  - `await adapter.chat.completions.create(model, messages, temperature, max_tokens, stream, top_p, stop, tools, tool_choice, **kwargs)` → litellm 返回的 `ModelResponse`(非流式)或 `CustomStreamWrapper`(流式,可 `async for` 迭代,块含 `.choices[0].delta.content`)
-  - `await adapter.models.list()` → `{data: [ModelItem]}`(ModelItem 有 `.id`)
+  - `await adapter.chat.completions.create(model, messages, temperature, max_tokens, stream, top_p, stop, tools, tool_choice, **kwargs)` → litellm `ModelResponse` (non-streaming) or `CustomStreamWrapper` (streaming, iterable with `async for`, chunks contain `.choices[0].delta.content`)
+  - `await adapter.models.list()` → `{data: [ModelItem]}` (ModelItem has `.id`)
 
-- [ ] **Step 1: 编写适配器 `py/ResponsesAsOpenAI.py`**
+- [ ] **Step 1: Write adapter `py/ResponsesAsOpenAI.py`**
 
 ```python
 import httpx
@@ -38,8 +40,8 @@ from typing import Optional, List, Dict, Any
 
 class AsyncResponsesAsOpenAI:
     """
-    完全模拟 AsyncOpenAI 客户端，底层用 litellm.acompletion 的 openai/responses/ 前缀桥接
-    (litellm 自动完成 Chat Completions <-> Responses API 双向转换)
+    Emulate the AsyncOpenAI client using the openai/responses/ prefix bridge in litellm.acompletion
+    (litellm automatically converts between Chat Completions and Responses API formats)
     """
 
     def __init__(
@@ -59,11 +61,11 @@ class AsyncResponsesAsOpenAI:
         self.timeout = timeout
         self.max_retries = max_retries
         self._extra_kwargs = kwargs
-        self._litellm_module = None  # 缓存 litellm 模块
+        self._litellm_module = None  # Cache the litellm module
 
     @property
     def _litellm(self):
-        """懒加载 litellm，第一次调用时才 import"""
+        """Lazy-load litellm; import only on first use."""
         if self._litellm_module is None:
             import litellm
             self._litellm_module = litellm
@@ -78,7 +80,7 @@ class AsyncResponsesAsOpenAI:
             self._parent = parent
 
         async def list(self):
-            # 构造兼容 OpenAI 返回形式的对象
+            # Construct an object compatible with OpenAI's response format
             class ModelItem:
                 def __init__(self, model_id: str):
                     self.id = model_id
@@ -87,7 +89,7 @@ class AsyncResponsesAsOpenAI:
                 def __init__(self, data: list):
                     self.data = data
 
-            # Responses API 服务商的模型列表端点仍是 OpenAI 兼容的 /models
+            # Responses API providers still use the OpenAI-compatible /models endpoint
             base_url = self._parent.base_url or "https://api.openai.com/v1"
             if base_url.endswith("/v1") or base_url.endswith("/v1/"):
                 url = f"{base_url.rstrip('/')}/models"
@@ -97,7 +99,7 @@ class AsyncResponsesAsOpenAI:
             headers = {"Authorization": f"Bearer {self._parent.api_key}"}
 
             try:
-                # 优先复用全局 http_client 以走系统代理配置
+                # Prefer the shared http_client to use system proxy settings
                 client = self._parent.http_client
                 need_close = False
                 if not client:
@@ -115,9 +117,9 @@ class AsyncResponsesAsOpenAI:
                     if models:
                         return ModelList(models)
             except Exception as e:
-                print(f"动态获取 OpenAI Responses 模型列表失败 (可能代理/服务商不支持): {e}")
+                print(f"Failed to retrieve OpenAI Responses model list (proxy/provider may not support it): {e}")
 
-            # [静态兜底方案]：请求失败时返回空列表，前端可手动输入模型名
+            # Static fallback: return an empty list on failure so the frontend can accept a manual model name
             return ModelList([])
 
     @property
@@ -149,16 +151,16 @@ class AsyncResponsesAsOpenAI:
                 if not model:
                     raise ValueError("model is required")
 
-                # openai/responses/ 前缀触发 litellm 的 responses_api_bridge
-                # (注意: litellm 1.83.x 中裸 "responses/" 前缀无法在 get_llm_provider 解析 provider,
-                #  必须带 "openai/" 路由前缀; 桥接内部会把模型名去掉前缀再调 /responses 端点)
+                # The openai/responses/ prefix triggers litellm's responses_api_bridge
+                # Note: in litellm 1.83.x, the bare "responses/" prefix cannot resolve a provider in get_llm_provider;
+                # the "openai/" routing prefix is required. The bridge strips the model prefix before calling /responses.
                 if model.startswith("responses/"):
                     # responses/gpt-4o -> openai/responses/gpt-4o
                     model = f"openai/{model}"
                 elif not model.startswith("openai/responses/"):
                     model = f"openai/responses/{model}"
 
-                # ===== 懒加载 litellm =====
+                # ===== Lazy-load litellm =====
                 litellm = self._parent._litellm
 
                 completion_kwargs = {
@@ -168,7 +170,7 @@ class AsyncResponsesAsOpenAI:
                     "stream": stream,
                 }
 
-                # tools 直接传 OpenAI 函数格式，桥接自动转换为 Responses API 格式
+                # Pass tools in OpenAI function format; the bridge converts to Responses API format
                 if tools:
                     completion_kwargs["tools"] = tools
                 if tool_choice:
@@ -189,20 +191,20 @@ class AsyncResponsesAsOpenAI:
                 if self._parent.http_client is not None:
                     completion_kwargs["client"] = self._parent.http_client
 
-                # 过滤桥接不支持的 OpenAI 特有参数；response_format、reasoning_effort 等
-                # 由桥接映射为 Responses API 参数，原样透传
+                # Filter OpenAI-specific parameters unsupported by the bridge; response_format, reasoning_effort, etc.
+                # are mapped to Responses API parameters by the bridge and passed through unchanged
                 safe_kwargs = {k: v for k, v in kwargs.items()
                               if k not in ['logprobs', 'top_logprobs', 'n']}
 
                 return await litellm.acompletion(**completion_kwargs, **safe_kwargs)
 ```
 
-- [ ] **Step 2: 编写冒烟测试 `tests/test_responses_adapter.py`**
+- [ ] **Step 2: Write smoke test `tests/test_responses_adapter.py`**
 
-本地起一个 mock Responses API HTTP 服务器(非流式 JSON + SSE 流式 + `/models` 列表),端到端验证适配器→litellm 桥接→本地端点全链路:
+Start a local mock Responses API HTTP server (non-streaming JSON, SSE streaming and `/models` list) to verify the complete adapter → litellm bridge → local endpoint path:
 
 ```python
-"""AsyncResponsesAsOpenAI 冒烟测试:本地 mock Responses API 服务器，无需真实网络。"""
+"""AsyncResponsesAsOpenAI smoke test: local mock Responses API server, no actual network service required."""
 import asyncio
 import json
 import os
@@ -302,7 +304,7 @@ async def main():
         http_client=http_client,
     )
 
-    # 1. 非流式调用
+    # 1. Non-streaming call
     resp = await adapter.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": "hi"}],
@@ -310,7 +312,7 @@ async def main():
     assert resp.choices[0].message.content == "Hello World", resp
     assert resp.usage.total_tokens == 15, resp.usage
 
-    # 2. 流式调用
+    # 2. Streaming call
     chunks = []
     stream = await adapter.chat.completions.create(
         model="gpt-4o",
@@ -323,11 +325,11 @@ async def main():
             chunks.append(delta.content)
     assert "".join(chunks) == "Hello World", chunks
 
-    # 3. 模型列表
+    # 3. Model list
     models = await adapter.models.list()
     assert [m.id for m in models.data] == ["gpt-4o", "gpt-5"], models.data
 
-    # 4. tools 透传不报错
+    # 4. Passing tools through does not raise an error
     resp2 = await adapter.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": "hi"}],
@@ -351,49 +353,49 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-- [ ] **Step 3: 运行冒烟测试,通过即完成本任务核心验证**
+- [ ] **Step 3: Run smoke test; success completes the core validation for this task**
 
 Run: `.venv/bin/python tests/test_responses_adapter.py`
-Expected: 输出 `ALL PASS`
+Expected: prints `ALL PASS`
 
-如果失败,按输出逐项排查(最常见两类:mock 事件格式与桥接期望不完全一致 → 参考 `.venv/lib/python3.12/site-packages/litellm/completion_extras/litellm_responses_transformation/transformation.py` 的 `translate_responses_chunk_to_openai_stream` 调整事件字段;或网络/代理导致 → 已设 `no_proxy` 则忽略,检查 `LITELLM_LOG=ERROR` 后真实错误信息)。
+If it fails, investigate each error. Two common causes: mock event format does not match bridge expectations → consult `translate_responses_chunk_to_openai_stream` in `.venv/lib/python3.12/site-packages/litellm/completion_extras/litellm_responses_transformation/transformation.py` and adjust event fields; or network/proxy issues → if `no_proxy` is set, rule that out and inspect the actual error with `LITELLM_LOG=ERROR`.
 
-- [ ] **Step 4: 语法检查**
+- [ ] **Step 4: Syntax check**
 
 Run: `.venv/bin/python -m py_compile py/ResponsesAsOpenAI.py tests/test_responses_adapter.py`
-Expected: 无输出,退出码 0
+Expected: no output, exit code 0
 
-- [ ] **Step 5: 提交**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add py/ResponsesAsOpenAI.py tests/test_responses_adapter.py
-git commit -m "feat: 新增 OpenAI Responses API 模型提供商适配器 (litellm openai/responses/ 桥接)"
+git commit -m "feat: add OpenAI Responses API provider adapter (litellm openai/responses/ bridge)"
 ```
 
 ---
 
-### Task 2: 后端分发 `server.py`
+### Task 2: Backend dispatch in `server.py`
 
 **Files:**
-- Modify: `server.py:471-473`(import 区)
+- Modify: `server.py:471-473` (imports)
 - Modify: `server.py:739-747`(`get_client_class`)
 - Modify: `server.py:7045-7072`(`/v1/providers/models`)
 
 **Interfaces:**
-- Consumes: Task 1 的 `AsyncResponsesAsOpenAI`(import 路径 `py.ResponsesAsOpenAI`)
-- Produces: vendor `'OpenAIResponses'` 在 `get_client_class()` 分发到新适配器;`/v1/providers/models` 用新适配器拉模型列表
+- Consumes: Task 1's `AsyncResponsesAsOpenAI` (import path `py.ResponsesAsOpenAI`)
+- Produces: dispatch vendor `'OpenAIResponses'` to the new adapter in `get_client_class()`; `/v1/providers/models` uses the adapter to retrieve models
 
-- [ ] **Step 1: 添加 import**
+- [ ] **Step 1: Add import**
 
-在 `server.py` 第 473 行 `from py.GeminiAsOpenAI import AsyncGeminiAsOpenAI` 后新增一行:
+After line 473 of `server.py`, `from py.GeminiAsOpenAI import AsyncGeminiAsOpenAI`, add:
 
 ```python
 from py.ResponsesAsOpenAI import AsyncResponsesAsOpenAI
 ```
 
-- [ ] **Step 2: `get_client_class()` 新增分支**
+- [ ] **Step 2: Add branch in `get_client_class()`**
 
-将 `server.py:740-747`:
+Replace `server.py:740-747`:
 
 ```python
     if vendor == 'Dify':
@@ -406,7 +408,7 @@ from py.ResponsesAsOpenAI import AsyncResponsesAsOpenAI
         return AsyncOpenAI
 ```
 
-改为:
+With:
 
 ```python
     if vendor == 'Dify':
@@ -421,12 +423,12 @@ from py.ResponsesAsOpenAI import AsyncResponsesAsOpenAI
         return AsyncOpenAI
 ```
 
-- [ ] **Step 3: `/v1/providers/models` 新增分支**
+- [ ] **Step 3: Add branch in `/v1/providers/models`**
 
-将 `server.py:7045-7058` 的 Gemini 分支(注释 `# 2. 拦截 Gemini`)之后、Dify 分支之前,插入:
+Insert after the Gemini branch in `server.py:7045-7058` (comment formerly labeled `# 2. Intercept Gemini`) and before the Dify branch:
 
 ```python
-        # 2.5 拦截 OpenAI Responses API
+        # 2.5 Intercept OpenAI Responses API
         elif vendor == 'OpenAIResponses':
             client = AsyncResponsesAsOpenAI(
                 api_key=request.api_key,
@@ -435,7 +437,7 @@ from py.ResponsesAsOpenAI import AsyncResponsesAsOpenAI
             )
 ```
 
-- [ ] **Step 4: 验证语法与分支存在**
+- [ ] **Step 4: Verify syntax and presence of branches**
 
 Run:
 ```bash
@@ -443,46 +445,46 @@ Run:
 grep -c "AsyncResponsesAsOpenAI" server.py
 grep -n "OpenAIResponses" server.py
 ```
-Expected: `py_compile` 无输出退出码 0;grep 计数为 3(import 1 + `get_client_class` 1 + `/v1/providers/models` 1);`grep -n` 显示 3 行
+Expected: `py_compile` exits 0 with no output; grep count is 3 (one import, one `get_client_class` branch, one `/v1/providers/models` branch); `grep -n` shows three lines.
 
-- [ ] **Step 5: 提交**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add server.py
-git commit -m "feat: server.py 按 vendor 分发 OpenAIResponses 到新适配器"
+git commit -m "feat: dispatch OpenAIResponses vendor to new adapter in server.py"
 ```
 
 ---
 
-### Task 3: 前端 vendor 选项与校验
+### Task 3: Frontend vendor option and validation
 
 **Files:**
 - Modify: `static/js/vue_data.js:1943`(`vendorValues`)
-- Modify: `static/js/vue_methods.js:5596`(`handleVendorChange` 默认 URL 逻辑)
+- Modify: `static/js/vue_methods.js:5596` (`handleVendorChange` default URL logic)
 - Modify: `static/js/vue_methods.js:8596-8598`(`goToURL`)
 - Modify: `static/js/renderer.js:2011`(`validProvider`)
-- Modify: `static/js/locales/zh-CN.js:127`、`static/js/locales/en-US.js:127`(vendor 翻译)
+- Modify: `static/js/locales/zh-CN.js:127`, `static/js/locales/en-US.js:127` (historical vendor translations; the former locale has since been retired from this fork)
 
 **Interfaces:**
-- Produces: vendor `'OpenAIResponses'` 出现在供应商选择列表,被当作"需填 URL 的自定义供应商"处理;显示名称"OpenAI Responses"
+- Produces: vendor `OpenAIResponses` appears in the provider selection list, treated as a custom provider requiring a URL, with display name "OpenAI Responses".
 
-- [ ] **Step 1: `vue_data.js` vendorValues 新增选项**
+- [ ] **Step 1: Add option to vendorValues in `vue_data.js`**
 
-将 `static/js/vue_data.js:1943`:
+Replace `static/js/vue_data.js:1943`:
 
 ```js
       'custom','customAnthropic', 'OpenAI','Anthropic', 'Gemini','Grok',
 ```
 
-改为:
+With:
 
 ```js
       'custom','customAnthropic','OpenAIResponses', 'OpenAI','Anthropic', 'Gemini','Grok',
 ```
 
-- [ ] **Step 2: `vue_methods.js` handleVendorChange 不预填默认 URL**
+- [ ] **Step 2: Do not prefill default URL in `vue_methods.js` handleVendorChange**
 
-将 `static/js/vue_methods.js:5596`:
+Replace `static/js/vue_methods.js:5596`:
 
 ```js
       if (value !== 'custom' && value !== 'customAnthropic' ) {
@@ -490,7 +492,7 @@ git commit -m "feat: server.py 按 vendor 分发 OpenAIResponses 到新适配器
       }
 ```
 
-改为:
+With:
 
 ```js
       if (value !== 'custom' && value !== 'customAnthropic' && value !== 'OpenAIResponses') {
@@ -498,9 +500,9 @@ git commit -m "feat: server.py 按 vendor 分发 OpenAIResponses 到新适配器
       }
 ```
 
-- [ ] **Step 3: `vue_methods.js` goToURL 打开用户填的 URL**
+- [ ] **Step 3: Open user-entered URL in `vue_methods.js` goToURL**
 
-将 `static/js/vue_methods.js:8596-8598`:
+Replace `static/js/vue_methods.js:8596-8598`:
 
 ```js
         else if (provider.vendor === 'customAnthropic'){
@@ -508,7 +510,7 @@ git commit -m "feat: server.py 按 vendor 分发 OpenAIResponses 到新适配器
         }
 ```
 
-改为:
+With:
 
 ```js
         else if (provider.vendor === 'customAnthropic' || provider.vendor === 'OpenAIResponses'){
@@ -516,88 +518,88 @@ git commit -m "feat: server.py 按 vendor 分发 OpenAIResponses 到新适配器
         }
 ```
 
-- [ ] **Step 4: `renderer.js` validProvider 校验 URL**
+- [ ] **Step 4: Validate URL in `renderer.js` validProvider**
 
-将 `static/js/renderer.js:2011`:
+Replace `static/js/renderer.js:2011`:
 
 ```js
       if (this.newProviderTemp.vendor === 'custom' || this.newProviderTemp.vendor === 'customAnthropic') {
 ```
 
-改为:
+With:
 
 ```js
       if (this.newProviderTemp.vendor === 'custom' || this.newProviderTemp.vendor === 'customAnthropic' || this.newProviderTemp.vendor === 'OpenAIResponses') {
 ```
 
-- [ ] **Step 5: 添加 vendor 翻译**
+- [ ] **Step 5: Add vendor translation**
 
-`static/js/locales/zh-CN.js:127` `'vendor.customAnthropic': '自定义Anthropic',` 之后新增:
-
-```js
-        'vendor.OpenAIResponses': 'OpenAI Responses',
-```
-
-`static/js/locales/en-US.js:127` `'vendor.customAnthropic': 'Custom Anthropic',` 之后新增:
+In the historical `static/js/locales/zh-CN.js:127`, add after the `vendor.customAnthropic` translation (meaning Custom Anthropic):
 
 ```js
         'vendor.OpenAIResponses': 'OpenAI Responses',
 ```
 
-- [ ] **Step 6: 语法检查**
+In `static/js/locales/en-US.js:127`, add after `'vendor.customAnthropic': 'Custom Anthropic',`:
+
+```js
+        'vendor.OpenAIResponses': 'OpenAI Responses',
+```
+
+- [ ] **Step 6: Syntax check**
 
 Run:
 ```bash
 node --check static/js/vue_data.js && node --check static/js/vue_methods.js && node --check static/js/renderer.js && node --check static/js/locales/zh-CN.js && node --check static/js/locales/en-US.js
 ```
-Expected: 无输出,退出码 0
+Expected: no output, exit code 0
 
-- [ ] **Step 7: 提交**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add static/js/vue_data.js static/js/vue_methods.js static/js/renderer.js static/js/locales/zh-CN.js static/js/locales/en-US.js
-git commit -m "feat: 前端新增 OpenAIResponses 供应商选项与校验"
+git commit -m "feat: add OpenAIResponses provider option and validation to frontend"
 ```
 
 ---
 
-### Task 4: 端到端手动验证
+### Task 4: Manual end-to-end validation
 
-**Files:** 无代码改动
+**Files:** No code changes
 
-- [ ] **Step 1: 启动应用**
+- [ ] **Step 1: Start application**
 
 Run: `npm start`
-Expected: Electron 窗口打开,后端启动成功(日志出现 `REAL_PORT_FOUND:<port>`)
+Expected: Electron window opens and backend starts successfully (log contains `REAL_PORT_FOUND:<port>`).
 
-- [ ] **Step 2: 新增供应商**
+- [ ] **Step 2: Add provider**
 
-设置 → 模型配置 → 服务商,点"+"。左侧供应商列表出现 **OpenAI Responses**;选中后 URL 输入框为空(需手动填写);填 `http://127.0.0.1:3456/v1`(本机后端可作 OpenAPI 兼容测试,或填真实 Responses API 端点)与 API Key,点"测试连接"。
-Expected: 不填 URL 时"确认"按钮禁用;填了以 http 开头的 URL 后可用
+Settings → Model configuration → Providers, click "+". **OpenAI Responses** appears in the provider list on the left. When selected, URL is blank and must be entered manually. Enter `http://127.0.0.1:3456/v1` (local backend for OpenAPI-compatible testing, or an actual Responses API endpoint) and API Key, then click "Test connection".
+Expected: "Confirm" is disabled without a URL and enabled when a URL beginning with http is entered.
 
-- [ ] **Step 3: 拉取模型列表**
+- [ ] **Step 3: Retrieve model list**
 
-测试连接后模型列表应显示(若端点无 `/models` 接口则允许手动输入模型名)。
+The model list should appear after connection test (if endpoint lacks `/models`, allow manual model name entry).
 
-- [ ] **Step 4: 主聊天流式对话**
+- [ ] **Step 4: Main chat streaming conversation**
 
-选该供应商为主模型,发送一条消息。
-Expected: 流式输出正常,结束时显示 token 用量(若桥接输出 usage);推理模型可看到思考内容(若端点支持)
+Select this provider as primary model and send a message.
+Expected: streaming output works; token usage appears at completion if bridge reports usage; reasoning content appears for reasoning models if endpoint supports it.
 
-- [ ] **Step 5: 工具调用验证**
+- [ ] **Step 5: Verify tool calls**
 
-发送需要工具的消息(如"现在几点"触发时间工具)。
-Expected: 工具调用 → 工具结果回传 → 最终回复,链路正常
+Send a message requiring a tool (e.g. "What time is it?" to invoke the time tool).
+Expected: tool call → tool result → final reply, with full path working.
 
-- [ ] **Step 6: 非流式路径抽测**
+- [ ] **Step 6: Spot-check non-streaming path**
 
-用深度搜索或关闭流式输出路径发一条消息(或直接调用 `/v1/chat/completions` 接口,model 填 super-model 且该供应商已选为主模型)。
-Expected: 返回完整 JSON 回复
+Send a message using deep search or a non-streaming path (or call `/v1/chat/completions` directly with model super-model, with this provider selected as primary).
+Expected: complete JSON response.
 
 ---
 
-## Self-Review 结论
+## Self-Review Conclusions
 
-- **Spec 覆盖**:适配器(Task 1)、server.py 两处分发(Task 2)、前端 vendor 列表/URL 处理/校验/翻译(Task 3)、错误处理(适配器异常经现有 `_wrap_client_chat_with_retry` 流程,Task 4 Step 5 实测工具链路)、验证(Task 1 冒烟 + Task 4 手动)— 全部覆盖,无缺口
-- **占位符**:无 TBD/TODO,所有代码完整
-- **类型一致**:`AsyncResponsesAsOpenAI` 构造签名、`chat.completions.create`、`models.list()` 返回值在 Task 1 定义,Task 2 使用方式(传 `api_key/base_url/http_client`)与 Task 1 签名一致;vendor 字符串 `'OpenAIResponses'` 全计划统一
+- **Spec coverage:** adapter (Task 1), two dispatch points in server.py (Task 2), frontend vendor list/URL handling/validation/translations (Task 3), error handling (adapter exceptions via existing `_wrap_client_chat_with_retry`, Task 4 Step 5 tool path check), validation (Task 1 smoke + Task 4 manual) — all covered with no gaps.
+- **Placeholders:** no TBD/TODO; code complete.
+- **Type consistency:** `AsyncResponsesAsOpenAI` constructor signature, `chat.completions.create` and `models.list()` returns defined in Task 1; Task 2 usage (passing `api_key/base_url/http_client`) matches Task 1; vendor string `'OpenAIResponses'` is consistent throughout.
