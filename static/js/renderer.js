@@ -1246,7 +1246,7 @@ const app = Vue.createApp({
         if (window.mermaid) {
           mermaid.initialize({
             startOnLoad: false,
-            securityLevel: 'loose',
+            securityLevel: 'strict',
             theme : ['dark','midnight','neon'].includes(newVal) ? 'dark' : 'default'
           });
         }

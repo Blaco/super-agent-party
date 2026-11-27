@@ -223,3 +223,9 @@ Legal source attribution and unmodified user-authored multilingual content are d
 
 - Windows build 45928796787 and source audit 45928796821 succeeded at `289d96328a9408bfe97913e1176421716b7080f4`. Artifact 15167614737 is available via Actions; 1,084,425,120 bytes, outer artifact SHA-256 f4d9c104fddaf3022b29a77c9bf7273adfd1727251e1d0b7a1f3c3c186b3e9a3. The inner checksum is included in the artifact, not independently retrieved here.
 - Next development package now requires a real packaged backend startup, English HTTP assets, safe default settings, WebSocket ping/save and synthetic profile restart/persistence. This new test is pending Windows execution. Electron rendering, existing actual upstream profiles, TabbyAPI chat, audio/avatar and agent actions remain unverified. No changes to runtime source, user profiles or dependencies.
+
+## Runtime validation and SAP-NG reference
+
+- Packaged backend test in run 45930156315 passed; the development artifact was uploading when checked. Clean synthetic profile and restart/persistence verified; no Electron UI or actual provider tests.
+- SAP-NG added as pinned reference in REFERENCE_RESEARCH.md. Prioritize local auth, path/permission fences, message-chain integrity and prompt/stream ownership; do not merge its regional integrations, mirrors, locale files or model-facing text.
+- Mermaid now configured strict in desktop, browser chat and theme reinitialization. Regression check added; CI and visual tests pending. General Markdown and HTML preview remain separate review items.

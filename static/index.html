@@ -149,7 +149,7 @@ function updateElement(el, rawMarkdown, formatFn) {
       { src: 'libs/exceljs.min.js', onload: null },
       { src: 'libs/mermaid.min.js', onload: function() {
         if (window.mermaid) {
-          mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', theme: 'default' });
+          mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'default' });
         }
       }}
     ];

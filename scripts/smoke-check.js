@@ -49,9 +49,24 @@ function checkJavaScript(file) {
   'start.js',
   'static/js/vue_data.js',
   'static/js/vue_methods.js',
+  'static/js/renderer.js',
   'static/js/locales/en-US.js',
   'static/js/locales.js',
 ].forEach(checkJavaScript);
+
+// Model-generated Mermaid diagrams must not enable interactive HTML/callbacks.
+[
+  'static/index.html',
+  'static/chat.html',
+  'static/js/renderer.js',
+].forEach(file => {
+  if (!checkExists(file)) return;
+  const source = fs.readFileSync(rel(file), 'utf8');
+  const levels = [...source.matchAll(/securityLevel\s*:\s*['"]([^'"]+)['"]/g)];
+  if (levels.length !== 1 || levels.some(match => match[1] !== 'strict')) {
+    failures.push(file + ': expected exactly one strict Mermaid security configuration');
+  }
+});
 
 if (failures.length > 0) {
   console.error('Smoke check failed:');
