@@ -5,55 +5,55 @@ const { ipcRenderer, webFrame } = require('electron');
 
 const stealthScript = `
 (() => {
-    // 0. 防重复注入标记
+    // 0. Prevent duplicate initialization
     const INJECT_KEY = '__stealth_injected_' + Math.random().toString(36).slice(2);
     if (window[INJECT_KEY]) return;
     window[INJECT_KEY] = true;
 
-    // 1. 定义核心伪装函数
+    // 1. Define the compatibility helper
     const spoof = (win) => {
-        // 防止对已经伪装过的窗口重复操作
+        // Skip windows that have already been processed
         if (!win || win.__spoofed_v2) return;
         
-        // 标记已处理
+        // Mark the window as processed
         try {
             Object.defineProperty(win, '__spoofed_v2', { value: true, enumerable: false });
         } catch(e) {}
 
-        // --- A. 彻底抹除 navigator.webdriver (关键修复) ---
+        // --- A. Navigator webdriver property handling ---
         try {
-            // 1. 删除 navigator 实例上的 webdriver 属性
-            // Electron 可能会在实例上定义它，必须删掉，否则会被检测到“属性位置不对”
+            // 1. Remove the instance property
+            // Electron may define this property on the instance
             if (win.navigator.hasOwnProperty('webdriver')) {
                 delete win.navigator.webdriver;
             }
 
-            // 2. 获取 Navigator 原型链
+            // 2. Obtain the Navigator prototype
             const navProto = win.Navigator.prototype;
 
-            // 3. 删除原型链上可能存在的原生 getter
+            // 3. Remove an existing prototype getter
             delete navProto.webdriver;
 
-            // 4. 在原型链上重新定义 webdriver，使其返回 false
-            // 这样 Object.getPrototypeOf(navigator).webdriver === false (符合原生)
-            // 而 navigator.hasOwnProperty('webdriver') === false (符合原生)
+            // 4. Define the replacement property on the prototype
+            // The prototype property returns false
+            // The navigator instance has no own webdriver property
             Object.defineProperty(navProto, 'webdriver', {
-                get: () => false, // 返回 false 比 undefined 更像原生非自动化环境
+                get: () => false, // Return false
                 enumerable: true,
                 configurable: true
             });
         } catch (e) { console.error('Spoof webdriver failed', e); }
 
-        // --- B. 伪造 window.chrome (关键修复) ---
+        // --- B. Chrome object compatibility ---
         try {
-            // 只有当主窗口有 chrome 或者为了通过检测必须有时才添加
-            // Headless Chrome 检测通常看 iframe 里有没有 chrome
+            // Conditionally initialize the chrome object
+            // Frame compatibility
             if (!win.chrome) {
                 const makeFake = (name) => {
                     const Fake = function() {};
                     Object.defineProperty(Fake, 'name', { value: name });
                     const inst = new Fake();
-                    // 某些检测会检查 constructor.name
+                    // Constructor name compatibility
                     Object.defineProperty(inst.constructor, 'name', { value: name });
                     return inst;
                 };
@@ -72,13 +72,13 @@ const stealthScript = `
                 mock.runtime.OnInstalledReason = { CHROME_UPDATE: 'chrome_update', INSTALL: 'install', SHARED_MODULE_UPDATE: 'shared_module_update', UPDATE: 'update' };
                 mock.runtime.connect = () => {};
                 mock.runtime.sendMessage = () => {};
-                mock.runtime.id = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; // 随便给个 ID
+                mock.runtime.id = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; // Placeholder ID
 
                 Object.defineProperty(win, 'chrome', { value: mock, writable: true, configurable: true });
             }
         } catch (e) { console.error('Spoof chrome failed', e); }
 
-        // --- C. 伪造 Plugins (SannySoft 检查点) ---
+        // --- C. Plugin array compatibility ---
         try {
             if (!win.navigator.plugins || win.navigator.plugins.length === 0) {
                  const pdfDesc = {
@@ -99,7 +99,7 @@ const stealthScript = `
                  const pdfPlugin = makePlugin();
                  const plugins = [pdfPlugin, pdfPlugin, pdfPlugin, pdfPlugin, pdfPlugin];
                  
-                 // 模拟 PluginArray 行为
+                 // Implement PluginArray behavior
                  plugins.item = function(i) { return this[i]; };
                  plugins.namedItem = function(name) { return this.find(p => p.name === name) || null; };
                  plugins.refresh = () => {};
@@ -123,8 +123,8 @@ const stealthScript = `
             }
         } catch (e) {}
 
-        // --- D. 修正 UserAgent (一致性检查) ---
-        // Iframe 可能会回退到默认 UA，导致 HEADCHR_IFRAME 里的 UA 检查失败
+        // --- D. User agent consistency ---
+        // Frame user agent values may differ from the main window
         try {
             if (win.navigator.userAgent !== window.navigator.userAgent) {
                 const userAgent = window.navigator.userAgent;
@@ -136,10 +136,10 @@ const stealthScript = `
         } catch (e) {}
     };
 
-    // 2. 立即把主窗口洗白
+    // 2. Initialize the main window
     spoof(window);
 
-    // 3. ★★★ 解决 HEADCHR_IFRAME 的核武器 ★★★
+    // 3. Handle iframe access
     try {
         const iframeProto = window.HTMLIFrameElement.prototype;
         const rawContentWindowGetter = Object.getOwnPropertyDescriptor(iframeProto, 'contentWindow').get;
@@ -147,7 +147,7 @@ const stealthScript = `
         Object.defineProperty(iframeProto, 'contentWindow', {
             get: function() {
                 const win = rawContentWindowGetter.apply(this);
-                // 只要一获取，立马伪装
+                // Initialize the accessed window
                 if (win) {
                     spoof(win);
                 }
@@ -157,7 +157,7 @@ const stealthScript = `
             configurable: true
         });
         
-        // 同样处理 contentDocument，防止通过 doc.defaultView 获取 window
+        // Also handle contentDocument access
         const rawContentDocumentGetter = Object.getOwnPropertyDescriptor(iframeProto, 'contentDocument').get;
         Object.defineProperty(iframeProto, 'contentDocument', {
             get: function() {
@@ -175,10 +175,10 @@ const stealthScript = `
         console.error('Failed to hook iframe prototype', e); 
     }
 
-    // 4. 劫持 createElement (辅助防御)
-    // 有些脚本创建 iframe 后不插入 DOM 直接操作，这时候 contentWindow 可能是 null，
-    // 但一旦插入 DOM，上面的 contentWindow getter 就会生效。
-    // 为了保险，我们还是监控 appendChild
+    // 4. Handle dynamically created elements
+    // A newly created iframe can have a null contentWindow before insertion
+    // The contentWindow getter becomes active after insertion
+    // Observe appendChild as well
     const rawAppend = window.Element.prototype.appendChild;
     window.Element.prototype.appendChild = function(node) {
         const res = rawAppend.apply(this, arguments);
@@ -195,7 +195,7 @@ const stealthScript = `
 `;
 
 // -----------------------------------------------------------------------
-// 立即注入到主世界
+// Initialize in the main world
 // -----------------------------------------------------------------------
 try {
     webFrame.executeJavaScript(stealthScript);
@@ -203,7 +203,7 @@ try {
     console.error('Stealth injection failed:', e);
 }
 
-// 默认文本
+// Default text
 let i18n = {
     translate: 'Translate',
     askAI: 'Ask AI',
@@ -217,11 +217,11 @@ let toolbar = null;
 let resultBox = null;
 let currentSelection = '';
 
-// 初始化 DOM
+// Initialize the DOM
 function initToolbar() {
     if (document.getElementById('sap-ai-toolbar')) return;
 
-    // 1. 注入样式
+    // 1. Inject styles
     const style = document.createElement('style');
     style.textContent = `
         #sap-ai-toolbar {
@@ -338,15 +338,15 @@ function initToolbar() {
     `;
     document.head.appendChild(style);
 
-    // 2. 创建工具栏容器
+    // 2. Create the toolbar container
     toolbar = document.createElement('div');
     toolbar.id = 'sap-ai-toolbar';
     document.body.appendChild(toolbar);
     
-    // 渲染内部结构
+    // Render the internal structure
     renderToolbarUI();
 
-    // 3. 绑定 Webview 内部的交互事件
+    // 3. Bind interaction events inside the webview
     bindEvents();
 }
 

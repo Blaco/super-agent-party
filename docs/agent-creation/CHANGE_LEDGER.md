@@ -418,3 +418,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Complete English alternate chat interface
 
 - Parent `608aa1c37fb0f9aadf83e47ec4a580267b9f9734`. Translate all 255 remaining flagged lines in static/chat.html, including markup and JavaScript comments plus active fallback labels and tooltips. Preserve Vue bindings, DOM IDs, routes, event handlers, styling and line count. Zero literal Han characters remain; 2 inline classic scripts parsed. Added regression coverage. Full CI and live UI testing pending; revert for rollback.
+
+## 2026-11-26 — Complete English webview preload comments
+
+- Parent `65a5bd03f91fe7c65c6cb981bc3b1a03cf2489ee`. Translate 37 comment lines in static/js/webview-preload.js. Preserve every executable prefix and the original line count; no change to browser behavior, injection logic, toolbar controls or permissions. Both original and edited JavaScript parse successfully; zero literal Han characters remain. Add a source regression check. No security audit, full CI or live Electron validation performed. Revert for rollback.

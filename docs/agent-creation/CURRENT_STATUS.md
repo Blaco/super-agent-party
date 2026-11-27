@@ -124,3 +124,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — alternate chat interface
 
 - Completed the remaining 255 Han-flagged lines in static/chat.html, including template comments and fallback labels. Preserved Vue directives, handlers, layout, display blocks, chat modes, extension controls and task functionality. Inline classic JavaScript parsing passed (2 scripts). Added source regression coverage. Browser/Electron runtime and full CI remain outstanding. No new build requested.
+
+## Follow-up source checkpoint — webview preload
+
+- Translated all 37 remaining flagged comments in static/js/webview-preload.js. No executable code, browser compatibility behavior or toolbar handlers changed. JavaScript parsing passed before and after; zero literal Han characters remain. Added a source regression check. This is localization only, not a browser security or compatibility audit. Full CI and live runtime testing remain outstanding. Next: repository-wide inventory, bundled skills, assets and residual regional references. No package requested.
