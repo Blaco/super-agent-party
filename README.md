@@ -37,7 +37,7 @@ npm start
 
 ### Dependency lock maintenance
 
-The [Python dependency lock candidate workflow](.github/workflows/resolve-python-lock.yml) resolves the inherited Python lock against the current manifest, checks removed SDKs and package source metadata, and uploads a candidate lockfile and patch for review. It does not commit the result or publish packages. Until the candidate is reviewed and committed, the repository lockfile remains stale. To reproduce locally using Python 3.12 and uv:
+The [Python dependency lock candidate workflow](.github/workflows/resolve-python-lock.yml) resolves the inherited Python lock against the current manifest, checks removed SDKs and package source metadata, and uploads a candidate lockfile and patch for review. It does not commit the result or publish packages. The current lockfile was resolved and reviewed using GitHub Actions run 45925158544; rerun the workflow when Python dependencies change. To reproduce locally using Python 3.12 and uv:
 
 ```powershell
 uv lock --python 3.12

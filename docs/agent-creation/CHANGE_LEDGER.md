@@ -438,3 +438,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Add reproducible Python lock candidate workflow
 
 - Parent `2be4df1982fa685b7e38e81edca0f87cc19af6c7`. Confirm six obsolete direct requirements in inherited uv.lock compared with pyproject.toml. Introduce scripts/check_python_lock.py and read-only .github/workflows/resolve-python-lock.yml to perform actual uv resolution on a runner, verify freshness, reject retired package names, enforce current PyPI source policy and artifact hash metadata, and upload a candidate with diff and provenance. No hand-pruning of lock records or changes to dependencies, no automatic branch updates. Workflow execution and candidate review remain pending; no Windows package triggered by this commit.
+
+## 2026-11-26 — Commit resolver output and correct Dynamic Island source encoding
+
+- Parent 6a84ebf0a9385e279957d5a272e2eb3dcf8507c1. Use the successful resolver artifact from run 45925158544, uv 0.13.10; 421 to 413 package records, six retired direct SDKs absent and no unexpected source findings. Independently verify artifact checksum and exact Git blob identity before advancing branch. Remove one leading BOM from py/dynamic_island.py to fix ast.parse failure in audit 45925158378; no executable change. Updated documentation and recorded remaining CSS/skills inventory. New CI and Windows runtime unverified.
