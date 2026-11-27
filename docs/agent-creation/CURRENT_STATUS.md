@@ -72,3 +72,8 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — Vue state definitions
 
 - static/js/vue_data.js now contains zero detected Han characters, including developer comments. Executable state and settings defaults remain unchanged. The broader Vue methods and backend inventory still requires work; CI pending and no new package requested.
+
+## Follow-up source checkpoint — complete server and Vue methods
+
+- Source audit for `bf6ab1b8134a77fc03d48e556cdbec892780e8ef` passed at https://github.com/Blaco/super-agent-party/actions/runs/45917460431.
+- All 3,868 remaining Han-flagged lines in server.py and static/js/vue_methods.js have been addressed; both contain zero literal Han characters. Existing multilingual group-memory matching and narrator compatibility are retained using Unicode escapes. JavaScript syntax and the character-card JSON example passed precommit checks. Regression coverage added; source CI for this commit and Windows interactive validation remain outstanding. Other inherited modules still need an inventory; no new package requested.

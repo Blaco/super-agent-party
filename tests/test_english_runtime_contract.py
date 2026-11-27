@@ -130,6 +130,35 @@ class EnglishRuntimeContractTests(unittest.TestCase):
             source = (ROOT / relative).read_text(encoding="utf-8")
             self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
 
+    def test_server_and_vue_methods_source_are_english(self):
+        server = (ROOT / "server.py").read_text(encoding="utf-8")
+        vue = (ROOT / "static/js/vue_methods.js").read_text(encoding="utf-8")
+        for name, source in (("server.py", server), ("vue_methods.js", vue)):
+            with self.subTest(module=name):
+                self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
+        tree = ast.parse(server, filename="server.py")
+        hints = next(
+            ast.literal_eval(node.value)
+            for node in tree.body
+            if isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name)
+                    and target.id == "GROUP_MEMORY_DONE_HINTS" for target in node.targets)
+        )
+        self.assertIn("\u5b8c\u6210", hints)
+        self.assertIn("done", hints)
+        self.assertIn(r'\u65c1\u767d', server)
+        self.assertIn("ext_select_app(port=0)", server)
+        self.assertIn("Generate the card in the same language as the user's input.", vue)
+        self.assertIn("Filename: ", vue)
+        self.assertIn("File link: ", vue)
+        card_prompt = vue.split("const systemPrompt = "+chr(96)+"You are a professional character designer.", 1)[1]
+        card_prompt = card_prompt.split(chr(96)+";", 1)[0]
+        example = card_prompt[card_prompt.index("{"):card_prompt.rindex("}") + 1]
+        example = json.loads(example.replace(r"\\n", r"\n"))
+        self.assertIn("\n", example["mesExample"])
+        self.assertEqual(example["characterBook"][0]["keysRaw"], "keyword1\nkeyword2")
+        self.assertNotIn("avatar", example)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

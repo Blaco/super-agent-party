@@ -5,28 +5,28 @@ const md = window.markdownit({
     highlight: function (str, lang) {
     let language = lang === 'a2ui' || (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
     const isPotentialMermaid = (code) => {
-    // 检测标准语法特征
+    // Detect standard syntax patterns
     const mermaidPatterns = [
-        // 检测图表类型声明
+        // Detect diagram type declaration
         /^\s*(graph|sequenceDiagram|gantt|classDiagram|pie|stateDiagram|gitGraph|journey|flowchart|mindmap|quadrantChart|erDiagram|requirementDiagram|gitGraph|C4Context|timeline|zenuml|sankey-beta|xychart-beta|block-beta|packet-beta|kanban|architecture-beta|radar-beta)\b/i,
-        // 检测节点关系语法
+        // Detect node relationships
         /-->|==>|:::|\|\|/,
-        // 检测样式配置语法
+        // Detect style configuration
         /^style\s+[\w]+\s+/im,
-        // 检测注释语法
+        // Detect comment syntax
         /%%\{.*\}\n?/
     ];
     
     return mermaidPatterns.some(pattern => pattern.test(code));
     };
-    // 自动升级普通文本中的 Mermaid 内容
+    // Upgrade Mermaid content in plain text
     if (language === 'plaintext' && isPotentialMermaid(str)) {
     language = 'mermaid';
     };
     const previewable = ['html', 'mermaid'].includes(language);
     const downloadButton = previewable ? 
     `<button class="download-button" data-lang="${language}"><i class="fa-solid fa-download"></i></button>` : '';
-    // 添加预览按钮
+    // Add preview button
     const previewButton = previewable ? 
     `<button class="preview-button" data-lang="${language}"><i class="fa-solid fa-eye"></i></button>` : '';
     try {
@@ -37,23 +37,23 @@ const md = window.markdownit({
 }
 });
 
-// 1. 重写表格开始标签：直接输出带 wrapper 的 HTML
+// 1. Override the opening table tag to include a wrapper
 md.renderer.rules.table_open = function(tokens, idx, options, env, self) {
-  // 返回：<div class="markdown-table-wrapper"><table>
+  // Returns: <div class="markdown-table-wrapper"><table>
   return '<div class="markdown-table-wrapper"><table' + self.renderAttrs(tokens[idx]) + '>';
 };
 
-// 2. 重写表格结束标签：闭合 table，添加按钮，闭合 div
+// 2. Override the closing table tag: close table, add button, close wrapper
 md.renderer.rules.table_close = function(tokens, idx, options, env, self) {
-  // 这里我们添加一个特殊的 class "download-xlsx-btn" 用于后续事件代理
-  // 注意：onclick 这里不直接写逻辑，而是通过 Vue 的事件代理来处理
+  // Add download-xlsx-btn for delegated event handling
+  // Handle clicks through Vue event delegation rather than inline onclick logic
   return '</table><button class="table-download-btn download-xlsx-trigger" type="button"><i class="fa-solid fa-file-excel"></i> XLSX</button></div>';
 };
 
 if (window.markdownitFootnote) {
     md.use(window.markdownitFootnote);
     
-    // 【新增】覆盖默认的脚注渲染规则，只返回数字，去掉方括号 []
+    // Override footnote rendering to show only the number without brackets
     md.renderer.rules.footnote_caption = (tokens, idx) => {
         var n = Number(tokens[idx].meta.id + 1).toString();
         return n;
@@ -62,21 +62,21 @@ if (window.markdownitFootnote) {
 
 if (window.markdownitTaskLists) {
     md.use(window.markdownitTaskLists, {
-        enabled: true,   // 渲染为 <input type="checkbox">
-        label: true,     // 将文字包裹在 <label> 中
-        labelAfter: true // label 放在 checkbox 之后
+        enabled: true,   // Render as <input type="checkbox">
+        label: true,     // Wrap text in <label>
+        labelAfter: true // Place the label after the checkbox
     });
 } else {
     console.warn('markdown-it-task-lists not loaded; task lists will not render.');
 }
 
-// 检查插件是否已加载
+// Check whether the plugin is loaded
 if (window.markdownitContainer) {
     
-    // 1. 定义 "warning" 容器 (对应 CSS 中的 .highlight-block-reasoning)
-    // 使用方法: 
-    // ::: warning 标题
-    // 内容...
+    // 1. Define the warning container (CSS .highlight-block-reasoning)
+    // Usage:
+    // ::: warning Title
+    // Content...
     // :::
     md.use(window.markdownitContainer, 'warning', {
         validate: function(params) {
@@ -85,21 +85,21 @@ if (window.markdownitContainer) {
         render: function (tokens, idx) {
             var m = tokens[idx].info.trim().match(/^warning\s*(.*)$/);
             if (tokens[idx].nesting === 1) {
-                // 开头标签: <div class="highlight-block-reasoning"> ...
+                // Opening tag: <div class="highlight-block-reasoning"> ...
                 var title = m[1] ? md.utils.escapeHtml(m[1]) : '';
                 var titleHtml = title ? '<strong>' + title + '</strong><br>' : '';
                 return '<div class="highlight-block-reasoning">' + titleHtml;
             } else {
-                // 结束标签: </div>
+                // Closing tag: </div>
                 return '</div>\n\n';
             }
         }
     });
 
-    // 2. 定义 "info" 容器 (对应 CSS 中的 .highlight-block)
-    // 使用方法: 
-    // ::: info 提示
-    // 内容...
+    // 2. Define the info container (CSS .highlight-block)
+    // Usage:
+    // ::: info Note
+    // Content...
     // :::
     md.use(window.markdownitContainer, 'info', {
         validate: function(params) {
@@ -122,31 +122,31 @@ if (window.markdownitContainer) {
 
 if (window.texmath) {
     md.use(window.texmath, {
-        engine: window.katex, // 指定渲染引擎为 katex
-        delims: 'dollars',    // 指定使用 $...$ 和 $$...$$ 语法
+        engine: window.katex, // Use KaTeX as the rendering engine
+        delims: 'dollars',    // Use $...$ and $$...$$ syntax
         katexOptions: {
             throwOnError: false,
-            output: 'html'    // 强制输出 HTML，对流式渲染最友好
+            output: 'html'    // Force HTML output for streaming rendering
         }
     });
 }
 
 const ALLOWED_EXTENSIONS =[
-  // 办公文档
+  // Office documents
   'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'pages', 
   'numbers', 'key', 'rtf', 'odt', 'epub',
 
-  // 编程开发
+  // Software development
   'js', 'ts', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'go', 'rs',
   'swift', 'kt', 'dart', 'rb', 'php', 'html', 'css', 'scss', 'less',
   'vue', 'svelte', 'jsx', 'tsx', 'json', 'xml', 'yml', 'yaml', 
   'sql', 'sh',
 
-  // 数据配置
+  // Data and configuration
   'csv', 'tsv', 'txt', 'md', 'log', 'conf', 'ini', 'env', 'toml'
 ];
 
-// MIME类型白名单
+// MIME type allowlist
 const MIME_WHITELIST =[
   'text/plain',
   'application/msword',
@@ -165,7 +165,7 @@ const MIME_WHITELIST =[
   'text/x-php'
 ];
 
-// 图片上传相关配置
+// Image upload configuration
 const ALLOWED_IMAGE_EXTENSIONS =['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'];
 const IMAGE_MIME_WHITELIST =[
   'image/png',
@@ -175,7 +175,7 @@ const IMAGE_MIME_WHITELIST =[
   'image/bmp'
 ];
 
-// ✨ 新增：视频上传相关配置
+// Video upload configuration
 const ALLOWED_VIDEO_EXTENSIONS =['mp4', 'webm', 'ogg', 'mov', 'avi'];
 const VIDEO_MIME_WHITELIST =[
   'video/mp4',
@@ -185,11 +185,11 @@ const VIDEO_MIME_WHITELIST =[
   'video/x-msvideo'
 ];
 
-// ✨ 修改：将视频扩展名合并到总允许列表中
+// Include video extensions in the complete allowlist
 const ALL_ALLOWED_EXTENSIONS = [...new Set([
   ...ALLOWED_EXTENSIONS, 
   ...ALLOWED_IMAGE_EXTENSIONS, 
-  ...ALLOWED_VIDEO_EXTENSIONS // 加入这里
+  ...ALLOWED_VIDEO_EXTENSIONS // Include video extensions
 ])];
 
 let vue_methods = {
@@ -210,12 +210,12 @@ formatFileUrl(originalUrl) {
     if (!this.isElectron) {
       try {
         const url = new URL(originalUrl);
-        // 替换0.0.0.0为当前域名
+        // Replace 0.0.0.0 with the current hostname
         if (url.hostname === '0.0.0.0' || url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
           url.hostname = window.location.hostname;
           url.protocol = window.location.protocol;
           
-          // ✨ 修复点：仅当原链接没有端口，或者是默认端口 3456、当前激活端口时才重写端口
+          // Rewrite the port only when absent, the default 3456, or the active port
           const isBackendPort = url.port === '' || url.port === '3456' || url.port === window.location.port;
           if (isBackendPort) {
             url.port = window.location.port;
@@ -233,7 +233,7 @@ formatFileUrl(originalUrl) {
           url.hostname = "localhost";
           url.protocol = window.location.protocol;
           
-          // ✨ 修复点：仅当原链接没有端口，或者是默认端口 3456、当前激活端口时才重写端口
+          // Rewrite the port only when absent, the default 3456, or the active port
           const isBackendPort = url.port === '' || url.port === '3456' || url.port === window.location.port;
           if (isBackendPort) {
             url.port = window.location.port;
@@ -296,21 +296,21 @@ formatFileUrl(originalUrl) {
       this.syncSystemPromptToMessages(this.system_prompt);
     }
     if (this.editType === 'user') {
-      // 移除this.editIndex之后的所有消息
+      // Remove all messages after this.editIndex
       this.messages.splice(this.editIndex);
       this.userInput = this.editContent;
       this.stopGenerate();
       await this.sendMessage();
     }else{
-      // this.messages[this.editIndex].pure_content = this.editContent; // 更新this.editIndex对应的消息内容
+      // this.messages[this.editIndex].pure_content = this.editContent; // Update the message at this.editIndex
     }
     await this.autoSaveSettings();
   },
     async addParam() {
       this.settings.extra_params.push({
         name: '',
-        type: 'string',  // 默认类型
-        value: ''        // 根据类型自动初始化
+        type: 'string',  // Default type
+        value: ''        // Initialize based on type
       });
       await this.autoSaveSettings();
     },
@@ -318,45 +318,45 @@ formatFileUrl(originalUrl) {
     async addFastParam() {
       this.fastSettings.extra_params.push({
         name: '',
-        type: 'string',  // 默认类型
-        value: ''        // 根据类型自动初始化
+        type: 'string',  // Default type
+        value: ''        // Initialize based on type
       });
       await this.autoSaveSettings();
     },
 
     isInvalidJson(param) {
-      // 如果不是 json 类型，不需要进行 JSON 校验
+      // Skip JSON validation for non-JSON types
       if (param.type !== 'json') return false;
       
-      // 为空或纯空格视为无效
+      // Empty or whitespace-only values are invalid
       if (!param.value || param.value.trim() === '') return true; 
 
       try {
         const parsed = JSON.parse(param.value);
         
-        // 既然单独选了 json 类型，通常排除了基础类型(string/integer/boolean)。
-        // 这里我们限制它解析后必须是 对象({}) 或 数组([])，且不能是 null
+        // JSON type excludes ordinary primitive types (string, integer, boolean)
+        // Require a parsed object or array, not null
         if (typeof parsed !== 'object' || parsed === null) {
           return true;
         }
         
-        return false; // 解析成功且是对象/数组，校验通过
+        return false; // Valid parsed object or array
       } catch (e) {
-        return true; // JSON 语法错误，校验失败
+        return true; // Invalid JSON syntax
       }
     },
 
   getParamPlaceholder(type) {
     if (type === 'dict') return '{"type": "enabled"}';
     if (type === 'list') return '["item1", "item2"]';
-    return this.t('paramValue'); // 默认使用翻译
+    return this.t('paramValue'); // Use the translated default
   },
 
     async updateParamType(index) {
       const param = this.settings.extra_params[index];
       switch(param.type) {
         case 'json':
-          param.value = '{}'; // 默认给一个对象，用户需要数组自己改成[] 即可
+          param.value = '{}'; // Default to an object; users may change it to an array
           break;
         case 'boolean':
           param.value = false;
@@ -373,10 +373,10 @@ formatFileUrl(originalUrl) {
 
     async updateFastParamType(index) {
       const param = this.fastSettings.extra_params[index];
-      // 根据类型初始化值
+      // Initialize value based on type
       switch(param.type) {
         case 'json':
-          param.value = '{}'; // 默认给一个对象，用户需要数组自己改成[] 即可
+          param.value = '{}'; // Default to an object; users may change it to an array
           break;
         case 'boolean':
           param.value = false;
@@ -392,7 +392,7 @@ formatFileUrl(originalUrl) {
     },
 
 
-    // 从建议参数中添加
+    // Add from suggested parameters
     async addMainSuggestedParam(param) {
       if (this.paramExistsInMain(param.name)) return;
       this.settings.extra_params.push({
@@ -417,7 +417,7 @@ formatFileUrl(originalUrl) {
     paramExistsInFast(name) {
       return this.fastSettings.extra_params.some(p => p.name === name);
     },
-    // 获取供应商名称（从 providerId 反查 vendor）
+    // Look up vendor from providerId
     getVendorByProviderId(providerId) {
       if (!providerId) return null;
       const provider = this.modelProviders.find(p => p.id === providerId);
@@ -481,7 +481,7 @@ formatFileUrl(originalUrl) {
       this.BotConfig.img_host = val;
       this.autoSaveSettings()
     },
-    // 获取模型列表
+    // Get model list
     async fetchModelsForType(type) {
       try {
         const response = await fetch(`/llm_models`, {
@@ -500,10 +500,10 @@ formatFileUrl(originalUrl) {
         console.error('Failed to fetch models:', error)
       }
     },
-    // 保存工具
+    // Save tool
     saveLLMTool() {
       const tool = { ...this.newLLMTool }
-      // 添加工具ID
+      // Add tool ID
       tool.id = uuid.v4();
       if (this.editingLLM) {
         this.llmTools[this.editingLLM] = tool
@@ -514,12 +514,12 @@ formatFileUrl(originalUrl) {
       this.resetForm()
       this.autoSaveSettings()
     },
-    // 删除工具
+    // Delete tool
     removeLLMTool(index) {
       this.llmTools.splice(index, 1)
       this.autoSaveSettings()
     },
-    // 重置表单
+    // Reset form
     resetForm() {
       this.newLLMTool = {
         name: '',
@@ -532,12 +532,12 @@ formatFileUrl(originalUrl) {
       }
       this.editingLLM = null
     },
-    // 类型标签转换
+    // Convert type labels
     toolTypeLabel(type) {
       const found = this.llmInterfaceTypes.find(t => t.value === type)
       return found ? found.label : type
     },
-    // 检查更新
+    // Check for updates
     async checkForUpdates() {
       if (isElectron) {
         try {
@@ -548,7 +548,7 @@ formatFileUrl(originalUrl) {
       }
     },
 
-    // 下载更新
+    // Download update
     async downloadUpdate() {
       if (isElectron && this.updateAvailable) {
         try {
@@ -559,14 +559,14 @@ formatFileUrl(originalUrl) {
       }
     },
 
-    // 安装更新
+    // Install update
     async installUpdate() {
       if (isElectron && this.updateDownloaded) {
         await window.electronAPI.quitAndInstall();
       }
     },
 
-    // 处理更新按钮点击
+    // Handle update button clicks
     async handleUpdate() {
       if (!this.updateSuccess) {
         try {
@@ -589,19 +589,19 @@ formatFileUrl(originalUrl) {
       if (lastUserMessage) {
         let textContent;
         
-        // 判断 content 是否为字符串还是对象数组
+        // Determine whether content is a string or an array of objects
         if (typeof lastUserMessage.content === 'string') {
           textContent = lastUserMessage.content;
         } else if (Array.isArray(lastUserMessage.content)) {
-          // 提取所有文本类型的内容并拼接
+          // Extract and concatenate text content
           textContent = lastUserMessage.content.filter(item => item.type === 'text')
                            .map(item => item.text).join(' ');
         } else {
-          // 如果既不是字符串也不是对象数组，设置为空字符串或其他默认值
+          // Use an empty string or other default for unsupported content types
           textContent = '';
         }
     
-        // 拼接 fileLinks_content 部分，如果有
+        // Append fileLinks_content when present
         const fullContent = textContent + (lastUserMessage.fileLinks_content ?? '');
         
         return fullContent.substring(0, 30) + (fullContent.length > 30 ? '...' : '');
@@ -610,8 +610,8 @@ formatFileUrl(originalUrl) {
       return this.t('newChat');
     },
     ensureConversationCreated() {
-      // 提前创建会话（发送首条消息时即分配 conversationId），
-      // 保证长耗时流式回复（如深度研究）期间 30s 增量保存可以正常工作
+      // Create the conversation early, assigning conversationId on the first message,
+      // so 30-second incremental saves work during lengthy streamed replies such as deep research.
       if (this.conversationId === null) {
         this.conversationId = uuid.v4();
         const newConv = {
@@ -630,7 +630,7 @@ formatFileUrl(originalUrl) {
           this.conversations = this.conversations.slice(0, MAX_CONVERSATIONS);
         }
       } else {
-        // 🔴 核心修复：添加安全链判断，防止潜在的读取错误
+        // Guard against missing values to avoid read errors
         const conv = this.conversations.find(conv => conv.id === this.conversationId);
         if (conv) {
           conv.messages = this.messages;
@@ -1067,9 +1067,9 @@ formatFileUrl(originalUrl) {
           m.briefly = false;
         })
       }
-      this.inAutoMode = false; // 重置自动模式状态
+      this.inAutoMode = false; // Reset automatic mode state
       this.requestScrollToBottom();
-      this.sendMessagesToExtension(); // 发送消息到插件
+      this.sendMessagesToExtension(); // Send messages to extensions
 
       this.autoSaveSettings();
     },
@@ -1082,18 +1082,18 @@ formatFileUrl(originalUrl) {
       }
       return date.toLocaleDateString([], { month: 'numeric', day: 'numeric' });
     },
-    // 修改 getConversationPreview，移除沉重的 DOM/正则替换，改用极简截取
+    // Use lightweight substring extraction instead of expensive DOM and regex replacements
     getConversationPreview(conversation) {
       const messages = Array.isArray(conversation?.messages) ? conversation.messages :[];
       const firstUsefulMessage = messages.find(msg => msg && msg.role !== 'system' && msg.content);
       if (!firstUsefulMessage) return this.t('newChat');
       
-      // 仅做简单的字符串截取（最高效），或者直接返回首句的纯文本部分
+      // Extract a substring or the plain text of the first sentence
       const rawContent = Array.isArray(firstUsefulMessage.content)
         ? firstUsefulMessage.content.map(item => item?.text || '').join(' ')
         : String(firstUsefulMessage.content);
         
-      // 只取前 30 个字符，放弃全局正则替换
+      // Take the first 30 characters without global regex replacement
       return rawContent.substring(0, 30) + (rawContent.length > 30 ? '...' : '') || this.t('newChat');
     },
     async syncGroupMemoryAfterReply(userMessage, assistantMessage) {
@@ -1142,33 +1142,33 @@ formatFileUrl(originalUrl) {
         if (provider) {
           let targetUrl = provider.url;
 
-          // 判断当前同步的对象是否为 ccSettings (通过引用比较)
-          // 如果是 CC 配置，则应用特殊的 vendor_list 映射逻辑
+          // Check whether the synchronized object is ccSettings by reference
+          // Use the special vendor_list mapping for CC configuration
           if (targetConfig === this.ccSettings) {
              const vendor_list = {
               "Anthropic": "https://api.anthropic.com/",
               "newapi": provider.url.replace(/\/v1\/?$/, ''),
               "Ollama":provider.url.replace(/\/v1\/?$/, '')
             };
-            // 使用映射的 URL，如果没有匹配则回退到默认 url
+            // Use mapped URL, falling back to the default
             targetUrl = vendor_list[provider.vendor] || provider.url;
           }
 
-          // 同步核心配置 (注意：这里比较和赋值时使用 targetUrl)
+          // Synchronize core configuration using targetUrl for comparisons and assignment
           const shouldUpdate = 
             targetConfig.model !== provider.modelId ||
-            targetConfig.base_url !== targetUrl || // 比较 targetUrl
+            targetConfig.base_url !== targetUrl || // Compare targetUrl
             targetConfig.api_key !== provider.apiKey;
             
           if (shouldUpdate) {
             targetConfig.model = provider.modelId || '';
-            targetConfig.base_url = targetUrl || ''; // 赋值 targetUrl
+            targetConfig.base_url = targetUrl || ''; // Assign targetUrl
             targetConfig.api_key = provider.apiKey || '';
-            console.log(`已同步 ${provider.vendor} 配置 (CC模式: ${targetConfig === this.ccSettings})`);
+            console.log("Synchronized " + provider.vendor + " configuration (CC mode: " + (targetConfig === this.ccSettings) + ")");
           }
         } else {
-          // ... (保持原本的清理逻辑不变)
-          console.warn('找不到匹配的供应商，已重置配置');
+          // ... (retain existing cleanup logic)
+          console.warn('No matching provider; configuration reset');
           targetConfig.selectedProvider = null;
           targetConfig.model = '';
           targetConfig.base_url = '';
@@ -1189,7 +1189,7 @@ formatFileUrl(originalUrl) {
       this.activeMenu = 'toolkit';
       this.subMenu = 'mcp'
     },
-    // 窗口控制
+    // Window control
     minimizeWindow() {
       if (isElectron) window.electronAPI.windowAction('minimize');
     },
@@ -1202,23 +1202,23 @@ formatFileUrl(originalUrl) {
     async handleSelect(key) {
       if (key === 'model-config') {
         this.activeMenu = 'model-config';
-        this.subMenu = 'service'; // 默认显示第一个子菜单
+        this.subMenu = 'service'; // Show the first submenu by default
       }
       else if (key === 'role') {
         this.activeMenu = 'role';
-        this.subMenu = 'memory'; // 默认显示第一个子菜单
+        this.subMenu = 'memory'; // Show the first submenu by default
       }
       else if (key === 'toolkit') {
         this.activeMenu = 'toolkit';
-        this.subMenu = 'tools'; // 默认显示第一个子菜单
+        this.subMenu = 'tools'; // Show the first submenu by default
       }
       else if (key === 'api-group') {
         this.activeMenu = 'api-group';
-        this.subMenu = 'openai'; // 默认显示第一个子菜单
+        this.subMenu = 'openai'; // Show the first submenu by default
       }
       else if (key === 'storage') {
         this.activeMenu = 'storage';
-        this.subMenu = 'text'; // 默认显示第一个子菜单
+        this.subMenu = 'text'; // Show the first submenu by default
         response = await fetch(`/update_storage`, {
             method: 'GET',
             headers: {
@@ -1239,12 +1239,12 @@ formatFileUrl(originalUrl) {
       }
       else if (key === 'deploy-bot') {
         this.activeMenu = 'deploy-bot';
-        this.subMenu = 'table_pet'; // 默认显示第一个子菜单
+        this.subMenu = 'table_pet'; // Show the first submenu by default
       }
       else if (key === 'system') {
         this.activeMenu = 'system';
-        this.subMenu = 'general'; // 默认显示通用设置子页
-        this.loadAccountList(); // 加载账户列表
+        this.subMenu = 'general'; // Show general settings by default
+        this.loadAccountList(); // Load account list
       }
       else {
         this.activeMenu = key;
@@ -1252,7 +1252,7 @@ formatFileUrl(originalUrl) {
       this.activeMenu = key;
     }, 
     toggleIcon() {
-      this.isExpanded = !this.isExpanded; // 点击时切换状态
+      this.isExpanded = !this.isExpanded; // Toggle on click
       this.maximizeWindow();
     },
 
@@ -1280,40 +1280,40 @@ preprocessEntertainmentText(content) {
   let formatted = content;
 
   // ============================================================
-  // 【核心修复】自定义元数据标签与中文角色标签净化（如 <user=...>, <星莱>, </星莱>）
+  // Sanitize custom metadata and multilingual character tags (e.g. <user=...>, <Character>, </Character>)
   // ============================================================
   const preservedHtmlTags = '(?:div|span|p|br|a|img|strong|em|code|pre|ul|ol|li|h[1-6]|blockquote|table|thead|tbody|tr|th|td|iframe|video|audio|canvas|svg|path|section|button|i|details|summary|think)';
   
-  // 1. 过滤原始自定义标签（如 <星莱> 或 <user=派酱 ...>）
-  // 仅匹配非白名单、且符合标签命名规范的节点，完美避开 “a < b” 这种普通数学公式
+  // 1. Filter raw custom tags (e.g. <Character> or <user=Alex ...>)
+  // Match only non-allowlisted valid tag names, not ordinary expressions such as a < b
   const customTagRegex = new RegExp(`<\\/?(?!(?:${preservedHtmlTags})\\b)[a-zA-Z0-9\\u4e00-\\u9fa5_-]+[^>]*>`, 'gi');
   formatted = formatted.replace(customTagRegex, '');
 
-  // 2. 过滤转义或被 LaTeX 机制转换后的自定义标签（如 \lt 星莱\gt 或 \lt /星莱\gt）
+  // 2. Filter escaped custom tags or tags converted by LaTeX (e.g. \lt Character\gt)
   const escapedCustomTagRegex = new RegExp(`(?:&lt;|\\\\lt\\b|\\\\lt\\s+)(?:\\/)?(?!(?:${preservedHtmlTags})\\b)([a-zA-Z0-9\\u4e00-\\u9fa5_-]+)[^&\\\\\\n]*(?:&gt;|\\\\gt\\b)`, 'gi');
   formatted = formatted.replace(escapedCustomTagRegex, '');
 
 
   // ============================================================
-  // 1. 强力图片隔离：匹配文本中的图片（支持 silence 标签包裹及各种空白符）
-  // 无论 AI 换行了几次、或者完全忘记换行，强行在其前后注入双换行符 (\n\n)
+  // 1. Isolate images in text, including silence wrappers and whitespace
+  // Insert double line breaks around images regardless of existing line breaks
   // ============================================================
   formatted = formatted.replace(/(<silence>\s*)?(!\[.*?\]\([^\)]+\))(\s*<\/silence>)?/gi, '\n\n$1$2$3\n\n');
 
   // ============================================================
-  // 2. 连续换行符压缩：收缩因强行注入或 AI 多次换行产生的冗余换行
-  // 确保最终 Markdown 编译时，各元素之间只有标准的一个空行
+  // 2. Collapse redundant line breaks introduced by formatting or generated text
+  // Ensure a single blank line between Markdown elements
   // ============================================================
   formatted = formatted.replace(/\n{3,}/g, '\n\n');
 
   // ============================================================
-  // 3. UI 标签净化：在渲染阶段彻底移除 <silence> 与 </silence>
-  // 避免其以纯文本或未知 HTML 标签的形式在气泡内残留，确保界面纯净
+  // 3. Remove <silence> and </silence> from the rendered UI
+  // Prevent these tags from appearing as text or unknown HTML in the bubble
   // ============================================================
   formatted = formatted.replace(/<\/?silence>/gi, '');
 
   // ============================================================
-  // 4. 娱乐模式智能换行：避开表格、列表、标题等排版结构，防止破坏 Markdown 渲染
+  // 4. Smart line breaks in entertainment mode: preserve tables, lists, headings and Markdown structure
   // ============================================================
   if (this.systemSettings && this.systemSettings.chatMode === 'entertainment') {
     const lines = formatted.split('\n');
@@ -1326,21 +1326,21 @@ preprocessEntertainmentText(content) {
       processedLines.push(lines[i]);
 
       if (i < lines.length - 1) {
-        // 判断是否属于表格行
+        // Check whether this is a table row
         const isCurrentTable = currentLine.includes('|');
         const isNextTable = nextLine.includes('|');
 
-        // 判断是否是无序列表、有序列表或引用（如 `- `, `* `, `+ `, `1. `, `> `）
+        // Check for unordered lists, ordered lists or blockquotes
         const structurePattern = /^([-*+>]|\d+\.)\s/;
         const isCurrentStructure = structurePattern.test(currentLine);
         const isNextStructure = structurePattern.test(nextLine);
 
-        // 判断是否是 Markdown 标题行
+        // Check for Markdown headings
         const headingPattern = /^#{1,6}\s/;
         const isCurrentHeading = headingPattern.test(currentLine);
         const isNextHeading = headingPattern.test(nextLine);
 
-        // 判断当前或下一行是否本身就是空行
+        // Check whether the current or next line is blank
         const isCurrentEmpty = currentLine === '';
         const isNextEmpty = nextLine === '';
 
@@ -1362,18 +1362,18 @@ formatMessage(content, index) {
   if (!content) return '';
 
   // ============================================================
-  // 【核心修复】自定义元数据标签与中文角色标签净化（如 <user=...>, <星莱>, </星莱>）
-  // 在最开始拦截并清除，防止其被 LaTeX 保护机制混淆成 \lt 字符
+  // Sanitize custom metadata and multilingual character tags (e.g. <user=...>, <Character>, </Character>)
+  // Remove early so LaTeX protection does not convert tags into \lt characters
   // ============================================================
   let processedForRender = content;
   
   const preservedHtmlTags = '(?:div|span|p|br|a|img|strong|em|code|pre|ul|ol|li|h[1-6]|blockquote|table|thead|tbody|tr|th|td|iframe|video|audio|canvas|svg|path|section|button|i|details|summary|think)';
   
-  // 1. 过滤原始自定义标签（如 <星莱> 或 <user=派酱 ...>）
+  // 1. Filter raw custom tags (e.g. <Character> or <user=Alex ...>)
   const customTagRegex = new RegExp(`<\\/?(?!(?:${preservedHtmlTags})\\b)[a-zA-Z0-9\\u4e00-\\u9fa5_-]+[^>]*>`, 'gi');
   processedForRender = processedForRender.replace(customTagRegex, '');
 
-  // 2. 过滤转义或被 LaTeX 机制转换后的自定义标签（如 \lt 星莱\gt 或 \lt /星莱\gt）
+  // 2. Filter escaped custom tags or tags converted by LaTeX (e.g. \lt Character\gt)
   const escapedCustomTagRegex = new RegExp(`(?:&lt;|\\\\lt\\b|\\\\lt\\s+)(?:\\/)?(?!(?:${preservedHtmlTags})\\b)([a-zA-Z0-9\\u4e00-\\u9fa5_-]+)[^&\\\\\\n]*(?:&gt;|\\\\gt\\b)`, 'gi');
   processedForRender = processedForRender.replace(escapedCustomTagRegex, '');
 
@@ -1386,7 +1386,7 @@ formatMessage(content, index) {
     processedForRender += ' |';
   }
 
-  // --- 预处理阶段 ---
+  // --- Preprocessing ---
   const parts = this.splitCodeAndText(processedForRender);
   let inUnclosedCodeBlock = false;
 
@@ -1400,8 +1400,8 @@ formatMessage(content, index) {
       let formatted = part.content;
 
       // ============================================================
-      // 娱乐模式下：智能单换行符（\n）转换为双换行符（\n\n）
-      // 避开表格、列表、标题、引用等结构，防止破坏排版
+      // Entertainment mode: convert appropriate single line breaks into double line breaks
+      // Preserve tables, lists, headings and blockquotes
       // ============================================================
       if (this.systemSettings && this.systemSettings.chatMode === 'entertainment') {
         const linesList = formatted.split('\n');
@@ -1414,25 +1414,25 @@ formatMessage(content, index) {
           processedLines.push(linesList[i]);
 
           if (i < linesList.length - 1) {
-            // 1. 判断是否属于表格行（包含 | 符号）
+            // 1. Check for table rows containing pipes
             const isCurrentTable = currentLine.includes('|');
             const isNextTable = nextLine.includes('|');
 
-            // 2. 判断是否是无序列表、有序列表或引用（如 `- `, `* `, `+ `, `1. `, `> `）
+            // 2. Check for unordered lists, ordered lists or blockquotes
             const structurePattern = /^([-*+>]|\d+\.)\s/;
             const isCurrentStructure = structurePattern.test(currentLine);
             const isNextStructure = structurePattern.test(nextLine);
 
-            // 3. 判断是否是 Markdown 标题行（# ）
+            // 3. Check for Markdown headings
             const headingPattern = /^#{1,6}\s/;
             const isCurrentHeading = headingPattern.test(currentLine);
             const isNextHeading = headingPattern.test(nextLine);
 
-            // 4. 判断当前或下一行是否本身就是空行（避免产生过大空白）
+            // 4. Check current or next line for blanks to avoid extra whitespace
             const isCurrentEmpty = currentLine === '';
             const isNextEmpty = nextLine === '';
 
-            // 只有当当前行和下一行都不是上述排版结构时，才进行双换行处理
+            // Double line breaks only when neither line is a structured Markdown element
             if (!isCurrentTable && !isNextTable && 
                 !isCurrentStructure && !isNextStructure && 
                 !isCurrentHeading && !isNextHeading &&
@@ -1445,31 +1445,31 @@ formatMessage(content, index) {
       }
 
       // ============================================================
-      // 【新增】图片强制分离逻辑
-      // 匹配文本中的图片（包含可能有 `<silence>` 包裹的情况），强行在其前后注入双换行符
+      // Force images onto separate paragraphs
+      // Insert double line breaks around images, including those wrapped in silence tags
       // ============================================================
       formatted = formatted.replace(/(<silence>)?(!\[.*?\]\([^\)]+\))(<\/silence>)?/g, '\n\n$1$2$3\n\n');
 
-      // 收缩可能因为强行注入而产生的多余连续换行符，确保 Markdown 格式紧凑
+      // Collapse redundant consecutive line breaks to maintain compact Markdown
       formatted = formatted.replace(/\n{3,}/g, '\n\n');
 
       // ============================================================
-      // 【新增】UI 屏蔽过滤：彻底移除 <silence> 与 </silence> 标签
-      // 由于此正则仅在 formatMessage 这一渲染管道内运行，因此绝对不影响
-      // 底层 TTS 合成引擎（其直接读取原始 content/pure_content 文本流）
+      // UI filter: remove <silence> and </silence>
+      // This regex runs only in formatMessage and does not affect
+      // the underlying TTS engine, which reads raw content or pure_content.
       // ============================================================
       formatted = formatted.replace(/<\/?silence>/gi, '');
 
       // ============================================================
-      // LaTeX 公式保护机制
-      // 防止公式内部的 < 和 > 被后续的 HTML 标签过滤正则误杀
+      // LaTeX formula protection
+      // Protect < and > inside formulas from HTML tag filtering
       // ============================================================
       formatted = formatted.replace(/\$\$([\s\S]*?)(?:\$\$|$)|\$([^\$\n]+)\$/g, function(match) {
         return match.replace(/</g, '\\lt ').replace(/>/g, '\\gt ');
       });
 
       // ============================================================
-      // 智能标签过滤
+      // Smart tag filtering
       // ============================================================
       const anyTagRegex = /<(\/?)([^\s>/>]+)([^>]*)>/g;
       formatted = formatted.replace(anyTagRegex, (match, slash, tagName, attrs) => {
@@ -1485,13 +1485,13 @@ formatMessage(content, index) {
       });
 
       // ============================================================
-      // 未闭合尾部标签持留：流式增量可能停在标签中间（如 "<mouth_smile:0."），
-      // 上方正则因缺少闭合 ">" 无法匹配，本帧先持留该片段，补全后再统一过滤
+      // Hold incomplete trailing tags when streaming stops mid-tag (e.g. "<mouth_smile:0.").
+      // The regex cannot match without a closing >; defer the fragment until complete.
       // ============================================================
       formatted = this.holdbackUnclosedTrailingTag(formatted);
 
       // ============================================================
-      // 处理 <think> 标签的 UI 转换
+      // Convert <think> tags for UI rendering
       // ============================================================
       const thinkTagRegexWithClose = /<think>([\s\S]*?)<\/think>/g;
       const thinkTagRegexOpenOnly = /<think>[\s\S]*$/;
@@ -1510,16 +1510,16 @@ formatMessage(content, index) {
 
   let rendered = md.render(processedContent);
 
-  // --- 恢复阶段 ---
+  // --- Restoration ---
   rendered = rendered.replace(/\\\`/g, '`').replace(/\\\$/g, '$');
 
-  // 注意增加对 currentMsg 存在的判断
+  // Check that currentMsg exists
   const currentMsg = this.messages && index >= 0 ? this.messages[index] : null;
   if (currentMsg && index === this.messages.length - 1 && currentMsg.role === 'assistant' && this.isTyping && currentMsg.content !== currentMsg.pure_content) {
     rendered = `<div class="thinking-header"><i class="fa-solid fa-lightbulb"></i> ${this.t('thinking')}</div>` + rendered;
   }
 
-  // --- 后处理 ---
+  // --- Postprocessing ---
   this.$nextTick(() => {
     if(typeof this.initCopyButtons === 'function') this.initCopyButtons();
     if(typeof this.initPreviewButtons === 'function') this.initPreviewButtons();
@@ -1537,7 +1537,7 @@ formatMessage(content, index) {
 },
 
     formatMessageWrapper(content) {
-        // 调用您现有的 formatMessage，这里传 index = -1 避免产生副作用（如 thinking 图标）
+        // Call formatMessage with index = -1 to avoid side effects such as thinking icons
         return this.formatMessage(content, -1); 
     },
     copyLink(uniqueFilename) {
@@ -1560,7 +1560,7 @@ formatMessage(content, index) {
         })
     },
     copyProvider(provider,index){
-      // 在this.modelProviders的index之后插入一个复制版本
+      // Insert a copy after the selected modelProviders index
       this.modelProviders.splice(index + 1, 0, { ...provider, id: Date.now() });
       this.autoSaveSettings();
     },
@@ -1570,11 +1570,11 @@ formatMessage(content, index) {
       console.log(this.previewImageUrl)
     },
     copyMessageContent(message) {
-      // 获取原始内容（用户消息直接复制，AI消息复制原始markdown）
+      // Copy original user content or original assistant Markdown
       let content = message.role === 'user' 
         ? message.content 
         : message.pure_content || message.rawContent || message.content;
-      // 处理文件链接
+      // Handle file links
       if (message.fileLinks?.length) {
         content += '\n\n' + message.fileLinks.map(link => `[${link.name}](${link.path})`).join('\n');
       }
@@ -1583,32 +1583,32 @@ formatMessage(content, index) {
         .catch(() => showNotification(this.t('copy_failed'), 'error'));
     },
     initPreviewButtons() {
-      // 清理旧事件监听器
+      // Remove old event listeners
       if (this._previewEventHandler) {
         document.body.removeEventListener('click', this._previewEventHandler);
       }
-      // 主事件处理器
+      // Main event handler
       this._previewEventHandler = (e) => {
         const button = e.target.closest('.preview-button');
         if (!button) return;
         e.preventDefault();
         e.stopPropagation();
-        console.debug('🏁 预览按钮触发:', button);
-        // 获取代码上下文
+        console.debug('Preview button triggered:', button);
+        // Get code context
         const codeBlock = button.closest('.code-block');
         if (!codeBlock) {
-          console.error('❌ 未找到代码块容器');
+          console.error('Code block container not found');
           return;
         }
-        // 获取代码内容
+        // Get code content
         const lang = button.dataset.lang;
         const codeContent = codeBlock.querySelector('code')?.textContent?.trim();
         if (!codeContent) {
-          console.warn('⚠️ 空代码内容', codeBlock);
+          console.warn('Empty code content', codeBlock);
           this.showErrorToast('Code is empty');
           return;
         }
-        // codeBlock中查找/创建预览容器
+        // Find or create preview container inside codeBlock
         let previewContainer = codeBlock.querySelector('.preview-container');
         const isNewContainer = !previewContainer;
         
@@ -1617,37 +1617,37 @@ formatMessage(content, index) {
           previewContainer.className = 'preview-container loading';
           codeBlock.appendChild(previewContainer);
         }
-        // 状态切换逻辑
+        // Toggle state
         if (previewContainer.classList.contains('active')) {
           this.collapsePreview(previewContainer, button);
         } else {
           this.expandPreview({ previewContainer, button, lang, codeContent });
         }
       };
-      // 绑定事件监听
+      // Bind event listener
       document.body.addEventListener('click', this._previewEventHandler);
-      //console.log('🔧 预览按钮事件监听已初始化');
+      // console.log('Preview button listener initialized');
     },
-    // 展开预览面板
+    // Expand preview panel
     expandPreview({ previewContainer, button, lang, codeContent }) {
-      console.log('🔼 展开预览:', { lang, length: codeContent.length });
+      console.log('Expand preview:', { lang, length: codeContent.length });
       
       const codeBlock = button.closest('.code-block');
   
-      // 检查是否已有预览
+      // Check for existing preview
       const existingPreview = codeBlock.querySelector('.preview-container.active');
       if (existingPreview) {
         this.collapsePreview(existingPreview, button);
         return;
       }
-      // 标记代码块状态
+      // Mark code block state
       codeBlock.dataset.previewActive = "true";
       
-      // 隐藏代码内容
+      // Hide code content
       const codeContentDiv = codeBlock.querySelector('.code-content');
       codeContentDiv.style.display = 'none';
       
-      // 更新按钮状态
+      // Update button state
       button.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
       
       previewContainer.classList.add('active', 'loading');
@@ -1655,19 +1655,19 @@ formatMessage(content, index) {
         previewContainer.style.width =  '85vw';
       }
       
-      // 渲染内容
+      // Render content
       requestAnimationFrame(() => {
         try {
           if (lang === 'html') {
             this.renderHtmlPreview(previewContainer, codeContent);
-            // 动态调整iframe高度
+            // Dynamically resize iframe height
             const iframe = previewContainer.querySelector('iframe');
             iframe.onload = () => {
               iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px';
             };
           } else if (lang === 'mermaid') {
             this.renderMermaidPreview(previewContainer, codeContent).then(() => {
-              // Mermaid渲染完成后调整高度
+              // Resize after Mermaid rendering completes
               const svg = previewContainer.querySelector('svg');
               if (svg) {
                 previewContainer.style.minHeight = svg.getBBox().height + 'px';
@@ -1676,33 +1676,33 @@ formatMessage(content, index) {
           }
           previewContainer.classList.remove('loading');
         } catch (err) {
-          console.error('🚨 预览渲染失败:', err);
+          console.error('Preview rendering failed:', err);
           this.showPreviewError(previewContainer, err);
         }
       });
     },
-    // 修改 collapsePreview 方法
+    // collapsePreview method
     collapsePreview(previewContainer, button) {
-      console.log('🔽 收起预览');
+      console.log('Collapse preview');
       
       const codeBlock = previewContainer.parentElement;
   
-      // 重置代码块状态
+      // Reset code block state
       delete codeBlock.dataset.previewActive;
       
-      // 显示代码内容
+      // Show code content
       const codeContentDiv = codeBlock.querySelector('.code-content');
       codeContentDiv.style.display = 'block';
       
-      // 移除预览容器
+      // Remove preview container
       previewContainer.remove();
       
-      // 重置按钮状态
+      // Reset button state
       button.innerHTML = '<i class="fa-solid fa-eye"></i>';
     },
-    // HTML渲染器
+    // HTML renderer
     renderHtmlPreview(container, code) {
-      console.log('🌐 渲染HTML预览');
+      console.log('Render HTML preview');
       
       const sandbox = document.createElement('iframe');
       sandbox.srcdoc = `<!DOCTYPE html>
@@ -1723,14 +1723,14 @@ formatMessage(content, index) {
       
       container.replaceChildren(sandbox);
     },
-    // Mermaid渲染器（带重试机制）
+    // Mermaid renderer with retry support
     async renderMermaidPreview(container, code) {
-      console.log('📊 渲染Mermaid图表');
+      console.log('Render Mermaid diagram');
       
       const diagramContainer = document.createElement('div');
       diagramContainer.className = 'mermaid-diagram';
       container.replaceChildren(diagramContainer);
-      // 异步渲染逻辑
+      // Asynchronous rendering
       let retryCount = 0;
       const maxRetries = 3;
       
@@ -1741,11 +1741,11 @@ formatMessage(content, index) {
             nodes: [diagramContainer],
             suppressErrors: false
           });
-          console.log('✅ Mermaid渲染成功');
+          console.log('Mermaid rendering succeeded');
         } catch (err) {
           if (retryCount < maxRetries) {
             retryCount++;
-            console.warn(`🔄 重试渲染 (${retryCount}/${maxRetries})`);
+            console.warn("Retry rendering (" + retryCount + "/" + maxRetries + ")");
             diagramContainer.innerHTML = '';
             await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
             await attemptRender();
@@ -1756,65 +1756,65 @@ formatMessage(content, index) {
       };
       await attemptRender();
     },
-    // 错误处理
+    // Error handling
     showPreviewError(container, error) {
       container.classList.add('error');
       container.innerHTML = `
         <div class="error-alert">
           <i class="fa-solid fa-triangle-exclamation"></i>
           <div>
-            <h4>预览渲染失败</h4>
+            <h4>Preview rendering failed</h4>
             <code>${error.message}</code>
           </div>
         </div>
       `;
     },
-    // 新增方法：检测未闭合代码块
+    // Detect unclosed code blocks
     hasUnclosedCodeBlock(parts) {
       return parts.some(p => p.type === 'code' && !p.closed);
     },
 
     /**
-     * 持留流式渲染中未闭合的尾部标签片段（如 "<mouth_smile:0."）
-     * 智能标签过滤（anyTagRegex）只能匹配带闭合 ">" 的完整标签，流式增量
-     * 恰好停在标签中间时，半截标签会以纯文本形式漏进气泡。
-     * 与 processMarkdownStreamForTTS 的积压缓冲思路一致：本帧先不渲染该片段，
-     * 待后续增量补全 ">" 后，交回智能标签过滤统一处理。
-     * 判定标准与智能标签过滤保持同一条正则：标准 HTML 标签名保留原样，
-     * 非标准名（表情/动作标签等）持留。
-     * @param {string} text 当前帧待渲染的完整累积文本
-     * @returns {string} 持留未闭合尾部标签后的文本
+     * Hold incomplete trailing tags during streaming, e.g. "<mouth_smile:0."
+     * Smart filtering (anyTagRegex) matches only tags with a closing >.
+     * If a stream increment ends mid-tag, the fragment would otherwise appear in the bubble.
+     * Like the TTS stream buffer, defer the incomplete fragment this frame,
+     * then filter it once a later increment supplies the closing >.
+     * Use the same tag-name regex as smart filtering: retain standard HTML names,
+     * and defer nonstandard names such as expression and motion tags.
+     * @param {string} text Complete accumulated text for the current frame
+     * @returns {string} Text with the incomplete trailing tag withheld
      */
     holdbackUnclosedTrailingTag(text) {
       const lt = text.lastIndexOf('<');
       if (lt === -1) return text;
       const fragment = text.slice(lt + 1);
-      // 片段中已出现 ">"，说明尾部标签是闭合的，交给智能标签过滤处理
+      // A closing > means the trailing tag is complete; let smart filtering handle it
       if (fragment.includes('>')) return text;
       const tagName = fragment.split(/\s/)[0].replace(/^\//, '');
-      // 标准 HTML 名（或尚无法判断的孤立 "<"）保留原样，等待补全
+      // Retain standard HTML names or an ambiguous standalone < until more text arrives
       if (tagName === '' || /^[a-zA-Z][a-zA-Z0-9-]*$/.test(tagName)) return text;
-      // 非标准标签名：本帧持留（截去该片段），下一增量重新渲染完整文本
+      // Defer nonstandard tag fragments and render again with the next increment
       return text.slice(0, lt);
     },
 
     splitCodeAndText(content) {
-      const codeFenceRegex = /(```[\s\S]*?)(?:```|$)/g; // 修改正则表达式
+      const codeFenceRegex = /(```[\s\S]*?)(?:```|$)/g; // Code-fence matching regex
       const parts = [];
       let lastIndex = 0;
       let hasUnclosed = false;
 
-      // 处理代码块
+      // Process code block
       let match;
       while ((match = codeFenceRegex.exec(content)) !== null) {
         const textBefore = content.slice(lastIndex, match.index);
         if (textBefore) parts.push({ type: 'text', content: textBefore });
 
-        // 判断是否闭合
+        // Check whether the fence is closed
         const isClosed = match[0].endsWith('```');
         const codeContent = isClosed ? 
           match[0] : 
-          match[0] + '\n```'; // 自动补全闭合
+          match[0] + '\n```'; // Complete the closing fence
 
         parts.push({
           type: 'code',
@@ -1826,11 +1826,11 @@ formatMessage(content, index) {
         hasUnclosed = !isClosed;
       }
 
-      // 处理剩余内容
+      // Process remaining content
       const remaining = content.slice(lastIndex);
       if (remaining) {
         if (hasUnclosed) {
-          // 将剩余内容视为代码块
+          // Treat remaining content as a code block
           parts.push({
             type: 'code',
             content: remaining + '\n```',
@@ -1851,19 +1851,19 @@ formatMessage(content, index) {
             const codeBlock = button.closest('.code-block');
             const previewButton = codeBlock.querySelector('.preview-button');
             const existingPreview = codeBlock.querySelector('.preview-container.active');
-            // 如果previewButton不在预览状态，则执行预览操作
+            // If previewButton is not already active, open the preview
             if (!existingPreview) {
-                // 触发预览按钮的点击事件
+                // Trigger the preview button click
                 previewButton.click();
-                // 等待预览完成
-                await new Promise(resolve => setTimeout(resolve, 500)); // 根据实际情况调整延时
+                // Wait for preview to finish
+                await new Promise(resolve => setTimeout(resolve, 500)); // Adjust delay as needed
             }
             const previewContainer = codeBlock.querySelector('.preview-container');
             try {
                 if (lang === 'mermaid') {
-                    // 使用html2canvas来截图
+                    // Capture with html2canvas
                     html2canvas(previewContainer, {
-                        // 如果Mermaid图表面板有滚动条，你可能需要设置宽度和高度
+                        // A scrollable Mermaid diagram may need explicit width and height
                         width: previewContainer.offsetWidth,
                         height: previewContainer.offsetHeight,
                     }).then(canvas => {
@@ -1871,7 +1871,7 @@ formatMessage(content, index) {
                             this.triggerDownload(blob, 'mermaid-diagram.png');
                         });
                     }).catch(error => {
-                        console.error('截图失败:', error);
+                        console.error('Screenshot failed:', error);
                         showNotification('Screenshot failed. Check the console.', 'error');
                     });
                 }
@@ -1883,7 +1883,7 @@ formatMessage(content, index) {
                     });
                 }
             } catch (error) {
-                console.error('下载失败:', error);
+                console.error('Download failed:', error);
                 showNotification('Download failed. Check the console.', 'error');
             }
         });
@@ -1918,36 +1918,36 @@ formatMessage(content, index) {
     },
     
     initCopyButtons() {
-      // 移除旧的ClipboardJS初始化代码
+      // Remove previous ClipboardJS initialization
       document.querySelectorAll('.copy-button').forEach(btn => {
         btn.removeEventListener('click', this.handleCopy)
         btn.addEventListener('click', this.handleCopy)
       })
     },  
-    // 滚动到最新消息
-    /* 判断元素是否接近底部 */
+    // Scroll to latest message
+    /* Check whether an element is near the bottom */
     isElemNearBottom(el, threshold = 300) {
-      if (!el) return true;               // 元素不存在就默认“需要滚底”
+      if (!el) return true;               // If absent, assume scrolling to bottom is needed
       return el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
     },
 
       /* ==========================================
-       滚动区域逻辑优化（支持内部区块跟随滚动）
+       Optimized scroll handling, including nested scrollable blocks
        ========================================== */
     scrollToBottom() {
       this.$nextTick(() => {
         const container = this.$refs.messagesContainer;
         if (container) {
-          // 1. 滚动外层主容器
+          // 1. Scroll the outer main container
           if (this.isElemNearBottom(container) || this.isForceScrollToBottom) {
             container.scrollTop = container.scrollHeight;
           }
           
-          // 2. 滚动内层带有滚动条的区块 (工具代码块、思考过程块)
+          // 2. Scroll inner blocks with scrollbars (tool code and reasoning)
           const innerBlocks = container.querySelectorAll('.sp-code, .type-reasoning .sp-content');
           innerBlocks.forEach(block => {
             if (block.scrollHeight > block.clientHeight) {
-              // 同样复用 isElemNearBottom 判断，如果用户没故意往上翻，就自动贴底
+              // Reuse isElemNearBottom and follow the bottom unless the user scrolled up
               if (this.isElemNearBottom(block) || this.isForceScrollToBottom) {
                 block.scrollTop = block.scrollHeight;
               }
@@ -1957,23 +1957,23 @@ formatMessage(content, index) {
       });
       
       this.scrollPanelToBottom();
-      // 兼容你原有的写法
+      // Retain compatibility with existing behavior
       if (typeof isElectron !== 'undefined' ? isElectron : this.isElectron) {
         this.browserPanelToBottom();
       }
     },
 
-    /* 侧边栏滚动 */
+    /* Sidebar scrolling */
     scrollPanelToBottom() {
       this.$nextTick(() => {
         const panel = this.$refs.messagesPanel;
         if (panel) {
-          // 1. 滚动侧边栏外层容器
+          // 1. Scroll the outer sidebar container
           if (this.isElemNearBottom(panel) || this.isForceScrollToBottom) {
             panel.scrollTop = panel.scrollHeight;
           }
 
-          // 2. 滚动侧边栏内层区块
+          // 2. Scroll inner sidebar blocks
           const innerBlocks = panel.querySelectorAll('.sp-code, .type-reasoning .sp-content');
           innerBlocks.forEach(block => {
             if (block.scrollHeight > block.clientHeight) {
@@ -1986,17 +1986,17 @@ formatMessage(content, index) {
       });
     },
 
-    /* 独立浏览器面板滚动 */
+    /* Independent browser panel scrolling */
     browserPanelToBottom() {
       this.$nextTick(() => {
         const panel = this.$refs.browserMessagesContainer;
         if (panel) {
-          // 1. 滚动独立面板外层容器
+          // 1. Scroll outer browser panel
           if (this.isElemNearBottom(panel) || this.isForceScrollToBottom) {
             panel.scrollTop = panel.scrollHeight;
           }
 
-          // 2. 滚动独立面板内层区块
+          // 2. Scroll inner browser panel blocks
           const innerBlocks = panel.querySelectorAll('.sp-code, .type-reasoning .sp-content');
           innerBlocks.forEach(block => {
             if (block.scrollHeight > block.clientHeight) {
@@ -2020,7 +2020,7 @@ formatMessage(content, index) {
       this.syncSystemPromptToMessages(this.system_prompt);
     },
 
-    // WebSocket相关
+    // WebSocket handling
     initWebSocket() {
       const http_protocol = window.location.protocol;
       const ws_protocol = http_protocol === 'https:' ? 'wss:' : 'ws:';
@@ -2028,9 +2028,9 @@ formatMessage(content, index) {
 
       this.ws = new WebSocket(ws_url);
 
-      // 设置心跳间隔和重连间隔（单位：毫秒）
-      const HEARTBEAT_INTERVAL = 10000; // 每10秒发送一次 ping
-      const RECONNECT_INTERVAL = 5000;  // 断开后每5秒尝试重连一次
+      // Heartbeat and reconnect intervals in milliseconds
+      const HEARTBEAT_INTERVAL = 10000; // Send ping every ten seconds
+      const RECONNECT_INTERVAL = 5000;  // Retry every five seconds after disconnect
 
       let heartbeatTimer = null;
       let reconnectTimer = null;
@@ -2039,7 +2039,7 @@ formatMessage(content, index) {
         heartbeatTimer = setInterval(() => {
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             try {
-              this.ws.send(JSON.stringify({ type: 'ping' })); // 发送心跳包
+              this.ws.send(JSON.stringify({ type: 'ping' })); // Send heartbeat
             } catch (e) {
               console.error('Failed to send ping:', e);
             }
@@ -2059,20 +2059,20 @@ formatMessage(content, index) {
         if (!reconnectTimer) {
           reconnectTimer = setTimeout(() => {
             console.log('Reconnecting WebSocket...');
-            this.initWebSocket(); // 重新初始化
+            this.initWebSocket(); // Reinitialize
             reconnectTimer = null;
           }, RECONNECT_INTERVAL);
         }
       };
 
-      // WebSocket 打开事件
+      // WebSocket open event
       this.ws.onopen = () => {
         console.log('WebSocket connection established');
-        stopHeartbeat(); // 防止重复心跳
+        stopHeartbeat(); // Prevent duplicate heartbeats
         startHeartbeat();
       };
 
-      // 接收消息
+      // Receive message
       this.ws.onmessage = async (event) => {
         let data;
         try {
@@ -2083,7 +2083,7 @@ formatMessage(content, index) {
         }
 
       if (data.type === 'pong') {
-        // 可以在这里处理 pong 回复，比如记录状态
+        // Optionally handle pong responses
         console.log('Received pong from server.');
       } 
       else if (data.type === 'behavior') {
@@ -2275,7 +2275,7 @@ formatMessage(content, index) {
           this.customHttpTools = data.data.custom_http || this.customHttpTools;
           this.isGroupMode = data.data.isGroupMode || this.isGroupMode;
           this.selectedGroupAgents = data.data.selectedGroupAgents || this.selectedGroupAgents;
-          // 初始化时确保数据一致性
+          // Ensure consistent initial state
           this.edgettsLanguage = this.ttsSettings.edgettsLanguage;
           this.edgettsGender = this.ttsSettings.edgettsGender;
           this.handleSystemLanguageChange(this.systemSettings.language);
@@ -2291,7 +2291,7 @@ formatMessage(content, index) {
             this.changeSqlEnabled();
           }
           this.changeMemory();
-          // this.target_lang改成navigator.language || navigator.userLanguage;
+          // Set this.target_lang from navigator.language or navigator.userLanguage
           this.target_lang = this.targetLangSelected!="system"? this.targetLangSelected: navigator.language || navigator.userLanguage || 'en-US';
           this.loadDefaultModels();
           this.loadDefaultMotions();
@@ -2311,20 +2311,20 @@ formatMessage(content, index) {
           if (this.activeMenu === 'home') this.startDriverGuide();
         } 
         else if (data.type === 'task_notification') {
-            // 1. 调用前端的弹窗提醒 (保持原有逻辑)
+            // 1. Display frontend notification
             showNotification(`${data.data.title}\n${this.t('intask')}`, 'success');
             
-            // 2. 核心改进：触发 runBehavior，让网页端发起对话总结
+            // 2. Trigger runBehavior to summarize conversation in the web client
             if (data.data.behavior) {
-                // 这里确保 this 指向正确，如果在箭头函数中直接用 this，否则用外层保存的_this/that
+                // Ensure this refers to the correct component
                 this.runBehavior(data.data.behavior);
             }
         }
         else if (data.type === 'diary_entry') {
-            // 日记系统：将后端生成的日记内容原样展示到当前对话
+            // Display generated diary content unchanged in current conversation
             if (data.data && data.data.content) {
                 if (data.data.actionType === 'system_notify') {
-                    const title = data.data.title || this.t('DiarySystem') || '日记系统';
+                    const title = data.data.title || this.t('DiarySystem') || 'Diary';
                     showNotification(title + ': ' + data.data.content, 'warning');
                 } else {
                     this.pushDiaryToChat(data.data.content, data.data.actionType);
@@ -2336,18 +2336,18 @@ formatMessage(content, index) {
             showNotification(this.t('settings_save_failed'), 'error');
           }
         }
-        // 新增：处理用户输入更新
+        // Handle user input updates
         else if (data.type === 'update_user_input') {
           this.userInput = data.data.text;
         }
-        // 更新或添加提示词
+        // Update or add a prompt
         else if (data.type === 'update_system_prompt') {
             const id = data.data.id;
             const text = data.data.text;
             this.extensionsSystemPromptsDict[id] = text; 
         }
         
-        // 移除提示词 (对应后端 finally 中的逻辑)
+        // Remove prompt (matching backend finally handling)
         else if (data.type === 'remove_system_prompt') {
             const id = data.data.id;
             
@@ -2355,43 +2355,43 @@ formatMessage(content, index) {
                 delete this.extensionsSystemPromptsDict[id];
             }
         }
-        // 新增：处理工具输入
+        // Handle tool input
         else if (data.type === 'update_tool_input') {
           this.userInput = data.data.text;
           this.sendMessage(role = 'system')
         }
-        // 新增：处理TTS输入
+        // Handle TTS input
         else if (data.type === 'start_tts') {
           this.readConfig.longText = data.data.text;
-          // 等待0.5s
+          // Wait 0.5 seconds
           setTimeout(() => {
             this.startRead();
           }, 500);
         }
-        // 新增：停止TTS
+        // Stop TTS
         else if (data.type === 'stop_tts') {
           this.stopTTSActivities();
           this.readConfig.longText = '';
         }
-        // 新增：处理关闭扩展侧边栏
+        // Handle extension sidebar closure
         else if (data.type === 'trigger_close_extension') {
-          console.log('关闭侧边栏')
+          console.log('Close sidebar')
           this.resetToDefaultView();
         }
-        // 新增：处理触发发送消息
+        // Handle message submission trigger
         else if (data.type === 'trigger_send_message') {
           this.sendMessage();
         }
-        // 新增：清空消息列表
+        // Clear messages
         else if (data.type === "trigger_clear_message" ){
           this.clearMessages();
         }
-        // 扩展推送的请求（如 sap-snack-director）：进弹幕队列，由闸门串行调度 ——
-        // 既不会打断正在生成/正在播报的一轮，也不会像 trigger_send_message 那样在 isTyping 时被静默丢掉。
+        // Enqueue extension requests (such as sap-snack-director) for serial scheduling,
+        // without interrupting generation or speech or dropping requests during isTyping.
         else if (data.type === 'live_enqueue') {
           this.enqueueLiveRequest(data.data);
         }
-        // 新增：接收来自其他窗口的消息同步
+        // Synchronize messages from other windows
         else if (data.type === 'messages_update') {
           if (data.data && data.data.messages && !this.isSending) {
             this.messages = data.data.messages;
@@ -2401,24 +2401,24 @@ formatMessage(content, index) {
             this.$nextTick(() => { this.requestScrollToBottom(); });
           }
         }
-        // 新增：响应请求消息列表
+        // Respond to message-list requests
         else if (data.type === 'request_messages') {
-          // 发送当前消息列表给请求方
+          // Send current messages to requesting client
           this.sendMessagesToExtension();
         }
       };
 
-      // WebSocket 关闭事件
+      // WebSocket close event
       this.ws.onclose = (event) => {
         console.log('WebSocket connection closed:', event.reason);
         stopHeartbeat();
         scheduleReconnect();
       };
 
-      // WebSocket 错误事件
+      // WebSocket error event
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
-        this.ws.close(); // 主动关闭连接，触发 onclose 事件
+        this.ws.close(); // Close actively to trigger onclose
       };
     },
 
@@ -2446,10 +2446,10 @@ formatMessage(content, index) {
 
       if (!window.electronAPI?.unregisterGlobalShortcut) return;
       
-      // 每次更新前，先注销旧的
+      // Unregister the old shortcut before updating
       await window.electronAPI.unregisterGlobalShortcut();
 
-      // 如果启用了 ASR 且为全局快捷键模式
+      // If ASR and global shortcut mode are enabled
       if (this.asrSettings.interactionMethod === 'globalKeyTriggered') {
         const globalKeyCombo = this.getGlobalAccelerator(this.asrSettings.hotkey);
         
@@ -2457,25 +2457,25 @@ formatMessage(content, index) {
         if (!success) {
           this.$message.error(`Failed to register global shortcut ${globalKeyCombo}; it may already be in use`);
         } else {
-          console.log(`全局快捷键已更新为: ${globalKeyCombo}`);
+          console.log("Global shortcut updated to: " + globalKeyCombo);
         }
       }
     },
 
-    // 【新增】将你的单键转换为 Electron 系统的组合键格式
+    // Convert the configured key to Electron accelerator format
     getGlobalAccelerator(localKey) {
       if (localKey === 'Alt') return 'Alt+Space';
       if (localKey === 'Control') return 'Control+Space';
       if (localKey === 'Shift') return 'Shift+Space';
-      return 'Alt+Space'; // 默认 fallback
+      return 'Alt+Space'; // Default fallback
     },
 
-    // 【修改】键盘按下事件 (只处理局部 keyTriggered)
+    // Keydown handler (local keyTriggered mode only)
     async handleKeyDown(event) {
       if (event?.repeat) return; 
       if (event.isComposing || event.keyCode === 229) return;
 
-      // ===== 快捷指令弹出菜单导航（优先处理）=====
+      // ===== Shortcut popup navigation (first priority) =====
       if (this.shortcutMenuOpen && this.shortcutMenuItems.length) {
         if (event.key === 'ArrowDown') { event.preventDefault(); this.moveShortcutMenu(1); return; }
         if (event.key === 'ArrowUp') { event.preventDefault(); this.moveShortcutMenu(-1); return; }
@@ -2488,17 +2488,17 @@ formatMessage(content, index) {
         if (event.key === 'Escape') { event.preventDefault(); this.closeShortcutMenu(); return; }
       }
 
-      // ====== 局部模式 (按住说话) ======
+      // ====== Local push-to-talk mode ======
       if (this.asrSettings.interactionMethod === "keyTriggered") {
-        // 如果按下的键和设置的键严格匹配 (例如 'Alt' === 'Alt')
+        // Require an exact match with the configured key
         if (event.key === this.asrSettings.hotkey) {
           event.preventDefault(); 
-          await this.handlePttPress(event); // 开始录音
+          await this.handlePttPress(event); // Start recording
           return; 
         }
       }
 
-      // -- 下方是你原有的播放控制及回车发送逻辑，保持不变 --
+      // Existing playback and Enter-key handling below
       if (event.code === 'Space' && event.shiftKey) {
         event.preventDefault();
         if (this.readState.ttsChunks.length > 0 && !this.readState.isPlaying) {
@@ -2529,15 +2529,15 @@ formatMessage(content, index) {
       }
     },
 
-    // 【修改】键盘松开事件 (只处理局部 keyTriggered)
+    // Keyup handler (local keyTriggered mode only)
     async handleKeyUp(event) {
       if (event?.repeat) return;
 
-      // ====== 局部模式 (松开结束) ======
+      // ====== Local release-to-stop mode ======
       if (this.asrSettings.interactionMethod === "keyTriggered") {
         if (event.key === this.asrSettings.hotkey) {
           event.preventDefault();
-          await this.handlePttRelease(event); // 结束录音
+          await this.handlePttRelease(event); // Stop recording
           return;
         }
       }  
@@ -2550,7 +2550,7 @@ formatMessage(content, index) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     },  
-    // 新增：发送当前消息列表到所有连接的客户端
+    // Send the current message list to all connected clients
     sendMessagesToExtension() {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
       if (this.isSending && this._lastExtSendTime && Date.now() - this._lastExtSendTime < 3000) {
@@ -2582,25 +2582,25 @@ formatMessage(content, index) {
         }
     },
     async syncSystemPromptToMessages(newPrompt) {
-      // 情况 1: 新提示词为空
+      // Case 1: new prompt is empty
       if (!newPrompt) {
         if (this.messages.length > 0 && this.messages[0].role === 'system') {
-          this.messages.splice(0, 1); // 删除系统消息
+          this.messages.splice(0, 1); // Remove system message
         }
         return;
       }
   
-      // 情况 2: 已有系统消息
+      // Case 2: existing system message
       if (this.messages[0]?.role === 'system') {
-        // 更新系统消息内容
+        // Update system content
         this.messages[0].content = newPrompt;
         console.log('Updated system message:', this.messages[0]);
         return;
       }
   
-      // 情况 3: 没有系统消息
+      // Case 3: no system message
       this.messages.unshift({
-        id: Date.now() + Math.random(), // 添加唯一ID
+        id: Date.now() + Math.random(), // Add unique ID
         role: 'system',
         content: newPrompt
       });
@@ -2609,25 +2609,25 @@ formatMessage(content, index) {
     },
 
 
-    // 敏感路径检测函数
+    // Sensitive path detection
     isDangerousPath(path) {
         if (!path) return false;
 
-        // 1. 规范化路径：统一斜杠，转小写，去掉末尾斜杠
+        // 1. Normalize separators, lowercase and remove trailing slash
         let normalized = path.trim().replace(/\\/g, '/').toLowerCase();
         if (normalized.length > 1 && normalized.endsWith('/')) {
             normalized = normalized.slice(0, -1);
         }
 
-        // --- A. 绝对禁止的磁盘/系统根目录 ---
-        // 匹配: "c:", "d:", "/"
+        // --- A. Disallowed disk and system roots ---
+        // Matches "c:", "d:", "/"
         const winRootRegex = /^[a-z]:$/;
         if (winRootRegex.test(normalized) || normalized === '/' || normalized === '') {
             return true; 
         }
 
-        // --- B. 仅禁止目录本身，但允许其子目录 (User Containers) ---
-        // 比如禁止选择 "C:/Users"，但允许 "C:/Users/YourName/Documents"
+        // --- B. Disallow container directory itself but allow subdirectories ---
+        // For example, disallow C:/Users but allow C:/Users/YourName/Documents
         const userContainers = [
             'c:/users',
             '/users',
@@ -2637,8 +2637,8 @@ formatMessage(content, index) {
             return true;
         }
 
-        // --- C. 禁止该目录及其所有子目录 (System Core) ---
-        // 这些地方无论如何都不该让本地引擎去跑
+        // --- C. Disallow system core directories and their descendants ---
+        // Local agents should not operate in these directories
         const strictSystemPaths = [
             'c:/windows',
             'c:/program files',
@@ -2652,16 +2652,16 @@ formatMessage(content, index) {
         ];
 
         return strictSystemPaths.some(prefix => {
-            // 只有在匹配系统核心目录或其子路径时才拦截
+            // Intercept system core directories or their descendants
             return normalized === prefix || normalized.startsWith(prefix + '/');
         });
     },
 
     // ==========================================
-    // 1. 用户动作入口与调度函数（可直接替换）
+    // 1. User action entry point and dispatcher
     // ==========================================
-    // 统一快捷指令分发：命中控制类指令则就地处理并返回 true，否则返回 false 继续正常发送
-    // 快捷指令弹出菜单：输入变化时刷新可见性
+    // Dispatch recognized control shortcuts locally; return false for ordinary submission
+    // Refresh shortcut popup visibility as input changes
     refreshShortcutMenu() {
       const items = this.shortcutMenuItems;
       this.shortcutMenuOpen = (this.shortcutMenuToken !== null) && items.length > 0;
@@ -2679,12 +2679,12 @@ formatMessage(content, index) {
     selectShortcutMenuItem(item) {
       if (!item) return;
       if (item.mode === 'fill') {
-        // 需要参数的指令 / 技能：填入并保留焦点，等待用户输入内容后回车
+        // For commands requiring arguments, insert command and retain focus for user input
         this.userInput = item.insert + ' ';
         this.shortcutMenuOpen = false;
         this.shortcutMenuIndex = 0;
       } else {
-        // 无参数指令：直接执行
+        // Execute argument-free commands immediately
         this.closeShortcutMenu();
         this.handleShortcutCommand(item.insert);
         this.userInput = '';
@@ -2789,11 +2789,11 @@ formatMessage(content, index) {
         showNotification(this.t('cmd_mode_switched') + ': ' + modeValue, 'success');
     },
     async sendMessage(role = 'user') { 
-        // 基础校验
+        // Basic validation
         if (!this.userInput.trim() && (!this.files || this.files.length === 0) && (!this.images || this.images.length === 0)) return;
         if (this.isTyping) return;
         this.closeShortcutMenu();
-        // 统一快捷指令拦截（仅处理聊天界面的控制类指令；技能注入 / #记忆 / @文件 仍走正常流程）
+        // Intercept web control shortcuts; skill injection, memory and file references follow normal flow
         if (this.systemSettings.enableShortcuts && role === 'user'
             && (!this.files || this.files.length === 0) && (!this.images || this.images.length === 0)
             && this.handleShortcutCommand(this.userInput.trim())) {
@@ -2808,17 +2808,17 @@ formatMessage(content, index) {
                     this.t('dangerous_path_detected'),
                     'error',
                 );
-                return; // 直接返回，不执行后续逻辑
+                return; // Return without further processing
             }
 
-            // 如果校验通过，继续执行...
+            // Continue if validation succeeds
         }
-        // [V2新增]：切换菜单
+        // Switch menu
         if (this.activeMenu === 'dashboard'){
           this.activeMenu = 'home'
         }
 
-        // 处理 TTS/Read 中断
+        // Handle TTS and read-aloud interruption
         if (this.readState.isPlaying && this.ttsSettings.enabled) { 
             if (this.isReadRunning){
                 this.pauseRead();
@@ -2863,7 +2863,7 @@ formatMessage(content, index) {
           }
       }
 
-        // --- 文件上传处理 ---
+        // --- File upload handling ---
         const userInput = this.userInput.trim();
         let fileLinks = this.files || [];
         
@@ -2889,7 +2889,7 @@ formatMessage(content, index) {
             const formData = new FormData();
               for (const file of imageLinks) {
                   if (file.file instanceof Blob) { 
-                      formData.append('files', file.file, file.name , file.detectedType); // [V2新增]：detectedType
+                      formData.append('files', file.file, file.name , file.detectedType); // Include detectedType
                   } 
               }
               try {
@@ -2898,24 +2898,24 @@ formatMessage(content, index) {
                   if (data.success) {
                     imageLinks = data.fileLinks;
                     this.imageFiles = [...this.imageFiles, ...data.imageFiles];
-                    if(data.vedioFiles) { // [V2新增]：视频支持
+                    if(data.vedioFiles) { // Support video files
                         this.vedioFiles = [...(this.vedioFiles || []), ...data.vedioFiles];
                     }
                   }
               } catch (error) { console.error(error); }
         }
 
-        // --- 核心修复点：确保 this.fileLinks 是数组 ---
+        // Ensure this.fileLinks is an array
         if (!Array.isArray(this.fileLinks)) {
             this.fileLinks = []; 
         }
 
-        // 构造文件链接字符串
-        const fileLinks_content = fileLinks.map(fileLink => `\n[文件名：${fileLink.name}\n文件链接: ${fileLink.path}]`).join('\n') || '';
+        // Construct file-link text
+        const fileLinks_content = fileLinks.map(fileLink => `\n[Filename: ${fileLink.name}\nFile link: ${fileLink.path}]`).join('\n') || '';
         const fileLinks_list = Array.isArray(fileLinks) ? fileLinks.map(fileLink => fileLink.path).flat() : []
         this.fileLinks = this.fileLinks.concat(fileLinks_list)
 
-        // --- 推送用户消息到界面 ---
+        // --- Push user message to UI ---
         this.messages.push({
             id: Date.now() + Math.random(),
             role: role,
@@ -2923,9 +2923,9 @@ formatMessage(content, index) {
             fileLinks: fileLinks,
             fileLinks_content: fileLinks_content,
             imageLinks: imageLinks || [],
-            hasDesktopVision: captureFlag, // ✨ 新增标记：告诉 UI 这条消息触发了后端截图
+            hasDesktopVision: captureFlag, // Mark messages that trigger backend screenshot capture
             agentName: this.memorySettings.userName || 'User',
-            timestamp: Date.now() // ✨ 记录发送时间 
+            timestamp: Date.now() // Record send time
         });
 
         this.sendMessagesToExtension();
@@ -2935,34 +2935,34 @@ formatMessage(content, index) {
         
         this.$nextTick(() => { this.requestScrollToBottom(); });
 
-        // 提前创建会话，确保深度研究等长耗时流式回复期间增量保存可正常工作
+        // Create conversation early for incremental saving during long streamed replies
         this.ensureConversationCreated();
 
-        // --- 调度逻辑：群聊 vs 单聊 ---
+        // --- Dispatch: group chat or individual chat ---
         this.isSending = true; 
         this.abortController = new AbortController(); 
 
         try {
                 if (this.isGroupMode && this.selectedGroupAgents && this.selectedGroupAgents.length > 0) {
-                    // == 群聊模式：随机串行调用 ==
+                    // Group chat: randomized serial calls
                     
-                    // 创建副本并随机打乱 (Fisher-Yates Shuffle)
+                    // Copy and shuffle using Fisher-Yates
                     let executionList = [...this.selectedGroupAgents];
                     for (let i = executionList.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [executionList[i], executionList[j]] = [executionList[j], executionList[i]];
                     }
 
-                    // 遍历打乱后的列表
+                    // Iterate the shuffled list
                     for (const targetId of executionList) {
                         if (this.abortController.signal.aborted) break;
 
                         let agentDisplayName = "Unknown";
                         
-                        // 解析显示名称
+                        // Resolve display name
                         if (targetId.startsWith('memory/')) {
                             const memId = targetId.split('/')[1];
-                            // 🔴 核心修复：加上 this.memories && 确保其存在时再调用 .find
+                            // Check this.memories before calling find
                             const memRecord = this.memories && this.memories.find(m => String(m.id) === String(memId));
                             agentDisplayName = memRecord ? memRecord.name : "Role";
                         } else if (targetId === 'super-model') {
@@ -2971,27 +2971,27 @@ formatMessage(content, index) {
                             agentDisplayName = this.agents[targetId].name;
                         }
 
-                        // 调用生成函数
+                        // Call generation function
                         await this.generateAIResponse(targetId, agentDisplayName);
                     }
                 } else {
-                    // == 单聊模式 ==
+                    // Individual chat
                     let currentName = 'Assistant';
 
-                    // 1. 判断角色卡主开关开启，且选中了具体的角色卡 ID
+                    // 1. Check character-card enable switch and selected card ID
                     if (this.memorySettings && this.memorySettings.is_memory && this.memorySettings.selectedMemory) {
                         const selectedId = this.memorySettings.selectedMemory;
                         
-                        // 确保 memories 列表存在，并采用 String 强转匹配，防止因数据类型不一致（数字 vs 字符串）导致查找失败
+                        // Ensure memories exists and compare IDs as strings to handle numeric/string mismatches
                         const memRecord = this.memories && this.memories.find(m => String(m.id) === String(selectedId));
                         if (memRecord) {
                             currentName = memRecord.name;
                         } else {
-                            // 降级兜底
+                            // Fallback
                             currentName = "Role";
                         }
                     } 
-                    // 2. 否则，展示系统当前默认选择的智能体名称
+                    // 2. Otherwise show the current default agent name
                     else if (this.mainAgent === 'super-model') {
                         currentName = this.t('defaultAgent');
                     } else if (this.agents && this.agents[this.mainAgent]) {
@@ -3021,7 +3021,7 @@ formatMessage(content, index) {
 
 
     // ==========================================
-    // 2. AI 生成与流式处理函数（支持 Human-in-the-loop 审批）
+    // 2. AI generation and streaming with human approval
     // ==========================================
     async generateAIResponse(targetAgentId, agentDisplayName = null, isResume = false) {
 
@@ -3040,12 +3040,12 @@ formatMessage(content, index) {
         const toolCallStack = [];
         this.toolArgsAccumulator = this.toolArgsAccumulator || {};
 
-        // 内部函数：准备发送给 API 的消息历史（保持不变）
+        // Internal helper: prepare API message history
         const prepareMessages = (msgs) => {
             const rawMessages = msgs.flatMap(msg => {
                 const userName = this.memorySettings?.userName || 'User';
 
-                // --- 1. 处理人类用户 / 群聊消息 ---
+                // --- 1. Human user and group-chat messages ---
                 if (this.isGroupMode && (msg.role === 'user' || (msg.role === 'assistant' && msg.agentName !== agentDisplayName))) {
                     let textContent = (msg.pure_content ?? msg.content) + (msg.fileLinks_content ?? '');
                     const prefix = msg.role === 'user' ? userName : msg.agentName;
@@ -3079,7 +3079,7 @@ formatMessage(content, index) {
                 let apiRole = msg.role === 'system' ? 'system' : (msg.role === 'assistant' ? 'assistant' : 'user');
                 let textContent = (msg.pure_content ?? msg.content) + (msg.fileLinks_content ?? '');
                 
-                // --- 2. 处理单聊 / 常规消息 ---
+                // --- 2. Individual and ordinary chat messages ---
                 if (msg.imageLinks && msg.imageLinks.length > 0) {
                     const contentArray = [{ type: "text", text: textContent }];
                     msg.imageLinks.forEach(imageLink => {
@@ -3125,7 +3125,7 @@ formatMessage(content, index) {
             return sanitized;
         };
 
-        // 第一步：打包 Payload
+        // Step one: assemble payload
         let messagesPayload = prepareMessages(this.messages);
         if (this.extensionsSystemPromptsDict) {
             const combinedPrompt = Object.values(this.extensionsSystemPromptsDict).filter(Boolean).join('\n\n');
@@ -3143,7 +3143,7 @@ formatMessage(content, index) {
                 id: Date.now() + Math.random(),
                 role: 'assistant',
                 agentName: agentDisplayName,
-                content: '',         // 不再使用 HTML，最后会被清空
+                content: '',         // HTML no longer needed; cleared at completion
                 pure_content: '',
                 backend_content: [{ role: 'assistant', content: '' }],
                 toolBlocks: {},
@@ -3153,14 +3153,14 @@ formatMessage(content, index) {
                 omniAudioChunks: [], ttsChunks: [], chunks_voice: [], audioChunks: [],
                 isPlaying: false, total_tokens: 0, first_token_latency: 0, elapsedTime: 0,
                 generationFinished: false,
-                timestamp: Date.now() // ✨ 记录生成时间
+                timestamp: Date.now() // Record generation time
             };
             this.messages.push(newMsgData);
             currentMsg = this.messages[this.messages.length - 1];
         }
         const latestUserMessage = [...this.messages].reverse().find(msg => msg.role === 'user');
 
-        // 获取块的辅助函数（带冻结，支持流式复用）
+        // Block lookup helper with freezing and stream reuse
         const getBlock = (type, id = null, name = null) => {
             if (!currentMsg.displayBlocks) currentMsg.displayBlocks = [];
             const blocks = currentMsg.displayBlocks;
@@ -3173,7 +3173,7 @@ formatMessage(content, index) {
                 blocks.splice(0, removeCount);
             }
 
-            // 如果有 id，先查找已存在的块（如 tool_call / tool_result 复用）
+            // Find an existing block by ID, e.g. tool_call/tool_result
             if (id) {
                 const existing = blocks.find(b => b.type === type && b.id === id);
                 if (existing) {
@@ -3182,7 +3182,7 @@ formatMessage(content, index) {
                 }
             }
             
-            // 检查最后一个块是否可复用（类型相同且未被冻结）
+            // Reuse the last block if type matches and it is not frozen
             const last = blocks[blocks.length - 1];
             const canReuse = last && last.type === type && !Object.isFrozen(last) && (!id || last.id === id);
             if (canReuse) {
@@ -3190,9 +3190,9 @@ formatMessage(content, index) {
                 return last;
             }
             
-            // 不复用，先冻结上一个不同类型的块（使其脱离响应式）
+            // Otherwise freeze the previous block of a different type
             if (last && !Object.isFrozen(last)) {
-                // 🔴 核心修复：含有复杂对象（如 data 属性）或类型为 approval 的块绝不能冻结，防止违反 Vue 3 Proxy 约束
+                // Never freeze blocks containing complex objects or approval blocks; preserve Vue proxy invariants
                 if (last.type !== 'approval' && !last.data) {
                     Object.freeze(last);
                     if (typeof last.content === 'string') Object.freeze(last.content);
@@ -3200,7 +3200,7 @@ formatMessage(content, index) {
                 }
             }
             
-            // 创建新块并推入数组
+            // Create block and append to array
         const newBlock = { type, id, name, content: '', args: '', data: null, segments: null };
             blocks.push(newBlock);
             return newBlock;
@@ -3234,7 +3234,7 @@ formatMessage(content, index) {
                     if (retryAttempt > 0) {
                         if (this.abortController?.signal.aborted) throw new DOMException('User aborted', 'AbortError');
                         const delay = RETRY_BASE_DELAY * Math.pow(2, retryAttempt - 1);
-                        console.log(`[Retry] fetch /v1/chat/completions 第 ${retryAttempt}/${MAX_FETCH_RETRIES} 次重试, 等待 ${delay}ms...`);
+                        console.log("[Retry] fetch /v1/chat/completions attempt " + retryAttempt + "/" + MAX_FETCH_RETRIES + ", waiting " + delay + "ms...");
                         await new Promise(r => setTimeout(r, delay));
                     }
 
@@ -3261,14 +3261,14 @@ formatMessage(content, index) {
                     if (response.status >= 400 && response.status < 500) break;
                     if (retryAttempt < MAX_FETCH_RETRIES) {
                         lastFetchError = new Error(`Server error: ${response.status}`);
-                        console.log(`[Retry] HTTP ${response.status}, 将重试...`);
+                        console.log("[Retry] HTTP " + response.status + ", retrying...");
                         continue;
                     }
                 } catch (e) {
                     lastFetchError = e;
                     if (e.name === 'AbortError') throw e;
                     if (retryAttempt < MAX_FETCH_RETRIES) {
-                        console.log(`[Retry] 网络错误: ${e.message}, 将重试...`);
+                        console.log("[Retry] Network error: " + e.message + ", retrying...");
                         continue;
                     }
                     throw e;
@@ -3292,7 +3292,7 @@ formatMessage(content, index) {
             const decoder = new TextDecoder();
             let buffer = '';
 
-            // 初始化流式文本批量更新状态
+            // Initialize batched streaming-text updates
             this._streamTargetMsg = currentMsg;
             this._streamTextBuffer = '';
             this._typewriterSpeed = 30;
@@ -3365,13 +3365,13 @@ formatMessage(content, index) {
                             currentMsg.first_token_latency = this.elapsedTime;
                         }
 
-                        // A. 处理思考 (Reasoning) —— 仅更新 displayBlocks，不拼 HTML
+                        // A. Reasoning: update displayBlocks without concatenating HTML
                         if (delta.reasoning_content) {
                             const block = getBlock('reasoning');
                             block.content += delta.reasoning_content;
 
                             let lastBackend = currentMsg.backend_content[currentMsg.backend_content.length - 1];
-                            // 如果最后一个条目不是 assistant，或者它已经有了内容（说明上一个 assistant 已完成）
+                            // If the last entry is not an assistant or already contains completed content
                             if (!lastBackend || lastBackend.role !== 'assistant' || (lastBackend.content && lastBackend.content.trim() !== '')) {
                                 lastBackend = { role: 'assistant', content: '', reasoning_content: '' };
                                 currentMsg.backend_content.push(lastBackend);
@@ -3379,7 +3379,7 @@ formatMessage(content, index) {
                             lastBackend.reasoning_content = (lastBackend.reasoning_content || '') + delta.reasoning_content;
                         }
 
-                        // B. 处理文本 (Content) —— 流式防抖更新
+                        // B. Content: debounced streaming updates
                         if (delta.content) {
 
                             if (!this._streamTextBuffer) {
@@ -3390,10 +3390,10 @@ formatMessage(content, index) {
                                 }
                             }
 
-                            // 缓冲文本，不再直接操作 DOM
+                            // Buffer text rather than manipulating the DOM
                             this._streamTextBuffer += delta.content;
 
-                            // 将文本同步存入 backend_content，防止多轮对话历史被过滤抛弃
+                            // Store text in backend_content to preserve multi-turn history
                             const lastBackend = currentMsg.backend_content[currentMsg.backend_content.length - 1];
                             if (lastBackend && lastBackend.role === 'assistant') {
                                 lastBackend.content = (lastBackend.content || '') + delta.content;
@@ -3403,13 +3403,13 @@ formatMessage(content, index) {
 
                             const accumulatedText = lastBackend ? (lastBackend.content || '') : '';
 
-                            // === 核心分支处理 ===
+                            // === Main handling branches ===
                             if (this.ttsSettings.enabled) {
-                                // 1. 利用流式状态机，将当前的 delta.content 转换为干净、安全的朗读文本
+                                // 1. Use the streaming state machine to turn delta.content into clean speech text
                                 const readableText = this.processMarkdownStreamForTTS(currentMsg, delta.content, false);
                                 tts_buffer += readableText;
 
-                                // 2. 切分已累积的可用文本语句送入 TTS
+                                // 2. Split accumulated speech-ready text into sentences for TTS
                                 const { chunks, chunks_voice, remaining, remaining_voice } = this.splitTTSBuffer(tts_buffer);
                                 if (chunks.length > 0) {
                                     currentMsg.chunks_voice.push(...chunks_voice);
@@ -3418,9 +3418,9 @@ formatMessage(content, index) {
                                 tts_buffer = remaining;
                                 this.cur_voice = remaining_voice;
                             } else {
-                                // === 【新增】TTS 禁用状态下的文本与表情同步逻辑 ===
+                                // === Text and expression synchronization when TTS is disabled ===
                                 if ((this.vrmOnline || this.vtsOnline) && this.ttsWebSocket) {
-                                    // 自动检测并提取累积文本中的表情/动作指令 tags (例如 [happy] 或 *wave*)
+                                    // Extract expression and motion tags from accumulated text
                                     const detectedExpressions = [];
                                     const tagRegex = /[\[\(\*]([a-zA-Z_0-9\u4e00-\u9fa5]+)[\]\)\*]/g;
                                     let match;
@@ -3430,7 +3430,7 @@ formatMessage(content, index) {
                                         detectedExpressions.push(tag);
                                     }
 
-                                    // 将累计文本和动作标记推送给 VRM 渲染
+                                    // Send accumulated text and motion tags to VRM
                                     this.sendTTSStatusToVRM('omniStreaming', {
                                         text: accumulatedText,
                                         expressions: detectedExpressions
@@ -3440,7 +3440,7 @@ formatMessage(content, index) {
 
                         }
 
-                        // C. 工具 Loading 状态 (tool_progress) —— 只更新 displayBlocks
+                        // C. Tool loading state (tool_progress): update displayBlocks only
                         if (delta.tool_progress) {
                             const progress = delta.tool_progress;
                             let toolCallId = progress.tool_call_id || progress.id;
@@ -3472,7 +3472,7 @@ formatMessage(content, index) {
                             continue;
                         }
 
-                        // D. 工具结果 / 错误 / 审批 —— 仅更新 displayBlocks + backend_content
+                        // D. Results, errors and approvals: update displayBlocks and backend_content
                         if (delta.tool_content) {
                             const tool = delta.tool_content;
                             const toolName = tool.title || 'unknown';
@@ -3516,34 +3516,34 @@ formatMessage(content, index) {
                                 } catch (e) { }
                             }
 
-                            // 审批逻辑
+                            // Approval handling
                             if (isApproval && approvalData) {
                                 const b = getBlock('approval', toolCallId, toolName);
                                 b.data = approvalData;
                                 this.approvalMap[toolCallId] = approvalData;
 
-                                // 不再生成 HTML，直接更新 backend_content
+                                // Update backend_content directly without generating HTML
                                 currentMsg.backend_content.push({ role: 'tool', tool_call_id: toolCallId, name: toolName, content: "{}" });
                                 currentMsg.backend_content.push({ role: 'assistant', content: '' });
                                 this.requestScrollToBottom();
 
-                                // 🚀 核心修复：一旦检测到审批块，立即阻断后续流式接收，等候用户操作
+                                // Stop receiving the stream as soon as an approval block arrives; wait for user action
                                 if (this.abortController) {
                                     this.abortController.abort();
                                 }
-                                break; // 强行跳出流式读取循环
+                                break; // Exit stream-reading loop
                             }
                             else if (tool.type === 'tool_result_stream' && tool.title === "tool_result_stream") {
                                 const targetBlock = getBlock('tool_result', toolCallId, toolName);
                                 
-                                // 限制 UI 层渲染最大字符，防止 DOM 卡死崩溃
+                                // Limit UI text size to prevent DOM hangs
                                 if (targetBlock.content.length < 50000) {
                                     targetBlock.content = this.smartMergeTerminal(targetBlock.content, tool.content);
                                 } else if (!targetBlock.content.endsWith('\n... (Display Truncated)')) {
                                     targetBlock.content += '\n... (Display Truncated)';
                                 }
 
-                                // 更新 backend_content (动态限制后端历史记录体积)
+                                // Update backend_content while bounding backend history size
                                 const lastToolIndex = currentMsg.backend_content.length - 1;
                                 for (let i = lastToolIndex; i >= 0; i--) {
                                     if (currentMsg.backend_content[i].role === 'tool' && currentMsg.backend_content[i].tool_call_id === toolCallId) {
@@ -3562,17 +3562,17 @@ formatMessage(content, index) {
 
                                 const targetBlock = getBlock(bType, toolCallId, toolName);
                                 
-                                // 截断显示内容（只影响 UI 显示）
+                                // Truncate display text only
                                 if (tool.type === 'call') {
                                     targetBlock.args = tool.content;
                                 } else {
                                     targetBlock.content = this.truncateDisplayContent(tool.content);
                                 }
 
-                                // 后端消息存储使用原始内容（可能截断，保护 AI 上下文）
+                                // Store original content for history, with context-protecting truncation if needed
                                 let rawContent = tool.content || '';
                                 
-                                // 🚀 新增：预截断，防止大文件或海量输出瞬间打爆 WebSocket
+                                // Pretruncate large files or output to avoid overloading WebSocket
                                 if (tool.type !== 'call' && rawContent.length > 15000) {
                                     rawContent = rawContent.slice(0, 15000) + '\n... (Truncated)';
                                 }
@@ -3581,16 +3581,16 @@ formatMessage(content, index) {
                                     let lastIdx = currentMsg.backend_content.length - 1;
                                     let last = currentMsg.backend_content[lastIdx];
                                     
-                                    // 🚀 核心自愈：如果检测到当前最新节点已被冻结，说明是旧 bug 留下的历史包袱，当场深/浅拷贝一份解冻
+                                    // If the newest node is frozen from an older bug, clone it to make it writable
                                     if (last && Object.isFrozen(last)) {
                                         last = { ...last };
                                         currentMsg.backend_content[lastIdx] = last;
                                     }
 
-                                    const actualArgs = rawContent || "{}"; // 提取真实的参数
+                                    const actualArgs = rawContent || "{}"; // Extract actual arguments
                                     
                                     if (last && last.role === 'assistant') {
-                                        // 🚀 克隆可能被冻结的内部 tool_calls 属性，保证可写
+                                        // Clone possibly frozen tool_calls to make them writable
                                         if (!last.tool_calls) {
                                             last.tool_calls = [];
                                         } else if (Object.isFrozen(last.tool_calls)) {
@@ -3601,13 +3601,13 @@ formatMessage(content, index) {
                                         if (!existingCall) {
                                             last.tool_calls.push({ id: toolCallId, type: 'function', function: { name: tool.title, arguments: actualArgs } });
                                         } else {
-                                            // 🚀 如果查找到的 existingCall 本身也是被冻结的，同样做深拷贝解冻
+                                            // Deep-copy a frozen existingCall to make it writable
                                             let callIdx = last.tool_calls.indexOf(existingCall);
                                             if (callIdx !== -1 && Object.isFrozen(existingCall)) {
                                                 existingCall = JSON.parse(JSON.stringify(existingCall));
                                                 last.tool_calls[callIdx] = existingCall;
                                             }
-                                            existingCall.function.arguments = actualArgs; // 覆盖占位符，更新为真实参数
+                                            existingCall.function.arguments = actualArgs; // Replace placeholder with actual arguments
                                         }
                                     } else {
                                         currentMsg.backend_content.push({ role: 'assistant', content: null, tool_calls:[{ id: toolCallId, type: 'function', function: { name: tool.title, arguments: actualArgs } }] });
@@ -3653,13 +3653,13 @@ formatMessage(content, index) {
                 if (streamFinished) break;
             }
 
-            // 循环结束后，停止打字机动画并强制刷新剩余文字
+            // Stop typewriter animation and flush remaining text at loop end
             this._typewriterRunning = false;
             this._typewriterTickCount = 0;
             if (this._typewriterRafId) cancelAnimationFrame(this._typewriterRafId);
             this.flushStreamTextBuffer();
 
-            // === 核心修改：强制刷新流式状态机中的所有残留文本 ===
+            // === Flush all remaining text from the streaming state machine ===
             if (this.ttsSettings.enabled) {
                 const finalReadable = this.processMarkdownStreamForTTS(currentMsg, '', true);
                 tts_buffer += finalReadable;
@@ -3677,7 +3677,7 @@ formatMessage(content, index) {
             }
 
             if (this.ttsSettings.enabled) {
-                // 提前通知：音频输入已全部送出，让 FlashHead 提前生成尾部残帧，避免结尾画面定格
+                // Notify FlashHead that audio input is complete so tail frames can be generated
                 setTimeout(() => { this.sendTTSStatusToVRM('audioInputComplete', {}); }, 0);
                 if (this.audioStartTime > this.audioCtx.currentTime) {
                     const remainingTime = (this.audioStartTime - this.audioCtx.currentTime) * 1000;
@@ -3715,16 +3715,16 @@ formatMessage(content, index) {
             this.voiceStack = ['default'];
             if (this.allBriefly) currentMsg.briefly = true;
 
-            // 清空 content 字段（不再需要 HTML）
+            // Clear the unused HTML content field
             if (currentMsg) {
                 currentMsg.generationFinished = true; 
-                currentMsg.content = ''; // 清空 content 字段
+                currentMsg.content = ''; // Clear content field
             }
 
-            // 消息去重和保存
+            // Deduplicate and save messages
             this.ensureConversationCreated();
 
-            // 截断后端消息中过长的 tool content，保护 AI 上下文
+            // Truncate overly long tool content in history to protect model context
             if (currentMsg && currentMsg.backend_content) {
                 const AI_MAX_TOOL_LENGTH = 15000;
                 currentMsg.backend_content.forEach(item => {
@@ -3747,7 +3747,7 @@ formatMessage(content, index) {
                 this.messages.splice(0, this.messages.length - MAX_MESSAGES);
             }
 
-            // 冻结已完成消息的所有 displayBlocks 及内部字符串，减少响应式开销
+            // Freeze completed message displayBlocks and strings to reduce reactive overhead
             if (currentMsg && Array.isArray(currentMsg.displayBlocks)) {
                 currentMsg.displayBlocks.forEach(block => {
                     if (!Object.isFrozen(block)) {
@@ -3763,7 +3763,7 @@ formatMessage(content, index) {
             if (this.ttsSettings.enabled && audioProcess) {
                 await audioProcess;
             } else {
-                // === 【新增】TTS 禁用状态下生成完毕通知 ===
+                // === Generation completion notification when TTS is disabled ===
                 if ((this.vrmOnline || this.vtsOnline) && this.ttsWebSocket) {
                     this.sendTTSStatusToVRM('allChunksCompleted', {});
                 }
@@ -3788,7 +3788,7 @@ formatMessage(content, index) {
                 delete currentMsg._ttsState;
             }
 
-            // 清理流式缓冲区状态及打字机动画
+            // Clear streaming buffer and typewriter animation
             this._typewriterRunning = false;
             this._typewriterTickCount = 0;
             if (this._typewriterRafId) { cancelAnimationFrame(this._typewriterRafId); this._typewriterRafId = null; }
@@ -3797,20 +3797,20 @@ formatMessage(content, index) {
         }
     },
 
-    // 1. 动态安全获取消息的发送者名称
+    // 1. Safely resolve the message sender name
     getMessageAgentName(message) {
-        // 如果消息体中已有记录，直接使用
+        // Use the recorded name if present
         if (message.agentName) return message.agentName;
         
-        // 如果是助手消息但没有记录名称（常见于开场白）
+        // For an assistant message without a name, such as a greeting
         if (message.role === 'assistant') {
-            // A. 优先尝试读取当前激活的角色卡/Memory的名称
+            // A. Prefer the active character card or memory name
             if (this.memorySettings && this.memorySettings.is_memory && this.memorySettings.selectedMemory) {
                 const selectedId = this.memorySettings.selectedMemory;
                 const memRecord = this.memories && this.memories.find(m => String(m.id) === String(selectedId));
                 if (memRecord) return memRecord.name;
             }
-            // B. 其次尝试读取默认智能体名称
+            // B. Otherwise try the default agent name
             if (this.mainAgent === 'super-model') {
                 return this.t('defaultAgent');
             } else if (this.agents && this.agents[this.mainAgent]) {
@@ -3819,18 +3819,18 @@ formatMessage(content, index) {
             return 'Assistant';
         }
         
-        // 如果是用户消息
+        // For user messages
         return this.memorySettings?.userName || 'User';
     },
 
-    // 2. 动态安全解析并格式化时间戳
+    // 2. Safely parse and format timestamps
     formatMessageTime(timestamp, messageId = null) {
         let timeVal = timestamp;
         
-        // 尝试解析唯一 message.id 作为降级时间戳
+        // Try message.id as fallback timestamp
         if (!timeVal && messageId) {
             const idNum = parseFloat(messageId);
-            if (!isNaN(idNum) && idNum > 1000000000000) { // 验证是否为合理的毫秒级时间戳
+            if (!isNaN(idNum) && idNum > 1000000000000) { // Check for a plausible millisecond timestamp
                 timeVal = idNum;
             }
         }
@@ -3840,40 +3840,40 @@ formatMessage(content, index) {
         const msgDate = new Date(timeVal);
         const now = new Date();
         
-        // 获取今日、昨日、前天零点的时间戳，进行精确天级对比
+        // Get midnight today, yesterday and the preceding day for date comparisons
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
         const oneDayMs = 24 * 60 * 60 * 1000;
         const yesterdayStart = todayStart - oneDayMs;
         const theDayBeforeStart = todayStart - 2 * oneDayMs;
         
-        // 计算本周一零点的时间戳（以周一为一周的起点）
-        const currentDayOfWeek = now.getDay(); // 0(周日) - 6(周六)
-        const daysSinceMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1; // 转换为以周一为 0 点的偏移量
+        // Compute Monday midnight as the start of the current week
+        const currentDayOfWeek = now.getDay(); // 0 (Sunday) through 6 (Saturday)
+        const daysSinceMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1; // Convert to an offset with Monday as zero
         const thisMondayStart = todayStart - daysSinceMonday * oneDayMs;
         
         const msgTime = msgDate.getTime();
         
-        // 格式化具体的时分（HH:mm）
+        // Format hour and minute (HH:mm)
         const hours = String(msgDate.getHours()).padStart(2, '0');
         const minutes = String(msgDate.getMinutes()).padStart(2, '0');
         const timeStr = `${hours}:${minutes}`;
         
-        // 1. 如果是今天：只显示时间，如 "17:26"
+        // 1. Today: show time only, e.g. 17:26
         if (msgTime >= todayStart) {
             return timeStr;
         }
         
-        // 2. 如果是昨天：读取 'yesterday' 键，显示 "昨天 17:26" / "Yesterday 17:26"
+        // 2. Yesterday: use yesterday translation key
         if (msgTime >= yesterdayStart && msgTime < todayStart) {
             return `${this.t('yesterday')} ${timeStr}`;
         }
         
-        // 3. 如果是前天：读取 'theDayBefore' 键，显示 "前天 17:26" / "Day before yesterday 17:26"
+        // 3. Day before yesterday: use theDayBefore translation key
         if (msgTime >= theDayBeforeStart && msgTime < yesterdayStart) {
             return `${this.t('theDayBefore')} ${timeStr}`;
         }
         
-        // 4. 如果是本周的其他时间（周一 0 点之后，但在前天 0 点之前）：读取对应的周几键，显示 "周一 17:26" / "Monday 17:26"
+        // 4. Other dates this week: use the weekday key and time
         if (msgTime >= thisMondayStart && msgTime < theDayBeforeStart) {
             const weekKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
             const dayKey = weekKeys[msgDate.getDay()];
@@ -3881,21 +3881,21 @@ formatMessage(content, index) {
             return `${dayName} ${timeStr}`;
         }
         
-        // 5. 跨周或更久的时间：显示具体日期和时间
+        // 5. Previous weeks: show date and time
         const year = msgDate.getFullYear();
         const month = String(msgDate.getMonth() + 1).padStart(2, '0');
         const day = String(msgDate.getDate()).padStart(2, '0');
         
-        // 如果是本年度内的消息，隐藏年份显示，如 "06-08 17:26"
+        // For current-year messages omit the year
         if (year === now.getFullYear()) {
             return `${month}-${day} ${timeStr}`;
         } else {
-            // 跨年消息，显示完整年份，如 "2025-06-08 17:26"
+            // For earlier years include the full year
             return `${year}-${month}-${day} ${timeStr}`;
         }
     },
 
-    // === Human-in-the-loop 处理函数 ===
+    // === Human-in-the-loop handling ===
     async processToolApproval(toolCallId, action) {
         const currentMsg = this.messages[this.messages.length - 1];
         if (!currentMsg) return;
@@ -3904,7 +3904,7 @@ formatMessage(content, index) {
         const toolName = data?.tool_name || data?.name || 'Tool';
         const blockId = `approval-${toolCallId}`;
 
-        // 定位并准备将“审批块”转变为“执行结果块”
+        // Locate approval block and prepare to convert it into a result block
         let targetIdx = -1;
         if (currentMsg.displayBlocks) {
             targetIdx = currentMsg.displayBlocks.findIndex(b => b.id === toolCallId && b.type === 'approval');
@@ -3945,20 +3945,20 @@ formatMessage(content, index) {
             if (action === 'deny') {
                 resultText = `User denied the execution of tool '${toolName}'.`;
                 
-                // 更新结果内容
+                // Update result content
                 if (targetIdx !== -1) {
                     currentMsg.displayBlocks[targetIdx].content = resultText;
                     currentMsg.displayBlocks[targetIdx].type = 'error';
                     currentMsg.displayBlocks[targetIdx].name = this.t('tool_deny');
                 }
             } else {
-                // 1. 安全提取并标准化参数
+                // 1. Safely extract and normalize arguments
                 let toolParams = data?.tool_params || data?.arguments || data?.params || data?.tool_args || {};
                 if (typeof toolParams === 'string') {
                     try { toolParams = JSON.parse(toolParams); } catch (e) {}
                 }
 
-                // 2. 发起 HTTP 请求
+                // 2. Send HTTP request
                 const response = await fetch('/execute_tool_manually', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -3977,13 +3977,13 @@ formatMessage(content, index) {
 
                 const contentType = response.headers.get('content-type');
 
-                // 🚀 3. 如果后端返回的是流（media_type="text/event-stream"），执行流式渲染
+                // 3. Stream rendering for text/event-stream responses
                 if (contentType && contentType.includes('event-stream')) {
                     const reader = response.body.getReader();
                     const decoder = new TextDecoder();
                     let buffer = '';
 
-                    // 动画加载文字改为正式标题
+                    // Replace loading text with the final title
                     if (targetIdx !== -1) {
                         currentMsg.displayBlocks[targetIdx].name = `${toolName} ${this.t('tool_result')}`;
                     }
@@ -4004,7 +4004,7 @@ formatMessage(content, index) {
                                     const parsed = JSON.parse(jsonStr);
                                     if (parsed.chunk) {
                                         resultText += parsed.chunk;
-                                        // 🌟 实时响应式流式渲染更新到前端组件
+                                        // Update frontend component reactively as stream arrives
                                         if (targetIdx !== -1) {
                                             currentMsg.displayBlocks[targetIdx].content = resultText;
                                         }
@@ -4019,7 +4019,7 @@ formatMessage(content, index) {
                         }
                     }
                 } else {
-                    // 4. 常规单次完整 JSON 返回适配
+                    // 4. Handle ordinary single JSON responses
                     const jsonRes = await response.json();
                     resultText = jsonRes.result || JSON.stringify(jsonRes);
                     
@@ -4029,7 +4029,7 @@ formatMessage(content, index) {
                     }
                 }
 
-                // 5. 将结果同步写入 AI 的 backend_content 节点
+                // 5. Synchronize result into AI backend_content
                 const cleanedForAI = this.truncateForAI(resultText);
                 if (currentMsg.backend_content) {
                     for (let i = currentMsg.backend_content.length - 1; i >= 0; i--) {
@@ -4042,7 +4042,7 @@ formatMessage(content, index) {
                 } 
             }
 
-            // 更新 HTML 兼容性备份块
+            // Update HTML compatibility backup block
             const blockClass = action === 'deny' ? 'type-error' : 'type-result';
             const iconClass = action === 'deny' ? 'fa-xmark' : 'fa-check';
             const finalTitle = action === 'deny' ? this.t('tool_deny') : `${toolName} ${this.t('tool_result')}`;
@@ -4053,7 +4053,7 @@ formatMessage(content, index) {
             </div>\n`;
             this.updateUIBlock(currentMsg, blockId, resultHtml);
 
-            // 6. 工具流式写入完毕，触发下一轮 AI 续写生成
+            // 6. Continue AI generation after tool streaming completes
             await this.generateAIResponse(this.mainAgent, currentMsg.agentName, true);
 
         } catch (e) {
@@ -4105,9 +4105,9 @@ formatMessage(content, index) {
         return blocks;
     },
 
-    // === 辅助函数 ===
+    // === Helpers ===
 
-    // 辅助：调用后端手动执行接口
+    // Helper: call manual execution endpoint
     async executeToolBackend(name, params, type) {
         try {
             const res = await fetch('/execute_tool_manually', {
@@ -4120,20 +4120,20 @@ formatMessage(content, index) {
                 })
             });
             
-            // 🚀 核心安全防护：先读取为原始文本
+            // Read raw text first
             const rawText = await res.text();
             
-            // 如果 HTTP 状态码不正确，直接返回后端输出的错误文本，不进行 JSON 解析
+            // Return raw error text for unsuccessful HTTP responses without JSON parsing
             if (!res.ok) {
                 return `Server Error (${res.status}): ${rawText}`;
             }
             
-            // 尝试以 JSON 解析
+            // Attempt JSON parsing
             try {
                 const json = JSON.parse(rawText);
                 return json.result || JSON.stringify(json);
             } catch (jsonErr) {
-                // 如果解析失败（说明返回了非 JSON 的纯文本），则直接展示原始文本
+                // Display original text when JSON parsing fails
                 return rawText || `No response from tool execution.`;
             }
         } catch (e) {
@@ -4142,7 +4142,7 @@ formatMessage(content, index) {
     },
     
 
-    // 1. 带截断的工具结果显示
+    // 1. Truncated tool result display
     truncateDisplayContent(content) {
         if (typeof content !== 'string') return content;
         if (content.length > MAX_DISPLAY_LENGTH) {
@@ -4151,12 +4151,12 @@ formatMessage(content, index) {
         return content;
     },
 
-    // 2. 节流版滚动（requestAnimationFrame）
+    // 2. Throttled scrolling with requestAnimationFrame
     requestScrollToBottom() {
         if (!this.scrollPending) {
             this.scrollPending = true;
             requestAnimationFrame(() => {
-                // ✅ 改为调用原始的 scrollToBottom
+                // Call the original scrollToBottom
                 if (typeof this.scrollToBottom === 'function') {
                     this.scrollToBottom();
                 }
@@ -4165,7 +4165,7 @@ formatMessage(content, index) {
         }
     },
 
-    // 3. 打字机逐字渲染（requestAnimationFrame 驱动，丝滑流畅）
+    // 3. Character-by-character rendering driven by requestAnimationFrame
     _startTypewriterTick() {
         if (this._typewriterRunning) return;
         this._typewriterRunning = true;
@@ -4239,28 +4239,28 @@ formatMessage(content, index) {
     },
 
 
-    // 1. 判断显示块是否处于活跃状态（正在输出、正在执行或处于等待中）
+    // 1. Determine if a display block is active, executing or waiting
     isBlockActive(msg, block, blockIndex) {
-        // 如果整条消息已经生成并结束，则没有任何块处于活跃状态
+        // No active blocks once the whole message is complete
         if (msg.generationFinished) return false;
 
-        // 【维度一：显式状态判定】（推荐在流式解析更新 block 时使用）
-        // 如果你在更新 displayBlocks 的方法中，给当前正在写入的 block 赋予了活跃标记：
+        // Explicit state detection (preferred for streaming block updates)
+        // Use an active marker on the block currently being written, when available
         if (block.active || block.isStreaming || block.status === 'running') {
             return true;
         }
 
-        // 【维度二：位置退级判定】（默认兜底）
-        // 在标准的单路流式输出中，最新、且正在接收流式数据的块，必然是 displayBlocks 中的最后一个元素
+        // Position-based fallback
+        // For a single stream, the newest receiving block is the last displayBlocks element
         const blocks = msg.displayBlocks;
         if (!blocks) return false;
         if (blockIndex === blocks.length - 1) return true;
 
-        // 【维度三：工具块滞后保护】
-        // 流式输出中，文本块可能先于工具块完成，导致仍在执行中的工具块
-        // 被后续已完成的文本块"挤"到倒数第二个位置而被错误折叠。
-        // 对于工具类块（tool_call/tool_result/reasoning），如果它是整个数组中
-        // 最后一个工具类块，则仍应视为活跃状态。
+        // Protect tools that finish later than text
+        // Text can finish before a tool, pushing the active tool block
+        // to the penultimate position where it could incorrectly collapse.
+        // For tool_call, tool_result and reasoning blocks,
+        // the final block of these types can still be active.
         if (this.isToolBlock(block)) {
             for (let i = blocks.length - 1; i > blockIndex; i--) {
                 if (this.isToolBlock(blocks[i])) return false;
@@ -4271,14 +4271,14 @@ formatMessage(content, index) {
         return false;
     },
 
-    // 2. 统一控制哪些块应该展开，哪些块应该折叠
+    // 2. Control expanded and collapsed block state consistently
     shouldExpandBlock(msg, block, blockIndex) {
-        // 1. 文本块、审批块、错误块：为保证阅读连贯性，默认始终保持展开
+        // 1. Text, approval and error blocks remain expanded for readability
         if (block.type === 'text' || block.type === 'approval' || block.type === 'error') {
             return true;
         }
 
-        // 2. 工具类、思考类块：仅在当前处于活跃状态时展开，完成后自动折叠
+        // 2. Tool and reasoning blocks expand when active and collapse after completion
         if (this.isToolBlock(block)) {
             return this.isBlockActive(msg, block, blockIndex);
         }
@@ -4286,19 +4286,19 @@ formatMessage(content, index) {
         return true;
     },
 
-    // 3. 判断是否为工具类块
+    // 3. Identify tool blocks
     isToolBlock(block) {
         return block.type === 'tool_call' || block.type === 'tool_result' || block.type === 'reasoning';
     },
 
-    // 打开工具块详情（点击折叠块时）
+    // Open tool details when a collapsed block is clicked
     openToolBlockDetail(message, block) {
         if (!block || !this.isToolBlock(block)) return;
         
-        // 直接保存块对象和消息引用
+        // Keep the block object and message reference
         this.activeToolBlock = {
             messageIndex: this.messages.indexOf(message),
-            blockIndex: message.displayBlocks.indexOf(block), // 保留原始索引，用于可能的后续操作
+            blockIndex: message.displayBlocks.indexOf(block), // Preserve original index for later operations
             block: block
         };
         
@@ -4309,13 +4309,13 @@ formatMessage(content, index) {
         this.updatePanelWidths();
     },
 
-    // 关闭工具详情
+    // Close tool details
     closeToolBlockDetail() {
         this.activeToolBlock = null;
-        this.activeSideView = 'list';  // 回到扩展列表视图
+        this.activeSideView = 'list';  // Return to extension list
     },
 
-    // 根据块类型返回对应的图标类名
+    // Choose icon class by block type
     getToolBlockIcon(type) {
         const icons = {
             'tool_call': 'fa-solid fa-wrench',
@@ -4326,7 +4326,7 @@ formatMessage(content, index) {
         return icons[type] || 'fa-solid fa-file-lines';
     },
 
-    // 格式化工具块内容（处理 \n 和 \" 显示）
+    // Format tool block content for newline and quote display
     formatToolBlockContent(block) {
         if (!block) return '';
         if (block.type === 'approval') {
@@ -4337,7 +4337,7 @@ formatMessage(content, index) {
         return content.replace(/\\n/g, '\n').replace(/\\"/g, '"');
     },
 
-    // 获取消息的指定类型 block（复用原逻辑，但独立出来）
+    // Get message block of a specified type
     getBlockForMsg(msg, type, id = null, name = null) {
         if (!msg.displayBlocks) msg.displayBlocks = [];
         if (id) {
@@ -4356,7 +4356,7 @@ formatMessage(content, index) {
         const newBlock = { type, id, name, content: '', args: '', data: null, segments: null };
         msg.displayBlocks.push(newBlock);
 
-        // 🔥 关键：添加新块后立即裁剪，只保留最后 MAX_RENDERED_BLOCKS 个块
+        // Trim immediately after inserting a block; keep only the last MAX_RENDERED_BLOCKS
         if (msg.displayBlocks.length > MAX_RENDERED_BLOCKS) {
             msg.displayBlocks.splice(0, msg.displayBlocks.length - MAX_RENDERED_BLOCKS);
         }
@@ -4364,11 +4364,11 @@ formatMessage(content, index) {
         return newBlock;
     },
 
-    // methods 增加此函数
+    // Additional method
     smartMergeTerminal(existing, chunk) {
         if (!chunk) return existing;
         
-        // 🚀 核心优化：避免 split('\n') 全局遍历导致的 O(N^2) 内存灾难与 OOM 崩溃
+        // Avoid full split scans and O(N^2) memory growth
         if (chunk.includes('\r')) {
             let combined = existing + chunk;
             const lastNewlineIndex = combined.lastIndexOf('\n');
@@ -4382,22 +4382,22 @@ formatMessage(content, index) {
         return existing + chunk;
     },
 
-    // 辅助：为 AI 准备的精简函数
+    // Helper: compact output for the model
     truncateForAI(text) {
         if (!text) return '';
-        const MAX_LIMIT = 8000; // 传回 AI 的上限，根据需求调整
+        const MAX_LIMIT = 8000; // Maximum characters returned to the model
         
-        // 1. 剔除进度条行（包含 █ 或大量进度字符的行对 AI 没用，浪费 Token）
+        // 1. Remove progress-bar lines that waste context tokens
         let lines = text.split('\n');
         let cleanedLines = lines.filter(line => {
-            // 过滤掉包含进度条特征的行
+            // Filter lines resembling progress bars
             const isProgressBar = (line.includes('█') || line.includes('░') || (line.includes('%') && line.includes('|')));
             return !isProgressBar;
         });
         
         let cleanedText = cleanedLines.join('\n').trim();
         
-        // 2. 如果依然超长，进行头尾截断
+        // 2. If still too long, truncate the middle
         if (cleanedText.length > MAX_LIMIT) {
             return cleanedText.substring(0, 2000) + 
                   `\n\n... [Total ${text.length} chars. Output truncated for context. User sees full output above.] ...\n\n` + 
@@ -4406,7 +4406,7 @@ formatMessage(content, index) {
         return cleanedText;
     },
 
-    // 辅助：转义 HTML (如果已有可忽略)
+    // Helper: escape HTML
     escapeHtml(text) {
         if (!text) return '';
         return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -4414,15 +4414,15 @@ formatMessage(content, index) {
     async handleInputPaste(event) {
       const items = (event.clipboardData || window.clipboardData).items;
       
-      // 🆕 配置: 超过多少字符转为文件
+      // Character threshold for converting text to a file
       const TEXT_TO_FILE_THRESHOLD = 2000; 
 
-      const imageFiles = []; // 待上传的图片列表
-      const videoFiles = []; // 🆕 待上传的视频列表
-      const docFiles = [];   // 待上传的普通文件列表
+      const imageFiles = []; // Images to upload
+      const videoFiles = []; // Videos to upload
+      const docFiles = [];   // Documents to upload
       let hasValidContent = false;
 
-      // 1. 遍历剪贴板中的项目
+      // 1. Iterate clipboard items
       for (const item of items) {
         if (item.kind === 'file') {
           const file = item.getAsFile();
@@ -4430,14 +4430,14 @@ formatMessage(content, index) {
 
           const ext = (file.name.split('.').pop() || '').toLowerCase();
           const isImageMime = item.type.startsWith('image/');
-          const isVideoMime = item.type.startsWith('video/'); // 🆕 识别视频MIME
+          const isVideoMime = item.type.startsWith('video/'); // Detect video MIME type
 
-          // --- 视频处理逻辑 ---
+          // --- Video handling ---
           if (isVideoMime || ALLOWED_VIDEO_EXTENSIONS.includes(ext)) {
             videoFiles.push(file);
             hasValidContent = true;
           } 
-          // --- 图片处理逻辑 ---
+          // --- Image handling ---
           else if (isImageMime || ALLOWED_IMAGE_EXTENSIONS.includes(ext)) {
             if (file.name === 'image.png' || !file.name.includes('.')) {
               const fileExtension = file.type.split('/')[1] || 'png';
@@ -4448,7 +4448,7 @@ formatMessage(content, index) {
             }
             hasValidContent = true;
           } 
-          // --- 普通文档处理逻辑 ---
+          // --- Document handling ---
           else if (ALLOWED_EXTENSIONS.includes(ext)) {
             docFiles.push(file);
             hasValidContent = true;
@@ -4456,7 +4456,7 @@ formatMessage(content, index) {
         }
       }
 
-      // 2. 如果没有检测到实体文件，检查纯文本是否过长
+      // 2. If no actual file is detected, check text length
       if (!hasValidContent) {
           const pastedText = event.clipboardData.getData('text');
           if (pastedText && pastedText.length > TEXT_TO_FILE_THRESHOLD) {
@@ -4467,11 +4467,11 @@ formatMessage(content, index) {
           }
       }
 
-      // 3. 如果找到了有效内容
+      // 3. If valid content was found
       if (hasValidContent) {
         event.preventDefault();
 
-        // 🆕 处理视频
+        // Handle video
         if (videoFiles.length > 0) {
           this.addFiles(videoFiles, 'video');
         }
@@ -4486,10 +4486,10 @@ formatMessage(content, index) {
       }
     },
     getRoleAvatar(name) {
-        // 尝试从记忆列表查找
+        // Look in memory list
         const mem = this.memories.find(m => m.name === name);
         if (mem && mem.avatar) return mem.avatar;
-        // 如果需要，也可以尝试从 agents 列表查找 (如果 agent 对象里存了 avatar)
+        // Optionally check agent avatars
         // const agentKey = Object.keys(this.agents).find(key => this.agents[key].name === name);
         // if (agentKey && this.agents[agentKey].avatar) return this.agents[agentKey].avatar;
         
@@ -4509,7 +4509,7 @@ formatMessage(content, index) {
             if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
 
-            // 解码数据
+            // Decode data
             const raw = atob(b64);
             const pcm16 = new Int16Array(raw.length / 2);
             for (let i = 0; i < raw.length; i += 2) {
@@ -4526,14 +4526,14 @@ formatMessage(content, index) {
                 message.omniDuration += chunkDuration;
             }
 
-            // ======= 【核心修改：利用二进制同步到 VRM】 =======
+            // ======= Synchronize binary data to VRM =======
             if ((this.vrmOnline || this.vtsOnline) && this.ttsWebSocket) {
                 const pcmUint8 = new Uint8Array(raw.length);
                 for(let i=0; i<raw.length; i++) pcmUint8[i] = raw.charCodeAt(i);
                 
                 this.sendBinaryToVRM({
                     type: 'omni_chunk',
-                    text: currentText, // 传入当前文本
+                    text: currentText, // Pass current text
                     sampleRate: sampleRate
                 }, pcmUint8.buffer);
             }
@@ -4576,13 +4576,13 @@ formatMessage(content, index) {
             if (message) message.isPlaying = false;
         }
     },
-    // --- [4] 辅助函数：二进制打包打包器 ---
+    // --- [4] Binary packet helper ---
     sendBinaryToVRM(metadata, audioArrayBuffer) {
         if (!this.ttsWebSocket || this.ttsWebSocket.readyState !== WebSocket.OPEN) return;
         const metadataBytes = new TextEncoder().encode(JSON.stringify(metadata));
         const totalBuffer = new Uint8Array(4 + metadataBytes.byteLength + audioArrayBuffer.byteLength);
         const view = new DataView(totalBuffer.buffer);
-        view.setUint32(0, metadataBytes.byteLength, true); // JSON长度
+        view.setUint32(0, metadataBytes.byteLength, true); // JSON length
         totalBuffer.set(metadataBytes, 4);
         totalBuffer.set(new Uint8Array(audioArrayBuffer), 4 + metadataBytes.byteLength);
         this.ttsWebSocket.send(totalBuffer);
@@ -4594,7 +4594,7 @@ formatMessage(content, index) {
       if (msg.isTranslating) return;
       if (originalContent.trim() === '') return;
 
-      // 1. 先占坑
+      // 1. Reserve a slot
       this.messages[index] = {
         ...msg,
         content: this.t('translating') + '...',
@@ -4606,7 +4606,7 @@ formatMessage(content, index) {
         const abortController = new AbortController();
         this.abortController = abortController;
 
-        // 2. 组装 TTS 提示
+        // 2. Assemble TTS instructions
         let newttsList = [];
         if (this.ttsSettings?.newtts) {
           for (const key in this.ttsSettings.newtts) {
@@ -4614,10 +4614,10 @@ formatMessage(content, index) {
           }
         }
         const ttsMsg = (newttsList.length === 0 || !this.ttsSettings?.enabled)
-          ? '如果被翻译的文字与目标语言一致，则返回原文即可'
-          : `你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！你可以使用以下音色：\n${newttsList.join(', ')}\n，当你生成回答时，将不同的旁白或角色的文字用<音色名></音色名>括起来，以表示这些话是使用这个音色，以控制不同TTS转换成对应音色。对于没有对应音色的部分，可以不括。即使音色名称不为英文，还是可以照样使用<音色名>使用该音色的文本</音色名>来启用对应音色。注意！如果是你扮演的角色的名字在音色列表里，你必须用这个音色标签将你扮演的角色说话的部分括起来！只要是非人物说话的部分，都视为旁白！角色音色应该标记在人物说话的前后！例如：<Narrator>现在是下午三点，她说道：</Narrator><角色名>”天气真好哇！“</角色名><Narrator>说完她伸了个懒腰。</Narrator>\n\n`;
+          ? 'If the source text is already in the target language, return it unchanged.'
+          : `While translating, add the appropriate voice tags. If the text is already in the target language, add only the appropriate voice tags. Do not use HTML comments because they hide text. Available voices:\n${newttsList.join(', ')}\nWrap narration or character dialogue in <VoiceName></VoiceName> to select the corresponding TTS voice. Leave portions with no matching voice untagged. Non-English voice names work too. If the character you play has a voice in the list, tag that character's spoken dialogue with that voice. Treat all non-dialogue as narration. Place voice tags around spoken dialogue. Example: <Narrator>It was three in the afternoon. She said:</Narrator><Character>\"What lovely weather!\"</Character><Narrator>She stretched.</Narrator>\n\n`;
 
-        // 3. 发起流式请求
+        // 3. Start streaming request
         const response = await fetch('/simple_chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -4626,11 +4626,11 @@ formatMessage(content, index) {
             messages: [
               {
                 role: 'system',
-                content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${this.target_lang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。${ttsMsg}`
+                content: `You are a professional translator. Translate the user's content strictly into ${this.target_lang}, preserving formatting such as Markdown and line breaks. Add no extra content. Return only the translation.${ttsMsg}`
               },
               {
                 role: 'user',
-                content: `请翻译以下内容到${this.target_lang}：\n\n${originalContent}`
+                content: `Translate the following content into ${this.target_lang}:\n\n${originalContent}`
               }
             ],
             stream: true,
@@ -4650,40 +4650,40 @@ formatMessage(content, index) {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = '';      // 残余半截行
-        let translated = '';  // 累积结果
+        let buffer = '';      // Residual partial line
+        let translated = '';  // Accumulated translation
 
-        // 4. 逐块读
+        // 4. Read chunks
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
-          buffer = lines.pop(); // 最后一行可能不完整，留到下一轮
+          buffer = lines.pop(); // Keep the potentially incomplete last line for the next iteration
 
           for (const line of lines) {
-            if (!line) continue;          // 空行跳过
+            if (!line) continue;          // Skip blank lines
             try {
               const chunk = JSON.parse(line);
               const delta = chunk.choices?.[0]?.delta?.content ?? '';
               if (delta) {
                 translated += delta;
-                this.messages[index].content = translated; // 实时渲染
+                this.messages[index].content = translated; // Render incrementally
               }
             } catch (e) {
-              // 忽略解析失败
+              // Ignore parse failures
             }
           }
         }
 
-        // 5. 翻译完成
+        // 5. Translation complete
         this.messages[index].isTranslating = false;
         this.messages[index].translated = true;
 
       } catch (error) {
         if (error.name === 'AbortError') {
-          // 用户中断，恢复原文
+          // Restore original text on user interruption
           this.messages[index] = { ...msg, content: originalContent, isTranslating: false };
         } else {
           this.messages[index].content = `Translation error: ${error.message}`;
@@ -4709,12 +4709,12 @@ formatMessage(content, index) {
         if (this.activeSources && this.activeSources.length > 0) {
           this.activeSources.forEach(src => {
             try {
-              src.stop(); // 立即停止播放
+              src.stop(); // Stop playback immediately
             } catch (e) {
-              // 忽略已经停止或未开始的错误
+              // Ignore errors from already stopped or unstarted sources
             }
           });
-          // 清空数组
+          // Clear array
           this.activeSources = [];
         }
         this.audioStartTime = 0; 
@@ -4728,7 +4728,7 @@ formatMessage(content, index) {
       return new Promise((resolve, reject) => {
         this.ensureConversationGroups();
         
-        // 🚀 剔除文件对象中隐藏的 base64 blob，仅保留关键路径供恢复
+        // Strip embedded Base64 blobs from file objects, retaining paths for restoration
         const cleanFiles = (files) => (files || []).map(f => ({ name: f.name, path: f.path, type: f.type, detectedType: f.detectedType }));
 
         const payload = {
@@ -4813,7 +4813,7 @@ formatMessage(content, index) {
             });
             this.ws.send(jsonStr);
         } catch (e) {
-            console.error("Payload 序列化失败，已阻断白屏崩溃:", e);
+            console.error("Payload serialization failed; prevented renderer crash:", e);
             reject(e);
             return;
         }
@@ -4826,37 +4826,37 @@ formatMessage(content, index) {
           }
           if (response.type === 'save_error') {
             this.ws.removeEventListener('message', handler);
-            reject(new Error('保存失败'));
+            reject(new Error('Save failed'));
           }
         };
         const timeout = setTimeout(() => {
           this.ws.removeEventListener('message', handler);
-          reject(new Error('保存超时'));
+          reject(new Error('Save timed out'));
         }, 10000);
         this.ws.addEventListener('message', handler);
       });
     },
 
     getSanitizedConversations() {
-      // 使用 map 创建新数组，不影响原始的内存数据
+      // Map into a new array without changing in-memory data
       return this.conversations.map(conv => ({
         ...conv,
-        // 清洗消息列表
+        // Clean message list
         messages: conv.messages.map(msg => {
-          // 使用解构赋值，排除掉不需要保存的大体积/临时属性
+          // Destructure to exclude large or temporary properties
           const {
-            audioChunks,      // 普通 TTS 的音频 Blob URL (保存了也没用)
-            omniAudioChunks,  // PCM 流的巨大 Base64 数组 (核心清洗目标)
-            ttsQueue,         // 运行时的 Set 队列
-            isPlaying,        // 播放状态
-            cur_audioDatas,   // 临时 Base64 数据
-            ...rest           // 保留 role, content, pure_content, timestamp, fileLinks 等
+            audioChunks,      // Ordinary TTS audio blob URLs
+            omniAudioChunks,  // Large PCM-stream Base64 arrays
+            ttsQueue,         // Runtime Set queue
+            isPlaying,        // Playback state
+            cur_audioDatas,   // Temporary Base64 data
+            ...rest           // Retain role, content, pure_content, timestamp, fileLinks, etc.
           } = msg;
 
-          // 返回一个干净的消息对象
+          // Return a clean message object
           return {
             ...rest,
-            // 明确将这些字段设为空，防止某些旧数据残留
+            // Explicitly clear these fields to avoid stale data
             audioChunks: [],
             omniAudioChunks: [],
             currentChunk: 0,
@@ -4885,7 +4885,7 @@ formatMessage(content, index) {
             });
             this.ws.send(jsonStr);
         } catch (e) {
-            console.error("对话记录序列化失败，已阻断白屏崩溃:", e);
+            console.error("Conversation serialization failed; prevented renderer crash:", e);
             reject(e);
             return;
         }
@@ -4898,12 +4898,12 @@ formatMessage(content, index) {
           }
           if (response.type === 'save_error') {
             this.ws.removeEventListener('message', handler);
-            reject(new Error('保存失败'));
+            reject(new Error('Save failed'));
           }
         };
         const timeout = setTimeout(() => {
           this.ws.removeEventListener('message', handler);
-          reject(new Error('保存超时'));
+          reject(new Error('Save timed out'));
         }, 10000);
         this.ws.addEventListener('message', handler);
       });
@@ -4934,18 +4934,18 @@ formatMessage(content, index) {
         });
         this.ws.send(jsonStr);
       } catch (e) {
-        console.error("增量保存对话失败:", e);
+        console.error("Incremental conversation save failed:", e);
       }
     },
 
-    // 修改后的fetchModels方法
+    // fetchModels implementation
     async fetchModels() {
       this.modelsLoading = true;
       try {
         const response = await fetch(`/v1/models`);
         const result = await response.json();
         
-        // 双重解构获取数据
+        // Extract nested data
         const { data } = result;
         
         this.models = data.map(item => ({
@@ -4954,15 +4954,15 @@ formatMessage(content, index) {
         }));
         
       } catch (error) {
-        console.error('获取模型数据失败:', error);
+        console.error('Failed to retrieve model data:', error);
         this.modelsError = error.message;
-        this.models = []; // 确保清空数据
+        this.models = []; // Clear data on failure
       } finally {
         this.modelsLoading = false;
       }
     },
 
-    // 修改copyEndpoint方法
+    // copyEndpoint implementation
     copyEndpoint() {
       navigator.clipboard.writeText(`${this.partyURL}/v1`)
         .then(() => {
@@ -5024,7 +5024,7 @@ formatMessage(content, index) {
       this.autoSaveSettings()
     },
     
-    // 新增点击头部的处理
+    // Header click handler
     handleHeaderClick(section) {
       this.toggleSection(section)
     },
@@ -5040,28 +5040,28 @@ formatMessage(content, index) {
       }
       this.conversationId = null;
       this.fileLinks = [];
-      this.isThinkOpen = false; // 重置思考模式状态
+      this.isThinkOpen = false; // Reset thinking-mode state
       this.asyncToolsID = [];
-      this.inAutoMode = false; // 重置自动模式状态
-      this.randomGreetings(); // 重新生成随机问候语
-      this.requestScrollToBottom();    // 触发界面更新
+      this.inAutoMode = false; // Reset automatic mode state
+      this.randomGreetings(); // Regenerate random greetings
+      this.requestScrollToBottom();    // Trigger UI refresh
       this.autoSaveSettings();
-      this.sendMessagesToExtension(); // 发送消息到插件
+      this.sendMessagesToExtension(); // Send messages to extensions
     },
 
 
   async browseAllFiles() {
     if (!this.isElectron) {
-      // 浏览器环境
+      // Browser environment
       const input = document.createElement('input')
       input.type = 'file'
       input.multiple = true
-      // 合并接受的文件类型
+      // Combine accepted file types
       input.accept = ALL_ALLOWED_EXTENSIONS.map(ext => `.${ext}`).join(',')
       
       input.onchange = (e) => {
         const files = Array.from(e.target.files)
-        // 统一验证：只要在合并后的列表中即可
+        // Validate against the combined allowlist
         const validFiles = files.filter(file => {
           const ext = file.name.split('.').pop()?.toLowerCase();
           return ALL_ALLOWED_EXTENSIONS.includes(ext);
@@ -5070,8 +5070,8 @@ formatMessage(content, index) {
       }
       input.click()
     } else {
-      // Electron 环境
-      // 假设你的 electronAPI.openFileDialog 支持多选并返回路径
+      // Electron environment
+      // openFileDialog is expected to return multiple selected paths
       const result = await window.electronAPI.openFileDialog(); 
       if (!result.canceled) {
         const files = await Promise.all(
@@ -5093,12 +5093,12 @@ formatMessage(content, index) {
 
     async sendFiles() {
       this.showUploadDialog = true;
-      // 设置文件上传专用处理
+      // Set up file upload handling
       this.currentUploadType = 'file';
     },
     async sendImages() {
       this.showUploadDialog = true;
-      // 设置图片上传专用处理
+      // Set up image upload handling
       this.currentUploadType = 'image';
     },
     browseFiles() {
@@ -5109,7 +5109,7 @@ formatMessage(content, index) {
       }
     },
     
-    // 专门处理图片选择
+    // Handle image selection
     async browseImages() {
       if (!this.isElectron) {
         const input = document.createElement('input')
@@ -5126,7 +5126,7 @@ formatMessage(content, index) {
       } else {
         const result = await window.electronAPI.openImageDialog();
         if (!result.canceled) {
-          // 转换Electron文件路径为File对象
+          // Convert Electron paths into File objects
           const files = await Promise.all(
             result.filePaths
               .filter(path => {
@@ -5134,7 +5134,7 @@ formatMessage(content, index) {
                 return ALLOWED_IMAGE_EXTENSIONS.includes(ext);
               })
               .map(async path => {
-                // 读取文件内容并转换为File对象
+                // Read file content and convert to File
                 const buffer = await window.electronAPI.readFile(path);
                 const blob = new Blob([buffer]);
                 return new File([blob], path.split(/[\\/]/).pop());
@@ -5145,7 +5145,7 @@ formatMessage(content, index) {
       }
     },
 
-    // 文件选择处理方法
+    // File selection handler
     async browseDocuments() {
       if (!this.isElectron) {
         const input = document.createElement('input')
@@ -5162,7 +5162,7 @@ formatMessage(content, index) {
       } else {
         const result = await window.electronAPI.openFileDialog();
         if (!result.canceled) {
-          // 转换Electron文件路径为File对象
+          // Convert Electron paths into File objects
           const files = await Promise.all(
             result.filePaths
               .filter(path => {
@@ -5170,7 +5170,7 @@ formatMessage(content, index) {
                 return ALLOWED_EXTENSIONS.includes(ext);
               })
               .map(async path => {
-                // 读取文件内容并转换为File对象
+                // Read file content and convert to File
                 const buffer = await window.electronAPI.readFile(path);
                 const blob = new Blob([buffer]);
                 return new File([blob], path.split(/[\\/]/).pop());
@@ -5180,7 +5180,7 @@ formatMessage(content, index) {
         }
       }
     },
-    // 文件选择处理方法
+    // File selection handler
     async browseReadFiles() {
       if (!this.isElectron) {
         const input = document.createElement('input')
@@ -5197,7 +5197,7 @@ formatMessage(content, index) {
       } else {
         const result = await window.electronAPI.openFileDialog();
         if (!result.canceled) {
-          // 转换Electron文件路径为File对象
+          // Convert Electron paths into File objects
           const files = await Promise.all(
             result.filePaths
               .filter(path => {
@@ -5205,7 +5205,7 @@ formatMessage(content, index) {
                 return ALLOWED_EXTENSIONS.includes(ext);
               })
               .map(async path => {
-                // 读取文件内容并转换为File对象
+                // Read file content and convert to File
                 const buffer = await window.electronAPI.readFile(path);
                 const blob = new Blob([buffer]);
                 return new File([blob], path.split(/[\\/]/).pop());
@@ -5216,7 +5216,7 @@ formatMessage(content, index) {
       }
     },
 
-    // 文件验证方法
+    // File validation
     isValidFileType(file) {
       if (this.currentUploadType === 'image') {
         return this.isValidImageType(file);
@@ -5229,7 +5229,7 @@ formatMessage(content, index) {
       return ALLOWED_IMAGE_EXTENSIONS.includes(ext) || IMAGE_MIME_WHITELIST.some(mime => file.type.includes(mime))
     },
 
-  // 拖拽释放处理
+  // Drop handler
   async handleInputDrop(event) {
     this.isDragging = false;
     const files = Array.from(event.dataTransfer.files);
@@ -5238,7 +5238,7 @@ formatMessage(content, index) {
     }
   },
 
-  // 粘贴处理 (同时也支持截图粘贴)
+  // Paste handler, including pasted screenshots
   handleInputPaste(event) {
     const items = event.clipboardData.items;
     const files = [];
@@ -5252,58 +5252,58 @@ formatMessage(content, index) {
     }
     
     if (hasFiles) {
-      // 有文件时阻止默认行为
+      // Prevent default behavior when files are present
       event.preventDefault();
       this.handleFiles(files);
     }
-    // 没有文件时，让浏览器正常处理文本粘贴
+    // Otherwise let the browser paste text normally
   },
 
 
-    // 统一处理文件
+    // Shared file handling
     async handleFiles(files) {
-      // 1. 合并所有允许的后缀，用于初步过滤
+      // 1. Combine allowed extensions for initial filtering
       const allAllowed = [...ALLOWED_VIDEO_EXTENSIONS, ...ALLOWED_IMAGE_EXTENSIONS, ...ALLOWED_EXTENSIONS];
       
-      // 2. 遍历处理每一个选中的文件
+      // 2. Process each selected file
       files.forEach(file => {
         try {
           const filename = file.name || (file.path && file.path.split(/[\\/]/).pop()) || '';
           const ext = filename.split('.').pop()?.toLowerCase() || '';
 
-          // 检查是否在允许名单内
+          // Check allowlist
           if (ALLOWED_IMAGE_EXTENSIONS.includes(ext)) {
-            // 如果是图片，按图片逻辑添加
+            // Handle images
             this.addFiles([file], 'image');
           } else if (ALLOWED_VIDEO_EXTENSIONS.includes(ext)) {
-            // 如果是文档，按文件逻辑添加
+            // Handle documents
             this.addFiles([file], 'video');
           } else if (ALLOWED_EXTENSIONS.includes(ext)) {
-            // 如果是文档，按文件逻辑添加
+            // Handle files
             this.addFiles([file], 'file');
           } else {
-            // 不支持的类型
-            console.warn(`不支持的文件类型: ${ext}`);
-            // 可以选加：this.showErrorAlert('file'); 
+            // Unsupported type
+            console.warn("Unsupported file type: " + ext);
+            // Optionally call this.showErrorAlert('file');
           }
         } catch (e) {
-          console.error('文件分拣错误:', e);
+          console.error('File classification failed:', e);
         }
       });
     },
-    // 统一处理文件
+    // Shared file handling
     async handleReadFiles(files) {
       this.showFileDialog = false;
       const allowedExtensions = this.currentUploadType === 'image' ? ALLOWED_IMAGE_EXTENSIONS : ALLOWED_EXTENSIONS;
 
       const validFiles = files.filter(file => {
         try {
-          // 安全获取文件扩展名
+          // Safely extract extension
           const filename = file.name || (file.path && file.path.split(/[\\/]/).pop()) || '';
           const ext = filename.split('.').pop()?.toLowerCase() || '';
           return allowedExtensions.includes(ext);
         } catch (e) {
-          console.error('文件处理错误:', e);
+          console.error('File processing failed:', e);
           return false;
         }
       });
@@ -5331,7 +5331,7 @@ formatMessage(content, index) {
 
           const data = await response.json();
           if (data.success) {      
-            // 将新的文件信息添加到 this.textFiles
+            // Add new file metadata to this.textFiles
             this.textFiles = [...data.textFiles,...this.textFiles];
             this.selectedFile = data.textFiles[0].unique_filename;
             this.autoSaveSettings();
@@ -5357,12 +5357,12 @@ formatMessage(content, index) {
       if (type === 'file') {
         this.files.splice(index, 1);
       } else {
-        // 如果是图片，则从图片列表中删除，考虑this.files长度
+        // Remove images from the image list, considering this.files.length
         index = index - this.files.length;
         this.images.splice(index, 1);
       }
     },
-    // 错误提示
+    // Error notification
     showErrorAlert(type = 'file') {
       const fileTypes = {
         file: this.t('file_type_error'),
@@ -5370,14 +5370,14 @@ formatMessage(content, index) {
       };
       showNotification(fileTypes[type], 'error');
     },
-    // 拖放处理
+    // Drop handling
     handleDrop(event) {
       event.preventDefault()
       const files = Array.from(event.dataTransfer.files)
         .filter(this.isValidFileType)
       this.handleFiles(files)
     },
-        // 拖放处理
+        // Drop handling
     handleReadDrop(event) {
       event.preventDefault()
       const files = Array.from(event.dataTransfer.files)
@@ -5385,25 +5385,25 @@ formatMessage(content, index) {
       this.handleReadFiles(files)
     },
     switchToApiBox() {
-      // 切换到 API 钥匙箱界面
+      // Open API key storage
       this.activeMenu = 'model-config';
       this.subMenu = 'service';
     },
 
-    // 添加文件到列表
+    // Add file to list
     addFiles(files, type = 'file') {
-      // 决定存入哪个展示数组 (图片和视频都进入 this.images 用于视觉预览)
+      // Choose display array; images and videos use this.images for preview
       const targetArray = type === 'image' || type === 'video' ? this.images : this.files;
 
       const newFiles = files.map(file => {
-        // ✨ 在这里进行精准类型判定
+        // Determine exact media type
         let detectedType = type; 
 
         return {
           path: URL.createObjectURL(file),
           name: file.name,
           file: file,
-          detectedType: detectedType // 存入具体的类型：'video', 'image' 或 'file'
+          detectedType: detectedType // Store video, image or file type
         };
       });
 
@@ -5483,18 +5483,18 @@ formatMessage(content, index) {
         this.newProviderTemp.models = [];
       }
     },
-    // 找到原有的 removeProvider 方法，替换为以下代码
+    // removeProvider implementation
     async removeProvider(index) {
-      // 获取被删除的供应商信息
+      // Get deleted provider details
       const removedProvider = this.modelProviders[index];
       
-      // 从供应商列表中移除
+      // Remove from provider list
       this.modelProviders.splice(index, 1);
 
-      // 清理所有相关配置中的引用
+      // Clear references in related settings
       const providerId = removedProvider.id;
       
-      // 主模型配置清理
+      // Clear main model configuration
       if (this.settings.selectedProvider === providerId) {
         this.settings.selectedProvider = null;
         this.settings.model = '';
@@ -5502,7 +5502,7 @@ formatMessage(content, index) {
         this.settings.api_key = '';
       }
 
-      // 推理模型配置清理
+      // Clear reasoning model configuration
       if (this.reasonerSettings.selectedProvider === providerId) {
         this.reasonerSettings.selectedProvider = null;
         this.reasonerSettings.model = '';
@@ -5510,7 +5510,7 @@ formatMessage(content, index) {
         this.reasonerSettings.api_key = '';
       }
 
-      // 触发自动保存
+      // Trigger autosave
       await this.autoSaveSettings();
     },
     confirmAddProvider() {
@@ -5578,16 +5578,16 @@ formatMessage(content, index) {
         this.newProviderTemp.modelId = 'dify'
       }
       if (value === 'SGLang') {
-        this.newProviderTemp.apiKey = 'SGLang' // 新增
+        this.newProviderTemp.apiKey = 'SGLang' // Provider-specific default
       }
       if (value === 'llama.cpp') {
-        this.newProviderTemp.apiKey = 'llamacpp' // 新增
+        this.newProviderTemp.apiKey = 'llamacpp' // Provider-specific default
       }
       this.newProviderTemp.models = [];
       this.newProviderTemp.modelsLoading = false;
       this.newProviderTemp.connectionStatus = null;
     },
-    // rerank供应商
+    // Rerank provider
     async selectRankProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
       if (provider) {
@@ -5598,7 +5598,7 @@ formatMessage(content, index) {
       }
     },
 
-    // 主模型供应商选择
+    // Main model provider selection
     async selectMainProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
       console.log(provider)
@@ -5623,7 +5623,7 @@ formatMessage(content, index) {
       }
     },
 
-    // Claude code 供应商选择
+    // Claude Code provider selection
     async selectCCProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
       let vendor_list = {
@@ -5658,26 +5658,26 @@ formatMessage(content, index) {
       }
     },
     async selectBrainProvider(providerId) {
-      // 1. 在供应商列表中查找详细信息
+      // 1. Find provider details
       const provider = this.modelProviders.find(p => p.id === providerId);
 
-      // 2. 校验：确保找到了供应商，且当前有正在编辑的脑区配置
+      // 2. Verify provider and currently edited brain-region settings exist
       if (provider && this.currentBrainSettings) {
-        // 3. 将供应商的详细信息 (model, url, key) 同步到当前脑区的设置中
+        // 3. Synchronize model, URL and key to current region
         this.currentBrainSettings.model = provider.modelId;
         this.currentBrainSettings.base_url = provider.url;
         this.currentBrainSettings.api_key = provider.apiKey;
 
-        // 4. 打印日志方便调试
-        console.log(`[${this.currentEditingKey}] 切换模型为: ${provider.modelId}`);
+        // 4. Log for diagnostics
+        console.log("[" + this.currentEditingKey + "] Switched model to: " + provider.modelId);
 
-        // 5. 自动保存
+        // 5. Autosave
         if (typeof this.autoSaveSettings === 'function') {
           await this.autoSaveSettings();
         }
       }
     },
-    // 推理模型供应商选择
+    // Reasoning model provider selection
     async selectReasonerProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
       if (provider) {
@@ -5754,7 +5754,7 @@ formatMessage(content, index) {
       }
     },
 
-    // 在methods中添加
+    // Additional method
     handleMainProviderVisibleChange(visible) {
       if (!visible) {
         this.selectMainProvider(this.settings.selectedProvider);
@@ -5792,19 +5792,19 @@ formatMessage(content, index) {
       }
     },
     handleBrainProviderVisibleChange(visible) {
-      // 当下拉框关闭 (!visible) 且当前有选中的供应商 ID 时
+      // When dropdown closes and a provider ID is selected
       if (!visible && this.currentBrainSettings && this.currentBrainSettings.selectedProvider) {
         this.selectBrainProvider(this.currentBrainSettings.selectedProvider);
       }
     },
-    // 创建知识库
+    // Create knowledge base
     async createKnowledgeBase() {
       try {
-        // 上传文件
+        // Upload files
         let uploadedFiles = [];
         if (this.newKbFiles.length > 0) {
           if (!this.isElectron) {
-            // 浏览器环境：通过 FormData 上传
+            // Browser: upload with FormData
             const formData = new FormData();
             for (const file of this.newKbFiles) {
               if (file.file instanceof Blob) {
@@ -5832,8 +5832,8 @@ formatMessage(content, index) {
   
               const data = await response.json();
               if (data.success) {
-                uploadedFiles = data.fileLinks; // 获取上传后的文件链接
-                // data.textFiles 添加到 this.textFiles
+                uploadedFiles = data.fileLinks; // Get uploaded file links
+                // Add data.textFiles to this.textFiles
                 this.textFiles = [...this.textFiles, ...data.textFiles];
                 await this.autoSaveSettings();
               } else {
@@ -5846,7 +5846,7 @@ formatMessage(content, index) {
               return;
             }
           } else {
-            // Electron 环境：通过 JSON 上传
+            // Electron: upload via JSON
             try {
               console.log('Uploading Electron files...');
               const response = await fetch(`/load_file`, {
@@ -5871,8 +5871,8 @@ formatMessage(content, index) {
   
               const data = await response.json();
               if (data.success) {
-                uploadedFiles = data.fileLinks; // 获取上传后的文件链接
-                // data.textFiles 添加到 this.textFiles
+                uploadedFiles = data.fileLinks; // Get uploaded file links
+                // Add data.textFiles to this.textFiles
                 this.textFiles = [...this.textFiles, ...data.textFiles];
                 await this.autoSaveSettings();
               } else {
@@ -5880,17 +5880,17 @@ formatMessage(content, index) {
                 return;
               }
             } catch (error) {
-              console.error('上传错误:', error);
+              console.error('Upload failed:', error);
               showNotification(this.t('file_upload_failed'), 'error');
               return;
             }
           }
         }
   
-        // 生成唯一的 ID
+        // Generate unique ID
         const kbId = uuid.v4();
   
-        // 构建新的知识库对象，使用上传后的文件链接
+        // Build knowledge base using uploaded file links
         const newKb = {
           id: kbId,
           name: this.newKb.name,
@@ -5899,27 +5899,27 @@ formatMessage(content, index) {
           model: this.newKb.model,
           base_url: this.newKb.base_url,
           api_key: this.newKb.api_key,
-          enabled: true, // 默认启用
+          enabled: true, // Enabled by default
           chunk_size: this.newKb.chunk_size,
           chunk_overlap: this.newKb.chunk_overlap,
           chunk_k: this.newKb.chunk_k,
           weight: this.newKb.weight,
-          files: uploadedFiles.map(file => ({ // 使用服务器返回的文件链接
+          files: uploadedFiles.map(file => ({ // Use file links returned by server
             name: file.name,
             path: file.path,
           })),
-          processingStatus: 'processing', // 设置处理状态为 processing
+          processingStatus: 'processing', // Set processing state
         };
   
-        // 更新 settings 中的 knowledgeBases
+        // Update knowledgeBases in settings
         this.knowledgeBases = [...(this.knowledgeBases || []), newKb];
-        //手动触发modelProviders更新，从而能够实时与后端同步
+        // Trigger modelProviders update to synchronize with backend
         this.modelProviders = this.modelProviders
-        // 保存 settings
+        // Save settings
         await this.autoSaveSettings();
-        // post kbId to 后端的create_kb端口
+        // POST kbId to create_kb
         try {
-          // 1. 触发任务
+          // 1. Start task
           const startResponse = await fetch(`/create_kb`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -5927,52 +5927,52 @@ formatMessage(content, index) {
           });
           
           if (!startResponse.ok) throw new Error('Startup failed');
-          // 2. 轮询状态
+          // 2. Poll status
           const checkStatus = async () => {
             try {
               const statusResponse = await fetch(`/kb_status/${kbId}`);
               
-              // 处理 HTTP 错误状态
+              // Handle HTTP errors
               if (!statusResponse.ok) {
-                console.error('状态检查失败:', statusResponse.status);
-                return 'failed'; // 返回明确的失败状态
+                console.error('Status check failed:', statusResponse.status);
+                return 'failed'; // Return explicit failure status
               }
               const data = await statusResponse.json();
-              return data.status || 'unknown'; // 防止 undefined
+              return data.status || 'unknown'; // Avoid undefined
             } catch (error) {
-              console.error('状态检查异常:', error);
+              console.error('Status check error:', error);
               return 'failed';
             }
           };
-          // 修改轮询逻辑
+          // Polling logic
           const interval = setInterval(async () => {
             try {
-              const status = await checkStatus() || ''; // 确保有默认值
+              const status = await checkStatus() || ''; // Provide fallback value
               
               const targetKb = this.knowledgeBases.find(k => k.id === kbId);
               if (!targetKb) {
                 clearInterval(interval);
                 return;
               }
-              // 安全的状态判断
+              // Safe status comparison
               if (status === 'completed') {
                 clearInterval(interval);
                 targetKb.processingStatus = 'completed';
                 showNotification(this.t('kb_created_successfully'), 'success');
                 await this.autoSaveSettings();
-              } else if (typeof status === 'string' && status.startsWith('failed')) { // 安全判断
+              } else if (typeof status === 'string' && status.startsWith('failed')) { // Safe comparison
                 clearInterval(interval);
                 this.knowledgeBases = this.knowledgeBases.filter(k => k.id !== kbId);
                 showNotification(this.t('kb_creation_failed'), 'error');
                 await this.autoSaveSettings();
               }
             } catch (error) {
-              console.error('轮询异常:', error);
+              console.error('Polling failed:', error);
               clearInterval(interval);
             }
           }, 2000);
         } catch (error) {
-          console.error('知识库创建失败:', error);
+          console.error('Knowledge base creation failed:', error);
           showNotification(this.t('kb_creation_failed'), 'error');
         }      
         this.showAddKbDialog = false;
@@ -5990,20 +5990,20 @@ formatMessage(content, index) {
         };
         this.newKbFiles = [];
       } catch (error) {
-        console.error('知识库创建失败:', error);
+        console.error('Knowledge base creation failed:', error);
         showNotification(this.t('kb_creation_failed'), 'error');
       }
     },
 
-    // 删除知识库
+    // Delete knowledge base
     async removeKnowledgeBase(kb) {
       try {
-        // 从 settings 中过滤掉要删除的 knowledgeBase
+        // Remove selected knowledgeBase from settings
         this.knowledgeBases = this.knowledgeBases.filter(
           item => item.id !== kb.id
         );
         let kbId = kb.id
-        //手动触发modelProviders更新，从而能够实时与后端同步
+        // Trigger modelProviders update to synchronize with backend
         this.modelProviders = this.modelProviders
         const Response = await fetch(`/remove_kb`, {
           method: 'DELETE',
@@ -6013,38 +6013,38 @@ formatMessage(content, index) {
 
         if (!Response.ok) throw new Error('Deletion failed');
 
-        // 保存 settings
+        // Save settings
         await this.autoSaveSettings();
 
         showNotification(this.t('kb_deleted_successfully'), 'success');
       } catch (error) {
-        console.error('知识库删除失败:', error);
+        console.error('Knowledge base deletion failed:', error);
         showNotification(this.t('kb_deletion_failed'), 'error');
       }
     },
 
-    // 切换知识库启用状态
+    // Toggle knowledge base
     async toggleKbEnabled(kb) {
       try {
-        // 更新 knowledgeBase 的 enabled 状态
+        // Update knowledgeBase enabled state
         const kbToUpdateIndex = this.knowledgeBases.findIndex(
           item => item.id === kb.id
         );
 
         if (kbToUpdateIndex !== -1) {
           this.knowledgeBases[kbToUpdateIndex].enabled = kb.enabled;
-          //手动触发modelProviders更新，从而能够实时与后端同步
+          // Trigger modelProviders update to synchronize with backend
           this.modelProviders = this.modelProviders
-          // 保存 settings
+          // Save settings
           await this.autoSaveSettings();
           showNotification(this.t('kb')+` ${kb.name} ${kb.enabled ? this.t('enabled')  : this.t('disabled')}`, 'success');
         }
       } catch (error) {
-        console.error('切换知识库状态失败:', error);
+        console.error('Failed to toggle knowledge base:', error);
         showNotification(this.t('kb_status_change_failed'), 'error');
       }
     },
-    // 选择供应商
+    // Select provider
     selectKbProvider(providerId) {
       if (providerId == 'paraphrase-multilingual-MiniLM-L12-v2'){
         this.newKb.model = providerId;
@@ -6061,7 +6061,7 @@ formatMessage(content, index) {
       }
     },
 
-    // 文件上传相关方法
+    // File upload methods
     async browseKbFiles() {
         if (!this.isElectron) {
           const input = document.createElement('input')
@@ -6095,17 +6095,17 @@ formatMessage(content, index) {
           this.showErrorAlert()
         }
     },
-      // 添加文件到列表
+      // Add files to list
     addKbFiles(files) {
       const newFiles = files.map(file => {
-        if (typeof file === 'string') { // Electron路径
+        if (typeof file === 'string') { // Electron path
           return {
             path: file,
             name: file.split(/[\\/]/).pop()
           }
         }
-        return { // 浏览器File对象
-          path: URL.createObjectURL(file),// 生成临时URL
+        return { // Browser File object
+          path: URL.createObjectURL(file),// Generate temporary URL
           name: file.name,
           file: file
         }
@@ -6123,18 +6123,18 @@ formatMessage(content, index) {
       this.newKbFiles.splice(index, 1);
     },
     switchToKnowledgePage() {
-      this.activeMenu = 'toolkit';  // 根据你的菜单项配置的实际值设置
-      this.subMenu = 'document';   // 根据你的子菜单项配置的实际值设置
+      this.activeMenu = 'toolkit';  // Select main menu
+      this.subMenu = 'document';   // Select submenu
     },
     switchToKnowledgeConfig(){
-      this.activeMenu = 'toolkit';  // 根据你的菜单项配置的实际值设置
-      this.subMenu = 'document';   // 根据你的子菜单项配置的实际值设置
+      this.activeMenu = 'toolkit';  // Select main menu
+      this.subMenu = 'document';   // Select submenu
       this.activeKbTab='settings';
       this.showAddKbDialog=false;
     },
     switchToMemoryConfig(){
-      this.activeMenu = 'role';  // 根据你的菜单项配置的实际值设置
-      this.subMenu = 'memory';   // 根据你的子菜单项配置的实际值设置
+      this.activeMenu = 'role';  // Select main menu
+      this.subMenu = 'memory';   // Select submenu
       this.activeMemoryTab='config';
       this.showAddMemoryDialog=false;
     },
@@ -6165,17 +6165,17 @@ formatMessage(content, index) {
       await this.autoSaveSettings();
       this.$forceUpdate();
     },
-    // renderer.js 增强方法
+    // Renderer helper methods
     async handleThemeChange(val) {
-      // 更新根属性
+      // Update root attributes
       document.documentElement.setAttribute('data-theme', val);
       
       this.systemSettings.theme = val;
 
       await this.autoSaveSettings();
     },
-    // 全局字体缩放：基准 14px，范围 0.85 ~ 1.5。
-    // Electron 走 webFrame.setZoomFactor 抗锯齿更好；其余环境兜底用 CSS zoom。
+    // Global font zoom: 14px baseline, range 0.85 to 1.5.
+    // Electron uses webFrame.setZoomFactor for antialiasing; other environments use CSS zoom.
     async handleFontScaleChange(val) {
       const safe = Math.max(0.85, Math.min(1.5, Number(val) || 1));
       if (this.isElectron && window.electronAPI?.setZoomFactor) {
@@ -6194,8 +6194,8 @@ formatMessage(content, index) {
     resetFontScale() {
       this.handleFontScaleChange(1);
     },
-    // 代码字体独立缩放：基准 12px（来自 github-markdown.css 的 .markdown-body pre），范围 0.83 ~ 1.67。
-    // 只写 --code-zoom，由 styles.css 中 pre.code-block 的 calc(--code-zoom / --app-zoom) 抵消全局缩放。
+    // Independent code zoom: 12px baseline from github-markdown.css, range 0.83 to 1.67.
+    // Set --code-zoom; styles.css uses calc(--code-zoom / --app-zoom) to offset global zoom.
     async handleCodeFontScaleChange(val) {
       const safe = Math.max(0.83, Math.min(1.67, Number(val) || 1));
       document.documentElement.style.setProperty('--code-zoom', String(safe));
@@ -6216,7 +6216,7 @@ formatMessage(content, index) {
       window.electronAPI.restartApp();
     },
 
-    // 方法替换为：
+    // Method implementation
     launchBrowserMode() {
       this.isBrowserOpening = true;
       
@@ -6228,7 +6228,7 @@ formatMessage(content, index) {
           window.open(url, '_blank');
         }
         
-        // 2秒后恢复状态
+        // Restore state after two seconds
         setTimeout(() => {
           this.isBrowserOpening = false;
         }, 2000);
@@ -6245,7 +6245,7 @@ formatMessage(content, index) {
           window.open(url, '_blank');
         }
         
-        // 2秒后恢复状态
+        // Restore state after two seconds
         setTimeout(() => {
           this.isBrowserOpening = false;
         }, 2000);
@@ -6254,7 +6254,7 @@ formatMessage(content, index) {
 
     async getInternalIP() {
         try {
-            const response = await fetch('/api/ip'); // 假设接口在同域名下
+            const response = await fetch('/api/ip'); // Same-origin endpoint
             const data = await response.json();
             return data.ip;
         } catch (error) {
@@ -6263,12 +6263,12 @@ formatMessage(content, index) {
         }
     },
     async generateQRCode() {
-      // 确保 partyURL 存在且 DOM 已渲染
+      // Ensure partyURL exists and DOM has rendered
       if (!this.partyURL) return;
-      // 获取内网 IP
+      // Get local network IP
       const internalIP = await this.getInternalIP();
 
-      // 替换 URL 中的 127.0.0.1 或 localhost，保留端口和路径
+      // Replace 127.0.0.1 or localhost while preserving port and path
       const url = new URL(this.partyURL);
       if (url.hostname === '127.0.0.1' || url.hostname === 'localhost') {
         url.hostname = internalIP;
@@ -6276,7 +6276,7 @@ formatMessage(content, index) {
       let qr_url = url.toString();
       const canvas = document.getElementById('qrcode');
 
-      // 生成二维码
+      // Generate QR code
       QRCode.toCanvas(canvas, qr_url, function(error) {
             if (error) {
                 console.error(error);
@@ -6288,8 +6288,8 @@ formatMessage(content, index) {
 
 
     /**
-     * 辅助方法：根据当前表单/JSON输入构建配置对象
-     * 返回 { mcpId, serversObj, inputStr }
+     * Build configuration from current form or JSON input.
+     * Return { mcpId, serversObj, inputStr }
      */
     buildCurrentMCPConfig() {
       let mcpId = "mcp";
@@ -6342,7 +6342,7 @@ formatMessage(content, index) {
           }
         }
 
-        // 构建 input 字符串用于存储
+        // Build input string for storage
         let inputObj = { "mcpServers": {} };
         inputObj.mcpServers[mcpId] = servers;
         inputStr = JSON.stringify(inputObj, null, 2);
@@ -6352,23 +6352,23 @@ formatMessage(content, index) {
     },
 
     /**
-     * 修改后的添加方法：直接调用 buildCurrentMCPConfig
+     * Add method delegates to buildCurrentMCPConfig.
      */
     async addMCPServer() {
       try {
         const { mcpId, servers, inputStr } = this.buildCurrentMCPConfig();
 
-        // 更新本地状态
+        // Update local state
         this.mcpServers = {
           ...this.mcpServers,
           [mcpId]: {
-            ...servers, // 新的配置
+            ...servers, // New configuration
             processingStatus: 'initializing',
             disabled: true,
             type: this.newMCPType,
             input: inputStr,
-            // 如果是编辑模式调用 addMCPServer (即重启)，保留原有的 tools 以防万一，或者清空看需求
-            // 这里为了UI不闪烁，如果ID相同，暂时保留旧tools，等ready了再覆盖
+            // For edit/restart, preserve existing tools until ready
+            // When ID matches, retain tools temporarily to avoid UI flicker
             tools: (this.mcpServers[mcpId] && this.mcpServers[mcpId].tools) || []
           }
         };
@@ -6378,17 +6378,17 @@ formatMessage(content, index) {
         
         await this.autoSaveSettings();
 
-        // 触发后台创建
+        // Start background creation
         await fetch(`/create_mcp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mcpId })
         });
 
-        // 轮询状态
-        await this.pollMCPStatus(mcpId); // 复用之前写的 poll 方法
+        // Poll status
+        await this.pollMCPStatus(mcpId); // Reuse status polling
 
-        // 成功后切换模式
+        // Switch mode after success
         this.isEditMode = true;
         this.activeDialogTab = 'tools';
       } catch (error) {
@@ -6404,7 +6404,7 @@ formatMessage(content, index) {
     },
 
     /**
-     * 更新配置逻辑：智能判断是否需要重启
+     * Update configuration and determine whether restart is needed.
      */
     async updateMCPServerConfig() {
       const currentId = this.currentEditingMCPId;
@@ -6412,8 +6412,8 @@ formatMessage(content, index) {
       
       if (!oldServer) return;
 
-      // 1. 获取新表单对应的配置
-      // 注意：这里我们只构建对象，暂时不写入 this.mcpServers
+      // 1. Build configuration from new form
+      // Do not write to this.mcpServers yet
       let newConfigData;
       try {
         newConfigData = this.buildCurrentMCPConfig();
@@ -6424,16 +6424,16 @@ formatMessage(content, index) {
       
       const { servers: newServersObj } = newConfigData;
 
-      // 2. 比较关键字段是否变更 (Command, Args, Env, Url, Headers)
-      // 忽略 tools, processingStatus, disabled 等状态字段
+      // 2. Compare core connection fields: Command, Args, Env, Url, Headers
+      // Ignore tools, processingStatus, disabled and other state
       const isConfigurationChanged = !this.isSameMCPConfig(oldServer, newServersObj);
 
       if (isConfigurationChanged) {
-        // A. 如果配置变了 -> 走完整的重启流程 (即 addMCPServer)
+        // A. Restart through addMCPServer if configuration changed
         console.log("Configuration changed, restarting MCP...");
         await this.addMCPServer();
       } else {
-        // B. 如果配置没变 (只是动了 Switch 或点了保存) -> 直接关闭
+        // B. Close without restarting if unchanged
         console.log("Configuration identical, skipping restart.");
         showNotification(this.t('settingsSaved'), 'success');
         this.showAddMCPDialog = false;
@@ -6441,30 +6441,30 @@ formatMessage(content, index) {
     },
 
     /**
-     * 深度比较两个 MCP 配置对象 (仅比较核心连接参数)
+     * Deep compare MCP configurations using core connection parameters only.
      */
     isSameMCPConfig(oldSrv, newSrv) {
-      // 比较辅助函数
+      // Comparison helper
       const jsonEq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-      // 1. 比较基础类型
-      // 注意：oldSrv 可能包含 extra 字段，newSrv 是纯净的配置对象
-      // 我们只检查 newSrv 里有的字段
+      // 1. Compare primitive types
+      // oldSrv may include extra fields; newSrv contains configuration only
+      // Compare only fields present in newSrv
       
-      // StdIO 检查
+      // Stdio check
       if (newSrv.command !== oldSrv.command) return false;
       if (!jsonEq(newSrv.args, oldSrv.args)) return false;
       if (!jsonEq(newSrv.env, oldSrv.env)) return false;
 
-      // HTTP/SSE/WS 检查
+      // HTTP/SSE/WS check
       if (newSrv.url !== oldSrv.url) return false;
       if (!jsonEq(newSrv.headers, oldSrv.headers)) return false;
 
       return true;
     },
 
-    // 在methods中添加
-    // 打开添加对话框的辅助函数
+    // Additional method
+    // Helper to open add dialog
     openAddDialog() {
       this.showAddMCPDialog = true;
       this.activeDialogTab = 'config';
@@ -6476,18 +6476,18 @@ formatMessage(content, index) {
       this.updateMCPExample();
     },
 
-    // 重置弹窗状态
+    // Reset dialog state
     resetDialogState() {
         this.newMCPJson = '';
         this.isSubmitting = false;
-        // 注意：不要在这里设 showAddMCPDialog = false，因为这是 closed 事件
+        // Do not set showAddMCPDialog = false in the closed event
     },
 
-    // 抽离轮询逻辑
+    // Shared polling logic
     async pollMCPStatus(mcpId) {
        return new Promise((resolve, reject) => {
           let checkCount = 0;
-          const maxChecks = 30; // 例如 60秒超时
+          const maxChecks = 30; // Example: 60-second timeout
 
           const interval = setInterval(async () => {
             checkCount++;
@@ -6505,19 +6505,19 @@ formatMessage(content, index) {
                   tools: JSON.parse(tools)    
                 };
                 showNotification(this.t('mcpAdded'), 'success');
-                resolve(true); // 成功
+                resolve(true); // Success
               } else if (status.startsWith('failed') || status === 'server_error') {
                 clearInterval(interval);
                 this.mcpServers[mcpId].processingStatus = 'server_error';
                 showNotification(this.t('mcpCreationFailed'), 'error');
-                resolve(false); // 虽然失败，但也算结束了轮询
+                resolve(false); // Failure also ends polling
               } else if (checkCount >= maxChecks) {
                 clearInterval(interval);
                 this.mcpServers[mcpId].processingStatus = 'server_error';
                 reject(new Error("Timeout waiting for MCP server"));
               }
             } catch(e) {
-               // 网络错误等
+               // Network errors and other exceptions
                clearInterval(interval);
                reject(e);
             }
@@ -6525,7 +6525,7 @@ formatMessage(content, index) {
        });
     },
 
-    // 编辑已有服务器
+    // Edit existing server
     editMCPServer(name) {
       this.isEditMode = true;
       this.activeDialogTab = 'config';
@@ -6533,12 +6533,12 @@ formatMessage(content, index) {
       this.isSubmitting = false;
 
       const server = this.mcpServers[name];
-      this.newMCPType = server.type || 'stdio'; // 默认回退
+      this.newMCPType = server.type || 'stdio'; // Default fallback
       this.newMCPJson = server.input;
       
-      // 根据类型判断 inputType (如果有 input 且是 json 格式比较多，可能是 json，否则 form)
-      // 简单起见，如果 editMCPServer 被调用，我们尝试填充 Form 数据
-      this.mcpInputType = 'form'; // 或者根据是否有 input 字符串决定
+      // Infer inputType from server input when appropriate
+      // Populate form when editMCPServer is called
+      this.mcpInputType = 'form'; // Alternatively infer mode from input string
 
       this.newMCPFormData = {
         name: name,
@@ -6553,20 +6553,20 @@ formatMessage(content, index) {
     },
 
     async restartMCPServer(name) {
-       // 保持原有逻辑，或者也可以打开弹窗显示 loading
-       // 这里简单复用原有逻辑，但加上 try catch
+       // Retain existing restart behavior or show a loading dialog
+       // Reuse logic with error handling
        this.mcpServers[name].processingStatus = 'initializing';
        // ... existing restart logic
-       // 如果你想重启时也看弹窗状态，可以调用 editMCPServer(name) 然后 auto trigger logic
-       // 但通常重启是卡片上的快捷操作，保持原样即可。
-       // 只需要加上轮询更新:
+       // Optionally show edit dialog and trigger restart
+       // Restart normally remains a card-level shortcut
+       // Add status polling
        try {
          await fetch(`/create_mcp`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ mcpId: name })
             });
-         this.pollMCPStatus(name); // 不 await，让它后台跑
+         this.pollMCPStatus(name); // Poll in the background without awaiting
        } catch(e) {
          console.error(e);
        }
@@ -6575,7 +6575,7 @@ formatMessage(content, index) {
       this.deletingMCPName = name
       this.showMCPConfirm = true
     },
-    // 新增确认方法
+    // Confirmation method
     async confirmDeleteMCP() {
       try {
         const response = await fetch(`/remove_mcp`, {
@@ -6610,27 +6610,27 @@ formatMessage(content, index) {
     },
 
     /**
-     * 监听输入方式切换 (Form <-> JSON)
+     * Watch input mode changes (Form <-> JSON).
      */
     handleInputMethodChange(val) {
       if (val === 'json') {
-        // 刚才在 Form 模式，切去 JSON -> 把表单转为 JSON
+        // Form to JSON: serialize form
         this.syncFormToJson();
       } else {
-        // 刚才在 JSON 模式，切去 Form -> 把 JSON 解析进表单
+        // JSON to form: parse JSON
         this.syncJsonToForm();
       }
     },
 
     /**
-     * 将表单数据同步到 JSON 字符串
+     * Synchronize form data to JSON.
      */
     syncFormToJson() {
-      // 如果表单名字都没填，可能还没开始编辑，就不覆盖 JSON 了
+      // Do not overwrite JSON before the form name is filled
       if (!this.newMCPFormData.name) return;
 
       try {
-        // 复用之前写过的构建配置对象的逻辑 (如果之前封装了 buildCurrentMCPConfig 可以复用，这里为了独立性单独写)
+        // Build configuration object independently
         const mcpId = this.newMCPFormData.name;
         let servers = {};
         
@@ -6648,7 +6648,7 @@ formatMessage(content, index) {
           }
         } else {
           servers = { "url": this.newMCPFormData.url };
-          // 构建 Headers
+          // Build headers
           if (this.newMCPFormData.apiKey) {
             servers['headers'] = { "Authorization": `Bearer ${this.newMCPFormData.apiKey.trim()}` };
           }
@@ -6662,42 +6662,42 @@ formatMessage(content, index) {
     },
 
     /**
-     * 将 JSON 字符串同步到表单数据
+     * Synchronize JSON to form fields.
      */
     syncJsonToForm() {
       if (!this.newMCPJson || !this.newMCPJson.trim()) return;
 
       try {
         const input = this.newMCPJson.trim();
-        // 容错处理：支持纯对象内容或完整 mcpServers 结构
+        // Accept a bare object or complete mcpServers structure
         const parsed = JSON.parse(input.startsWith('{') ? input : `{${input}}`);
         const serversMap = parsed.mcpServers || parsed;
         const names = Object.keys(serversMap);
         
         if (names.length === 0) return;
 
-        const name = names[0]; // 取第一个服务器
+        const name = names[0]; // Take first server
         const config = serversMap[name];
 
-        // 1. 填充名字
+        // 1. Populate name
         this.newMCPFormData.name = name;
 
-        // 2. 判断类型并填充字段
+        // 2. Determine type and populate fields
         if (config.command) {
-          // 是 Stdio 类型
+          // Stdio type
           this.newMCPType = 'stdio';
           this.newMCPFormData.command = config.command;
           this.newMCPFormData.args = Array.isArray(config.args) ? config.args.join('\n') : '';
           this.newMCPFormData.env = config.env ? Object.entries(config.env).map(([k, v]) => `${k}=${v}`).join('\n') : '';
         } else if (config.url) {
-          // 是 HTTP/SSE/WS 类型
-          // 如果当前 newMCPType 还是 stdio，就切成 sse，否则保留用户选择的 (ws/streamablehttp)
+          // HTTP/SSE/WS type
+          // If newMCPType is stdio, switch to sse; otherwise preserve selection
           if (this.newMCPType === 'stdio') {
              this.newMCPType = 'sse'; 
           }
           this.newMCPFormData.url = config.url;
           
-          // 尝试提取 API Key
+          // Try extracting API key
           if (config.headers && config.headers.Authorization) {
             this.newMCPFormData.apiKey = config.headers.Authorization.replace('Bearer ', '');
           } else {
@@ -6706,11 +6706,11 @@ formatMessage(content, index) {
         }
       } catch (e) {
         console.warn("JSON parse failed during sync:", e);
-        // JSON 格式可能有误，暂不强制覆盖表单，以免用户数据丢失
+        // On invalid JSON, leave existing form values intact
       }
     },
 
-      // 保存智能体
+      // Save agent
     truncatePrompt(text) {
       return text.length > 100 ? text.substring(0, 100) + '...' : text;
     },
@@ -6743,13 +6743,13 @@ formatMessage(content, index) {
         delete this.agents[id]
         this.agents = { ...this.agents }
         try {
-          // 向/delete_file发送请求
+          // Send request to /delete_file
           const response = await fetch(`/remove_agent`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ agentId: id })
           });
-          // 处理响应
+          // Handle response
           if (response.ok) {
             console.log('Agent deleted successfully');
             showNotification(this.t('AgentDeleted'), 'success');
@@ -6795,7 +6795,7 @@ formatMessage(content, index) {
 
         await this.autoSaveSettings();
       } catch (error) {
-        console.error('A2A初始化失败:', error);
+        console.error('A2A initialization failed:', error);
         this.a2aServers = Object.fromEntries(Object.entries(this.a2aServers).filter(([k]) => k !== newurl));
         await this.autoSaveSettings();
         showNotification(this.t('a2aInitFailed'), 'error');
@@ -6806,7 +6806,7 @@ formatMessage(content, index) {
       await this.autoSaveSettings();
     },
     formatDate(date) {
-      // 时间戳转日期
+      // Convert timestamp to date
       return new Date(date).toLocaleString();
     },
     async deleteFile(file) {
@@ -6815,13 +6815,13 @@ formatMessage(content, index) {
       await this.autoSaveSettings();
       fileName = file.unique_filename
       try {
-        // 向/delete_file发送请求
+        // Send request to /delete_file
         const response = await fetch(`/delete_file`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileName: fileName })
         });
-        // 处理响应
+        // Handle response
         if (response.ok) {
           console.log('File deleted successfully');
           showNotification(this.t('fileDeleted'), 'success');
@@ -6831,7 +6831,7 @@ formatMessage(content, index) {
         showNotification(this.t('fileDeleteFailed'), 'error');
       }
     },
-    // 顶部“全选 / 取消全选”
+    // Top select-all toggle
     toggleAll(checked) {
       this.selectedFiles = checked
         ? this.textFiles.map(f => f.unique_filename)
@@ -6848,13 +6848,13 @@ formatMessage(content, index) {
         });
         const data = await res.json();
 
-        // 只要后端说“有成功”就提示成功
+        // Report success if backend reports any successful deletion
         if (data.success && data.successFiles?.length) {
-          // 把后端返回已成功删除的文件干掉
+          // Remove successfully deleted files
           this.textFiles = this.textFiles.filter(
             f => !data.successFiles.includes(f.unique_filename)
           );
-          this.selectedFiles = [];          // 清空选中
+          this.selectedFiles = [];          // Clear selection
           showNotification(this.t('batchDeleteSuccess'), 'success');
           await this.autoSaveSettings();
         } else {
@@ -6867,21 +6867,21 @@ formatMessage(content, index) {
       }
     },
 
-    // 图片全选切换
+    // Toggle all images
     toggleAllImages(checked) {
       this.selectedImages = checked
         ? this.imageFiles.map(i => i.unique_filename)
         : []
     },
     
-    // 视频全选切换
+    // Toggle all videos
     toggleAllVideos(checked) {
       this.selectedVideos = checked
         ? this.videoFiles.map(v => v.unique_filename)
         : []
     },
     
-    // 图片批量删除
+    // Batch image deletion
     async batchDeleteImages() {
       if(!this.selectedImages.length) return
       
@@ -6893,7 +6893,7 @@ formatMessage(content, index) {
         })
         
         if(res.ok) {
-          // 更新前端列表
+          // Update frontend list
           this.imageFiles = this.imageFiles.filter(
             img => !this.selectedImages.includes(img.unique_filename)
           )
@@ -6906,7 +6906,7 @@ formatMessage(content, index) {
       }
     },
     
-    // 视频批量删除（复用同一API）
+    // Batch video deletion using the shared API
     async batchDeleteVideos() {
       if(!this.selectedVideos.length) return
       try {
@@ -6917,7 +6917,7 @@ formatMessage(content, index) {
         })
         
         if(res.ok) {
-          // 更新前端列表
+          // Update frontend list
           this.videoFiles = this.videoFiles.filter(
             img => !this.selectedVideos.includes(img.unique_filename)
           )
@@ -6934,13 +6934,13 @@ formatMessage(content, index) {
       await this.autoSaveSettings();
       fileName = img.unique_filename
       try {
-        // 向/delete_file发送请求
+        // Send request to /delete_file
         const response = await fetch(`/delete_file`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileName: fileName })
         });
-        // 处理响应
+        // Handle response
         if (response.ok) {
           console.log('File deleted successfully');
           showNotification(this.t('fileDeleted'), 'success');
@@ -7006,12 +7006,12 @@ formatMessage(content, index) {
       }
     },
 
-    // 世界书条目清空
+    // Clear worldbook entries
     clearBook(idx) {
       this.newMemory.characterBook[idx].keysRaw = '';
       this.newMemory.characterBook[idx].content = '';
     },
-    /* 世界书 */
+    /* Worldbook */
     addBook() {
       this.newMemory.characterBook.push({ keysRaw: '', content: '' });
     },
@@ -7024,23 +7024,23 @@ formatMessage(content, index) {
     clearFirstMes() {
       this.newMemory.firstMes = '';
     },
-    /* 删除 alternate greeting */
+    /* Delete alternate greeting */
     removeGreeting(idx) {
       this.newMemory.alternateGreetings.splice(idx, 1);
     },
-    /* 新增 alternate greeting */
+    /* Add alternate greeting */
     addGreeting() {
       this.newMemory.alternateGreetings.push('');
     },
     async addMemory() {
       this.selectMemoryProvider(this.newMemory.providerId);
 
-      /* ---- 0. 备份旧数据（更新场景用） ---- */
+      /* ---- 0. Back up existing data for update ---- */
       const oldMemory = this.newMemory.id
         ? this.memories.find(m => m.id === this.newMemory.id)
         : 1024;
 
-      /* ---- 1. 立即生成内存对象（用户可瞬间看到） ---- */
+      /* ---- 1. Create the in-memory object immediately ---- */
       const build = (dims = 1024) => ({
         id: this.newMemory.id || uuid.v4(),
         name: this.newMemory.name,
@@ -7064,7 +7064,7 @@ formatMessage(content, index) {
       });
 
       let memory;
-      let insertIdx = -1;          // 用于更新场景
+      let insertIdx = -1;          // Index used when updating
       if (this.newMemory.id === null) {
         memory = build();
         this.memories.push(memory);
@@ -7079,7 +7079,7 @@ formatMessage(content, index) {
       }
       this.showAddMemoryDialog = false;
       if (this.newMemory.providerId != null){
-        /* ---- 2. 异步探测维度（失败则回滚） ---- */
+        /* ---- 2. Probe dimensions asynchronously; roll back on failure ---- */
         try {
           const resp = await fetch('/api/embedding_dims', {
             method: 'POST',
@@ -7091,14 +7091,14 @@ formatMessage(content, index) {
             })
           });
 
-          // ******** 关键点 ********
-          if (!resp.ok) {                           // 4xx/5xx 都进这里
+          // ******** Validate response ********
+          if (!resp.ok) {                           // Handle 4xx and 5xx responses
             const txt = await resp.text();
             throw new Error(`Embedding API error ${resp.status}: ${txt}`);
           }
 
           const { dims } = await resp.json();
-          // 编辑时维度变化警告：更换 provider/model 可能导致已有记忆与 faiss 维度不匹配
+          // Warn on dimension changes that could mismatch existing memory and FAISS indexes
           if (this.newMemory.id && oldMemory && oldMemory.embedding_dims && dims !== oldMemory.embedding_dims) {
             showNotification(
               `${this.t('embeddingDimsChanged') || 'Embedding dimension changed'}: ${oldMemory.embedding_dims} → ${dims}. ${this.t('existingMemoriesPreserved') || 'Existing memories are preserved but may need re-vectorization.'}`,
@@ -7106,27 +7106,27 @@ formatMessage(content, index) {
             );
           }
           memory.embedding_dims = dims;
-          await this.autoSaveSettings();          // 真正落盘
+          await this.autoSaveSettings();          // Persist settings
         } catch (e) {
-          /* ---- 3. 回滚 & 提示 ---- */
+          /* ---- 3. Roll back and notify ---- */
           if (this.newMemory.id === null) {
-            // 新增：直接 pop
+            // For new entries, pop the added item
             this.memories.pop();
             if (this.memorySettings.selectedMemory === memory.id) {
               this.memorySettings.selectedMemory = null;
             }
           } else {
-            // 更新：把旧记忆写回去
+            // For updates, restore the old memory
             if (oldMemory) this.memories.splice(insertIdx, 1, oldMemory);
           }
-          // 保证能拿到 t 函数
+          // Ensure the translation function is available
           showNotification(this.t('EmbeddingFailed'), 'error');
-          console.error('[addMemory] 探测维度失败', e);
-          return;   // 不再继续
+          console.error('[addMemory] Dimension probe failed', e);
+          return;   // Stop processing
         }
       }
 
-      /* ---- 4. 收尾 ---- */
+      /* ---- 4. Finish ---- */
       this.resetNewMemory();
       this.changeMemory();
     },
@@ -7137,13 +7137,13 @@ formatMessage(content, index) {
         this.memorySettings.selectedMemory = null;
       }
       try {
-        // 向/delete_file发送请求
+        // Send request to /delete_file
         const response = await fetch(`/remove_memory`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ memoryId: id })
         });
-        // 处理响应
+        // Handle response
         if (response.ok) {
           console.log('memory deleted successfully');
           showNotification(this.t('memoryDeleted'), 'success');
@@ -7177,21 +7177,21 @@ formatMessage(content, index) {
       const toolData = { ...this.newCustomHttpTool };
       
       if (this.editingCustomHttpTool) {
-        // 更新现有工具
+        // Update existing tool
         const index = this.customHttpTools.findIndex(tool => tool.id === toolData.id);
         if (index !== -1) {
           this.customHttpTools.splice(index, 1, toolData);
         }
       } else {
-        // 添加新工具
+        // Add new tool
         toolData.id = uuid.v4();
         this.customHttpTools.push(toolData);
       }
       
-      // 与后端同步数据
+      // Synchronize data with backend
       await this.autoSaveSettings();
       
-      // 重置表单
+      // Reset form
       this.newCustomHttpTool = {
         enabled: true,
         name: '',
@@ -7282,14 +7282,14 @@ async checkTelegramBotStatus() {
     const st = await res.json();
     this.isTelegramBotRunning = st.is_running;
   } catch (e) {
-    console.error('检查 Telegram 机器人状态失败', e);
+    console.error('Telegram bot status check failed', e);
   }
 },
 handleCreateTelegramSeparator(val) {
   this.telegramBotConfig.separators.push(val);
 },
 
-/* ------- Discord 机器人 ------- */
+/* ------- Discord bot ------- */
 async startDiscordBot() {
   this.isDiscordStarting = true;
   try {
@@ -7355,7 +7355,7 @@ async checkDiscordBotStatus() {
     const st = await res.json();
     this.isDiscordBotRunning = st.is_running;
   } catch (e) {
-    console.error('检查 Discord 机器人状态失败', e);
+    console.error('Discord bot status check failed', e);
   }
 },
 handleCreateDiscordSeparator(val) {
@@ -7364,35 +7364,35 @@ handleCreateDiscordSeparator(val) {
 
 async requestSlackBotStopIfRunning() {
     try {
-      // 1. 先从后端确认 Slack 机器人的真实运行状态
+      // 1. Check actual Slack bot state on the backend
       const response = await fetch(`/slack_bot_status`);
       const status = await response.json();
 
-      // 2. 如果后端返回正在运行 (is_running 为 true)
+      // 2. If the backend reports is_running
       if (status.is_running) {
-        // 3. 调用你之前在 methods 里写好的 stopSlackBot 方法
-        // 该方法包含了停止逻辑、Loading 状态切换以及 showNotification 通知
+        // 3. Call stopSlackBot
+        // This handles stopping, loading state and notification
         await this.stopSlackBot();
-        console.log('Slack 机器人已应系统请求成功关闭');
+        console.log('Slack bot stopped at the system request');
       }
     } catch (error) {
-      // 捕获网络错误或后端未启动的情况
-      console.error('检查或停止 Slack 机器人失败:', error);
+      // Handle network errors or backend not running
+      console.error('Failed to check or stop Slack bot:', error);
     }
   },
 
-/* ------- Slack 机器人 ------- */
+/* ------- Slack bot ------- */
 async startSlackBot() {
   this.isSlackStarting = true;
   try {
     showNotification('Connecting Slack bot...', 'info');
-    // 注意：这里发送的是 slackBotConfig，但后端会自动处理共用的 memorySettings 状态
+    // Send slackBotConfig; backend handles shared memorySettings
     const res = await fetch('/start_slack_bot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...this.slackBotConfig,
-        // 显式传一下 memory 配置，确保后端能拿到最新的
+        // Explicitly pass current memory configuration
         memory_settings: this.memorySettings 
       }),
     });
@@ -7455,7 +7455,7 @@ async checkSlackBotStatus() {
     const st = await res.json();
     this.isSlackBotRunning = st.is_running;
   } catch (e) {
-    console.error('检查 Slack 状态失败', e);
+    console.error('Slack status check failed', e);
   }
 },
 handleCreateSlackSeparator(val) {
@@ -7474,7 +7474,7 @@ handleCreateSlackSeparator(val) {
               .replace(/\t/g, '\\t')
               .replace(/\r/g, '\\r');
     },
-    // 新增创建分隔符处理方法
+    // Create separator handler
     async handleCreateSeparator(newSeparator) {
       const processed = this.escapeSeparator(newSeparator)
       if (!this.ttsSettings.separators.includes(processed)) {
@@ -7483,7 +7483,7 @@ handleCreateSlackSeparator(val) {
       }
     },
 
-    // 处理回车键冲突
+    // Handle Enter-key conflict
     handleEnter(e) {
       if (e.target.value) {
         e.stopPropagation()
@@ -7494,7 +7494,7 @@ handleCreateSlackSeparator(val) {
       return s.replace(/\\n/g, '\n').replace(/\\t/g, '\t')
     },
 
-    // 一键重置
+    // One-click reset
     resetNewMemory() {
       this.newMemory = {
         id: null,
@@ -7518,7 +7518,7 @@ handleCreateSlackSeparator(val) {
     copyExistingMemoryData(selectedId) {
       const src = this.memories.find(m => m.id === selectedId);
       if (src) {
-        /* 把旧字段映射到新字段，没有的就给默认值 */
+        /* Map old fields to new ones, using defaults for missing fields */
         this.newMemory = {
           id: null,
           name: src.name || '',
@@ -7529,7 +7529,7 @@ handleCreateSlackSeparator(val) {
           api_key: src.api_key || '',
           vendor: src.vendor || '',
 
-          /* 旧→新 */
+          /* Old -> new */
           description: src.basic_character || src.description || '',
           avatar: src.avatar || '',
           personality: src.personality || '',
@@ -7552,18 +7552,18 @@ handleCreateSlackSeparator(val) {
               this.newMemory.characterBook = [{ keysRaw: '', content: '' }]
            }   
       } else {
-        /* 新建：直接给空模板 */
+        /* New: start with an empty template */
         this.resetNewMemory();
       }
     },
     colorBlend(color1, color2, ratio) {
-        // 确保ratio在0-1范围内
+        // Clamp ratio to 0-1
         ratio = Math.max(0, Math.min(1, ratio));
         
-        // 解析十六进制颜色值
+        // Parse hexadecimal color
         const parseHex = (hex) => {
           hex = hex.replace(/^#/, '');
-          // 处理3位简写格式
+          // Handle three-digit shorthand
           if (hex.length === 3) {
             hex = hex.split('').map(char => char + char).join('');
           }
@@ -7574,7 +7574,7 @@ handleCreateSlackSeparator(val) {
           };
         };
 
-        // 转换为两位十六进制字符串
+        // Convert to two-digit hex strings
         const toHex = (value) => {
           const hex = Math.round(value).toString(16);
           return hex.length === 1 ? '0' + hex : hex;
@@ -7583,12 +7583,12 @@ handleCreateSlackSeparator(val) {
         const rgb1 = parseHex(color1);
         const rgb2 = parseHex(color2);
 
-        // 计算混合后的RGB值
+        // Calculate blended RGB values
         const r = rgb1.r * ratio + rgb2.r * (1 - ratio);
         const g = rgb1.g * ratio + rgb2.g * (1 - ratio);
         const b = rgb1.b * ratio + rgb2.b * (1 - ratio);
 
-        // 组合成十六进制颜色
+        // Combine into hexadecimal color
         return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
       },
       toggleInputExpand() {
@@ -7597,7 +7597,7 @@ handleCreateSlackSeparator(val) {
     onChatInputFocus() {
       this.isChatInputActive = true;
     },
-    // textarea 失焦后延迟一帧再判定，给 pill / dialog 的 click 留出落点时间
+    // Defer textarea blur handling one frame so pill or dialog clicks can register
     onChatInputBlur() {
       setTimeout(() => {
         const active = document.activeElement;
@@ -7635,13 +7635,13 @@ handleCreateSlackSeparator(val) {
       }
       if(this.isMobile) this.sidebarVisible = false;
     },
-    // 添加ComfyUI服务器
+    // Add ComfyUI server
     addComfyUIServer() {
       this.comfyuiServers.push('http://localhost:8188')
       this.autoSaveSettings()
     },
 
-    // 移除服务器
+    // Remove server
     removeComfyUIServer(index) {
       if (this.comfyuiServers.length > 1) {
         this.comfyuiServers.splice(index, 1)
@@ -7649,7 +7649,7 @@ handleCreateSlackSeparator(val) {
       }
     },
 
-    // 连接服务器
+    // Connect server
     async connectComfyUI(index) {
       this.isConnecting = true
       try {
@@ -7667,7 +7667,7 @@ handleCreateSlackSeparator(val) {
       }
       this.isConnecting = false
     },
-    // 浏览文件
+    // Browse files
     browseWorkflowFile() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -7676,16 +7676,16 @@ handleCreateSlackSeparator(val) {
         const files = event.target.files;
         if (files.length > 0) {
           this.workflowFile = files[0];
-          this.loadWorkflowFile(this.workflowFile); // 确保在文件已选择后调用
+          this.loadWorkflowFile(this.workflowFile); // Load after selection
         }
       };
       input.click();
     },
-    // 移除文件
+    // Remove file
     removeWorkflowFile() {
       this.workflowFile = null;
     },
-    // 删除工作流
+    // Delete workflow
     async deleteWorkflow(filename) {
       try {
         const response = await fetch(`/delete_workflow/${filename}`, {
@@ -7702,21 +7702,21 @@ handleCreateSlackSeparator(val) {
           showNotification('Deletion failed', 'error');
         }
       } catch (error) {
-        console.error('删除失败:', error);
+        console.error('Delete failed:', error);
        showNotification('Deletion failed', 'error');
       }
     },
-      // 处理文件拖拽
+      // Handle file drop
   handleWorkflowDrop(event) {
     event.preventDefault();
     const files = event.dataTransfer.files;
     if (files.length > 0) {
       this.workflowFile = files[0];
-      this.loadWorkflowFile(this.workflowFile); // 加载工作流文件以生成选择项
+      this.loadWorkflowFile(this.workflowFile); // Load workflow file to populate options
     }
   },
   
-  // 加载工作流文件
+  // Load workflow file
   async loadWorkflowFile(file) {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -7726,7 +7726,7 @@ handleCreateSlackSeparator(val) {
     reader.readAsText(file);
   },
 
-  // 填充输入选择项
+  // Populate input options
   populateInputOptions(workflowJson) {
     this.textInputOptions = [];
     this.imageInputOptions = [];
@@ -7736,13 +7736,13 @@ handleCreateSlackSeparator(val) {
       const node = workflowJson[nodeId];
       if (!node.inputs) continue;
       
-      // 查找所有包含text/value/prompt的文本输入字段
+      // Find text fields containing text, value or prompt
       const textInputKeys = Object.keys(node.inputs).filter(key => 
         (key.includes('text') || key.includes('value') || key.includes('prompt')) &&
-        typeof node.inputs[key] === 'string' // 确保值是字符串类型
+        typeof node.inputs[key] === 'string' // Require string value
       );
       
-      // 为每个符合条件的字段创建选项
+      // Create option for each matching field
       textInputKeys.forEach(key => {
         this.textInputOptions.push({
           label: `${node._meta.title} - ${key} (ID: ${nodeId})`,
@@ -7750,11 +7750,11 @@ handleCreateSlackSeparator(val) {
         });
       });
       
-      // 查找图片输入字段
+      // Find image input fields
       if (node.class_type === 'LoadImage') {
         const imageKeys = Object.keys(node.inputs).filter(key => 
           key.includes('image') && 
-          typeof node.inputs[key] === 'string' // 确保值是字符串类型
+          typeof node.inputs[key] === 'string' // Require string value
         );
         
         imageKeys.forEach(key => {
@@ -7765,9 +7765,9 @@ handleCreateSlackSeparator(val) {
         });
       }
 
-      // 查找所有包含seed的种子输入字段
+      // Find seed input fields
       const seedInputKeys = Object.keys(node.inputs).filter(
-        key => key.includes('seed') && typeof node.inputs[key] === 'number' // 确保值是数字类型
+        key => key.includes('seed') && typeof node.inputs[key] === 'number' // Require numeric value
       )
       seedInputKeys.forEach(key => {
         this.seedInputOptions.push({
@@ -7778,14 +7778,14 @@ handleCreateSlackSeparator(val) {
     }
   },
 
-    // 上传文件
+    // Upload file
     async uploadWorkflow() {
       if (!this.workflowFile) return;
 
       const formData = new FormData();
       formData.append('file', this.workflowFile);
 
-      // 记录所选的输入位置
+      // Record selected input positions
       const workflowData = {
         textInput: this.selectedTextInput,
         textInput2: this.selectedTextInput2,
@@ -7796,7 +7796,7 @@ handleCreateSlackSeparator(val) {
         description: this.workflowDescription,
       };
 
-      // 发送 JSON 字符串作为普通字段
+      // Send JSON as an ordinary form field
       formData.append('workflow_data', JSON.stringify(workflowData));
 
       try {
@@ -7805,9 +7805,9 @@ handleCreateSlackSeparator(val) {
           body: formData,
         });
 
-        if (!response.ok) { // 检查响应状态
-          const errorText = await response.text(); // 获取错误文本
-          console.error("Server error:", errorText); // 输出错误信息
+        if (!response.ok) { // Check response status
+          const errorText = await response.text(); // Read error text
+          console.error("Server error:", errorText); // Log error
           throw new Error("Server error");
         }
 
@@ -7816,46 +7816,46 @@ handleCreateSlackSeparator(val) {
           this.workflows.push(data.file);
           this.showWorkflowUploadDialog = false;
           this.workflowFile = null;
-          this.selectedTextInput = null; // 重置选中
-          this.selectedImageInput = null; // 重置选中
-          this.selectedTextInput2 = null; // 重置选中
-          this.selectedImageInput2 = null; // 重置选中
-          this.selectedSeedInput = null; // 重置选中
-          this.selectedSeedInput2 = null; // 重置选中
-          this.workflowDescription = ''; // 清空描述
+          this.selectedTextInput = null; // Reset selection
+          this.selectedImageInput = null; // Reset selection
+          this.selectedTextInput2 = null; // Reset selection
+          this.selectedImageInput2 = null; // Reset selection
+          this.selectedSeedInput = null; // Reset selection
+          this.selectedSeedInput2 = null; // Reset selection
+          this.workflowDescription = ''; // Clear description
           await this.autoSaveSettings();
           showNotification('Upload successful');
         } else {
           showNotification('Upload failed', 'error');
         }
       } catch (error) {
-        console.error('上传失败:', error);
+        console.error('Upload failed:', error);
         showNotification('Upload failed', 'error');
       }
     },
     cancelWorkflowUpload() {
       this.showWorkflowUploadDialog = false;
       this.workflowFile = null;
-      this.selectedTextInput = null; // 重置选中
-      this.selectedImageInput = null; // 重置选中
-      this.selectedTextInput2 = null; // 重置选中
-      this.selectedImageInput2 = null; // 重置选中
-      this.selectedSeedInput = null; // 重置选中
-      this.selectedSeedInput2 = null; // 重置选中
-      this.workflowDescription = ''; // 清空描述
+      this.selectedTextInput = null; // Reset selection
+      this.selectedImageInput = null; // Reset selection
+      this.selectedTextInput2 = null; // Reset selection
+      this.selectedImageInput2 = null; // Reset selection
+      this.selectedSeedInput = null; // Reset selection
+      this.selectedSeedInput2 = null; // Reset selection
+      this.workflowDescription = ''; // Clear description
     },
     async deleteVideo(video) {
       this.videoFiles = this.videoFiles.filter(i => i !== video);
       await this.autoSaveSettings();
       fileName = video.unique_filename
       try {
-        // 向/delete_file发送请求
+        // Send request to /delete_file
         const response = await fetch(`/delete_file`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileName: fileName })
         });
-        // 处理响应
+        // Handle response
         if (response.ok) {
           console.log('File deleted successfully');
           showNotification(this.t('fileDeleted'), 'success');
@@ -7869,7 +7869,7 @@ handleCreateSlackSeparator(val) {
     goToURL(provider) {
         if (provider.vendor === 'custom') {
           url = provider.url;
-          // 移除url尾部的/v1
+          // Remove trailing /v1 from URL
           if (url.endsWith('/v1')) {
             url = url.slice(0, -3);
           }
@@ -7921,7 +7921,7 @@ handleCreateSlackSeparator(val) {
           file: file
         })
       }
-      return false // 阻止自动上传
+      return false // Prevent automatic upload
     },
 
     handleStickerRemove(file) {
@@ -7930,39 +7930,39 @@ handleCreateSlackSeparator(val) {
 
     async createStickerPack() {
       try {
-        // 验证输入
+        // Validate input
         if (!this.newStickerPack.name || this.uploadedStickers.length === 0) {
           showNotification(this.t('fillAllFields'), 'warning');
           return;
         }
         
 
-        // 创建FormData对象
+        // Create FormData
         const formData = new FormData();
         
-        // 添加表情包名称
+        // Add sticker pack name
         formData.append('pack_name', this.newStickerPack.name);
         
-        // 添加所有表情描述
+        // Add all expression descriptions
         this.uploadedStickers.forEach(sticker => {
           formData.append('descriptions', sticker.description);
         });
         
-        // 添加所有表情文件
+        // Add all expression files
         this.uploadedStickers.forEach(sticker => {
           formData.append('files', sticker.file);
         });
 
-        // 发送请求
+        // Send request
         const response = await fetch(`/create_sticker_pack`, {
           method: 'POST',
           body: formData
         });
         
-        // 处理响应
+        // Handle response
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("服务器错误详情:", errorData);
+          console.error("Server error details:", errorData);
           
           let errorMsg = this.t('uploadFailed');
           if (errorData.detail) {
@@ -7978,7 +7978,7 @@ handleCreateSlackSeparator(val) {
 
         const data = await response.json();
         if (data.success) {
-          // 更新前端状态
+          // Update frontend state
           this.stickerPacks.push({
             id: data.id,
             name: data.name,
@@ -7998,7 +7998,7 @@ handleCreateSlackSeparator(val) {
           this.showStickerDialog = false;
         }
       } catch (error) {
-        console.error('创建失败:', error);
+        console.error('Creation failed:', error);
         showNotification(
           error.message || this.t('createFailed'), 
           'error'
@@ -8029,7 +8029,7 @@ handleCreateSlackSeparator(val) {
       this.dialogVisible = true
     },
     downloadMemory(memory) {
-      // 仅导出酒馆 V3 所需字段，敏感信息全部剔除
+      // Export only SillyTavern V3 fields and exclude sensitive information
       const card = {
         spec: 'chara_card_v3',
         spec_version: '3.0',
@@ -8067,7 +8067,7 @@ handleCreateSlackSeparator(val) {
                 }))
             : []
         }
-        // 其余字段如 avatar、tags、scenario…按需补空
+        // Fill other fields such as avatar, tags and scenario as needed
       };
 
       const blob = new Blob([JSON.stringify(card, null, 2)], {
@@ -8084,7 +8084,7 @@ handleCreateSlackSeparator(val) {
     },
     changeMemory() {
       if (this.memorySettings.is_memory){
-        // 根据selectedMemory获取当前的memories中的对应的记忆
+        // Look up selectedMemory in memories
         let curMemory = this.memories.find(memory => memory.id === this.memorySettings.selectedMemory);
         this.firstMes = curMemory.firstMes;
         this.alternateGreetings= curMemory.alternateGreetings;
@@ -8094,22 +8094,22 @@ handleCreateSlackSeparator(val) {
         this.alternateGreetings = [];
       }
       this.randomGreetings();
-      this.autoSaveSettings(); // 保存设置
+      this.autoSaveSettings(); // Save settings
     },
     randomGreetings() {
       let greetings = [this.firstMes, ...this.alternateGreetings];
-      // 过滤掉空字符串
+      // Filter empty strings
       greetings = greetings.filter(greeting => greeting.trim() !== '');
-      // 替换掉开场白中的所有的{{user}}为this.memorySettings.userName
+      // Replace greeting user placeholders with this.memorySettings.userName
       greetings = greetings.map(greeting => greeting.replace(/{{user}}/g, this.memorySettings.userName));
-      // 根据selectedMemory获取当前的memories中的对应的记忆
+      // Look up selectedMemory in memories
       let curMemory = this.memories.find(memory => memory.id === this.memorySettings.selectedMemory);
-      // 替换掉开场白中的所有的{{char}}为curMemory.name
+      // Replace greeting character placeholders with curMemory.name
       greetings = greetings.map(greeting => greeting.replace(/{{char}}/g, curMemory.name));
       if (greetings.length > 0) {
         let randomIndex = Math.floor(Math.random() * greetings.length);
-        // 将随机的开场白立刻加入的this.messages中
-        // 如果this.messages中第二个元素是开场白，则替换，否则在第一个元素之后插入
+        // Immediately insert random greeting into messages
+        // Replace an existing second-message greeting or insert after first message
         if (this.messages.length > 1 && this.messages[1].role === 'assistant') {
           this.messages[1].content = greetings[randomIndex];
           this.messages[1].pure_content = greetings[randomIndex];
@@ -8122,7 +8122,7 @@ handleCreateSlackSeparator(val) {
         }
       } 
       else{
-        // 如果this.messages中第二个元素是开场白，则移除
+        // Remove an existing second-message greeting
         if (this.messages.length > 1 && this.messages[1].role === 'assistant') {
           this.messages.splice(1, 1);
         }
@@ -8131,14 +8131,14 @@ handleCreateSlackSeparator(val) {
     browseJsonFile() {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = '.json,.png';          // 关键：多给一个 png
+      input.accept = '.json,.png';          // Accept PNG in addition to JSON
       input.onchange = (event) => {
         const file = event.target.files[0];
         if (!file) return;
         if (file.name.toLowerCase().endsWith('.png')) {
-          this.handlePngAsJson(file);        // 新增分支
+          this.handlePngAsJson(file);        // PNG branch
         } else {
-          this.handleFileUpload(file);       // 原 JSON 分支
+          this.handleFileUpload(file);       // Existing JSON branch
         }
       };
       input.click();
@@ -8162,9 +8162,9 @@ handleCreateSlackSeparator(val) {
     },
 
     async handlePngAsJson(file) {
-      // 1. 把 PNG 当成普通图片先上传，拿外链
+      // 1. Upload PNG as an image to get its URL
       const formData = new FormData();
-      formData.append('files', file);   // 字段名跟 /load_file 接口保持一致
+      formData.append('files', file);   // Field name must match /load_file
 
       let imageUrl;
       try {
@@ -8173,8 +8173,8 @@ handleCreateSlackSeparator(val) {
         const res = await up.json();
         if (!res.success || !res.fileLinks || !res.fileLinks[0])
           throw new Error('no url returned');
-        imageUrl = res.fileLinks[0].path;          // 后端返回的完整 URL
-        // 可选：把这张图片也塞进 imageFiles 列表，保持界面同步
+        imageUrl = res.fileLinks[0].path;          // Full URL returned by backend
+        // Optionally add image to imageFiles to synchronize UI
         this.imageFiles = [...this.imageFiles, ...res.imageFiles];
       } catch (e) {
         console.error(e);
@@ -8182,11 +8182,11 @@ handleCreateSlackSeparator(val) {
         return;
       }
 
-      // 2. 拆包拿 JSON
+      // 2. Extract embedded JSON
       const jsonText = await this.extractJsonFromPng(file);
-      if (!jsonText) return;   // 通知已在内部弹过
+      if (!jsonText) return;   // Notification already shown internally
 
-      // 3. 把 avatar 换成刚上传的 URL
+      // 3. Replace avatar with uploaded URL
       let jsonData;
       try {
         jsonData = JSON.parse(jsonText);
@@ -8194,13 +8194,13 @@ handleCreateSlackSeparator(val) {
         showNotification('Invalid JSON inside PNG', 'error');
         return;
       }
-      // 兼容 V2/V3
+      // Support V2 and V3
       const target = jsonData.data || jsonData;
-      target.avatar = imageUrl;   // 直接覆盖
+      target.avatar = imageUrl;   // Overwrite avatar
 
-      // 4. 走现有逻辑回填表单
+      // 4. Populate form using existing logic
       this.importMemoryData(jsonData);
-      this.jsonFile = file;       // 保留文件对象，方便移除按钮
+      this.jsonFile = file;       // Keep file for the remove button
       showNotification('Character card imported from PNG', 'success');
     },
 
@@ -8240,7 +8240,7 @@ handleCreateSlackSeparator(val) {
           }
         }
         if (type === 'IEND') break;
-        pos = end + 4; // 跳过 CRC
+        pos = end + 4; // Skip CRC
       }
 
       if (!jsonText) showNotification('No character data found in PNG', 'error');
@@ -8248,25 +8248,25 @@ handleCreateSlackSeparator(val) {
     },
 
 
-    // 触发文件选择框
+    // Open file picker
     triggerAvatarUpload() {
       this.$refs.avatarInput.click();
     },
 
-    // 处理文件上传
+    // Handle file upload
     async handleAvatarUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      // 重置 input value，防止选择相同文件时不触发 change 事件
+      // Reset input so reselecting the same file triggers change
       event.target.value = '';
 
       const formData = new FormData();
-      // 注意：这里的 'files' 字段名必须与后端 @app.post("/load_file") 中定义的一致
+      // files must match the backend /load_file endpoint
       formData.append('files', file, file.name);
 
       try {
-        // 可选：在这里显示加载动画
+        // Optional loading animation
         // const loading = this.$loading({ lock: true, text: 'Uploading...' });
 
         const response = await fetch('/load_file', {
@@ -8276,16 +8276,16 @@ handleCreateSlackSeparator(val) {
 
         const data = await response.json();
         
-        // loading.close(); // 关闭加载动画
+        // loading.close(); // Close loading animation
 
         if (data.success && data.fileLinks && data.fileLinks.length > 0) {
-          // 获取后端返回的完整 URL
+          // Get complete URL from backend
           const uploadedUrl = data.fileLinks[0].path;
           
-          // 赋值给 newMemory.avatar
+          // Assign to newMemory.avatar
           this.newMemory.avatar = uploadedUrl;
           
-          // 如果您有全局通知组件
+          // Use global notification if available
           showNotification(this.t('uploadSuccess') || 'Upload successful', 'success');
         } else {
           showNotification(this.t('uploadFailed') || 'Upload failed', 'error');
@@ -8297,23 +8297,23 @@ handleCreateSlackSeparator(val) {
     },
 
 
-    // 触发背景图文件选择框
+    // Open background image picker
     triggerBgUpload() {
       if (this.$refs.bgImageInput) {
         this.$refs.bgImageInput.click();
       }
     },
 
-    // 处理背景图文件上传
+    // Handle background image upload
     async handleBgUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      // 重置 input value，防止选择相同文件时不触发 change 事件
+      // Reset input so reselecting the same file triggers change
       event.target.value = '';
 
       const formData = new FormData();
-      // 'files' 字段需与后端 @app.post("/load_file") 中一致
+      // files must match backend /load_file
       formData.append('files', file, file.name);
 
       try {
@@ -8325,11 +8325,11 @@ handleCreateSlackSeparator(val) {
         const data = await response.json();
         
         if (data.success && data.fileLinks && data.fileLinks.length > 0) {
-          // 获取后端返回的完整 URL 路径并赋值给 backgroundURL
+          // Assign backend URL to backgroundURL
           const uploadedUrl = data.fileLinks[0].path;
           this.systemSettings.backgroundURL = uploadedUrl;
           
-          // 自动保存配置
+          // Autosave configuration
           this.autoSaveSettings();
           
           showNotification(this.t('uploadSuccess') || 'Upload successful', 'success');
@@ -8353,36 +8353,36 @@ handleCreateSlackSeparator(val) {
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const jsonData = JSON.parse(event.target.result); // 解析 JSON 数据
-          this.importMemoryData(jsonData); // 调用导入方法
-          this.jsonFile = file; // 保存文件信息
+          const jsonData = JSON.parse(event.target.result); // Parse JSON
+          this.importMemoryData(jsonData); // Call importer
+          this.jsonFile = file; // Keep file metadata
         } catch (error) {
-          showNotification('Invalid JSON file.', 'error'); // 错误提示
+          showNotification('Invalid JSON file.', 'error'); // Error notification
         }
       };
 
-      reader.readAsText(file); // 读取文件内容
+      reader.readAsText(file); // Read file contents
     },
 
     _sanitizeCardText(raw, maxLen = 100 * 1024) {
       if (typeof raw !== 'string') return raw || '';
-      // 移除破坏 JSON / API 传输的控制字符（保留换行、回车、制表符）
+      // Remove control characters that break JSON/API transport; retain newline, carriage return and tab
       let cleaned = raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
       if (cleaned.length > maxLen) {
-        console.warn(`[_sanitizeCardText] 字段过长 ${cleaned.length} > ${maxLen}，已截断`);
+        console.warn("[_sanitizeCardText] Field length " + cleaned.length + " exceeds " + maxLen + "; truncated");
         cleaned = cleaned.substring(0, maxLen);
       }
       return cleaned;
     },
 
     importMemoryData(jsonData) {
-      // 兼容 V2/V3：统一抽出 data
+      // Extract data consistently from V2/V3
       const data = jsonData.data || jsonData;
       const s = this._sanitizeCardText.bind(this);
 
       this.newMemory = {
-        ...this.newMemory,                      // 保持 providerId 等旧字段
-        name: s(data.name).substring(0, 512),   // 名称限制 512 字符
+        ...this.newMemory,                      // Keep existing fields such as providerId
+        name: s(data.name).substring(0, 512),   // Limit name to 512 characters
         description: s(data.description),
         avatar: data.avatar || '',
         personality: s(data.personality),
@@ -8404,13 +8404,13 @@ handleCreateSlackSeparator(val) {
     },
 
     removeJsonFile() {
-      this.jsonFile = null; // 清空文件
+      this.jsonFile = null; // Clear file
     },
-    // 初始化ASR WebSocket连接（修改版本，支持Web Speech API）
+    // Initialize ASR WebSocket with Web Speech API support
     async initASRWebSocket() {
       if (this.asrSettings.engine === 'webSpeech') return;
       
-      // 🌟 关键：如果当前已经有连接或正在连接，先清理
+      // Clean up existing or connecting socket first
       if (this.asrWs) {
         this.asrWs.onclose = null;
         this.asrWs.close();
@@ -8440,7 +8440,7 @@ handleCreateSlackSeparator(val) {
       };
 
       this.asrWs.onclose = (event) => {
-        // 只有当 ASR 处于启用状态，且我们没有手动销毁 asrWs 时才重连
+        // Reconnect only if ASR remains enabled and the socket was not manually destroyed
         if (this.asrSettings.enabled && this.asrWs !== null) {
           console.log('ASR WebSocket unexpected closed, reconnecting in 3s...');
           setTimeout(() => {
@@ -8454,7 +8454,7 @@ handleCreateSlackSeparator(val) {
       };
     },
 
-    // 修改：初始化Web Speech API（不自动启动）
+    // Initialize Web Speech API without starting it automatically
     initWebSpeechAPI() {
       if(isElectron){
         showNotification(this.t('webSpeechNotSupportedInElectron'), 'error');
@@ -8463,24 +8463,24 @@ handleCreateSlackSeparator(val) {
         return false;
       }
 
-      // 检查浏览器是否支持Web Speech API
+      // Check browser support for Web Speech API
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         showNotification(this.t('webSpeechNotSupported'), 'error');
         this.asrSettings.enabled = false;
         return false;
       }
 
-      // 创建语音识别对象
+      // Create speech recognition object
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       this.recognition = new SpeechRecognition();
 
-      // 配置语音识别参数
-      this.recognition.continuous = true; // 改为非持续识别，由VAD控制
+      // Configure recognition parameters
+      this.recognition.continuous = true; // Use continuous recognition with VAD control
       this.recognition.interimResults = true;
       if (this.asrSettings.webSpeechLanguage != 'auto'){
         this.recognition.lang = this.asrSettings.webSpeechLanguage;
       }
-      // 识别结果处理
+      // Handle recognition results
       this.recognition.onresult = (event) => {
         let finalTranscript = '';
         let interimTranscript = '';
@@ -8494,7 +8494,7 @@ handleCreateSlackSeparator(val) {
           }
         }
 
-        // 处理中间结果
+        // Handle interim results
         if (interimTranscript) {
           this.handleASRResult({
             type: 'transcription',
@@ -8503,7 +8503,7 @@ handleCreateSlackSeparator(val) {
           });
         }
 
-        // 处理最终结果
+        // Handle final results
         if (finalTranscript) {
           this.handleASRResult({
             type: 'transcription',
@@ -8513,7 +8513,7 @@ handleCreateSlackSeparator(val) {
         }
       };
 
-      // 错误处理
+      // Error handling
       this.recognition.onerror = (event) => {
         console.error('Web Speech API error:', event.error);
         let errorMessage = null;
@@ -8536,18 +8536,18 @@ handleCreateSlackSeparator(val) {
           showNotification(errorMessage, 'error');
         }
         
-        // 重置识别状态
+        // Reset recognition state
         this.isWebSpeechRecognizing = false;
       };
 
-      // 识别结束处理
+      // Handle recognition end
       this.recognition.onend = () => {
         console.log('Web Speech API recognition ended');
         this.isWebSpeechRecognizing = false;
-        // 不再自动重启，由VAD控制
+        // VAD controls restart
       };
 
-      // 识别开始处理
+      // Handle recognition start
       this.recognition.onstart = () => {
         console.log('Web Speech API recognition started');
         this.isWebSpeechRecognizing = true;
@@ -8562,31 +8562,31 @@ handleCreateSlackSeparator(val) {
       }, 30_000);
     },
 
-    /* 刷新 30s 窗口（每次成功交互后调用） */
+    /* Refresh the 30-second window after successful interaction */
     resetWakeWindow() {
       clearTimeout(this.wakeWindowTimer);
       this.openWakeWindow();
     },
 
-    /* 清理计时器，可在组件销毁时调用 */
+    /* Clear timer, e.g. when destroying the component */
     clearWakeWindow() {
       clearTimeout(this.wakeWindowTimer);
       this.withinWakeWindow = false;
     },
 
-    // 修改：统一的ASR结果处理函数
+    // Shared ASR result handler
     handleASRResult(data) {
       if (data.type === 'transcription') {
         const lastMessage = this.messages[this.messages.length - 1];
         if (!this.ttsSettings.enabledInterruption && (this.ttsSettings.enabled||this.settings.enableOmniTTS)) {
-          // 如果TTS正在运行，并且不允许中断，则不处理ASR结果
+          // Ignore ASR while TTS plays if interruption is disabled
           if(this.TTSrunning){
             if ((!lastMessage || (lastMessage?.currentChunk ?? 0) >= (lastMessage?.ttsChunks?.length ?? 0)) && !this.isTyping) {
               console.log('All audio chunks played');
               lastMessage.currentChunk = 0;
               this.TTSrunning = false;
               this.cur_audioDatas = [];
-              // 通知VRM所有音频播放完成
+              // Notify VRM that audio playback ended
               this.sendTTSStatusToVRM('allChunksCompleted', {});
             }
             else{
@@ -8600,7 +8600,7 @@ handleCreateSlackSeparator(val) {
             lastMessage.currentChunk = 0;
             this.TTSrunning = false;
             this.cur_audioDatas = [];
-            // 通知VRM所有音频播放完成
+            // Notify VRM that audio playback ended
             this.sendTTSStatusToVRM('allChunksCompleted', {});
         }
         else if(this.settings.enableOmniTTS && this.ttsSettings.enabledInterruption){
@@ -8608,26 +8608,26 @@ handleCreateSlackSeparator(val) {
             this.sendTTSStatusToVRM('allChunksCompleted', {});
         }
         if (data.is_final) {
-          // 最终结果
+          // Final result
           if (this.userInputBuffer.length > 0) {
-            // 用data.text替换this.userInput中最后一个this.userInputBuffer
+            // Replace the final userInputBuffer in userInput with data.text
             this.userInput = this.userInput.slice(0, -this.userInputBuffer.length) + data.text;
             this.userInputBuffer = '';
           } else {
-            // 如果没有临时结果，直接添加到userInput
+            // Append directly if there is no interim result
             this.userInput += data.text;
             this.userInputBuffer = '';
           }
           
           if (this.isPttMode || this.waitingForPttResult) {
-            console.log("PTT 识别完成，自动发送:", data.text);
+            console.log("PTT recognition finished; submitting:", data.text);
             this.sendMessage(); 
-            this.userInput = ''; // 发送后清空
-            this.waitingForPttResult = false; // 重置标记
+            this.userInput = ''; // Clear after submission
+            this.waitingForPttResult = false; // Reset flag
             return;
           }
 
-          // 根据交互方式处理
+          // Handle according to interaction mode
           if (this.asrSettings.interactionMethod == "auto") {
             if (this.ttsSettings.enabledInterruption) {
               this.sendMessage();
@@ -8640,19 +8640,19 @@ handleCreateSlackSeparator(val) {
             const lowerInput = this.userInput.toLowerCase();
             const hasWakeWord = lowerInput.includes(this.asrSettings.wakeWord.toLowerCase());
 
-            /* 1. 如果在 30s 免唤醒窗口，直接发送 */
+            /* 1. Submit directly within the 30-second wake-word-free window */
             if (this.withinWakeWindow) {
               this.sendMessage();
-              this.resetWakeWindow();          // 刷新 30s
+              this.resetWakeWindow();          // Refresh the 30-second window
               return;
             }
 
-            /* 2. 否则必须检测唤醒词 */
+            /* 2. Otherwise require wake word */
             if (hasWakeWord) {
               this.sendMessage();
-              this.openWakeWindow();           // 进入 30s 免唤醒
+              this.openWakeWindow();           // Open the 30-second wake-word-free window
             } else {
-              this.userInput = '';             // 未唤醒，清空输入
+              this.userInput = '';             // No wake word; clear input
             }
           }
           
@@ -8661,26 +8661,26 @@ handleCreateSlackSeparator(val) {
             const wakeWordLower = this.asrSettings.wakeWord.toLowerCase();
             const endWordLower = this.asrSettings.endWord.toLowerCase();
             
-            // 检查是否包含结束词
+            // Check for stop word
             if (userInputLower.includes(endWordLower)) {
               this.inAutoMode = false;
               console.log('End word detected, exiting auto mode');
               showNotification(this.t('endWordDetected'));
-              // 可以选择发送包含结束词的消息，或者清空不发送
+              // Either submit the stop-word message or clear without submission
               this.userInput = '';
             }
-            // 检查是否包含唤醒词
+            // Check for wake word
             else if (userInputLower.includes(wakeWordLower)) {
               this.inAutoMode = true;
               console.log('ake word detected, entering auto mode');
-              // 发送包含唤醒词的消息
+              // Submit message containing wake word
               if (this.ttsSettings.enabledInterruption) {
                 this.sendMessage();
               } else if (!this.TTSrunning ||  !this.ttsSettings.enabled) {
                 this.sendMessage();
               }
             }
-            // 如果在自动模式下，所有消息都自动发送
+            // Submit all messages in automatic mode
             else if (this.inAutoMode) {
               if (this.ttsSettings.enabledInterruption) {
                 this.sendMessage();
@@ -8689,7 +8689,7 @@ handleCreateSlackSeparator(val) {
               }
             }
             else{
-              this.userInput = '';             // 未唤醒，清空输入
+              this.userInput = '';             // No wake word; clear input
             }
           }
         } else {
@@ -8697,7 +8697,7 @@ handleCreateSlackSeparator(val) {
             this.userInput = data.text;
             this.userInputBuffer = data.text;
           }else {
-            // 临时结果
+            // Interim result
             this.userInput += data.text;
             this.userInputBuffer += data.text;
           }
@@ -8713,7 +8713,7 @@ handleCreateSlackSeparator(val) {
       }
     },
 
-    // 修改：开关ASR功能
+    // Toggle ASR
     async toggleASR() {
       this.asrSettings.enabled = !this.asrSettings.enabled;
       this.autoSaveSettings();
@@ -8734,12 +8734,12 @@ handleCreateSlackSeparator(val) {
       }
     },
 
-    // 修改：处理ASR设置变化
+    // Handle ASR settings changes
     async handleASRchange() {
-      // 🌟 锁保护：如果正在启动中，直接返回，防止疯狂点击
+      // Return during startup to prevent duplicate clicks
       if (this.isStartingASR) return;
       
-      // 先彻底停止
+      // Stop completely first
       await this.stopASR(); 
       if (this.asrSettings.enabled === true && this.asrSettings.engine === 'sherpa'){
         if (!this.sherpaModelExists){
@@ -8753,7 +8753,7 @@ handleCreateSlackSeparator(val) {
       }
 
       if (this.asrSettings.enabled) {
-        // 给系统 200ms 时间回收资源
+        // Allow 200 ms for resource cleanup
         await new Promise(resolve => setTimeout(resolve, 200));
         await this.startASR();
       }
@@ -8761,31 +8761,31 @@ handleCreateSlackSeparator(val) {
       this.autoSaveSettings();
     },
 
-    // 修改：启动ASR
+    // Start ASR
     async startASR() {
       if (!this.asrSettings.enabled) return;
       if (this.asrSettings.interactionMethod === 'globalKeyTriggered' || this.asrSettings.interactionMethod === 'keyTriggered') return;
       
-      // 🌟 开启启动锁
+      // Acquire startup lock
       if (this.isStartingASR) return;
       this.isStartingASR = true;
 
       try {
-        // 1. 统一获取流
+        // 1. Acquire shared stream
         if (!this.mediaStream) {
           this.mediaStream = await navigator.mediaDevices.getUserMedia({
             audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
           });
         }
 
-        // 2. 初始化 VAD
+        // 2. Initialize VAD
         await this.initVAD();
 
-        // 3. 初始化引擎
+        // 3. Initialize engine
         if (this.asrSettings.engine === 'webSpeech') {
           this.initWebSpeechAPI();
         } else {
-          // 确保在创建新连接前，旧连接已死
+          // Ensure old connection is closed before creating another
           await this.initASRWebSocket();
         }
 
@@ -8798,20 +8798,20 @@ handleCreateSlackSeparator(val) {
         console.error('Start ASR Error:', error);
         this.stopASR();
       } finally {
-        // 🌟 释放启动锁
+        // Release startup lock
         this.isStartingASR = false;
       }
     },
 
-    // 修改：停止ASR
+    // Stop ASR
     async stopASR() {
       console.log('Stopping ASR...');
       this.isRecording = false;
       this.isStartingASR = false;
 
-      // 1. 彻底切断 WebSocket (关键：先抹除监听器)
+      // 1. Close WebSocket after removing listeners
       if (this.asrWs) {
-        this.asrWs.onclose = null; // 🌟 抹除监听，防止触发自动重连死循环
+        this.asrWs.onclose = null; // Remove listener to prevent automatic reconnect loops
         this.asrWs.onerror = null;
         this.asrWs.onmessage = null;
         this.asrWs.onopen = null;
@@ -8821,7 +8821,7 @@ handleCreateSlackSeparator(val) {
         this.asrWs = null;
       }
 
-      // 2. 停止 Web Speech
+      // 2. Stop Web Speech
       if (this.recognition) {
         try {
           this.recognition.onend = null;
@@ -8832,7 +8832,7 @@ handleCreateSlackSeparator(val) {
         this.isWebSpeechRecognizing = false;
       }
 
-      // 3. 停止 VAD
+      // 3. Stop VAD
       if (this.vad) {
         try {
           this.vad.pause();
@@ -8841,7 +8841,7 @@ handleCreateSlackSeparator(val) {
         this.vad = null;
       }
 
-      // 4. 释放麦克风硬件
+      // 4. Release microphone
       if (this.mediaStream) {
         this.mediaStream.getTracks().forEach(track => {
           track.stop();
@@ -8849,7 +8849,7 @@ handleCreateSlackSeparator(val) {
         this.mediaStream = null;
       }
 
-      // 5. 释放音频上下文
+      // 5. Release audio context
       if (this.audioContext) {
         try {
           await this.audioContext.close();
@@ -8860,7 +8860,7 @@ handleCreateSlackSeparator(val) {
       this.ASRrunning = false;
     },
 
-    // 修改：初始化VAD（Web Speech模式也使用VAD）
+    // Initialize VAD for Web Speech and other modes
     async initVAD() {
       if (!this.mediaStream) return;
 
@@ -8875,7 +8875,7 @@ handleCreateSlackSeparator(val) {
         },
         onFrameProcessed: (probabilities, frame) => {
           if (probabilities["isSpeech"] > min_probabilities) {
-            // 打断逻辑
+            // Interruption handling
             if (this.ttsSettings.enabledInterruption) {
               this.stopAllAudioPlayback();
               this.stopGenerate();
@@ -8909,7 +8909,7 @@ handleCreateSlackSeparator(val) {
         try {
           this.recognition.start();
         } catch (error) {
-          // 忽略已经启动的报错
+          // Ignore already-started errors
         }
       }
     },
@@ -8917,7 +8917,7 @@ handleCreateSlackSeparator(val) {
     async handleFrameProcessed(frame) {
       if (!frame || !(frame instanceof Float32Array)) return;
 
-      // 🌟 增加极其严格的检查：连接不处于 OPEN 状态绝不发送数据
+      // Never send data unless the connection is OPEN
       if (!this.asrWs || this.asrWs.readyState !== WebSocket.OPEN) {
         return;
       }
@@ -8940,7 +8940,7 @@ handleCreateSlackSeparator(val) {
           sample_rate: 16000
         }));
       } catch (e) {
-        // 如果发送失败，多半是连接刚刚断开
+        // A send failure may mean the connection just closed
         console.warn('Failed to send audio frame');
       }
     },
@@ -8957,17 +8957,17 @@ handleCreateSlackSeparator(val) {
     },
 
 
-    // 修改：开始录音（两种模式都需要）
+    // Start recording in both modes
     async startRecording() {
       try {
-        // 请求麦克风权限
+        // Request microphone permission
         this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        // 初始化音频上下文
+        // Initialize audio context
         this.audioContext = new AudioContext();
         const source = this.audioContext.createMediaStreamSource(this.mediaStream);
         
-        // 设置VAD参数
+        // Set VAD parameters
         this.vad.start();
         
         this.isRecording = true;
@@ -8978,7 +8978,7 @@ handleCreateSlackSeparator(val) {
       }
     },
 
-    // 修改：停止录音（两种模式都需要）
+    // Stop recording in both modes
     stopRecording() {
       if (this.vad) {
         this.vad.pause();
@@ -8996,7 +8996,7 @@ handleCreateSlackSeparator(val) {
       
       this.isRecording = false;
     },
-    // 修改：统一的语音开始处理
+    // Shared speech-start handler
 
     async handleSpeechStart() {
       if (this.asrSettings.engine === 'webSpeech') {
@@ -9015,7 +9015,7 @@ handleCreateSlackSeparator(val) {
     async handleFrameProcessed(frame) {
       if (!frame || !(frame instanceof Float32Array)) return;
 
-      // 🌟 修复点：增加 WebSocket 状态检查，避免发送报错
+      // Check WebSocket state before sending
       if (!this.asrWs || this.asrWs.readyState !== WebSocket.OPEN) {
         return;
       }
@@ -9043,20 +9043,20 @@ handleCreateSlackSeparator(val) {
     },
 
     async handleSpeechEnd(audio) {
-      // 语音结束时的处理
+      // Speech-end handling
       if (!this.asrWs || this.asrWs.readyState !== WebSocket.OPEN) return;
       
-        // 非流式模式，发送完整音频数据
-        // 将音频数据转换为WAV格式
+        // Send complete audio in non-streaming mode
+        // Convert audio to WAV
         const wavFile = await this.audioToWav(audio);
         
-        // 将WAV文件转换为base64编码
+        // Encode WAV as Base64
         const reader = new FileReader();
         reader.readAsDataURL(wavFile);
         reader.onloadend = () => {
-          const base64data = reader.result.split(',')[1]; // 移除前缀
+          const base64data = reader.result.split(',')[1]; // Strip data URL prefix
           
-          // 发送完整音频数据
+          // Send complete audio
           this.asrWs.send(JSON.stringify({
             type: 'audio_complete',
             id: this.currentTranscriptionId,
@@ -9065,11 +9065,11 @@ handleCreateSlackSeparator(val) {
           }));
         };
     },
-  // 1. 按下：开始录音
+  // 1. Press: start recording
   async handlePttPress(event) {
-    this.stopAllAudioPlayback(); // 停止所有正在播放的音频
-    this.TTSrunning = false; // 停止任何正在播放的 TTS
-    // 手动阻止默认事件，解决 _withMods 报错
+    this.stopAllAudioPlayback(); // Stop all current audio playback
+    this.TTSrunning = false; // Stop current TTS
+    // Prevent default event to avoid _withMods errors
     if (event && event.preventDefault) {
       if (event.type !== 'touchstart') {
         event.preventDefault();
@@ -9080,10 +9080,10 @@ handleCreateSlackSeparator(val) {
     this.isPttRecording = true;
 
     // ==========================================
-    // 分支 A: Web Speech API 模式 (直接复用你现有的 initWebSpeechAPI)
+    // Branch A: reuse Web Speech API initialization
     // ==========================================
     if (this.asrSettings.engine === 'webSpeech') {
-      // 如果还没有初始化识别对象，则进行初始化
+      // Initialize recognition if needed
       if (!this.recognition) {
         const success = this.initWebSpeechAPI();
         if (!success) {
@@ -9096,16 +9096,16 @@ handleCreateSlackSeparator(val) {
         this.recognition.start();
         if (navigator.vibrate) navigator.vibrate(50);
       } catch (e) {
-        // 捕获“已经启动”的错误，避免控制台报错
+        // Handle already-started error
         console.warn("Web Speech already started:", e);
       }
-      return; // ⚠️ 关键：直接跳出，不执行下方的 MediaRecorder 逻辑
+      return; // Return without running MediaRecorder logic below
     }
 
     // ==========================================
-    // 分支 B: 其他 ASR 模式 (二进制流模式：Sherpa/FunASR/OpenAI)
+    // Branch B: other binary-stream ASR modes (Sherpa/FunASR/OpenAI)
     // ==========================================
-    this.audioChunks = []; // 重置数据桶
+    this.audioChunks = []; // Reset audio chunk buffer
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -9113,7 +9113,7 @@ handleCreateSlackSeparator(val) {
 
       let options = { mimeType: 'audio/webm' };
       if (!MediaRecorder.isTypeSupported('audio/webm')) {
-        options = { mimeType: 'audio/mp4' }; // Safari 兼容
+        options = { mimeType: 'audio/mp4' }; // Safari compatibility
       }
       
       this.pttMediaRecorder = new MediaRecorder(stream, options);
@@ -9130,7 +9130,7 @@ handleCreateSlackSeparator(val) {
 
     } catch (error) {
       console.error("PTT Start Error:", error);
-      // 如果定义了 showNotification 则调用，否则用 alert 兜底
+      // Use showNotification if defined, otherwise alert
       if (typeof showNotification === 'function') {
         showNotification(this.t('micPermissionDenied'), 'error');
       }
@@ -9138,9 +9138,9 @@ handleCreateSlackSeparator(val) {
     }
   },
 
-  // 2. 松开：停止录音 -> 转码 -> 发送
+  // 2. Release: stop recording, convert and send
   async handlePttRelease(event) {
-    // 手动阻止默认事件
+    // Prevent default event
     if (event && event.preventDefault && event.type !== 'touchend') {
        event.preventDefault();
     }
@@ -9149,45 +9149,45 @@ handleCreateSlackSeparator(val) {
     this.isPttRecording = false;
 
     // ==========================================
-    // 分支 A: Web Speech API 模式
+    // Branch A: Web Speech API mode
     // ==========================================
     if (this.asrSettings.engine === 'webSpeech') {
       if (this.recognition) {
-        // 【核心修复】：创建一个一次性的监听器，确保在文字识别彻底完成后发送
+        // Use a one-time listener to send after recognition finishes
         const sendAfterRecognition = () => {
-          // 移除监听器，避免下次重复触发
+          // Remove listener to avoid duplicate callbacks
           this.recognition.removeEventListener('end', sendAfterRecognition);
           
-          // 给一点点延迟（100ms），确保 handleASRResult 已经把最后的文字更新到 userInput
+          // Wait 100 ms for handleASRResult to update userInput
           setTimeout(() => {
             if (this.userInput && this.userInput.trim() !== '') {
-              this.sendMessage(); // 触发发送逻辑
+              this.sendMessage(); // Trigger submission
             }
           }, 100);
         };
 
-        // 绑定一次性结束监听
+        // Bind one-time end listener
         this.recognition.addEventListener('end', sendAfterRecognition);
         
-        this.recognition.stop(); // 停止识别
+        this.recognition.stop(); // Stop recognition
         if (navigator.vibrate) navigator.vibrate(30);
       }
       return; 
     }
 
     // ==========================================
-    // 分支 B: 其他 ASR 模式 (二进制流停止逻辑)
+    // Branch B: other ASR modes
     // ==========================================
     if (!this.pttMediaRecorder) return;
 
     this.isProcessingPtt = true;
 
-    // 停止录制
+    // Stop recording
     if(this.pttMediaRecorder.state !== 'inactive') {
         this.pttMediaRecorder.stop();
     }
     
-    // 关闭麦克风红点
+    // Turn off microphone recording indicator
     if (this.pttStream) {
       this.pttStream.getTracks().forEach(track => track.stop());
       this.pttStream = null;
@@ -9195,32 +9195,32 @@ handleCreateSlackSeparator(val) {
     
     if (navigator.vibrate) navigator.vibrate(30);
 
-    // 等待录制彻底结束并合并数据
+    // Wait for recording completion and merge audio
     await new Promise(resolve => {
       this.pttMediaRecorder.onstop = () => resolve();
     });
 
-    // 处理音频逻辑 (原有的 processAndSendPttAudio)
+    // Process audio through processAndSendPttAudio
     await this.processAndSendPttAudio();
     
     this.isProcessingPtt = false;
     this.pttMediaRecorder = null;
   },
 
-  // 3. 处理音频逻辑
+  // 3. Process audio
   async processAndSendPttAudio() {
     if (this.audioChunks.length === 0) return;
 
     try {
-      // 合并录音片段
+      // Merge recording chunks
       const mimeType = this.pttMediaRecorder ? this.pttMediaRecorder.mimeType : 'audio/webm';
       const rawBlob = new Blob(this.audioChunks, { type: mimeType });
 
-      // ★ 核心转换：将 WebM/MP4 转为 16000Hz WAV
-      // 这是后端 ASR 通常能识别的最稳妥格式
+      // Convert WebM/MP4 to 16 kHz WAV
+      // This format is broadly supported by backend ASR
       const wavBlob = await this.convertBlobToWav(rawBlob, 16000);
 
-      // 发送
+      // Send
       await this.sendPttToBackend(wavBlob);
 
     } catch (error) {
@@ -9228,9 +9228,9 @@ handleCreateSlackSeparator(val) {
     }
   },
 
-  // 4. 发送给后端 (复用 WebSocket)
+  // 4. Send to backend via existing WebSocket
   async sendPttToBackend(wavBlob) {
-    // 确保连接
+    // Ensure connection
     if (!this.asrWs || this.asrWs.readyState !== WebSocket.OPEN) {
       try {
         await this.initASRWebSocket();
@@ -9247,7 +9247,7 @@ handleCreateSlackSeparator(val) {
       const base64data = reader.result.split(',')[1];
       const reqId = uuid.v4();
 
-      // 发送完整音频包
+      // Send complete audio packet
       this.asrWs.send(JSON.stringify({
         type: 'audio_complete', 
         id: reqId,
@@ -9256,18 +9256,18 @@ handleCreateSlackSeparator(val) {
         sample_rate: 16000
       }));
       
-      // 标记我们在等待 PTT 结果
+      // Mark that PTT result is pending
       this.waitingForPttResult = true;
     };
   },
 
-  // 5. 音频格式转换工具 (必须包含)
+  // 5. Audio format conversion helper
   async convertBlobToWav(blob, targetSampleRate = 16000) {
     const arrayBuffer = await blob.arrayBuffer();
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-    // 离线重采样
+    // Offline resampling
     const offlineCtx = new OfflineAudioContext(1, audioBuffer.duration * targetSampleRate, targetSampleRate);
     const source = offlineCtx.createBufferSource();
     source.buffer = audioBuffer;
@@ -9279,7 +9279,7 @@ handleCreateSlackSeparator(val) {
     return this.bufferToWav(renderedBuffer);
   },
 
-  // 6. Buffer 转 WAV 封装 (必须包含)
+  // 6. Wrap buffer in WAV
   bufferToWav(abuffer) {
     const numOfChan = abuffer.numberOfChannels;
     const length = abuffer.length * numOfChan * 2 + 44;
@@ -9288,7 +9288,7 @@ handleCreateSlackSeparator(val) {
     const channels = [];
     let i, sample, offset = 0, pos = 0;
 
-    // 写入 WAV 头
+    // Write WAV header
     setUint32(0x46464952); // "RIFF"
     setUint32(length - 8); // file length - 8
     setUint32(0x45564157); // "WAVE"
@@ -9318,34 +9318,34 @@ handleCreateSlackSeparator(val) {
     }
 
     function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
-    function setUint32(data) { view.setUint32(pos, data, true); pos += 4; } // 注意这里修正了 pos+=4
+    function setUint32(data) { view.setUint32(pos, data, true); pos += 4; } // Advance position by four bytes
 
     return new Blob([buffer], { type: 'audio/wav' });
   },
 
 
-    // WAV转换函数保持不变
+    // WAV conversion
     async audioToWav(audioData) {
       try {
-        // 音频参数配置
-        const sampleRate = 16000; // 采样率 16kHz，适合语音识别
-        const numChannels = 1;    // 单声道
-        const bitsPerSample = 16; // 16位采样深度
+        // Audio parameters
+        const sampleRate = 16000; // 16 kHz sample rate for speech recognition
+        const numChannels = 1;    // Mono
+        const bitsPerSample = 16; // 16-bit sample depth
         
-        // 将Float32Array转换为Int16Array (16位PCM)
+        // Convert Float32Array to 16-bit PCM
         const int16Array = new Int16Array(audioData.length);
         for (let i = 0; i < audioData.length; i++) {
-          // 将[-1.0, 1.0]范围的浮点数转换为[-32768, 32767]范围的整数
-          const sample = Math.max(-1, Math.min(1, audioData[i])); // 限制范围
+          // Convert floats in [-1,1] to integers in [-32768,32767]
+          const sample = Math.max(-1, Math.min(1, audioData[i])); // Clamp range
           int16Array[i] = sample < 0 ? sample * 32768 : sample * 32767;
         }
         
-        // 计算文件大小
-        const byteLength = int16Array.length * 2; // 每个样本2字节
-        const buffer = new ArrayBuffer(44 + byteLength); // WAV头部44字节 + 音频数据
+        // Calculate file size
+        const byteLength = int16Array.length * 2; // Two bytes per sample
+        const buffer = new ArrayBuffer(44 + byteLength); // 44-byte WAV header plus audio
         const view = new DataView(buffer);
         
-        // 写入WAV文件头
+        // Write WAV file header
         const writeString = (offset, string) => {
           for (let i = 0; i < string.length; i++) {
             view.setUint8(offset + i, string.charCodeAt(i));
@@ -9354,30 +9354,30 @@ handleCreateSlackSeparator(val) {
         
         // RIFF chunk descriptor
         writeString(0, 'RIFF');
-        view.setUint32(4, 36 + byteLength, true); // 文件大小-8
+        view.setUint32(4, 36 + byteLength, true); // File size minus eight
         writeString(8, 'WAVE');
         
         // fmt sub-chunk
         writeString(12, 'fmt ');
-        view.setUint32(16, 16, true); // fmt chunk大小
-        view.setUint16(20, 1, true);  // 音频格式 (PCM)
-        view.setUint16(22, numChannels, true); // 声道数
-        view.setUint32(24, sampleRate, true);  // 采样率
-        view.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true); // 字节率
-        view.setUint16(32, numChannels * bitsPerSample / 8, true); // 块对齐
-        view.setUint16(34, bitsPerSample, true); // 位深度
+        view.setUint32(16, 16, true); // fmt chunk size
+        view.setUint16(20, 1, true);  // PCM audio format
+        view.setUint16(22, numChannels, true); // Channel count
+        view.setUint32(24, sampleRate, true);  // Sample rate
+        view.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true); // Byte rate
+        view.setUint16(32, numChannels * bitsPerSample / 8, true); // Block alignment
+        view.setUint16(34, bitsPerSample, true); // Bit depth
         
         // data sub-chunk
         writeString(36, 'data');
-        view.setUint32(40, byteLength, true); // 数据大小
+        view.setUint32(40, byteLength, true); // Data size
         
-        // 写入音频数据
+        // Write audio data
         const offset = 44;
         for (let i = 0; i < int16Array.length; i++) {
           view.setInt16(offset + i * 2, int16Array[i], true);
         }
         
-        // 创建Blob并返回File对象
+        // Create Blob and return File
         const blob = new Blob([buffer], { type: 'audio/wav' });
         const file = new File([blob], 'audio.wav', { type: 'audio/wav' });
         
@@ -9389,7 +9389,7 @@ handleCreateSlackSeparator(val) {
       }
     },
 
-    // 自动判断下载源的工具函数
+    // Determine download source automatically
     async getAutoSource() {
       // Model downloads use Hugging Face by default.
       return 'huggingface';
@@ -9416,22 +9416,22 @@ handleCreateSlackSeparator(val) {
 
 
 /**
- * 流式 Markdown 状态机解析器
- * 过滤代码块、行内代码、表格、数学公式，并提取链接文本，拦截未闭合的流片段
- * @param {Object} message 当前消息对象，用于挂载临时状态
- * @param {string} deltaText 这一轮流式接收到的文本增量
- * @param {boolean} isFinal 是否为最后一个数据块（流结束标志）
- * @returns {string} 过滤处理后的、可直接用于 TTS 的文本
+ * Streaming Markdown state-machine parser
+ * Filter code blocks, inline code, tables and formulas; extract link text and defer incomplete syntax.
+ * @param {Object} message Current message, holding temporary state
+ * @param {string} deltaText Newly received streaming text
+ * @param {boolean} isFinal Whether this is the final chunk
+ * @returns {string} Filtered text ready for TTS
  */
 processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
-    // 初始化状态机上下文（保存在 message 内部，防止多轮对话冲突）
+    // Initialize per-message parser state to avoid conflicts between turns
     if (!message._ttsState) {
         message._ttsState = {
             inCodeBlock: false,
             inInlineCode: false,
             inTable: false,
             inMath: false,
-            buffer: '' // 积压缓冲区，暂存未闭合的语法片段
+            buffer: '' // Buffer incomplete syntax fragments
         };
     }
 
@@ -9441,7 +9441,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     let i = 0;
 
     while (i < textToProcess.length) {
-        // 1. 拦截代码块 (```)
+        // 1. Intercept fenced code blocks
         if (textToProcess.substring(i, i + 3) === '```') {
             state.inCodeBlock = !state.inCodeBlock;
             i += 3;
@@ -9452,14 +9452,14 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             continue;
         }
 
-        // 2. 拦截行内代码 (`) — 保留内容，仅移除标记符号
+        // 2. Strip inline code delimiters but retain content
         if (textToProcess[i] === '`') {
-            // 不跳过内容：对于 TTS 来说，`code` 里的文字也应该朗读
+            // Inline code text should still be read aloud
             i++;
             continue;
         }
 
-        // 3. 拦截 LaTeX 数学公式 ($$ 或 $)
+        // 3. Intercept LaTeX math
         if (textToProcess.substring(i, i + 2) === '$$') {
             state.inMath = !state.inMath;
             i += 2;
@@ -9470,92 +9470,92 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             continue;
         }
 
-        // 4. 拦截 Markdown 表格 (| ... |)
-        // 如果一行以 '|' 开头，则判定其为表格行，跳过整行
+        // 4. Intercept Markdown tables
+        // Skip table rows starting with a pipe
         if ((i === 0 || textToProcess[i - 1] === '\n') && textToProcess[i] === '|') {
             state.inTable = true;
         }
         if (state.inTable) {
             if (textToProcess[i] === '\n') {
                 state.inTable = false;
-                readableText += ' '; // 用空格/换行替代，作为朗读时的自然停顿
+                readableText += ' '; // Use a space or line break as a natural speech pause
             }
             i++;
             continue;
         }
 
-        // 5. 阻断未闭合的图片 ![alt](url) 和链接 [text](url) 语法
+        // 5. Defer incomplete image and link syntax
         if (textToProcess[i] === '[' || (textToProcess[i] === '!' && textToProcess[i + 1] === '[')) {
             const remaining = textToProcess.slice(i);
-            // 匹配完整的 [显示文字](链接URL) 结构
+            // Match complete Markdown links
             const match = remaining.match(/^(!?\[([^\]]*)\]\(([^)]*)\))/);
             if (match) {
                 const completeMatch = match[1];
                 const linkText = match[2];
                 if (!completeMatch.startsWith('!')) {
-                    // 仅提取链接的显示文本（如果是图片 ! 标记，则不转译为可读文本，直接滤掉）
+                    // Extract link display text; omit image alt text
                     readableText += linkText;
                 }
                 i += completeMatch.length;
                 continue;
             } else {
-                // 如果检测到 `[` 或 `![` 开头，但这一轮的流尚未收到闭合的 `)`
-                // 且流还没结束，则阻断后续字符处理，将其留入 buffer 供下一次增量拼接
+                // If a link or image starts but its closing parenthesis has not arrived,
+                // defer processing until the next increment if the stream is ongoing.
                 if (!isFinal) {
                     break;
                 }
             }
         }
 
-        // 6. 普通字符提取
+        // 6. Extract ordinary characters
         readableText += textToProcess[i];
         i++;
     }
 
-    // 将未处理完毕的残留文本留入缓冲区
+    // Retain unprocessed text in buffer
     state.buffer = textToProcess.slice(i);
     return readableText;
 },
 
 /**
-     * 按分隔符 + <voice> 标签 拆分 buffer (终极防漏、防换行抖动、完美兼容中文音色版)
+     * Split buffer by separators and voice tags; support multilingual voice names and incomplete fragments.
      * @returns {
-     *   chunks: string[]        // 纯文本块（已去标签、已清理）
-     *   chunks_voice: string[]  // 与 chunks 一一对应的声音 key
-     *   remaining: string       // 未完结文本
-     *   remaining_voice: string // remaining 对应的 voice key
+     *   chunks: string[]        // Clean plain-text chunks
+     *   chunks_voice: string[]  // Voice keys corresponding to chunks
+     *   remaining: string       // Unfinished text
+     *   remaining_voice: string // Voice key for remaining text
      * }
      */
     splitTTSBuffer(buffer) {
         // ============================================================
-        // 🌟 核心优化 1：一进来就以最优先级、最彻底地干掉所有的 Markdown 图片
-        // 使用 [\s\S] 替代 . ，防止流式文本中因换行符或特殊格式导致正则匹配失败而残留图片 alt 文本
-        // 这一步运行后，无论是在 <silence> 内部还是外部，"开心" 等 alt 文本都将直接被安全抹除
+        // Remove Markdown images before other processing
+        // Use a pattern matching all characters, including newlines, to remove complete images
+        // This removes alt text inside or outside silence tags
         // ============================================================
         buffer = buffer.replace(/!\[[\s\S]*?\]\([\s\S]*?\)/g, '');
 
-        // 1. 初始化栈和允许的音色列表
+        // 1. Initialize voice stack and allowed voices
         if (!this.voiceStack) this.voiceStack = ['default'];
         const voiceKeys = ['default', 'silence', ...Object.keys(this.ttsSettings.newtts || {})].filter(Boolean);
 
         // ============================================================
-        // 🌟 核心优化 2：意外情况防噪兜底
+        // Fallback noise suppression
         // ============================================================
         
-        // A. 自动识别未隔离的网页链接/原始 URL，将其无缝包裹在 <silence> 标签中
+        // A. Detect bare URLs and wrap them in silence tags
         buffer = buffer.replace(/(<silence>[\s\S]*?<\/silence>)|(https?:\/\/[^\s]+?(?=[,.:;!?。，：；？！]*?(?:\s|$)))/gi, (match, silence, url) => {
             if (silence) return silence; 
             return `<silence>${url}</silence>`;
         });
 
-        // 2. 基础清理逻辑 (此时图片已被彻底过滤，在此处安全清理常规超链接，支持多行 [文本](url))
+        // 2. Clean regular hyperlinks after image filtering; supports multiline links
         buffer = buffer
             .replace(/#{1,6}\s/gm, '')
             .replace(/[*~`]+/g, '')
             .replace(/^\s*[-*]\s/gm, '')
             .replace(/[\u{2600}-\u{27BF}\u{2700}-\u{27BF}\u{1F300}-\u{1F9FF}]/gu, '')
             .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
-            .replace(/\[([\s\S]*?)\]\([\s\S]*?\)/g, '$1'); // 仅提取文本链接的展示文字
+            .replace(/\[([\s\S]*?)\]\([\s\S]*?\)/g, '$1'); // Extract link display text only
 
         if (!buffer) {
             return {
@@ -9566,21 +9566,21 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             };
         }
 
-        // 2. 构造正则 (保持原有逻辑不变)
+        // 2. Construct regex
         const separators = (this.ttsSettings.separators || [])
             .map(s => s.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\r/g, '\r'));
 
         const openTagRe = new RegExp(`<(${voiceKeys.join('|')})>`, 'gi');
         
-        // 🔴 核心修复点 2：将原来仅支持英文匹配的 /<\/\w+>/gi 改为支持中文字符的匹配正则
-        // 确保中文字符的闭合标签（如 </星莱>、</旁白>）能正常触发出栈，防止音色发生堆叠混乱
+        // Match multilingual closing tags instead of ASCII-only names
+        // This allows non-English voice tags to pop correctly and prevents voice-stack imbalance
         const closeTagRe = /<\/[a-zA-Z0-9_\u4e00-\u9fa5]+>/gi; 
         
         const sepRe = separators.length
             ? new RegExp(separators.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g')
             : /$^/;
 
-        // 3. 扫描所有标记并排序
+        // 3. Scan and sort tokens
         const tokens = [];
         let m;
         openTagRe.lastIndex = 0;
@@ -9594,7 +9594,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
 
         tokens.sort((a, b) => a.index - b.index);
 
-        // 4. 遍历处理
+        // 4. Process tokens
         const chunks = [];
         const chunks_voice = [];
         let segmentStart = 0;
@@ -9612,13 +9612,13 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             switch (tok.type) {
                 case 'open':
                     emitText(tok.index);
-                    this.voiceStack.push(tok.value); // 压入新音色
+                    this.voiceStack.push(tok.value); // Push new voice
                     segmentStart = tok.index + tok.raw.length;
                     break;
                 case 'close':
                     emitText(tok.index);
                     if (this.voiceStack.length > 1) {
-                        this.voiceStack.pop(); // 弹出当前音色，回到上一层
+                        this.voiceStack.pop(); // Pop current voice and restore previous voice
                     }
                     segmentStart = tok.index + tok.raw.length;
                     break;
@@ -9629,22 +9629,22 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             }
         }
 
-        // 5. 剩余文本
+        // 5. Remaining text
         const remaining = buffer.slice(segmentStart);
         const remaining_voice = this.voiceStack[this.voiceStack.length - 1];
 
         return { chunks, chunks_voice, remaining, remaining_voice };
     },
 
-    // TTS处理进程 - 使用流式响应
-    // 修改 TTS 处理开始时的通知
+    // TTS processing with streamed responses
+    // Notify at TTS startup
     async startTTSProcess(message) {
       if (!this.ttsSettings.enabled || message.audioAborted) return;
       message._ttsRunning = true;
       this.TTSrunning = true;
       this.cur_audioDatas = [];
       
-      // 使用传入的消息对象
+      // Use supplied message
       const lastMessage = message; 
 
       this.sendTTSStatusToVRM('ttsStarted', {
@@ -9710,7 +9710,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         if (lastMessage.generationFinished && 
             nextIndex >= lastMessage.ttsChunks.length && 
             lastMessage.ttsQueue.size === 0) {
-            break; // 所有文本已下发，所有音频块已请求完毕，当前消息的 TTS 进程完美完成并安全退出
+            break; // All text submitted and audio requests finished; exit TTS processing
         }
 
         await new Promise(resolve => setTimeout(resolve, 10));
@@ -9730,10 +9730,10 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         let voice = message.chunks_voice[index];
         const chunk = message.ttsChunks[index];
         
-        // 解析标记
+        // Parse marker
         const isVrmSilent = voice.startsWith('danmaku_vrm_silent:');
         if (isVrmSilent) {
-            voice = voice.replace('danmaku_vrm_silent:', ''); // 恢复成真实音色 ID
+            voice = voice.replace('danmaku_vrm_silent:', ''); // Restore actual voice ID
         }
 
         let chunk_text = chunk;
@@ -9746,7 +9746,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         }
 
         const offset = message.chunks_voice.filter(v => v.startsWith('danmaku_vrm_silent:')).length;
-        const vrmIndex = index - offset; // 计算发给 VRM 的虚拟索引
+        const vrmIndex = index - offset; // Compute virtual index for VRM
 
         const markChunkAsPlayablePlaceholder = (metadata = {}) => {
             message.audioChunks[index] = {
@@ -9776,7 +9776,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
 
         try {
             if (voice === 'silence') {
-                // 静音块走文本通道发指令
+                // Send silent blocks as text commands
                 const cmd = JSON.stringify({
                     type: 'startSpeaking',
                     data: { chunkIndex: index, text: chunk_text, voice: 'silence', expressions: chunk_expressions }
@@ -9841,7 +9841,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             if (!sourceBuffer || sourceBuffer.updating) return;
             if (pendingChunks.length > 0) {
                 try { 
-                    // 每次只送入一个音频块，剩余的等待底层的 updateend 事件自动触发
+                    // Append one audio chunk at a time; updateend triggers the next append
                     sourceBuffer.appendBuffer(pendingChunks.shift()); 
                 } catch (e) { 
                     console.error('appendBuffer failed:', e); 
@@ -9854,7 +9854,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         const reader = response.body.getReader();
         const ctx = this;
 
-        // 创建唯一的播放 Audio 元素 —— 这会触发 MediaSource 的 sourceopen
+        // Create playback Audio element, triggering MediaSource sourceopen
         const audio = new Audio(audioUrl);
         audio.preload = 'auto';
         const audioReady = new Promise((resolve) => {
@@ -9872,7 +9872,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             else { ms.addEventListener('sourceopen', onReady, { once: true }); }
         });
 
-        // 等待 SourceBuffer 就绪
+        // Wait for SourceBuffer
         try {
             await Promise.race([
                 audioReady,
@@ -9888,7 +9888,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             return { url: audioUrl2, buffer: audioBuffer, mimeType };
         }
 
-        // 同步读取首个音频块并填入 SourceBuffer，确保 play() 时有数据可播
+        // Read and append the first audio chunk before play()
         try {
             const first = await Promise.race([
                 reader.read(),
@@ -9908,7 +9908,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             console.warn('First chunk read failed:', e);
         }
 
-        // 存入条目（含预创建的 Audio 元素）
+        // Store entry including the pre-created Audio element
         message.audioChunks[index] = {
             url: audioUrl,
             buffer: null,
@@ -9920,7 +9920,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             _audio: audio
         };
 
-        // 后台读取剩余数据
+        // Read remaining data in background
         (async () => {
             try {
                 while (true) {
@@ -9934,7 +9934,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
                     pendingChunks.push(value);
                     flushQueue();
                 }
-                // 等待队列中的音频全部被底层解码器消化完毕
+                // Wait for the decoder to consume queued audio
                 while (sourceBuffer && (sourceBuffer.updating || pendingChunks.length > 0)) {
                     await new Promise(r => setTimeout(r, 50));
                 }
@@ -9969,7 +9969,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         return { url: audioUrl, buffer: null, mimeType, _streaming: true };
     },
 
-    // 音频播放进程
+    // Audio playback process
     async startAudioPlayProcess(message, resolve) {
       if (!this.ttsSettings.enabled) {
           if(resolve) resolve();
@@ -9979,17 +9979,17 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const lastMessage = message;
       lastMessage.currentChunk = lastMessage.currentChunk || 0;
       lastMessage.isPlaying = false;
-      lastMessage.audioAborted = false; // --- 核心修复 5：新队列启动时重置中断标记 ---
+      lastMessage.audioAborted = false; // Reset interruption marker when starting a new queue
       
       this.audioPlayQueue = [];
       console.log('Audio playback monitor started for:', message.agentName);
       
-      // 启动递归检查
+      // Start recursive check
       this.checkAudioPlayback(message, resolve);
     },
 
     async checkAudioPlayback(message, resolve) {
-       // --- 核心修复 3：检查是否被打断，如果打断则直接终止递归 ---
+       // Stop recursion if playback was interrupted
         if (!message || message.audioAborted) { 
             if (message) message.isPlaying = false;
             if (resolve) resolve(); 
@@ -10006,34 +10006,34 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         const currentIndex = lastMessage.currentChunk;
         const audioChunk = lastMessage.audioChunks[currentIndex];
         
-        // 如果该块还没合成好，继续等待
+        // Wait while this chunk is being synthesized
         if (!audioChunk) {
-            // 如果所有已有的 chunk 都播完了
+            // If all available chunks have played
             const allLocalChunksPlayed = currentIndex >= (lastMessage.ttsChunks?.length || 0);
             
             if (allLocalChunksPlayed) {
-                // 判断当前正在播放的消息，是不是对话列表里的最后一条最新消息
+                // Determine whether the playing message is the newest conversation message
                 const isLatestMessage = this.messages.length > 0 && 
                                       this.messages[this.messages.length - 1] === lastMessage;
 
                 if (lastMessage.generationFinished) {
-                    console.log("播放全部完成，正常退出");
-                    // --- 核心修复 2：只有自己是最新消息时，才去关闭全局 TTS 开关 ---
+                    console.log("Playback complete");
+                    // Only the newest message can clear the global TTS flag
                     if (isLatestMessage) {
                         this.TTSrunning = false; 
                     }
                     lastMessage._ttsRunning = false;
-                    // 全部播完后，把进度归位到第一块，UI 显示 1/totalChunks 而非越界
+                    // Reset progress to the first chunk after playback
                     lastMessage.currentChunk = 0;
                     try { fetch('/api/overlay/danmaku/clear', { method: 'POST' }).catch(()=>{}); } catch(e){}
                     if (resolve) resolve();
                     return;
                 } else {
                     if (!this.isSending) { 
-                        console.warn("检测到生成已停止但未标记完成，强行释放锁");
+                        console.warn("Generation stopped without completion marker; releasing lock");
                         lastMessage.generationFinished = true; 
                         
-                        // --- 同上，加一层保护 ---
+                        // Apply the same guard
                         if (isLatestMessage) {
                             this.TTSrunning = false; 
                         }
@@ -10055,7 +10055,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         const isVrmSilent = rawVoice.startsWith('danmaku_vrm_silent:');
         const actualVoice = isVrmSilent ? rawVoice.replace('danmaku_vrm_silent:', '') : rawVoice;
 
-        // --- 防御：合成的占位失败块直接跳过，避免 queue 死等 ---
+        // Skip failed synthesis placeholders to avoid stalling the queue
         if (audioChunk && audioChunk._failed) {
             console.warn(`Skipping failed TTS chunk ${currentIndex}`);
             lastMessage.currentChunk++;
@@ -10072,7 +10072,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         }
 
         
-        // 计算偏移
+        // Compute offset
         const offset = lastMessage.chunks_voice.filter(v => v.startsWith('danmaku_vrm_silent:')).length;
         const vrmIndex = currentIndex - offset;
 
@@ -10097,7 +10097,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
                     }
                 }
 
-                // --- 核心同步修改点：只有非弹幕块且 VRM 在线时，才在此刻发送二进制数据 ---
+                // Send binary audio at this point only for non-livestream blocks while VRM is online
                 if (!isVrmSilent && vrmIndex >= 0 && (this.vrmOnline || this.vtsOnline) && audioChunk.buffer) {
                     const metadata = {
                         type: 'audio_chunk',
@@ -10108,20 +10108,20 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
                     };
 
                     console.log(`Sending audio chunk ${currentIndex} to VRM with metadata:`, metadata);
-                    // 此时发送，VRM 插件会立刻开始播放，与浏览器端的“静音播放”逻辑完美同步
+                    // VRM starts playback immediately in sync with muted browser playback
                     this.sendBinaryToVRM(metadata, audioChunk.buffer);
                 }
 
                 lastMessage._currentAudio = audioChunk._audio || new Audio(audioChunk.url);
                 
                 if (isVrmSilent) {
-                    lastMessage._currentAudio.volume = 1.0; // 弹幕声音从浏览器出
-                    console.log("正在播放弹幕:", audioChunk.text);
+                    lastMessage._currentAudio.volume = 1.0; // Livestream audio plays in the browser
+                    console.log("Playing livestream message:", audioChunk.text);
                 } else {
-                    lastMessage._currentAudio.volume = this.vrmOnline ? 0.0000001 : 1.0; // AI声音从VRM出
+                    lastMessage._currentAudio.volume = this.vrmOnline ? 0.0000001 : 1.0; // AI audio plays through VRM when available
                 }
                 
-                // 发送指令通知 VRM 更新状态（UI显示、表情等）
+                // Notify VRM to update UI and expressions
                 if (!isVrmSilent && vrmIndex >= 0) {
                     this.sendTTSStatusToVRM('startSpeaking', {
                         chunkIndex: vrmIndex,
@@ -10132,12 +10132,12 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
                     });
                 }
                 
-                // 等待当前这段音频播完
+                // Wait for current audio to finish
                 await new Promise((r) => {
                     lastMessage._currentAudio.onended = r;
                     lastMessage._currentAudio.onerror = r; 
                     lastMessage._currentAudio.play().catch(e => {
-                        console.error("播放失败", e);
+                        console.error("Playback failed", e);
                         r(); 
                     });
                     setTimeout(r, 20000); 
@@ -10148,34 +10148,34 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
             } finally {
                 lastMessage.isPlaying = false;
                 
-                // --- 核心修复 4：音频结束后再次检查是否被手动打断/切歌 ---
+                // Check for interruption or track changes after audio ends
                 if (lastMessage.audioAborted) {
                     if (resolve) resolve();
-                    return; // 彻底终止该消息的播放队列，不要再 setTimeout 了！
+                    return; // Stop this message's queue without scheduling another timeout
                 }
                 
                 lastMessage.currentChunk++;
-                // 只有当前音频彻底 onended 之后，才会递归触发下一条
+                // Start the next chunk only after onended
                 setTimeout(() => this.checkAudioPlayback(message, resolve), 0);
             }
         }
     },
-    // 修改轮询函数
+    // Polling function
     pollVRMStatus() {
       this.vrmPollTimer = setInterval(async () => {
         try {
           const r = await fetch('/tts/status').then(r => r.json())
           this.vrmOnline = r.vrm_connections > 0;
-          this.vtsOnline = r.vts_active; // 获取 VTS 是否激活
+          this.vtsOnline = r.vts_active; // Read VTS active state
         } catch (e) {
           this.vrmOnline = false;
           this.vtsOnline = false;
         }
       }, 3000)
     },
-    // 停止音频播放（用于停止生成时）
+    // Stop audio playback when generation stops
     stopAudioPlayback() {
-      // 这里可以添加停止当前播放音频的逻辑
+      // Optional current-audio cleanup
       const lastMessage = this.messages[this.messages.length - 1];
       if (lastMessage) {
         lastMessage.isPlaying = false;
@@ -10183,27 +10183,27 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     },
     toggleTTS(message) {
       if (message.isPlaying) {
-        // 如果正在播放，点击则停止
+        // Stop if currently playing
         message.isPlaying = false;
         this.stopAllAudioPlayback();
         this.sendTTSStatusToVRM('stopSpeaking', {});
       } else {
-        // 如果未在播放
+        // If not playing
         this.stopAllAudioPlayback();
         
         if (message.isOmni) {
-          // --- Omni 逻辑保持不变 ---
+          // --- Omni handling ---
           if ((message.omniCurrentTime || 0) >= (message.omniDuration || 0) - 0.1) {
             message.omniCurrentTime = 0; 
           }
           message.isPlaying = true;
           this.playOmniFromTime(message, message.omniCurrentTime);
         } else {
-          // --- 普通 TTS 逻辑：统一复用流式播放函数 ---
+          // --- Ordinary TTS: reuse streaming playback ---
           message.isPlaying = false; 
-          message.audioAborted = false; // --- 核心修复 6：用户手动恢复播放时，重置中断标记 ---
+          message.audioAborted = false; // Reset interruption marker on manual resume
           
-          // 如果想让用户暂停后从头播，保留这行：
+          // Retain this line to restart playback from the beginning
           message.currentChunk = 0;  
           
           message.generationFinished = true; 
@@ -10211,33 +10211,33 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         }
       }
     },
-    // 进度条跳转
+    // Seek progress bar
     seekOmniTTS(message, time) {
       this.stopAllAudioPlayback();
       message.omniCurrentTime = time;
-      if (message.isPlaying || true) { // 跳转后通常直接播放
+      if (message.isPlaying || true) { // Usually start playback after seeking
         message.isPlaying = true;
         this.playOmniFromTime(message, time);
       }
     },
 
-    // 核心回放逻辑
+    // Core replay logic
     async playOmniFromTime(message, startTime = 0) {
       if (!message.omniAudioChunks || message.omniAudioChunks.length === 0) return;
       
       if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
       
-      // 每次开始新播放时，将排程起点设为当前时间
+      // Set scheduling origin to current time for each new playback
       this.audioStartTime = this.audioCtx.currentTime;
 
       let accumulated = 0;
       for (const b64 of message.omniAudioChunks) {
-        // 如果中途用户点了暂停，跳出循环不再排程
+        // Stop scheduling if user pauses
         if (!message.isPlaying) break;
 
         const chunkDuration = (atob(b64).length / 2) / 24000;
         
-        // 只播放从 startTime 开始之后的块
+        // Play only chunks after startTime
         if (accumulated + chunkDuration > startTime) {
           this.playPCMChunk(b64, message.pure_content, message);
         }
@@ -10245,15 +10245,15 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       }
     },
 
-    // 停止所有正在播放的音频
+    // Stop all current audio playback
     stopAllAudioPlayback() {
-      // --- 与 sendMessage 入口对齐：任何调用本函数的路径都强制释放弹幕队列锁 ---
+      // Release the livestream queue lock on every call, as in sendMessage
       this.TTSrunning = false;
-      // --- 核心修复 1：给所有消息打上"终止循环"的标记 ---
+      // Mark all messages to stop their playback loops
       this.messages.forEach(message => {
         message.audioAborted = true; 
         message.isPlaying = false;
-        // 快速淡出并停止每一条消息正在播放的音频
+        // Fade out and stop each message's audio
         if (message._currentAudio && typeof message._currentAudio.pause === 'function' && !message._currentAudio.paused) {
           const audio = message._currentAudio;
           const fadeSteps = 5;
@@ -10276,7 +10276,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         message._currentAudio = null;
       });
 
-      // 2. 停止阅读音频
+      // 2. Stop read-aloud audio
       if (this.currentReadAudio) {
         this.currentReadAudio.pause();
         if (typeof this.currentReadAudio.onended === 'function') {
@@ -10285,12 +10285,12 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         this.currentReadAudio = null;
       }
       
-      // 3. 【核心修复】停止所有 Web Audio API 的 Omni 节点
+      // 3. Stop all Web Audio Omni nodes
       if (this.activeSources && this.activeSources.length > 0) {
         this.activeSources.forEach(src => {
           src.isForceStopped = true; 
           try {
-            src.stop(); // 立即停止播放
+            src.stop(); // Stop playback immediately
           } catch (e) {}
         });
         this.activeSources = [];
@@ -10299,28 +10299,28 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       this.isOmniPlaying = false; 
       this.audioStartTime = 0; 
 
-      // 6. 发送停止信号到VRM
+      // 6. Send stop signal to VRM
       this.sendTTSStatusToVRM('stopSpeaking', {});
     },
 
     async playAudioChunk(message) {
       if (!this.ttsSettings.enabled){
-        message.isPlaying = false; // 如果没有音频块，停止播放
-        message.currentChunk = 0; // 重置索引
+        message.isPlaying = false; // Stop if no audio chunks
+        message.currentChunk = 0; // Reset index
         return;
       }
 
-      // 初始化 cur_audioDatas 对象（如果不存在）
+      // Initialize cur_audioDatas if missing
       if (!this.cur_audioDatas) {
         this.cur_audioDatas = {};
       }
 
-      // 为每个消息创建唯一的键，使用消息ID
+      // Use message ID as unique key
       const base64Key = `msg_${message.id}_chunk_${message.currentChunk}`;
 
       const audioChunk = message.audioChunks[message.currentChunk];
       if (audioChunk) {
-        // 检查是否有音频URL可以播放
+        // Check for playable audio URL
         if (!audioChunk.url) {
           console.log(`Audio chunk ${message.currentChunk} has no URL, skipping`);
           message.currentChunk++;
@@ -10331,10 +10331,10 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         const audio = new Audio(audioChunk.url);
         message._currentAudio = audio;
 
-        // 设置音量：VRM在线时静音，让VRM播放；不在线时正常播放
+        // Mute browser audio when VRM is online; otherwise play normally
         audio.volume = this.vrmOnline ? 0.0000001 : 1;
 
-        // 如果没有base64数据，尝试从blob URL生成
+        // Generate Base64 from blob URL if absent
         if (!this.cur_audioDatas[base64Key] && audioChunk.url) {
           try {
             const response = await fetch(audioChunk.url);
@@ -10353,8 +10353,8 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
           }
         }
 
-        // 发送 startSpeaking 状态到 VRM（每个块都需要发送）
-        // 确保有base64数据才发送startSpeaking
+        // Send startSpeaking to VRM for each chunk
+        // Require Base64 before sending startSpeaking
         const audioDataUrl = this.cur_audioDatas[base64Key];
         if (audioDataUrl && audioDataUrl.length > 0) {
           console.log(`Sending startSpeaking with base64 data for ${base64Key}`);
@@ -10373,78 +10373,78 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         try {
           await audio.play();
           audio.onended = () => {
-            // 发送 chunkEnded 状态到 VRM
+            // Send chunkEnded to VRM
             this.sendTTSStatusToVRM('chunkEnded', {
               chunkIndex: message.currentChunk
             });
 
-            message.currentChunk++; // 播放结束后，索引加一
-            this.playAudioChunk(message); // 递归调用播放下一个音频块
+            message.currentChunk++; // Advance index after playback
+            this.playAudioChunk(message); // Recursively play next chunk
           };
           audio.onerror = (error) => {
             console.error(`Error playing audio chunk ${message.currentChunk}:`, error);
-            message.isPlaying = false; // 出错时停止播放
+            message.isPlaying = false; // Stop playback on error
           };
         } catch (error) {
           console.error(`Error playing audio chunk ${message.currentChunk}:`, error);
-          message.currentChunk++; // 播放结束后，索引加一
-          this.playAudioChunk(message); // 递归调用播放下一个音频块
+          message.currentChunk++; // Advance index after playback
+          this.playAudioChunk(message); // Recursively play next chunk
         }
       } else {
-        message.isPlaying = false; // 如果没有音频块，停止播放
-        message.currentChunk = 0; // 重置索引
-        // 发送所有块播放完成状态到 VRM
+        message.isPlaying = false; // Stop if no audio chunks
+        message.currentChunk = 0; // Reset index
+        // Notify VRM that all chunks have played
         this.sendTTSStatusToVRM('allChunksCompleted', {});
       }
     },
     backwardTTS(message) {
       if (message.currentChunk > 0) {
-        message.currentChunk--; // 当前索引减一
+        message.currentChunk--; // Decrement current index
       }
     },
 
     forwardTTS(message) {
       if (message.currentChunk < message.audioChunks.length - 1) {
-        message.currentChunk++; // 当前索引加一
+        message.currentChunk++; // Increment current index
       }
     },
 
     updateLanguages() {
-      // 更新 ttsSettings 中的语言
+      // Update language in ttsSettings
       this.ttsSettings.edgettsLanguage = this.edgettsLanguage;
       
-      // 更新性别和语音
+      // Update gender and voice
       this.updateGenders(); 
       this.autoSaveSettings();
     },
-    // 当语言改变时更新性别和语音
+    // Update gender and voice when language changes
     updateGenders() {
-      // 更新 ttsSettings 中的性别
+      // Update gender in ttsSettings
       this.ttsSettings.edgettsGender = this.edgettsGender;
-      // 更新到第一个语音
+      // Select first voice
       this.ttsSettings.edgettsVoice = this.filteredVoices[0].name;
 
-      // 更新语音
+      // Update voice
       this.updateVoices();
       this.autoSaveSettings();
     },
 
 
-    // 当性别改变时更新语音
+    // Update voice when gender changes
     updateVoices() {
       this.autoSaveSettings();
     },
 
     updateNewLanguages() {
-      // 更新 ttsSettings 中的语言
+      // Update language in ttsSettings
       this.newTTSConfig.edgettsVoice = this.filteredNewVoices[0].name;
     },
-    // 当语言改变时更新性别和语音
+    // Update gender and voice when language changes
     updateNewGenders() {
-      // 更新 ttsSettings 中的性别
+      // Update gender in ttsSettings
       this.newTTSConfig.edgettsVoice = this.filteredNewVoices[0].name;
     },
-      // 浏览参考音频文件
+      // Browse reference audio
   browseGsvRefAudioFile() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -10453,29 +10453,29 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const files = event.target.files;
       if (files.length > 0) {
         this.newGsvAudio.name = files[0].name;
-        this.newGsvAudio.file = files[0]; // 存储文件对象
+        this.newGsvAudio.file = files[0]; // Store file object
       }
     };
     input.click();
   },
   
-  // 处理参考音频拖拽
+  // Handle reference audio drop
   handleGsvRefAudioDrop(event) {
     event.preventDefault();
     const files = event.dataTransfer.files;
     if (files.length > 0) {
       this.newGsvAudio.name = files[0].name;
-      this.newGsvAudio.file = files[0]; // 存储文件对象
+      this.newGsvAudio.file = files[0]; // Store file object
     }
   },
   
-  // 移除已选择的参考音频
+  // Remove selected reference audio
   removeNewGsvAudio() {
     this.newGsvAudio.name = '';
     this.newGsvAudio.file = null;
   },
   
-  // 取消上传
+  // Cancel upload
   cancelGsvAudioUpload() {
     this.showGsvRefAudioPathDialog = false;
     this.newGsvAudio.name = '';
@@ -10483,14 +10483,14 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     this.newGsvAudio.file = null;
   },
   
-  // 上传参考音频
+  // Upload reference audio
   async uploadGsvAudio() {
     if (!this.newGsvAudio.file && !this.newGsvAudio.path) {
       showNotification('Select an audio file first', 'error');
       return;
     }
     if (!this.newGsvAudio.file) {
-        // 添加新音频到选项列表
+        // Add audio to options
         const newAudioOption = {
           path: this.newGsvAudio.path,
           name: this.newGsvAudio.name,
@@ -10499,10 +10499,10 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         
         this.ttsSettings.gsvAudioOptions.push(newAudioOption);
         
-        // 关闭对话框并重置状态
+        // Close dialog and reset state
         this.cancelGsvAudioUpload();
         
-        // 自动保存设置
+        // Autosave settings
         await this.autoSaveSettings();
         
         showNotification('Reference audio uploaded');
@@ -10522,7 +10522,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const result = await response.json();
       
       if (result.success) {
-        // 添加新音频到选项列表
+        // Add audio to options
         const newAudioOption = {
           path: result.file.unique_filename,
           name: result.file.name,
@@ -10531,10 +10531,10 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         
         this.ttsSettings.gsvAudioOptions.push(newAudioOption);
         
-        // 关闭对话框并重置状态
+        // Close dialog and reset state
         this.cancelGsvAudioUpload();
         
-        // 自动保存设置
+        // Autosave settings
         await this.autoSaveSettings();
         
         showNotification('Reference audio uploaded');
@@ -10542,14 +10542,14 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('上传参考音频失败:', error);
+      console.error('Reference audio upload failed:', error);
       showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
   
-  // 处理参考音频路径改变
+  // Handle reference audio path changes
   handleRefAudioPathChange(value, option) {
-    // 当选择新的参考音频时，更新对应的提示文本
+    // Update prompt text for selected reference audio
     const selectedAudio = this.ttsSettings.gsvAudioOptions.find(
       audio => audio.path === value
     );
@@ -10564,32 +10564,32 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       
     }
     
-    // 自动保存设置
+    // Autosave settings
     this.autoSaveSettings();
   },
 
 
-    // 删除音频选项
+    // Delete audio option
   async deleteAudioOption(path) {
     try {
-      // 查找要删除的音频选项
+      // Find selected audio option
       const audioIndex = this.ttsSettings.gsvAudioOptions.findIndex(
         audio => audio.path === path
       );
       
       if (audioIndex === -1) return;
       if (this.ttsSettings.gsvAudioOptions[audioIndex].path == this.ttsSettings.gsvAudioOptions[audioIndex].name){
-        // 为路径上传的音频，直接从选项中移除
+        // Remove path-based audio directly from options
         this.ttsSettings.gsvAudioOptions.splice(audioIndex, 1);
         showNotification('Audio deleted');
         return;
       }
-      // 获取文件名用于后端删除
+      // Get filename for backend deletion
       const uniqueFilename = this.ttsSettings.gsvAudioOptions[audioIndex].path
         .split('/')
         .pop();
       
-      // 调用后端API删除文件
+      // Call deletion API
       const response = await fetch(`/delete_audio/${uniqueFilename}`, {
         method: 'DELETE'
       });
@@ -10597,16 +10597,16 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const result = await response.json();
       
       if (result.success) {
-        // 从选项中移除
+        // Remove option
         this.ttsSettings.gsvAudioOptions.splice(audioIndex, 1);
         
-        // 如果当前选中的音频被删除，则重置选择
+        // Reset selection if selected audio was deleted
         if (this.ttsSettings.gsvRefAudioPath === path) {
           this.ttsSettings.gsvRefAudioPath = '';
           this.ttsSettings.gsvPromptText = '';
         }
         
-        // 自动保存设置
+        // Autosave settings
         await this.autoSaveSettings();
         
         showNotification('Audio deleted');
@@ -10614,7 +10614,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         showNotification(`Deletion failed: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('删除音频失败:', error);
+      console.error('Audio deletion failed:', error);
       showNotification('Deletion failed. Try again later.', 'error');
     }
   },
@@ -10629,7 +10629,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     if (this.isElectron) {
       this.VRMConfig.name = 'default';
       await this.autoSaveSettings();
-      // Electron 环境
+      // Electron environment
       try {
         this.isVRMStarting = true;
         const windowConfig = {
@@ -10638,12 +10638,12 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         };
         await window.electronAPI.startVRMWindow(windowConfig);
       } catch (error) {
-        console.error('启动失败:', error);
+        console.error('Startup failed:', error);
       } finally {
         this.isVRMStarting = false;
       }
     } else {
-      // 浏览器环境
+      // Browser environment
       window.open(`${this.partyURL}/vrm.html`, '_blank');
     }
   },
@@ -10655,18 +10655,18 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       this.VRMConfig.selectedNewMotionIds = this.VRMConfig.newVRM[name].selectedMotionIds;
       await this.autoSaveSettings();
     if (this.isElectron) {
-      // Electron 环境
+      // Electron environment
         const windowConfig = {
           width: this.VRMConfig.newVRM[name].windowWidth,
           height: this.VRMConfig.newVRM[name].windowHeight,
         };
         await window.electronAPI.startVRMWindow(windowConfig);
     } else {
-      // 浏览器环境
+      // Browser environment
       window.open(`${this.partyURL}/vrm.html`, '_blank');
     }      
   } catch (error) {
-    console.error('启动失败:', error);
+    console.error('Startup failed:', error);
   } finally {
     this.isVRMStarting = false;
   }
@@ -10675,7 +10675,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     if (this.isElectron) {
       window.electronAPI.openExternal(`${this.partyURL}/vrm.html`);
     }else {
-      // 浏览器环境
+      // Browser environment
       window.open(`${this.partyURL}/vrm.html`, '_blank');
     }
   },
@@ -10685,25 +10685,25 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       try {
         await window.electronAPI.stopVRMWindow();
       } catch (error) {
-        console.error('关闭VRM失败:', error);
+        console.error('Failed to close VRM:', error);
       }
     }
   },
     async checkServerPort() {
       try {
-        // 方式1：使用专门的方法
+        // Option 1: use dedicated method
         const serverInfo = await window.electronAPI.getServerInfo()
         
         
         if (!serverInfo.isDefaultPort) {
-          const message = `默认端口 ${serverInfo.defaultPort} 被占用，已自动切换到端口 ${serverInfo.port}`
+          const message = "Default port " + serverInfo.defaultPort + " is occupied; switched to port " + serverInfo.port
           showNotification(message, 'warning')
         }
       } catch (error) {
-        console.error('获取服务器信息失败:', error)
+        console.error('Failed to get server information:', error)
       }
     },
-    // 初始化 WebSocket 连接
+    // Initialize WebSocket
     initTTSWebSocket() {
       const http_protocol = window.location.protocol;
       const ws_protocol = http_protocol === 'https:' ? 'wss:' : 'ws:';
@@ -10715,50 +10715,50 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         this.wsConnected = true;
       };
       
-      // 核心反馈处理：监听后端发来的 JSON 消息
+      // Listen for backend JSON feedback
       this.ttsWebSocket.onmessage = async (event) => {
         try {
-          // 判断消息类型：处理文本（JSON）
+          // Handle text messages as JSON
           if (typeof event.data === 'string') {
             const msg = JSON.parse(event.data);
             
-            // 匹配 VTS 状态反馈
+            // Match VTS status feedback
             if (msg.type === 'vts_connection_status') {
-              this.isVTSStarting = false; // 收到消息，停止 Loading
+              this.isVTSStarting = false; // Stop loading when feedback arrives
               
               if (msg.data.success) {
-                // 真的连接成功了
+                // Connection succeeded
                 this.VTSConfig.enabled = true;
                 showNotification(msg.data.message || 'VTube Studio connected', 'success', 'VTS');
               } else {
-                // 连接失败：回退开关状态
+                // Connection failed; restore toggle
                 this.VTSConfig.enabled = false;
-                // 弹出错误提示，引导用户开启 VTS
+                // Show error and guide user to enable VTS
                 showNotification(
-                  msg.data.message || '请确保 VTube Studio 已开启 API 访问权限', 
+                  msg.data.message || 'Ensure API access is enabled in VTube Studio',
                   'error', 
                   'VTS connection failed'
                 );
               }
-              this.autoSaveSettings(); // 同步保存到本地配置
+              this.autoSaveSettings(); // Save local settings
             }
           } 
-          // 处理二进制（音频流）：如果是音频，则转发或播放
+          // Handle binary audio by forwarding or playback
           else if (event.data instanceof Blob) {
-            // 这里可以保留你原来的逻辑，比如交给 VRM 播放器
+            // Retain existing VRM playback handling
             // this.handleAudioBlob(event.data); 
           }
         } catch (e) {
-          console.error('解析 WebSocket 消息出错:', e);
+          console.error('Failed to parse WebSocket message:', e);
         }
       };
       
       this.ttsWebSocket.onclose = () => {
         console.log('TTS WebSocket disconnected');
         this.wsConnected = false;
-        this.isVTSStarting = false; // 断开时停止加载
+        this.isVTSStarting = false; // Stop loading on disconnect
         
-        // 自动重连
+        // Reconnect automatically
         setTimeout(() => {
           if (!this.wsConnected) {
             this.initTTSWebSocket();
@@ -10772,7 +10772,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       };
     },
     
-    // 发送 TTS 状态到 VRM
+    // Send TTS status to VRM
     async sendTTSStatusToVRM(type, data) {
       if (this.ttsWebSocket && this.wsConnected) {
         this.ttsWebSocket.send(JSON.stringify({
@@ -10782,7 +10782,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         }));
       }
     },
-  // 浏览VRM模型文件
+  // Browse VRM model files
   browseVrmModelFile() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -10791,46 +10791,46 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const files = event.target.files;
       if (files.length > 0) {
         const file = files[0];
-        // 检查文件扩展名
+        // Check extension
         if (!file.name.toLowerCase().endsWith('.vrm')) {
           showNotification('Only .vrm files are supported', 'error');
           return;
         }
         this.newVrmModel.name = file.name;
         this.newVrmModel.file = file;
-        // 自动设置显示名称（去掉扩展名）
+        // Set display name without extension
         this.newVrmModel.displayName = file.name.replace(/\.vrm$/i, '');
       }
     };
     input.click();
   },
   
-  // 处理VRM模型拖拽
+  // Handle VRM model drop
   handleVrmModelDrop(event) {
     event.preventDefault();
     const files = event.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      // 检查文件扩展名
+      // Check extension
       if (!file.name.toLowerCase().endsWith('.vrm')) {
         showNotification('Only .vrm files are supported', 'error');
         return;
       }
       this.newVrmModel.name = file.name;
       this.newVrmModel.file = file;
-      // 自动设置显示名称（去掉扩展名）
+      // Set display name without extension
       this.newVrmModel.displayName = file.name.replace(/\.vrm$/i, '');
     }
   },
   
-  // 移除已选择的VRM模型
+  // Remove selected VRM model
   removeNewVrmModel() {
     this.newVrmModel.name = '';
     this.newVrmModel.displayName = '';
     this.newVrmModel.file = null;
   },
   
-  // 取消上传
+  // Cancel upload
   cancelVrmModelUpload() {
     this.showVrmModelDialog = false;
     this.newVrmModel.name = '';
@@ -10839,13 +10839,13 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
   },
   
   
-  // 处理模型选择改变
+  // Handle model selection changes
   handleModelChange(value) {
-    // 自动保存设置
+    // Autosave settings
     this.autoSaveSettings();
   },
 
-  // 判断当前引擎是否处于 Goal 模式
+  // Check whether current engine uses Goal mode
   isGoalModeActive() {
     const engine = this.CLISettings.engine;
     if (engine === 'local') {
@@ -10860,7 +10860,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
   },
   
  
-    // 加载默认模型列表
+    // Load default model list
   async loadDefaultModels() {
     try {
       const response = await fetch(`/get_default_vrm_models`);
@@ -10869,18 +10869,18 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       if (result.success) {
         this.VRMConfig.defaultModels = result.models;
         console.log(this.VRMConfig.defaultModels);
-        // 如果没有选中任何模型，默认选择第一个默认模型
+        // Select the first default model if none selected
         if (!this.VRMConfig.selectedModelId && result.models.length > 0) {
           this.VRMConfig.selectedModelId = result.models[0].id;
         }
         await this.autoSaveSettings();
       }
     } catch (error) {
-      console.error('加载默认模型失败:', error);
+      console.error('Failed to load default models:', error);
     }
   },
 
-  // 修改上传VRM模型方法
+  // Upload VRM model
   async uploadVrmModel() {
     if (!this.newVrmModel.file) {
       showNotification('Select a VRM model file first', 'error');
@@ -10905,20 +10905,20 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const result = await response.json();
       
       if (result.success) {
-        // 添加新模型到用户模型列表
+        // Add model to user model list
         const newModelOption = {
           id: result.file.unique_filename,
           name: result.file.display_name,
           path: result.file.path,
-          type: 'user' // 标记为用户上传的模型
+          type: 'user' // Mark user-uploaded model
         };
         
         this.VRMConfig.userModels.push(newModelOption);
         
-        // 关闭对话框并重置状态
+        // Close dialog and reset state
         this.cancelVrmModelUpload();
         
-        // 自动保存设置
+        // Autosave settings
         await this.autoSaveSettings();
         
         showNotification('VRM model uploaded');
@@ -10926,15 +10926,15 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('上传VRM模型失败:', error);
+      console.error('VRM model upload failed:', error);
       showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
   
-  // 修改删除模型选项方法（只能删除用户上传的模型）
+  // Delete only user-uploaded models
   async deleteModelOption(modelId) {
     try {
-      // 查找要删除的模型选项（只在用户模型中查找）
+      // Find model only in user model list
       const modelIndex = this.VRMConfig.userModels.findIndex(
         model => model.id === modelId
       );
@@ -10944,7 +10944,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         return;
       }
       
-      // 调用后端API删除文件
+      // Call deletion API
       const response = await fetch(`/delete_vrm_model/${modelId}`, {
         method: 'DELETE'
       });
@@ -10952,10 +10952,10 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const result = await response.json();
       
       if (result.success) {
-        // 从用户模型列表中移除
+        // Remove from user model list
         this.VRMConfig.userModels.splice(modelIndex, 1);
         
-        // 如果当前选中的模型被删除，则重置为默认模型
+        // Reset to default if selected model was deleted
         if (this.VRMConfig.selectedModelId === modelId) {
           if (this.VRMConfig.defaultModels.length > 0) {
             this.VRMConfig.selectedModelId = this.VRMConfig.defaultModels[0].id;
@@ -10964,7 +10964,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
           }
         }
         
-        // 自动保存设置
+        // Autosave settings
         await this.autoSaveSettings();
         
         showNotification('VRM model deleted');
@@ -10972,7 +10972,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         showNotification(`Deletion failed: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('删除VRM模型失败:', error);
+      console.error('VRM model deletion failed:', error);
       showNotification('Deletion failed. Try again later.', 'error');
     }
   },
@@ -10991,7 +10991,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         };
         await window.electronAPI.startTHAWindow(windowConfig);
       } catch (error) {
-        console.error('启动THA失败:', error);
+        console.error('THA startup failed:', error);
       } finally {
         this.isTHAStarting = false;
       }
@@ -11013,7 +11013,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       try {
         await window.electronAPI.stopTHAWindow();
       } catch (error) {
-        console.error('停止THA失败:', error);
+        console.error('THA shutdown failed:', error);
       }
     }
   },
@@ -11031,7 +11031,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         };
         await window.electronAPI.startSoulxWindow(windowConfig);
       } catch (error) {
-        console.error('启动SoulX失败:', error);
+        console.error('SoulX startup failed:', error);
       } finally {
         this.isSoulxStarting = false;
       }
@@ -11053,7 +11053,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       try {
         await window.electronAPI.stopSoulxWindow();
       } catch (error) {
-        console.error('停止SoulX失败:', error);
+        console.error('SoulX shutdown failed:', error);
       }
     }
   },
@@ -11064,11 +11064,11 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const data = await res.json();
       if (data.success) {
         this.SoulxConfig.images = data.images || [];
-        // 旧版单图(base64存SQLite)自动迁移到多图管理
+        // Migrate old single-image Base64 SQLite storage to multi-image management
         if (this.SoulxConfig.images.length === 0 && this.SoulxConfig.condImage) {
           await this.migrateLegacySoulxImage();
         }
-        // 选中项失效时回退到第一张
+        // Fall back to first image if selection is invalid
         const ids = this.SoulxConfig.images.map(i => i.id);
         if (this.SoulxConfig.selectedImageId && !ids.includes(this.SoulxConfig.selectedImageId)) {
           this.SoulxConfig.selectedImageId = ids[0] || '';
@@ -11076,7 +11076,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         }
       }
     } catch (error) {
-      console.error('加载SoulX参考图列表失败:', error);
+      console.error('Failed to load SoulX reference images:', error);
     }
   },
 
@@ -11088,7 +11088,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const blob = new Blob([bytes], { type: 'image/png' });
       const formData = new FormData();
       formData.append('file', blob, 'legacy.png');
-      formData.append('display_name', '默认形象');
+      formData.append('display_name', 'Default appearance');
       const response = await fetch('/upload_soulx_image', { method: 'POST', body: formData });
       const result = await response.json();
       if (result.success) {
@@ -11098,7 +11098,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         await this.autoSaveSettings();
       }
     } catch (error) {
-      console.error('迁移旧版SoulX参考图失败:', error);
+      console.error('Legacy SoulX reference image migration failed:', error);
     }
   },
 
@@ -11124,7 +11124,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('上传SoulX参考图失败:', error);
+      console.error('SoulX reference image upload failed:', error);
       showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
@@ -11150,7 +11150,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         showNotification(`Deletion failed: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('删除SoulX参考图失败:', error);
+      console.error('SoulX reference image deletion failed:', error);
       showNotification('Deletion failed. Try again later.', 'error');
     }
   },
@@ -11223,7 +11223,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('上传THA模型失败:', error);
+      console.error('THA model upload failed:', error);
       showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
@@ -11258,7 +11258,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         showNotification(`Deletion failed: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('删除THA模型失败:', error);
+      console.error('THA model deletion failed:', error);
       showNotification('Deletion failed. Try again later.', 'error');
     }
   },
@@ -11279,7 +11279,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         this.THAConfig.userModels = userData.models;
       }
     } catch (error) {
-      console.error('加载THA模型列表失败:', error);
+      console.error('Failed to load THA models:', error);
     }
   },
 
@@ -11314,14 +11314,14 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     this.newThaModel.name = '';
   },
 
-  // 获取当前选中的模型信息
+  // Get selected model information
   getCurrentSelectedModel() {
-    // 先在默认模型中查找
+    // Search default models first
     let selectedModel = this.VRMConfig.defaultModels.find(
       model => model.id === this.VRMConfig.selectedModelId
     );
     
-    // 如果没找到，再在用户模型中查找
+    // If not found, search user models
     if (!selectedModel) {
       selectedModel = this.VRMConfig.userModels.find(
         model => model.id === this.VRMConfig.selectedModelId
@@ -11330,7 +11330,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     
     return selectedModel;
   },
-  // 启动直播监听
+  // Start livestream listener
   async startLive() {
     if (!this.isLiveConfigValid || this.isLiveRunning || this.isLiveStarting) {
       return;
@@ -11339,7 +11339,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     this.isLiveStarting = true;
     
     try {
-      // 发送启动请求到FastAPI后端
+      // Send start request to FastAPI backend
       const response = await fetch('/api/live/start', {
         method: 'POST',
         headers: {
@@ -11354,22 +11354,22 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       
       if (result.success) {
         this.isLiveRunning = true;
-        this.shouldReconnectWs = true; // 启动时允许重连
+        this.shouldReconnectWs = true; // Allow reconnect after startup
         this.connectLiveWebSocket();
-        this.startDanmuProcessor(); // 启动弹幕处理器
+        this.startDanmuProcessor(); // Start livestream message processor
         showNotification(result.message || this.t('live_started_successfully'));
       } else {
         showNotification(result.message || this.t('failed_to_start_live'), 'error');
       }
     } catch (error) {
-      console.error('启动直播监听失败:', error);
+      console.error('Livestream listener startup failed:', error);
       showNotification(this.t('failed_to_start_live'), 'error');
     } finally {
       this.isLiveStarting = false;
     }
   },
 
-  // 停止直播监听
+  // Stop livestream listener
   async stopLive() {
     if (!this.isLiveRunning || this.isLiveStopping) {
       return;
@@ -11378,17 +11378,17 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     this.isLiveStopping = true;
     
     try {
-      // 先设置状态，阻止WebSocket重连
+      // Update state first to prevent WebSocket reconnection
       this.shouldReconnectWs = false;
       this.isLiveRunning = false;
       
-      // 停止弹幕处理器
+      // Stop livestream message processor
       this.stopDanmuProcessor();
       
-      // 关闭WebSocket连接
+      // Close WebSocket
       this.disconnectLiveWebSocket();
       
-      // 发送停止请求到FastAPI后端
+      // Send stop request to backend
       const response = await fetch('/api/live/stop', {
         method: 'POST',
         headers: {
@@ -11399,28 +11399,28 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const result = await response.json();
       
       if (result.success) {
-        this.danmu = []; // 清空弹幕数据
+        this.danmu = []; // Clear livestream messages
         showNotification(result.message || this.t('live_stopped_successfully'));
       } else {
         showNotification(result.message || this.t('failed_to_stop_live'), 'error');
-        // 如果后端停止失败，恢复状态
+        // Restore state if backend stop fails
         this.isLiveRunning = true;
         this.shouldReconnectWs = true;
-        this.startDanmuProcessor(); // 重新启动弹幕处理器
+        this.startDanmuProcessor(); // Restart livestream message processor
       }
     } catch (error) {
-      console.error('停止直播监听失败:', error);
+      console.error('Livestream listener shutdown failed:', error);
       showNotification(this.t('failed_to_stop_live'), 'error');
-      // 如果出错，恢复状态
+      // Restore state on error
       this.isLiveRunning = true;
       this.shouldReconnectWs = true;
-      this.startDanmuProcessor(); // 重新启动弹幕处理器
+      this.startDanmuProcessor(); // Restart livestream message processor
     } finally {
       this.isLiveStopping = false;
     }
   },
 
-  // 重载直播配置
+  // Reload livestream configuration
   async reloadLiveConfig() {
     if (!this.isLiveRunning || this.isLiveReloading) {
       return;
@@ -11442,12 +11442,12 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       const result = await response.json();
       
       if (result.success) {
-        // 重新连接WebSocket
-        this.shouldReconnectWs = false; // 先阻止重连
+        // Reconnect WebSocket
+        this.shouldReconnectWs = false; // Prevent reconnect initially
         this.disconnectLiveWebSocket();
         
         setTimeout(() => {
-          this.shouldReconnectWs = true; // 重新允许重连
+          this.shouldReconnectWs = true; // Allow reconnect again
           this.connectLiveWebSocket();
         }, 1000);
         
@@ -11456,7 +11456,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
         showNotification(result.message || this.t('failed_to_reload_live_config'), 'error');
       }
     } catch (error) {
-      console.error('重载直播配置失败:', error);
+      console.error('Livestream configuration reload failed:', error);
       showNotification(this.t('failed_to_reload_live_config'), 'error');
     } finally {
       this.isLiveReloading = false;
@@ -11464,11 +11464,11 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
   },
 
   /**
-   * 队列裁剪：保留最新 N 条，但**永不丢弃扩展推来的请求**（`source === 'director'`）。
+   * Trim the queue to the newest N items without dropping extension requests (source === 'director').
    *
-   * 为什么必须豁免：导演请求是 `push` 到**队尾**的（队尾 = 队首，下一个被处理），
-   * 而裁剪是 `slice(0, limit)` —— 保留队首、砍掉队尾。
-   * 不豁免的话，只要再来一条观众弹幕，导演请求就被裁掉了（`danmakuQueueLimit` 默认只有 5）。
+   * Director requests are pushed to the tail, which is the next item processed.
+   * Trimming with slice(0, limit) retains the front and removes the tail.
+   * Without the exemption, another viewer message could drop a director request (default limit 5).
    */
   trimDanmuQueue() {
     const limit = this.liveConfig.danmakuQueueLimit || 5;
@@ -11479,18 +11479,18 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
   },
 
   /**
-   * 外部（如 sap-snack-director 扩展）经 `/ws` 的 `live_enqueue` 推来的请求：
-   * **进弹幕队列**，不直接 `sendMessage()`。
+   * Extension requests such as sap-snack-director arrive via live_enqueue over /ws.
+   * Enqueue them rather than calling sendMessage directly.
    *
-   * 为什么不走 `set_user_input` + `trigger_send_message`：
-   *   · `trigger_send_message` → `sendMessage()` 会 `stopAllAudioPlayback()` + 清 `TTSrunning`
-   *     ⇒ **打断正在播报的语音**；
-   *   · 而 `sendMessage()` 开头 `if (this.isTyping) return;` ⇒ 正在生成时**静默丢弃**，
-   *     调用方还以为发出去了。
-   * 进队列后由 `processDanmuQueue` 的闸门（`isTyping` / `TTSrunning` / `isProcessingDanmu`）
-   * 串行调度，两个问题一起解决。
+   * Why set_user_input and trigger_send_message are insufficient:
+   * - sendMessage calls stopAllAudioPlayback and clears TTSrunning,
+   *   interrupting speech already playing.
+   * - sendMessage returns early if isTyping, silently discarding requests during generation,
+   *   even though the caller thinks it was submitted.
+   * processDanmuQueue gates on isTyping, TTSrunning and isProcessingDanmu,
+   * serializing queued requests to resolve both problems.
    *
-   * 队列里**至多留一条**导演请求：新请求替换旧请求（游戏状态已经变了，旧问题过期了）。
+   * Retain at most one director request: newer requests replace obsolete game-state requests.
    */
   enqueueLiveRequest(payload) {
     const text = String((payload && payload.text) || '').trim();
@@ -11503,36 +11503,36 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
       type: (payload && payload.source) || 'director',
       platform: (payload && payload.platform) || 'director',
       source: 'director',
-      // 默认不上 OBS 弹幕叠加层（这是一大段提示词）
+      // Exclude long prompt text from the OBS chat overlay by default
       silent: payload ? payload.silent !== false : true,
       timestamp: new Date().toLocaleTimeString('en-US', { hour12: false, hourCycle: 'h23' })
     });
     this.trimDanmuQueue();
 
-    // 没开直播面板时 danmuProcessTimer 可能不存在，这里保证它被挂上
+    // Ensure the timer exists even when the livestream panel is disabled
     this.startDanmuProcessor();
-    // 若当前空闲，别等下一个 1s tick；忙的话闸门会挡住，下一 tick 再来
+    // Process immediately when idle; otherwise wait for the next one-second tick
     this.processDanmuQueue();
   },
 
-  // 启动弹幕处理器
+  // Start livestream message processor
   startDanmuProcessor() {
-    console.log('启动弹幕处理器');
+    console.log('Starting livestream message processor');
     
-    // 如果已经有定时器在运行，先清除
+    // Clear an existing timer first
     if (this.danmuProcessTimer) {
       clearInterval(this.danmuProcessTimer);
     }
     
-    // 每秒检查一次弹幕队列
+    // Check queue every second
     this.danmuProcessTimer = setInterval(async () => {
       await this.processDanmuQueue();
     }, 1000);
   },
 
-  // 停止弹幕处理器
+  // Stop livestream message processor
   stopDanmuProcessor() {
-    console.log('停止弹幕处理器');
+    console.log('Stopping livestream message processor');
     
     if (this.danmuProcessTimer) {
       clearInterval(this.danmuProcessTimer);
@@ -11542,7 +11542,7 @@ processMarkdownStreamForTTS(message, deltaText, isFinal = false) {
     this.isProcessingDanmu = false;
   },
 
-// 1. 拷贝 URL 方法
+// 1. Copy URL
   copyDanmakuOverlayEndpoint() {
     const url = this.partyURL + '/danmaku_overlay';
     navigator.clipboard.writeText(url).then(() => {
@@ -11592,19 +11592,19 @@ copyIslandEndpoint(){
     );
   },
 
-// 处理弹幕队列 - 新版
+// Livestream message queue processing
   /**
-   * 从弹幕队列里移除**指定的那一条**（按引用删，不是 `pop()`）。
+   * Remove the exact processed item by reference rather than pop().
    *
-   * ⚠️ 这里**必须**按引用删，不能 `this.danmu.pop()`。
+   * Removal must use identity; do not call this.danmu.pop().
    *
-   * `await this.sendMessage()` 期间队列还会变：观众弹幕 `unshift` 到队首、
-   * 扩展请求 `push` 到队尾。而 `pop()` 删的是「当前最后一条」，可能根本不是刚处理的那条 ——
-   * 真机实测（2026-10-07）：处理 A 的过程中扩展推进来 B（B 在队尾），A 跑完后 `pop()` 把 **B** 删了，
-   * 于是 B 从队列里凭空消失、永远不会被处理（主窗口看起来"收到请求但没反应"）。
+   * The queue can change while awaiting sendMessage: viewer messages are unshifted,
+   * extension requests are pushed, so pop may remove a different item.
+   * Observed on 2026-10-07: while A was processing, extension request B was pushed;
+   * pop removed B after A finished, silently discarding the request.
    *
-   * 原来只用 `pop()` 之所以没暴露，是因为观众弹幕一律 `unshift` 到队首（队尾那条始终没变）——
-   * 是「扩展请求 push 到队尾」打破了这个不变量。
+   * Previously pop worked because viewer messages always went to the front,
+   * but extension requests at the tail invalidate that assumption.
    */
   removeDanmuItem(item) {
     if (!item) return;
@@ -11625,11 +11625,11 @@ copyIslandEndpoint(){
       }
 
       /**
-       * 基础闸门：**正在生成 / 正在播报 / 正在处理** 时一律不取队列 ——
-       * 这正是「扩展的请求不会打断 LLM 说话」的机制：它排队，不抢麦。
+       * Do not dequeue while generating, speaking or processing an item.
+       * This ensures extension requests wait rather than interrupting the assistant.
        *
-       * ⚠️ `isLiveRunning` 只该拦**观众弹幕**。扩展推来的请求（`source === 'director'`）
-       * 即使没开直播面板也必须处理，否则整个导演功能会被「没开直播」卡死。
+       * isLiveRunning should gate viewer messages only; extension director requests
+       * must work even when the livestream panel is disabled.
        */
       if ((!this.isLiveRunning && !this.danmu.some((d) => d && d.source === 'director')) || this.danmu.length === 0 || this.isTyping || 
           (this.TTSrunning && this.ttsSettings.enabled) || this.isProcessingDanmu) {
@@ -11641,24 +11641,24 @@ copyIslandEndpoint(){
       processing = oldestDanmu;
       
       if (oldestDanmu && oldestDanmu.content) {
-        // 扩展的请求带唯一 id，且游戏没变化时正文会重复，所以**只对观众弹幕**做连续重复去重。
+        // Deduplicate consecutive viewer messages only; extension requests have unique IDs
         if (oldestDanmu.source !== 'director' && this.lastProcessedContent === oldestDanmu.content) {
             this.removeDanmuItem(processing);
             this.isProcessingDanmu = false;
             return;
         }
 
-        console.log('开始处理弹幕:', oldestDanmu.content);
+        console.log('Processing livestream message:', oldestDanmu.content);
         this.lastProcessedContent = oldestDanmu.content;
         
-        // 【关键修复点 1】：将弹幕存入临时变量，准备注入 TTS 队列
+        // Save message temporarily for TTS queue injection
         this.pendingDanmakuToRead = oldestDanmu.content;
 
-        // 设置 LLM 的输入
+        // Set model input
         this.userInput = oldestDanmu.content;
         
-        // 触发 OBS 弹窗显示 (调用后端 API)。
-        // 扩展的请求标了 `silent`，不上画面 —— 它是一大段提示词，滚到 OBS 上会很难看。
+        // Trigger OBS popup through backend API.
+        // Silent extension requests do not appear in the overlay.
         if (!oldestDanmu.silent) {
           try {
               fetch('/api/overlay/danmaku', {
@@ -11669,29 +11669,29 @@ copyIslandEndpoint(){
           } catch(e) {}
         }
 
-        // 发送消息，启动 AI 生成流程
+        // Submit message and start generation
         await this.sendMessage();
         
         this.removeDanmuItem(processing); 
       }
     } catch (error) {
-      console.error('处理弹幕出错:', error);
+      console.error('Livestream message processing failed:', error);
       this.removeDanmuItem(processing); 
     } finally {
       this.isProcessingDanmu = false;
     }
   },
-  // 连接WebSocket
+  // Connect WebSocket
   connectLiveWebSocket() {
     try {
-      // 根据当前协议选择ws或wss
+      // Choose ws or wss based on current protocol
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws/live/danmu`;
       
       this.liveWs = new WebSocket(wsUrl);
       
       this.liveWs.onopen = (event) => {
-        console.log('WebSocket连接已建立');
+        console.log('WebSocket connected');
       };
       
       this.liveWs.onmessage = (event) => {
@@ -11699,48 +11699,48 @@ copyIslandEndpoint(){
           const data = JSON.parse(event.data);
           this.handleDanmuMessage(data);
         } catch (error) {
-          console.error('解析WebSocket消息失败:', error);
+          console.error('Failed to parse WebSocket message:', error);
         }
       };
       
       this.liveWs.onclose = (event) => {
-        console.log('WebSocket连接已关闭');
+        console.log('WebSocket disconnected');
         
-        // 只有在允许重连且直播还在运行时才重连
+        // Reconnect only if enabled and livestream is running
         if (this.shouldReconnectWs && this.isLiveRunning) {
-          console.log('准备重连WebSocket...');
+          console.log('Preparing WebSocket reconnection...');
           setTimeout(() => {
-            // 再次检查状态，确保仍然需要重连
+            // Recheck state before reconnecting
             if (this.shouldReconnectWs && this.isLiveRunning) {
-              console.log('开始重连WebSocket');
+              console.log('Reconnecting WebSocket');
               this.connectLiveWebSocket();
             } else {
-              console.log('取消重连WebSocket');
+              console.log('WebSocket reconnection cancelled');
             }
           }, 3000);
         } else {
-          console.log('不需要重连WebSocket');
+          console.log('WebSocket reconnection not required');
         }
       };
       
       this.liveWs.onerror = (error) => {
-        console.error('WebSocket连接错误:', error);
+        console.error('WebSocket connection error:', error);
       };
     } catch (error) {
-      console.error('创建WebSocket连接失败:', error);
+      console.error('Failed to create WebSocket connection:', error);
     }
   },
 
-  // 断开WebSocket连接
+  // Disconnect WebSocket
   disconnectLiveWebSocket() {
-    console.log('断开WebSocket连接');
+    console.log('Disconnecting WebSocket');
     
     if (this.liveWs) {
-      // 先设置为null，避免onclose事件中的重连逻辑
+      // Clear reference first to avoid reconnecting in onclose
       const ws = this.liveWs;
       this.liveWs = null;
       
-      // 然后关闭连接
+      // Close connection
       ws.close();
     }
   },
@@ -11750,33 +11750,33 @@ copyIslandEndpoint(){
       const response = await fetch('/api/live/status');
       const result = await response.json();
       
-      // 更新状态
+      // Update state
       this.isLiveRunning = result.is_running;
 
-      // 关键点：如果后台正在运行，前端刷新后需要重新挂载 WebSocket 和处理器
+      // Restore WebSocket and processor after refresh if backend is running
       if (this.isLiveRunning) {
-        console.log('检测到后台直播监听正在运行，正在恢复连接...');
+        console.log('Livestream listener is running; restoring connection...');
         this.shouldReconnectWs = true;
         
-        // 重新连接 WebSocket 接收弹幕
+        // Reconnect WebSocket for incoming messages
         this.connectLiveWebSocket();
         
-        // 重新启动弹幕队列处理定时器
+        // Restart queue processing timer
         this.startDanmuProcessor();
       }
     } catch (error) {
-      console.error('检查直播状态失败:', error);
+      console.error('Livestream status check failed:', error);
     }
   },
 
-  // 处理弹幕消息
+  // Handle livestream messages
   handleDanmuMessage(data) {
     if (data.type !== 'message') {
       if (data.type === 'error') showNotification(data.message, 'error');
       return;
     }
 
-    // --- 1. ID 级去重 ---
+    // --- 1. Deduplicate IDs ---
     if (data.id) {
       if (this.receivedMsgIds.has(data.id)) return;
       this.receivedMsgIds.add(data.id);
@@ -11786,13 +11786,13 @@ copyIslandEndpoint(){
       }
     }
 
-    // --- 2. 统一定义消息属性 ---
+    // --- 2. Normalize message properties ---
     const danmuType = data.danmu_type; // danmaku, super_chat, gift, buy_guard, enter_room, follow, like
     const isDanmaku = (danmuType === "danmaku" || danmuType === "super_chat");
     const isPaid = (danmuType === "gift" || danmuType === "buy_guard" || danmuType === "super_chat");
     const isInteraction = (danmuType === "enter_room" || danmuType === "follow" || danmuType === "like");
 
-    // --- 3. 模式过滤判断 ---
+    // --- 3. Filter by mode ---
     let modePass = false;
     const mode = this.liveConfig.filterMode || 'all';
 
@@ -11806,7 +11806,7 @@ copyIslandEndpoint(){
 
     if (!modePass) return;
 
-    // --- 4. 唤醒词校验 (仅针对文本类消息) ---
+    // --- 4. Check wake words for text messages only ---
     const wakeStr = this.liveConfig.wakeWord || "";
     const wakeKeywords = wakeStr.split(/[\r\n]+/).map(k => k.trim()).filter(k => k.length > 0);
     
@@ -11817,14 +11817,14 @@ copyIslandEndpoint(){
 
     let shouldAdd = false;
     if (isDanmaku) {
-      // 弹幕和 SC 必须匹配唤醒词
+      // Chat and Super Chat must match wake words
       if (isMatchWakeWord(data.content)) shouldAdd = true;
     } else {
-      // 礼物、舰长、关注等互动，直接放行 (不被唤醒词拦截)
+      // Allow gifts, subscriptions, follows and other interactions without wake words
       shouldAdd = true;
     }
 
-    // --- 5. 入队 ---
+    // --- 5. Enqueue ---
     if (shouldAdd) {
       const danmuItem = {
         id: data.id,
@@ -11834,7 +11834,7 @@ copyIslandEndpoint(){
         timestamp: new Date().toLocaleTimeString('en-US', { hour12: false, hourCycle: 'h23' })
       };
 
-      // 连续重复内容防刷屏
+      // Prevent repeated-message spam
       if (this.danmu.length > 0 && this.danmu[0].content === danmuItem.content) return;
 
       this.danmu.unshift(danmuItem);
@@ -11850,16 +11850,16 @@ copyIslandEndpoint(){
   },
   async rewrite(index){
       if (index != 1){
-        // 1. 备份要被重写的用户消息（this.messages[index-1]）
+        // 1. Back up user message being regenerated
         const targetMsg = this.messages[index - 1];
 
-        // 2. 删除 index 及其之后的所有消息
+        // 2. Remove messages at index and after
         this.messages.splice(index);
 
-        // 3. 恢复文本内容
+        // 3. Restore text
         this.userInput = this.messages[index-1]?.pure_content ?? this.messages[index-1]?.content ?? '';
 
-        // 4. 恢复文件/图片信息（从备份中提取，构造不含 Blob 的对象，避免重复上传）
+        // 4. Restore file/image metadata without blobs to avoid reuploading
         this.files = targetMsg.fileLinks
           ? targetMsg.fileLinks.map(link => ({ name: link.name, path: link.path }))
           : [];
@@ -11867,14 +11867,14 @@ copyIslandEndpoint(){
           ? targetMsg.imageLinks.map(link => ({
               name: link.name,
               path: link.path,
-              detectedType: link.detectedType   // 保留类型信息
+              detectedType: link.detectedType   // Preserve type
             }))
           : [];
 
-        // 5. 删除原用户消息（此时已是数组最后一个元素）
+        // 5. Remove the original user message, now last in array
         this.messages.pop();
       } else {
-        // 替换开场白
+        // Replace greeting
         this.randomGreetings();
       }
 
@@ -11892,7 +11892,7 @@ copyIslandEndpoint(){
       const data = await response.json();
       console.log(data);
     }else {
-      console.error('更新代理失败');
+      console.error('Proxy update failed');
     }
   },
   async openUserfile(){
@@ -11903,9 +11903,9 @@ copyIslandEndpoint(){
       }
     });
     if (response.ok) {
-      // 拿到userfile
+      // Get userfile
       const data = await response.json();
-      let userfile = data.userfile;    // 打开文件夹
+      let userfile = data.userfile;    // Open directory
       if (this.isElectron){
         window.electronAPI.openPath(userfile);
       }
@@ -11919,9 +11919,9 @@ copyIslandEndpoint(){
       }
     });
     if (response.ok) {
-      // 拿到userfile
+      // Get userfile
       const data = await response.json();
-      let userfile = data.userfile;    // 打开文件夹
+      let userfile = data.userfile;    // Open directory
       if (this.isElectron){
         window.electronAPI.openPath(userfile+'/logs');
       }
@@ -11935,9 +11935,9 @@ copyIslandEndpoint(){
       }
     });
     if (response.ok) {
-      // 拿到Extfile
+      // Get extfile
       const data = await response.json();
-      let extfile = data.extfile;    // 打开文件夹
+      let extfile = data.extfile;    // Open directory
       if (this.isElectron){
         window.electronAPI.openPath(extfile);
       }
@@ -11960,7 +11960,7 @@ copyIslandEndpoint(){
         showNotification(this.t('success_start_HA'));
       }else {
         this.HASettings.enabled = false;
-        console.error('启动HA失败');
+        console.error('HA startup failed');
         showNotification(this.t('error_start_HA'), 'error');
       }
     }else{
@@ -11976,7 +11976,7 @@ copyIslandEndpoint(){
         showNotification(this.t('success_stop_HA'));
       }else {
         this.HASettings.enabled = true;
-        console.error('停止HA失败');
+        console.error('HA shutdown failed');
         showNotification(this.t('error_stop_HA'), 'error');
       }
     }
@@ -11987,11 +11987,11 @@ copyIslandEndpoint(){
     if (this.chromeMCPSettings.enabled && this.chromeMCPSettings.type === 'internal' && this.isElectron) {
         if (!window.electronAPI) return;
         await this.autoSaveSettings();
-        // CDP 端口始终开启，直接同步端口号即可
+        // CDP port is always active; synchronize its number
         const cdpInfo = await window.electronAPI.getInternalCDPInfo();
         if (cdpInfo.active) {
             this.chromeMCPSettings.CDPport = cdpInfo.port;
-            console.log(`[CDP] 准备启动 MCP，使用实际端口: ${cdpInfo.port}`);
+            console.log("[CDP] Starting MCP with active port: " + cdpInfo.port);
         }
         await this.autoSaveSettings();
         showNotification(this.t('success_start_browserControl'));
@@ -12012,7 +12012,7 @@ copyIslandEndpoint(){
         showNotification(this.t('success_start_browserControl'));
       }else {
         this.chromeMCPSettings.enabled = false;
-        console.error('启动ChromeMCP失败');
+        console.error('Chrome MCP startup failed');
         showNotification(this.t('error_start_browserControl'), 'error');
       }
     }else{
@@ -12030,7 +12030,7 @@ copyIslandEndpoint(){
         }
       }else {
         this.chromeMCPSettings.enabled = true;
-        console.error('停止ChromeMCP失败');
+        console.error('Chrome MCP shutdown failed');
         if (this.chromeMCPSettings.type === 'external'||!this.chromeMCPSettings.enabled){
           showNotification(this.t('error_stop_browserControl'), 'error');
         }
@@ -12065,7 +12065,7 @@ copyIslandEndpoint(){
         }
       }
     } catch (e) {
-      console.error('同步连接状态失败:', e);
+      console.error('Failed to synchronize connection state:', e);
     }
   },
 
@@ -12075,13 +12075,13 @@ copyIslandEndpoint(){
       showNotification('Electron is required', 'error');
       return;
     }
-    if (this.connectingAppId) return; // 已有应用在连接中
+    if (this.connectingAppId) return; // Another application is connecting
     this.connectingAppId = app.id;
-    console.log(`[smartConnect] 开始连接 ${app.name}, port=${app.cdpPort || this.localAppControlSettings.nextPort}, forceNewInstance=${this.localAppControlSettings.forceNewInstance}`);
+    console.log("[smartConnect] Connecting " + app.name + ", port=" + (app.cdpPort || this.localAppControlSettings.nextPort) + ", forceNewInstance=" + this.localAppControlSettings.forceNewInstance);
     showNotification(`Connecting to ${app.name}…`, 'info');
     const port = app.cdpPort || this.localAppControlSettings.nextPort;
 
-    // 1. 先试试直接连接（端口可能已经开着）
+    // 1. Try direct connection to an already-open port
     try {
       const resp = await fetch('/connect-app-cdp', {
         method: 'POST',
@@ -12091,7 +12091,7 @@ copyIslandEndpoint(){
       if (resp.ok) {
         const d = await resp.json();
         if (d.success) {
-          console.log(`[smartConnect] ${app.name} 直连成功 (port=${port})`);
+          console.log("[smartConnect] " + app.name + " connected directly (port=" + port + ")");
           this.localAppControlSettings.connectedApps[app.id] = {
             appId: app.id, appName: app.name, port: port,
             targets: d.targets || [], usableCount: d.usableCount || 0,
@@ -12106,9 +12106,9 @@ copyIslandEndpoint(){
         }
       }
     } catch (e) {}
-    console.log(`[smartConnect] ${app.name} 直连失败, 准备杀掉残留进程并启动调试`);
+    console.log("[smartConnect] " + app.name + " direct connection failed; restarting for debugging");
 
-    // 2. 直连失败，杀掉残留进程后启动调试
+    // 2. On direct connection failure, stop remaining processes and launch with debugging
     try { await window.electronAPI.quitAppProcess({ pid: app.pid || 0, path: app.path }); } catch (e) {}
     app.isRunning = false;
     app.pid = 0;
@@ -12117,27 +12117,27 @@ copyIslandEndpoint(){
     app.cdpPort = port;
     this.localAppControlSettings.nextPort = port + 1;
 
-    console.log(`[smartConnect] ${app.name} 正在启动调试端口 (path=${app.path}, port=${port})`);
+    console.log("[smartConnect] " + app.name + " starting debugging (path=" + app.path + ", port=" + port + ")");
     const launchResult = await window.electronAPI.launchAppWithDebugging({
       path: app.path, port: port,
       forceNewInstance: this.localAppControlSettings.forceNewInstance
     });
     app.isRunning = !!launchResult?.success;
     app.pid = launchResult?.pid || app.pid;
-    console.log(`[smartConnect] ${app.name} 启动结果: success=${!!launchResult?.success}, pid=${launchResult?.pid}, error=${launchResult?.error || 'none'}`);
+    console.log("[smartConnect] " + app.name + " launch result: success=" + !!launchResult?.success + ", pid=" + launchResult?.pid + ", error=" + (launchResult?.error || 'none'));
 
     if (!launchResult?.success) {
       this.connectingAppId = null;
-      let msg = `${app.name}: 无法开启调试端口，该应用可能不支持 CDP 远程调试`;
+      let msg = app.name + ': Could not open debugging port; this application may not support CDP remote debugging';
       if (!this.localAppControlSettings.forceNewInstance) {
-        msg += '，可尝试开启「开启新实例（独立用户数据）」开关后重试';
+        msg += '. Try enabling Launch new instance (separate user data) and retrying';
       }
       showNotification(msg, 'error');
       return;
     }
 
-    // 3. 轮询连接，最多 3 次
-    console.log(`[smartConnect] ${app.name} 启动成功, 开始轮询连接 CDP (最多3次)`);
+    // 3. Poll connection up to three times
+    console.log("[smartConnect] " + app.name + " launched; polling CDP up to three times");
     for (let i = 0; i < 3; i++) {
       await new Promise(r => setTimeout(r, 1000));
       try {
@@ -12149,7 +12149,7 @@ copyIslandEndpoint(){
         if (resp.ok) {
           const d = await resp.json();
           if (d.success) {
-            console.log(`[smartConnect] ${app.name} 轮询第${i+1}次连接成功 (port=${port})`);
+            console.log("[smartConnect] " + app.name + " connected on attempt " + (i+1) + " (port=" + port + ")");
             this.localAppControlSettings.connectedApps[app.id] = {
               appId: app.id, appName: app.name, port: port,
               targets: d.targets || [], usableCount: d.usableCount || 0,
@@ -12164,9 +12164,9 @@ copyIslandEndpoint(){
       } catch (e) {}
     }
     this.connectingAppId = null;
-    let msg = `${app.name}: 连接超时，请确认应用支持 CDP 调试`;
+    let msg = app.name + ': Connection timed out. Verify that the application supports CDP debugging';
     if (!this.localAppControlSettings.forceNewInstance) {
-      msg += '，可尝试开启「开启新实例（独立用户数据）」开关后重试';
+      msg += '. Try enabling Launch new instance (separate user data) and retrying';
     }
     showNotification(msg, 'error');
   },
@@ -12178,7 +12178,7 @@ copyIslandEndpoint(){
       const response = await fetch('/scan-local-apps', { method: 'POST' });
       if (response.ok) {
         const data = await response.json();
-        // 合并手动添加的应用（排在前面，去重）
+        // Merge manually added applications first, removing duplicates
         const scannedIds = new Set((data.apps || []).map(a => (a.path || '').toLowerCase()));
         const manualApps = (this.localAppControlSettings.manualApps || []).filter(a => {
           return !scannedIds.has((a.path || '').toLowerCase());
@@ -12190,7 +12190,7 @@ copyIslandEndpoint(){
         showNotification(this.t('success_scan_apps').replace('{count}', data.apps.length) + ` (${typeStr})`);
       } else { showNotification(this.t('error_launch_app'), 'error'); }
     } catch (e) {
-      console.error('扫描本地应用失败:', e);
+      console.error('Local application scan failed:', e);
       showNotification(this.t('error_launch_app'), 'error');
     } finally { this.localAppControlSettings.scanning = false; }
     this.autoSaveSettings();
@@ -12202,7 +12202,7 @@ copyIslandEndpoint(){
     if (!path) return showNotification('Enter the application path', 'warning');
     const existing = (this.localAppControlSettings.manualApps || []).find(a => a.path.toLowerCase() === path.toLowerCase());
     if (existing) return showNotification('This path has already been added', 'warning');
-    // 已在扫描结果中，无需手动添加
+    // Already in scan results; no manual addition needed
     const alreadyScanned = (this.localAppControlSettings.scannedApps || []).find(a => a.path.toLowerCase() === path.toLowerCase());
     if (alreadyScanned) return showNotification('This application is already listed', 'warning');
     try {
@@ -12243,7 +12243,7 @@ copyIslandEndpoint(){
         showNotification(this.t('error_launch_app'), 'error');
       }
     } catch (e) {
-      console.error('启动应用失败:', e);
+      console.error('Application launch failed:', e);
       showNotification(this.t('error_launch_app'), 'error');
     }
     this.autoSaveSettings();
@@ -12282,7 +12282,7 @@ copyIslandEndpoint(){
         showNotification(this.t('error_connect_app'), 'error');
       }
     } catch (e) {
-      console.error('连接应用失败:', e);
+      console.error('Application connection failed:', e);
       showNotification(this.t('error_connect_app'), 'error');
     }
   },
@@ -12308,7 +12308,7 @@ copyIslandEndpoint(){
         showNotification(this.t('error_disconnect_app'), 'error');
       }
     } catch (e) {
-      console.error('断开应用失败:', e);
+      console.error('Application disconnection failed:', e);
       showNotification(this.t('error_disconnect_app'), 'error');
     }
   },
@@ -12336,7 +12336,7 @@ copyIslandEndpoint(){
         showNotification(this.t('error_quit_app'), 'error');
       }
     } catch (e) {
-      console.error('退出应用失败:', e);
+      console.error('Application exit failed:', e);
       showNotification(this.t('error_quit_app'), 'error');
     }
     this.autoSaveSettings();
@@ -12375,7 +12375,7 @@ copyIslandEndpoint(){
         }
       }
     } catch (e) {
-      console.error('切换 target 失败:', e);
+      console.error('Target switch failed:', e);
     }
   },
 
@@ -12395,7 +12395,7 @@ copyIslandEndpoint(){
         }
       }
     } catch (e) {
-      console.error('刷新 targets 失败:', e);
+      console.error('Target refresh failed:', e);
     }
   },
 
@@ -12410,7 +12410,7 @@ copyIslandEndpoint(){
         showNotification('Screenshot captured');
       }
     } catch (e) {
-      console.error('截图失败:', e);
+      console.error('Screenshot failed:', e);
     }
   },
 
@@ -12425,7 +12425,7 @@ copyIslandEndpoint(){
         showNotification('Snapshot captured');
       }
     } catch (e) {
-      console.error('快照失败:', e);
+      console.error('Snapshot failed:', e);
     }
   },
 
@@ -12445,7 +12445,7 @@ copyIslandEndpoint(){
         showNotification('Execution successful');
       }
     } catch (e) {
-      console.error('执行JS失败:', e);
+      console.error('JavaScript execution failed:', e);
     }
   },
 
@@ -12453,18 +12453,18 @@ copyIslandEndpoint(){
     if (this.sqlSettings.enabled) {
       
       // ==========================================
-      // 1. 启动前置校验 (新增逻辑)
+      // 1. Validate before startup
       // ==========================================
       const settings = this.sqlSettings;
       let errorMsg = '';
 
       if (settings.engine === 'sqlite') {
-        // SQLite 只需要校验 dbpath
+        // SQLite requires dbpath only
         if (!settings.dbpath?.trim()) {
           errorMsg = this.t('pleaseConfigSqliteDbpath');
         }
       } else {
-        // 其他数据库校验 host, port, user, password, dbname
+        // Other databases require host, port, user, password and dbname
         if (!settings.host?.trim()) {
           errorMsg = this.t('pleaseConfigSqlHost');
         } else if (settings.port === undefined || settings.port === null || settings.port === '') {
@@ -12478,7 +12478,7 @@ copyIslandEndpoint(){
         }
       }
 
-      // 校验失败：弹窗报错，重置开关并阻断执行
+      // On validation failure, show error, reset toggle and stop
       if (errorMsg) {
         const errorTitle = this.t ? this.t('configIncomplete') : 'Configuration Incomplete';
         showNotification(errorMsg, 'error', errorTitle);
@@ -12487,11 +12487,11 @@ copyIslandEndpoint(){
           this.sqlSettings.enabled = false;
         });
         
-        return; // ⚠️ 必须 return，防止继续执行下方的 fetch 请求
+        return; // Return to prevent the fetch below
       }
 
       // ==========================================
-      // 2. 原有的启动逻辑 (校验通过后执行)
+      // 2. Startup after validation
       // ==========================================
       const response = await fetch('/start_sql', {
         method: 'POST',
@@ -12508,14 +12508,14 @@ copyIslandEndpoint(){
         showNotification(this.t('success_start_sqlControl'));
       } else {
         this.sqlSettings.enabled = false;
-        console.error('启动sql失败');
+        console.error('SQL startup failed');
         showNotification(this.t('error_start_sqlControl'), 'error');
       }
 
     } else {
       
       // ==========================================
-      // 3. 原有的停止逻辑 (用户关闭开关时执行)
+      // 3. Shutdown when the user disables the toggle
       // ==========================================
       const response = await fetch('/stop_sql', {
         method: 'GET',
@@ -12529,18 +12529,18 @@ copyIslandEndpoint(){
         showNotification(this.t('success_stop_sqlControl'));
       } else {
         this.sqlSettings.enabled = true;
-        console.error('停止sql失败');
+        console.error('SQL shutdown failed');
         showNotification(this.t('error_stop_sqlControl'), 'error');
       }
     }
     
     // ==========================================
-    // 4. 操作成功后保存配置
+    // 4. Save settings after success
     // ==========================================
     this.autoSaveSettings();
   },
   
-    // 加载默认动作列表
+    // Load default motions
   async loadDefaultMotions() {
     try {
       const response = await fetch(`/get_default_vrma_motions`);
@@ -12548,72 +12548,72 @@ copyIslandEndpoint(){
       
       if (result.success) {
         this.VRMConfig.defaultMotions = result.motions;
-        console.log('默认动作列表:', this.VRMConfig.defaultMotions);
+        console.log('Default motions:', this.VRMConfig.defaultMotions);
         await this.autoSaveSettings();
       }
     } catch (error) {
-      console.error('加载默认动作失败:', error);
+      console.error('Failed to load default motions:', error);
     }
   },
 
-  // 处理动作选择改变
+  // Handle motion selection changes
   handleMotionChange(value) {
-    console.log('选中的动作:', value);
-    // 自动保存设置
+    console.log('Selected motion:', value);
+    // Autosave settings
     this.autoSaveSettings();
   },
 
-  // 浏览VRMA动作文件
+  // Browse VRMA motion files
   browseVrmaMotionFile() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.vrma';
-    input.multiple = true; // 允许多选
+    input.multiple = true; // Allow multiple selection
     input.onchange = (event) => {
       const files = event.target.files;
       if (files.length > 0) {
-        // 如果选择了多个文件，只处理第一个（或者你可以修改为支持批量上传）
+        // If multiple files are selected, process the first
         const file = files[0];
-        // 检查文件扩展名
+        // Check extension
         if (!file.name.toLowerCase().endsWith('.vrma')) {
           showNotification('Only .vrma files are supported', 'error');
           return;
         }
         this.newVrmaMotion.name = file.name;
         this.newVrmaMotion.file = file;
-        // 自动设置显示名称（去掉扩展名）
+        // Set display name without extension
         this.newVrmaMotion.displayName = file.name.replace(/\.vrma$/i, '');
       }
     };
     input.click();
   },
 
-  // 处理VRMA动作拖拽
+  // Handle VRMA motion drop
   handleVrmaMotionDrop(event) {
     event.preventDefault();
     const files = event.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      // 检查文件扩展名
+      // Check extension
       if (!file.name.toLowerCase().endsWith('.vrma')) {
         showNotification('Only .vrma files are supported', 'error');
         return;
       }
       this.newVrmaMotion.name = file.name;
       this.newVrmaMotion.file = file;
-      // 自动设置显示名称（去掉扩展名）
+      // Set display name without extension
       this.newVrmaMotion.displayName = file.name.replace(/\.vrma$/i, '');
     }
   },
 
-  // 移除已选择的VRMA动作
+  // Remove selected VRMA motion
   removeNewVrmaMotion() {
     this.newVrmaMotion.name = '';
     this.newVrmaMotion.displayName = '';
     this.newVrmaMotion.file = null;
   },
 
-  // 取消VRMA动作上传
+  // Cancel VRMA upload
   cancelVrmaMotionUpload() {
     this.showVrmaMotionDialog = false;
     this.newVrmaMotion.name = '';
@@ -12621,7 +12621,7 @@ copyIslandEndpoint(){
     this.newVrmaMotion.file = null;
   },
 
-  // 上传VRMA动作
+  // Upload VRMA motion
   async uploadVrmaMotion() {
     if (!this.newVrmaMotion.file) {
       showNotification('Select a VRMA motion file first', 'error');
@@ -12646,25 +12646,25 @@ copyIslandEndpoint(){
       const result = await response.json();
       
       if (result.success) {
-        // 添加新动作到用户动作列表
+        // Add motion to user motion list
         const newMotionOption = {
           id: result.file.unique_filename,
           name: result.file.display_name,
           path: result.file.path,
-          type: 'user' // 标记为用户上传的动作
+          type: 'user' // Mark user-uploaded motion
         };
         
         this.VRMConfig.userMotions.push(newMotionOption);
         
-        // 自动选中新上传的动作
+        // Select newly uploaded motion
         if (!this.VRMConfig.selectedMotionIds.includes(newMotionOption.id)) {
           this.VRMConfig.selectedMotionIds.push(newMotionOption.id);
         }
         
-        // 关闭对话框并重置状态
+        // Close dialog and reset state
         this.cancelVrmaMotionUpload();
         
-        // 自动保存设置
+        // Autosave settings
         await this.autoSaveSettings();
         
         showNotification('VRMA motion uploaded');
@@ -12672,20 +12672,20 @@ copyIslandEndpoint(){
         showNotification(`Upload failed: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('上传VRMA动作失败:', error);
+      console.error('VRMA motion upload failed:', error);
       showNotification('Upload failed. Check the network connection.', 'error');
     }
   },
 
-  // 删除动作选项（只能删除用户上传的动作）
+  // Delete user-uploaded motions only
   async deleteMotionOption(motionId) {
     try {
-      // 查找要删除的动作选项（只在用户动作中查找）
+      // Find motion in user motion list
       const motionIndex = this.VRMConfig.userMotions.findIndex(
         motion => motion.id === motionId
       );
       
-      // 调用后端API删除文件
+      // Call deletion API
       const response = await fetch(`/delete_vrma_motion/${motionId}`, {
         method: 'DELETE'
       });
@@ -12693,16 +12693,16 @@ copyIslandEndpoint(){
       const result = await response.json();
       
       if (result.success) {
-        // 从用户动作列表中移除
+        // Remove from user motion list
         this.VRMConfig.userMotions.splice(motionIndex, 1);
         
-        // 如果当前选中的动作中包含被删除的动作，则从选中列表中移除
+        // Remove deleted motion from selection
         const selectedIndex = this.VRMConfig.selectedMotionIds.indexOf(motionId);
         if (selectedIndex > -1) {
           this.VRMConfig.selectedMotionIds.splice(selectedIndex, 1);
         }
         
-        // 自动保存设置
+        // Autosave settings
         await this.autoSaveSettings();
         
         showNotification(this.t("VRMAactionDeleted"));
@@ -12710,23 +12710,23 @@ copyIslandEndpoint(){
         showNotification(`error: ${result.message}`, 'error');
       }
     } catch (error) {
-      console.error('删除VRMA动作失败:', error);
+      console.error('VRMA motion deletion failed:', error);
       showNotification(error, 'error');
     }
   },
 
-  // 获取当前选中的动作信息
+  // Get selected motion information
   getCurrentSelectedMotions() {
     const selectedMotions = [];
     
-    // 从默认动作中查找
+    // Search default motions
     this.VRMConfig.defaultMotions.forEach(motion => {
       if (this.VRMConfig.selectedMotionIds.includes(motion.id)) {
         selectedMotions.push(motion);
       }
     });
     
-    // 从用户动作中查找
+    // Search user motions
     this.VRMConfig.userMotions.forEach(motion => {
       if (this.VRMConfig.selectedMotionIds.includes(motion.id)) {
         selectedMotions.push(motion);
@@ -12736,17 +12736,17 @@ copyIslandEndpoint(){
     return selectedMotions;
   },
 
-  // 获取所有可用的动作（默认 + 用户上传）
+  // Get all default and user-uploaded motions
   getAllAvailableMotions() {
     return [...this.VRMConfig.defaultMotions, ...this.VRMConfig.userMotions];
   },
 
-  // 根据ID获取动作信息
+  // Get motion information by ID
   getMotionById(motionId) {
-    // 先在默认动作中查找
+    // Search default motions first
     let motion = this.VRMConfig.defaultMotions.find(m => m.id === motionId);
     
-    // 如果没找到，再在用户动作中查找
+    // Then search user motions
     if (!motion) {
       motion = this.VRMConfig.userMotions.find(m => m.id === motionId);
     }
@@ -12754,7 +12754,7 @@ copyIslandEndpoint(){
     return motion;
   },
 
-/* 生命周期：读取场景列表 */
+/* Lifecycle: load scene list */
 async loadGaussScenes() {
   const [def, user] = await Promise.all([
     fetch('/get_default_gauss_scenes').then(r => r.json()),
@@ -12762,21 +12762,21 @@ async loadGaussScenes() {
   ]);
   this.VRMConfig.gaussDefaultScenes = def.scenes || [];
   this.VRMConfig.gaussUserScenes   = user.scenes || [];
-  console.log("默认场景：",this.VRMConfig.gaussDefaultScenes);
+  console.log("Default scenes:",this.VRMConfig.gaussDefaultScenes);
   if (!this.VRMConfig.selectedGaussSceneId) {
     this.VRMConfig.selectedGaussSceneId = 'transparent';
   }
   this.autoSaveSettings();
 },
-/* 选择场景后实时切换背景 */
+/* Switch background after scene selection */
 async handleGaussSceneChange(sceneId) {
-  // 与 VRM 模型切换类似：把场景 id 写进 VRMConfig
+  // Store scene ID in VRMConfig like model selection
   this.VRMConfig.selectedGaussSceneId = sceneId;
 
   this.autoSaveSettings();
 },
 
-/* 上传区域点击 */
+/* Upload area click */
 browseGaussSceneFile() {
   const ipt = document.createElement('input');
   ipt.type = 'file';
@@ -12785,14 +12785,14 @@ browseGaussSceneFile() {
     const file = e.target.files[0];
     if (file) {
       this.newGaussScene.name = file.name;
-      this.newGaussScene.file = file;   // 保存原始 File 对象
+      this.newGaussScene.file = file;   // Keep original File object
       this.newGaussScene.displayName = this.newGaussScene.displayName || this.newGaussScene.name;
     }
   };
   ipt.click();
 },
 
-/* 拖拽上传 */
+/* Drag and drop upload */
 handleGaussSceneDrop(e) {
   const file = e.dataTransfer.files[0];
   if (!file) return;
@@ -12805,17 +12805,17 @@ handleGaussSceneDrop(e) {
   this.newGaussScene.displayName = this.newGaussScene.displayName || this.newGaussScene.name;
 },
 
-/* 移除待上传文件 */
+/* Remove pending upload */
 removeNewGaussScene() {
   this.newGaussScene = { name: '', displayName: '' };
 },
 
-/* 真正上传 */
+/* Upload */
 async uploadGaussScene() {
   const fd = new FormData();
   fd.append('file', this.newGaussScene.file);
   fd.append('display_name', this.newGaussScene.displayName || this.newGaussScene.name);
-  console.log("上传场景：",fd);
+  console.log("Uploading scene:",fd);
   const res = await fetch('/upload_gauss_scene', {
     method: 'POST',
     body: fd
@@ -12824,34 +12824,34 @@ async uploadGaussScene() {
   if (res.success) {
     showNotification('Scene uploaded');
     this.showGaussSceneDialog = false;
-    // 添加新动作到用户动作列表
+    // Add new scene to user list
     const newgaussScenes = {
       id: res.file.unique_filename,
       name: res.file.display_name,
       path: res.file.path,
-      type: 'user' // 标记为用户上传的动作
+      type: 'user' // Mark user-uploaded scene
     };
         
     this.VRMConfig.gaussUserScenes.push(newgaussScenes);
-    // 自动选中新上传的场景
+    // Select newly uploaded scene
     if (newgaussScenes) this.handleGaussSceneChange(newgaussScenes.id);
   } else {
     showNotification(res.message || 'Upload failed', 'error');
   }
 },
 
-/* 取消上传 */
+/* Cancel upload */
 cancelGaussSceneUpload() {
   this.showGaussSceneDialog = false;
   this.removeNewGaussScene();
 },
 
-/* 删除用户场景 */
+/* Delete user scene */
 async deleteGaussSceneOption(sceneId) {
   const scene = this.VRMConfig.gaussUserScenes.find(s => s.id === sceneId);
   if (!scene) return;
 
-  // 提取 uuid 文件名
+  // Extract UUID filename
   const filename = scene.path.split('/').pop();
   const res = await fetch(`/delete_gauss_scene/${filename}`, {
     method: 'DELETE'
@@ -12859,7 +12859,7 @@ async deleteGaussSceneOption(sceneId) {
 
   if (res.success) {
     showNotification('Scene deleted');
-    // 如果当前正在使用被删场景，切回第一个默认场景
+    // If deleted scene is active, switch to first default scene
     if (this.VRMConfig.selectedGaussSceneId === sceneId) {
       const firstDef = this.VRMConfig.gaussDefaultScenes[0];
       if (firstDef) this.handleGaussSceneChange(firstDef.id);
@@ -12888,12 +12888,12 @@ async deleteGaussSceneOption(sceneId) {
         conv.timestamp && conv.timestamp >= oneWeekAgo
       );
       if (this.conversations == []){
-        this.conversationId = null; // 清空当前对话ID
+        this.conversationId = null; // Clear current conversation ID
       }
       
       await this.saveConversations();
     } catch (error) {
-      // 用户取消操作
+      // User cancelled operation
     }
   },
   changeGsvAudioPath() {
@@ -12901,7 +12901,7 @@ async deleteGaussSceneOption(sceneId) {
       this.newGsvAudio.name = this.newGsvAudio.path;
     }
   },
-    /* ===============  朗读主流程  =============== */
+    /* =============== Read-aloud workflow =============== */
 toggleRead() {
   if (this.isReadRunning) {
     if (this.isReadPaused) {
@@ -12914,7 +12914,7 @@ toggleRead() {
   }
 },
 
-// 修改后的startRead方法
+// startRead implementation
 async startRead() {
   if (!this.readConfig.longText.trim()) return;
   
@@ -12922,10 +12922,10 @@ async startRead() {
   this.readState.currentChunk = 0;
   this.isReadStarting = true;
   this.isReadRunning  = true;
-  this.isReadPaused   = false;  // 重置暂停状态
+  this.isReadPaused   = false;  // Reset pause state
   this.isReadStopping = false;
 
-  /* 清空上一次的残留 */
+  /* Clear previous playback state */
   this.readState.ttsChunks  = [];
   this.readState.audioChunks = [];
   this.readState.currentChunk = 0;
@@ -12933,11 +12933,11 @@ async startRead() {
   this.readState.chunks_voice = [];
   this.cur_voice = 'default';
   
-  /* 重置音频计数状态 */
+  /* Reset audio counters */
   this.audioChunksCount = 0;
   this.totalChunksCount = 0;
 
-  /* 分段处理逻辑（保持原有） */
+  /* Segment text */
   const {
     chunks,
     chunks_voice,
@@ -12950,7 +12950,7 @@ async startRead() {
     chunks_voice.push(remaining_voice);
   }
 
-  /* 去标签 + 去空白并同步删除 */
+  /* Strip tags and whitespace, synchronizing deletions */
   const cleanedChunks = chunks.map(txt => txt.replace(/<\/?[^>]+>/g, '').trim());
   const finalChunks = [];
   const finalChunksVoice = [];
@@ -12972,61 +12972,61 @@ async startRead() {
   this.readState.chunks_voice = finalChunksVoice;
   this.totalChunksCount = finalChunks.length;
 
-  /* 通知 VRM 开始朗读 */
+  /* Notify VRM that reading has started */
   this.sendTTSStatusToVRM('ttsStarted', {
     totalChunks: this.readState.ttsChunks.length
   });
 
   this.isReadStarting = false;
 
-  /* 并发 TTS */
+  /* Concurrent TTS */
   this.isAudioSynthesizing = true;
   await this.startReadTTSProcess();
 },
 
-// 新增：暂停朗读
+// Pause reading
 pauseRead() {
   if (!this.isReadRunning || this.isReadPaused) return;
   
   this.isReadPaused = true;
   
-  // 暂停当前音频
+  // Pause current audio
   if (this.currentReadAudio) {
     this.currentReadAudio.pause();
   }
   
-  // 通知 VRM 暂停
+  // Notify VRM to pause
   this.sendTTSStatusToVRM('pauseSpeaking', {});
 },
 
-// 新增：恢复朗读
+// Resume reading
 resumeRead() {
   if (!this.isReadRunning || !this.isReadPaused) return;
   
   this.isReadPaused = false;
   
-  // 恢复当前音频播放
+  // Resume current audio
   if (this.currentReadAudio) {
     this.currentReadAudio.play().catch(console.error);
   }
   
-  // 通知 VRM 恢复
+  // Notify VRM to resume
   this.sendTTSStatusToVRM('resumeSpeaking', {});
   
-  // 尝试继续播放后续音频
+  // Try playing subsequent audio
   this.checkReadAudioPlayback();
 },
 
-    // 修改 processReadTTSChunk 方法
+    // processReadTTSChunk implementation
     async processReadTTSChunk(index) {
       try {
         const chunk = this.readState.ttsChunks[index];
         const voice = this.readState.chunks_voice[index];
         const cachedAudio = this.readState.audioChunks[index];
 
-        // --- 修改点 1：将缓存检查中的 base64 改为 buffer ---
+        // Check cached buffer rather than Base64
         if (cachedAudio?.url && cachedAudio?.buffer && cachedAudio?.text === chunk && cachedAudio?.voice === voice){
-          // this.cur_audioDatas[index] = cachedAudio.buffer; // 可省略，直接用 readState
+          // this.cur_audioDatas[index] = cachedAudio.buffer; // Optional; readState can be used directly
         }
         else{
           let chunk_text = chunk;
@@ -13048,14 +13048,14 @@ resumeRead() {
           const blob = await res.blob();
           const url  = URL.createObjectURL(blob);
 
-          // --- 修改点 2：抛弃 Base64，改用 ArrayBuffer ---
+          // Use ArrayBuffer rather than Base64
           const audioBuffer = await blob.arrayBuffer();
 
           this.readState.audioChunks[index] = {
             url,                       
             expressions: chunk_expressions,
-            buffer: audioBuffer, // <--- 缓存二进制
-            mimeType: blob.type, // <--- 保存真实的类型
+            buffer: audioBuffer, // Cache binary audio
+            mimeType: blob.type, // Store actual MIME type
             text: chunk_text,
             index,
             voice
@@ -13083,22 +13083,22 @@ resumeRead() {
 
     async ClickToListen(SampleText,voice='default') {
       if (!SampleText) {
-        SampleText ='super agent party链接一切！'
+        SampleText ='Hello! This is a sample of my voice.'
       }
 
     try {
-      // 创建副本，避免直接修改 this.ttsSettings
+      // Copy settings to avoid directly changing this.ttsSettings
       let Settings = { ...this.ttsSettings };
 
       if (this.showAddTTSDialog) {
         Settings = { ...Settings, ...this.newTTSConfig };
       } else if (voice !== 'default' && this.ttsSettings.newtts && this.ttsSettings.newtts[voice]) {
-        // 从角色语音卡片调用：合并角色配置
+        // Merge character settings when called from character voice card
         Settings = { ...Settings, ...this.ttsSettings.newtts[voice] };
       }
 
-      // ★ 关键修复：附带 modelProviders，供后端查找 API Key
-      // 后端逻辑：如果角色配置缺少api_key但有selectedProvider，会从这里查找
+      // Include modelProviders for API key lookup
+      // Backend looks up missing api_key from selectedProvider
       if (this.modelProviders && Array.isArray(this.modelProviders)) {
         Settings.modelProviders = this.modelProviders;
       }
@@ -13109,7 +13109,7 @@ resumeRead() {
           body: JSON.stringify({
             ttsSettings: Settings,
             text: SampleText,
-            index: 0,          // 随便给个 index，后端不关心
+            index: 0,          // Backend does not use this index
             voice: voice || 'default'
           })
         });
@@ -13118,26 +13118,26 @@ resumeRead() {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
 
-        /* 直接播放 */
+        /* Play directly */
         const audio = new Audio(url);
         audio.play().catch(console.error);
 
-        /* 播放完清掉内存 */
+        /* Clear memory after playback */
         audio.onended = () => URL.revokeObjectURL(url);
       } catch (e) {
         console.error('ClickToListen error', e);
       }
     },
 
-    // 添加下载方法
+    // Download method
     downloadAudio() {
-      // 确保有音频片段可以下载
+      // Ensure audio chunks are available
       if (this.audioChunksCount === 0) {
         showNotification(this.t('noAudioToDownload'));
         return;
       }
 
-      // 检查是否有有效的音频片段
+      // Check for valid audio chunks
       const validChunks = this.readState.audioChunks.filter(chunk => chunk && chunk.url);
       if (validChunks.length === 0) {
         showNotification(this.t('noValidAudioChunks'));
@@ -13145,7 +13145,7 @@ resumeRead() {
       }
 
       try {
-        // 创建合并的音频文件，只包含有效的片段
+        // Combine valid audio chunks into a file
         this.createCombinedAudio(validChunks, this.getAudioMimeType());
       } catch (error) {
         console.error('Audio download failed:', error);
@@ -13155,14 +13155,14 @@ resumeRead() {
 
 
 
-    // 1. 修改 downloadAudio：不再需要传入 MIME 类型，交给内部探测
+    // 1. downloadAudio delegates MIME detection to the helper
     downloadAudio() {
       if (this.audioChunksCount === 0) {
         showNotification(this.t('noAudioToDownload'));
         return;
       }
 
-      // 过滤无效片段
+      // Filter invalid chunks
       const validChunks = this.readState.audioChunks.filter(chunk => chunk && chunk.url);
       if (validChunks.length === 0) {
         showNotification(this.t('noValidAudioChunks'));
@@ -13170,7 +13170,7 @@ resumeRead() {
       }
 
       try {
-        // 直接调用，不需要传参，函数内部会自己识别格式
+        // Call without arguments; detect format internally
         this.createCombinedAudio(validChunks);
       } catch (error) {
         console.error('Audio download failed:', error);
@@ -13178,25 +13178,25 @@ resumeRead() {
       }
     },
 
-    // 2. 重写 createCombinedAudio：核心修改是“自动识别真实格式”
+    // 2. createCombinedAudio detects the actual format
     async createCombinedAudio(chunks) {
       if (!chunks || chunks.length === 0) return;
 
       showNotification(this.t('audioProcessingStarted') || 'Processing audio...');
 
       try {
-        // ================= 关键步骤：探测真实格式 =================
-        // 先 Fetch 第一个片段，查看 HTTP 头或 Blob 类型，以此为准
+        // ================= Detect actual format =================
+        // Fetch first chunk and inspect HTTP headers or Blob type
         const firstResponse = await fetch(chunks[0].url);
         const firstBlob = await firstResponse.blob();
         
-        // 获取真实的 MIME (例如: "audio/ogg; codecs=opus" -> "audio/ogg")
+        // Get MIME type without codec parameters
         const realMimeType = firstBlob.type.split(';')[0]; 
         
         console.log('Detected Real Audio Format:', realMimeType);
 
-        // 根据真实 MIME 推导后缀名和处理逻辑
-        let extension = 'mp3'; // 默认
+        // Infer extension and handling from actual MIME
+        let extension = 'mp3'; // Default
         let isWav = false;
 
         if (realMimeType.includes('wav')) {
@@ -13214,11 +13214,11 @@ resumeRead() {
           extension = 'm4a';
         }
 
-        // ================= 开始获取所有数据 =================
-        // 重用第一个 Blob，减少一次请求
+        // ================= Fetch all chunks =================
+        // Reuse first Blob to avoid a duplicate request
         const firstBuffer = await firstBlob.arrayBuffer();
         
-        // 并发获取剩余片段
+        // Fetch remaining chunks concurrently
         const restPromises = chunks.slice(1).map(async (chunk) => {
           const response = await fetch(chunk.url);
           return response.arrayBuffer();
@@ -13227,20 +13227,20 @@ resumeRead() {
         const restBuffers = await Promise.all(restPromises);
         const allBuffers = [firstBuffer, ...restBuffers];
 
-        // ================= 根据真实格式合并 =================
+        // ================= Combine based on format =================
         let combinedBuffer;
 
         if (isWav) {
-          // WAV 专用处理：去头
+          // For WAV, strip headers
           combinedBuffer = this.mergeWavBuffers(allBuffers);
         } else {
-          // 其他格式（MP3, OGG等）：直接拼接
-          // 注意：OGG 直接拼接在浏览器中播放可能只能听第一句（Chained Ogg），
-          // 但下载后用本地播放器（VLC/PotPlayer）是完整的。这是无损拼接的特性。
+          // For MP3, OGG and other formats, concatenate
+          // Chained Ogg may play only its first segment in browsers;
+          // a local player can play the complete losslessly concatenated file.
           combinedBuffer = this.mergeGeneralBuffers(allBuffers);
         }
 
-        // ================= 下载文件 =================
+        // ================= Download file =================
         const blob = new Blob([combinedBuffer], { type: realMimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -13248,13 +13248,13 @@ resumeRead() {
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
         
         a.href = url;
-        // 使用探测到的真实后缀名
+        // Use detected extension
         a.download = `tts-merged-${timestamp}.${extension}`; 
         
         document.body.appendChild(a);
         a.click();
         
-        // 清理
+        // Clean up
         setTimeout(() => {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
@@ -13268,9 +13268,9 @@ resumeRead() {
       }
     },
 
-    // --- 辅助函数保持不变 ---
+    // --- Helpers ---
     
-    // 通用拼接 (MP3/OGG/AAC)
+    // General concatenation (MP3/OGG/AAC)
     mergeGeneralBuffers(buffers) {
       const totalLength = buffers.reduce((acc, buffer) => acc + buffer.byteLength, 0);
       const result = new Uint8Array(totalLength);
@@ -13284,7 +13284,7 @@ resumeRead() {
       return result;
     },
 
-    // WAV 专用拼接
+    // WAV-specific concatenation
     mergeWavBuffers(buffers) {
       if (buffers.length === 0) return new Uint8Array(0);
       if (buffers.length === 1) return new Uint8Array(buffers[0]);
@@ -13299,11 +13299,11 @@ resumeRead() {
 
       const result = new Uint8Array(totalDataLength);
       
-      // 写入第一个文件（含头）
+      // Write first file including header
       result.set(new Uint8Array(buffers[0]), 0);
       let offset = buffers[0].byteLength;
 
-      // 写入后续文件（去头）
+      // Append subsequent files without headers
       for (let i = 1; i < buffers.length; i++) {
         const buffer = new Uint8Array(buffers[i]);
         if (buffer.byteLength > HEADER_SIZE) {
@@ -13313,7 +13313,7 @@ resumeRead() {
         }
       }
 
-      // 修正 WAV 头
+      // Correct WAV header
       const view = new DataView(result.buffer);
       view.setUint32(4, result.byteLength - 8, true); 
       view.setUint32(40, result.byteLength - HEADER_SIZE, true);
@@ -13322,16 +13322,16 @@ resumeRead() {
     },
 
 
-// 修改 stopRead 方法
+// stopRead implementation
 stopRead() {
   if (!this.isReadRunning) return;
   
   this.isReadStopping = true;
   this.isReadRunning  = false;
-  this.isReadPaused   = false;  // 重置暂停状态
+  this.isReadPaused   = false;  // Reset pause state
   this.readState.isPlaying = false;
 
-  /* 停掉当前音频 */
+  /* Stop current audio */
   if (this.currentReadAudio) {
     this.currentReadAudio.pause();
     this.currentReadAudio = null;
@@ -13339,7 +13339,7 @@ stopRead() {
   
   this.sendTTSStatusToVRM('stopSpeaking', {});
   
-  /* 重置音频计数状态 */
+  /* Reset audio counters */
   this.isAudioSynthesizing = false;
   this.audioChunksCount = 0;
   this.totalChunksCount = 0;
@@ -13347,29 +13347,29 @@ stopRead() {
   this.isReadStopping = false;
 },
 
-// 修改 stopTTSActivities 方法
+// stopTTSActivities implementation
 stopTTSActivities() {
-  // 停止朗读流程
+  // Stop read-aloud workflow
   if (this.isReadRunning) {
     this.isReadStopping = true;
     this.isReadRunning = false;
-    this.isReadPaused = false;  // 重置暂停状态
+    this.isReadPaused = false;  // Reset pause state
     this.readState.isPlaying = false;
     
-    /* 停掉当前音频 */
+    /* Stop current audio */
     if (this.currentReadAudio) {
       this.currentReadAudio.pause();
       this.currentReadAudio = null;
     }
     this.sendTTSStatusToVRM('stopSpeaking', {});
     
-    /* 重置音频计数状态 */
+    /* Reset audio counters */
     this.isAudioSynthesizing = false;
     
     this.isReadStopping = false;
   }
   
-  // 停止音频转换流程（保持原有）
+  // Stop audio conversion
   if (this.isConvertingAudio) {
     this.isConvertStopping = true;
     this.isConvertingAudio = false;
@@ -13378,12 +13378,12 @@ stopTTSActivities() {
     this.isConvertStopping = false;
   }
 },
-  /* ===============  复用 / 微调 TTS 流程  =============== */
+  /* =============== Shared TTS workflow =============== */
   async startReadTTSProcess() {
     let max_concurrency = this.ttsSettings.maxConcurrency || 1;
     let nextIndex = 0;
 
-    /* 与对话版唯一区别：readState 代替 messages[last] */
+    /* Use readState instead of the last chat message. */
     while (this.isReadRunning) {
       while (
         this.readState.ttsQueue.size < max_concurrency &&
@@ -13398,7 +13398,7 @@ stopTTSActivities() {
           this.readState.ttsQueue.delete(index);
         });
 
-        /* 首包加速 */
+        /* Prioritize first chunk */
         if (index === 0) await new Promise(r => setTimeout(r, 800));
       }
       await new Promise(r => setTimeout(r, 10));
@@ -13406,7 +13406,7 @@ stopTTSActivities() {
     console.log('Read TTS queue processing completed');
   },
 
-  // 修改后的 convertAudioOnly 方法
+  // convertAudioOnly implementation
   async convertAudioOnly() {
     if (!this.readConfig.longText.trim()) {
       showNotification(this.t('noTextToConvert'));
@@ -13416,14 +13416,14 @@ stopTTSActivities() {
     this.isConvertingAudio = true;
     
     try {
-      // 1. 清空上一次的残留
+      // 1. Clear previous state
       this.readState.ttsChunks = [];
       this.readState.audioChunks = [];
       this.readState.chunks_voice = [];
       this.audioChunksCount = 0;
       this.totalChunksCount = 0;
 
-  /* 2. 分段 */
+  /* 2. Segment text */
       const {
         chunks,
         chunks_voice,
@@ -13431,28 +13431,28 @@ stopTTSActivities() {
         remaining_voice
       } = this.splitTTSBuffer(this.readConfig.longText);
 
-      // 追加 remaining
+      // Append remaining text
       if (remaining) {
         chunks.push(remaining);
         chunks_voice.push(remaining_voice);
       }
 
-      /* ================= 新增：去标签 + 去空白并同步删除 ================= */
-      // 1. 去 HTML 标签
+      /* Strip tags and whitespace, keeping arrays aligned */
+      // 1. Strip HTML tags
       const cleanedChunks = chunks.map(txt => txt.replace(/<\/?[^>]+>/g, '').trim());
 
-      // 2. 过滤空白并同步删除 chunks_voice 对应项
+      // 2. Remove empty text and corresponding chunks_voice entries
       const finalChunks       = [];
       const finalChunksVoice  = [];
 
       cleanedChunks.forEach((txt, idx) => {
-        if (txt) {                      // 非空才保留
+        if (txt) {                      // Keep only nonempty text
           finalChunks.push(txt);
           finalChunksVoice.push(chunks_voice[idx]);
         }
       });
 
-      // 3. 覆盖原来的数组
+      // 3. Replace original arrays
       chunks.length       = 0;
       chunks_voice.length = 0;
       chunks.push(...finalChunks);
@@ -13468,30 +13468,30 @@ stopTTSActivities() {
       this.readState.chunks_voice = chunks_voice;
       this.totalChunksCount = chunks.length;
 
-      // 3. 开始转换（复用 processReadTTSChunk 但禁用播放）
+      // 3. Convert using processReadTTSChunk without playback
       this.isAudioSynthesizing = true;
       
-      // 使用并发控制处理所有片段
+      // Use concurrency control for all segments
       const maxConcurrency = this.ttsSettings.maxConcurrency || 1;
       let nextIndex = 0;
       const activeTasks = new Set();
       
-      // 使用 Promise 来等待所有任务完成
+      // Wait for all tasks with a Promise
       await new Promise((resolve) => {
         const processNext = async () => {
-          // 检查是否被用户停止
+          // Check for user cancellation
           if (!this.isConvertingAudio) {
             resolve();
             return;
           }
           
-          // 所有任务完成
+          // All tasks complete
           if (nextIndex >= chunks.length && activeTasks.size === 0) {
             resolve();
             return;
           }
           
-          // 添加新任务（如果有空位且还有任务）
+          // Add tasks while slots and work remain
           while (activeTasks.size < maxConcurrency && nextIndex < chunks.length) {
             const index = nextIndex++;
             activeTasks.add(index);
@@ -13499,7 +13499,7 @@ stopTTSActivities() {
             this.processTTSChunkWithoutPlayback(index)
               .finally(() => {
                 activeTasks.delete(index);
-                processNext(); // 检查是否可添加新任务
+                processNext(); // Check for another available task
               });
           }
         };
@@ -13507,7 +13507,7 @@ stopTTSActivities() {
         processNext();
       });
       
-      // 只有在没有被停止的情况下才显示完成通知
+      // Show completion only if not cancelled
       if (this.isConvertingAudio) {
         this.isAudioSynthesizing = false;
         showNotification(this.t('audioConversionCompleted', { count: chunks.length }));
@@ -13521,18 +13521,18 @@ stopTTSActivities() {
     }
   },
 
-    // 处理TTS片段但不播放
+    // Process TTS segment without playback
     async processTTSChunkWithoutPlayback(index) {
       const chunk = this.readState.ttsChunks[index];
       const voice = this.readState.chunks_voice[index];
       console.log(`Processing TTS chunk ${index}`);
-      // 文本清洗
+      // Clean text
       let chunk_text = chunk;
       let chunk_expressions =[];
       if (chunk.indexOf('<') !== -1) {
         const tagReg = /<[^>]+>/g;
-        chunk_expressions = (chunk.match(tagReg) || []).map(t => t.slice(1, -1)); // 去掉两端的 <>
-        chunk_text = chunk.replace(tagReg, '').trim(); // 把标签从正文里删掉
+        chunk_expressions = (chunk.match(tagReg) || []).map(t => t.slice(1, -1)); // Strip surrounding angle brackets
+        chunk_text = chunk.replace(tagReg, '').trim(); // Remove tags from body text
       }
 
       try {
@@ -13552,7 +13552,7 @@ stopTTSActivities() {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const audioBuffer = await blob.arrayBuffer();
-        /* Base64 给 VRM */
+        /* Base64 for VRM */
         const base64 = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload  = () => resolve(reader.result.split(',')[1]);
@@ -13560,9 +13560,9 @@ stopTTSActivities() {
           reader.readAsDataURL(blob);
         });
         this.cur_audioDatas[index] = `data:${blob.type};base64,${base64}`;
-        /* 缓存两样东西 */
+        /* Cache playback data */
         this.readState.audioChunks[index] = {
-          url,                       // 本地播放用
+          url,                       // Local playback URL
           expressions: chunk_expressions,
           buffer: audioBuffer, 
           mimeType: blob.type, 
@@ -13570,11 +13570,11 @@ stopTTSActivities() {
           index,
           voice
         };
-        // 增加计数
+        // Increment counter
         this.audioChunksCount++;
         if (this.audioChunksCount >= this.totalChunksCount) {
           this.isAudioSynthesizing = false;
-          this.audioChunksCount = this.totalChunksCount; // 重置计数
+          this.audioChunksCount = this.totalChunksCount; // Reset counter
         }
       } catch (e) {
         console.error(`TTS chunk ${index} error`, e);
@@ -13585,18 +13585,18 @@ stopTTSActivities() {
           index 
         };
         
-        // 错误时也增加计数
+        // Increment count on error as well
         this.audioChunksCount++;
         if (this.audioChunksCount >= this.totalChunksCount) {
           this.isAudioSynthesizing = false;
-          this.audioChunksCount = this.totalChunksCount; // 重置计数
+          this.audioChunksCount = this.totalChunksCount; // Reset counter
         }
       }
     },
 
-  /* ===============  播放监控  =============== */
+  /* =============== Playback monitoring =============== */
   async startReadAudioPlayProcess() {
-    /* 与对话版的 startAudioPlayProcess 完全一致，只是把 readState 替换掉 */
+    /* Same as chat playback, using readState. */
     this.readState.currentChunk = 0;
     this.readState.isPlaying   = false;
     this.audioPlayQueue = [];
@@ -13625,7 +13625,7 @@ stopTTSActivities() {
     this.scrollToCurrentChunk(curIdx);
     
     try {
-      // --- 修改点 5：发送二进制数据到 VRM (照搬对话播放的核心逻辑) ---
+      // Send binary audio to VRM using the chat playback mechanism
       if ((this.vrmOnline || this.vtsOnline) && audioChunk.buffer) {
           const metadata = {
               type: 'audio_chunk',
@@ -13638,9 +13638,9 @@ stopTTSActivities() {
       }
 
       this.currentReadAudio = new Audio(audioChunk.url);
-      this.currentReadAudio.volume = this.vrmOnline ? 0.0000001 : 1; // VRM在线时静音
+      this.currentReadAudio.volume = this.vrmOnline ? 0.0000001 : 1; // Mute local playback while VRM is online
 
-      // --- 修改点 6：剔除 audioDataUrl，仅发送状态指令 ---
+      // Send state commands without audioDataUrl
       this.sendTTSStatusToVRM('startSpeaking', {
         chunkIndex: curIdx,
         totalChunks: total,
@@ -13669,21 +13669,21 @@ stopTTSActivities() {
         this.readConfig.longText = '';
         this.readConfig.longTextList = [];
         this.longTextListIndex = 0;
-        // 根据选择的文件unique_filename在textFiles中查找对应的文件信息
+        // Look up file metadata by unique_filename in textFiles
         const selectedFile = this.textFiles.find(file => file.unique_filename === this.selectedFile);
         try {
           if (selectedFile) {
-            // 构建完整的请求URL
+            // Construct complete request URL
             const url = `/get_file_content?file_url=${selectedFile.unique_filename}`;
             
-            // 发送请求获取文件内容
+            // Request file contents
             const response = await fetch(url, {
               method: 'GET',
               headers: { 'Content-Type': 'application/json' }
             });
             const data = await response.json();
             if (selectedFile.unique_filename.toLowerCase().endsWith('.epub')){
-              // data.content转成字典
+              // Convert data.content to dictionary
               let data_json = JSON.parse(data.content);
               this.readConfig.longTextList = data_json.chapters || [];
               if (this.readConfig.longTextList.length > 0){
@@ -13695,7 +13695,7 @@ stopTTSActivities() {
             }else{
               this.readConfig.longText = data.content;
             }
-            // 如果this.readConfig.longText太长了，就只取前100000个
+            // Limit readConfig.longText to its first 100000 characters
             // if (this.readConfig.longText.length > 100000) {
             //   this.readConfig.longText = this.readConfig.longText.substring(0, 100000);
             //   showNotification(this.t('contentTooLong'))
@@ -13774,7 +13774,7 @@ stopTTSActivities() {
       name: '',
       windowWidth: 540,
       windowHeight: 960,
-      selectedModelId: 'alice', // 默认选择Alice模型
+      selectedModelId: 'alice', // Default to Alice model
       selectedMotionIds: [],
     };
     this.showAddAppearanceDialog = true;
@@ -13795,7 +13795,7 @@ stopTTSActivities() {
     this.autoSaveSettings();
   },
   addBehavior() {
-    // 深拷贝一份默认模板
+    // Deep-copy default template
     this.behaviorSettings.behaviorList.push(JSON.parse(JSON.stringify(this.newBehavior)));
     this.autoSaveSettings();
   },
@@ -13817,7 +13817,7 @@ stopTTSActivities() {
     showNotification(this.t('deleteAllBehaviorSuccess'))
     this.autoSaveSettings();
   },
-    /* 真正执行行为 */
+    /* Execute behavior */
     runBehavior(b) {
       if (!b.enabled) return
       if (!this.noInputFlag){
@@ -13826,7 +13826,7 @@ stopTTSActivities() {
       if (b.action.type === 'prompt' && b.action.prompt) {
         console.log('Prompt:', b.action.prompt)
         this.userInput= '[system]:'+ b.action.prompt
-        // 这里把 prompt 发给你的模型即可，举例：
+        // Send prompt to the model
         this.sendMessage();
       }
       if (b.action.type === 'random' && b.action.random) {
@@ -13835,7 +13835,7 @@ stopTTSActivities() {
             let randomEvent = b.action.random.events[Math.floor(Math.random() * b.action.random.events.length)];
             if(randomEvent){
               this.userInput= '[system]:'+randomEvent;
-              // 这里把 prompt 发给你的模型即可，举例：
+              // Send prompt to the model
               this.sendMessage();
             }
           }else if( b.action.random.type === 'order'){
@@ -13847,7 +13847,7 @@ stopTTSActivities() {
               b.action.random.orderIndex += 1;
               if(randomEvent){
                 this.userInput= '[system]:'+randomEvent;
-                // 这里把 prompt 发给你的模型即可，举例：
+                // Send prompt to the model
                 this.sendMessage();
               }
             }
@@ -13856,7 +13856,7 @@ stopTTSActivities() {
       }
     },
 
-    /* 触发一次后，如果是“不重复”就把 enabled 关掉 */
+    /* Disable a nonrepeating behavior after execution */
     disableOnceBehavior(b) {
       if (b.trigger.type === 'time' && !b.trigger.time.days.length && b.platform === 'chat') {
         b.enabled = false
@@ -13876,7 +13876,7 @@ stopTTSActivities() {
       }
     },
     async handleDownload(file) {
-      // 构造文件URL（确保是完整URL）
+      // Construct complete file URL
       const fileUrl = `${this.partyURL}/uploaded_files/${file.unique_filename}`;
       console.log(fileUrl);
       if (isElectron) {
@@ -13889,7 +13889,7 @@ stopTTSActivities() {
           console.error(e);
         }
       } else {
-        // 非Electron环境保留原逻辑
+        // Retain non-Electron handling
         const link = document.createElement('a');
         link.href = fileUrl;
         link.download = file.unique_filename;
@@ -13900,14 +13900,14 @@ stopTTSActivities() {
     },
   removeEvent(idx,index) {
     this.behaviorSettings.behaviorList[idx].action.random.events.splice(index, 1);
-    this.autoSaveSettings(); // 删除后也触发自动保存
+    this.autoSaveSettings(); // Autosave after deletion
   },
   addNewEvent(idx) {
-    this.behaviorSettings.behaviorList[idx].action.random.events.push(''); // 添加一个新的空事件，从而新增一个输入框
+    this.behaviorSettings.behaviorList[idx].action.random.events.push(''); // Append an empty event to display a new input field
     this.autoSaveSettings();
   },
 
-  // 初始化周期定时器
+  // Initialize periodic timer
 initCycleTimer(behavior, index) {
   if (this.cycleTimers[index]) {
     clearInterval(this.cycleTimers[index]);
@@ -13917,7 +13917,7 @@ initCycleTimer(behavior, index) {
   let currentCount = 0;
   
   this.cycleTimers[index] = setInterval(() => {
-    // 运行前再次确认启用状态和平台
+    // Recheck enabled state and platform before execution
     if (!behavior || !behavior.enabled || !this.isTargetPlatform(behavior, 'chat')) return;
     
     if (behavior.trigger.cycle.isInfiniteLoop || currentCount < behavior.trigger.cycle.repeatNumber) {
@@ -13932,27 +13932,27 @@ initCycleTimer(behavior, index) {
   }, cycleMs);
 },
 
-// --- 修改重置逻辑 ---
+// --- Reset timers ---
 resetCycleTimers() {
-  // 防护：如果设置还没加载好，或者列表不存在，直接跳过
+  // Skip if settings or behavior list is not loaded
   if (!this.behaviorSettings || !Array.isArray(this.behaviorSettings.behaviorList)) {
     return;
   }
 
-  // 确保 cycleTimers 是个数组
+  // Ensure cycleTimers is an array
   if (!Array.isArray(this.cycleTimers)) {
     this.cycleTimers = [];
   }
 
-  // 清除旧的计时器
+  // Clear old timers
   this.cycleTimers.forEach((timer, index) => {
     if (timer) clearInterval(timer);
     this.cycleTimers[index] = null;
   });
 
-  // 重新初始化
+  // Reinitialize
   this.behaviorSettings.behaviorList.forEach((b, index) => {
-    // 增加 b && b.trigger 的判断
+    // Check b and b.trigger
     if (b && b.enabled && b.trigger && b.trigger.type === 'cycle' && this.isTargetPlatform(b, 'chat')) {
       this.initCycleTimer(b, index);
     }
@@ -13961,22 +13961,22 @@ resetCycleTimers() {
 
 
 isTargetPlatform(behavior, platformKey) {
-  // 1. 如果 behavior 本身不存在
+  // 1. Missing behavior
   if (!behavior) return false;
 
-  // 2. 检查新字段 platforms (数组)
-  // 必须先判断 Array.isArray 且长度 > 0，才能读取 [0]
+  // 2. Check new platforms array
+  // Ensure array is nonempty before reading index zero
   if (behavior.platforms && Array.isArray(behavior.platforms) && behavior.platforms.length > 0) {
     if (behavior.platforms.includes('all')) return true;
     return behavior.platforms.includes(platformKey);
   }
 
-  // 3. 兼容老数据：检查旧字段 platform (字符串)
+  // 3. Support legacy platform string
   if (behavior.platform && typeof behavior.platform === 'string') {
     return behavior.platform === 'all' || behavior.platform === platformKey;
   }
 
-  // 4. 兜底逻辑
+  // 4. Fallback
   return platformKey === 'chat';
 },
 
@@ -14010,10 +14010,10 @@ isTargetPlatform(behavior, platformKey) {
               title: this.t('guide.model-config'),
               description: this.t('guide.model-config-notice'),
               side: 'right',
-              // 使用 onNextClick 替代 onNext
+              // Use onNextClick instead of onNext
               onNextClick: async () => {
                 await this.handleSelect('model-config');
-                // 手动触发下一步导航
+                // Manually advance tour
                 d.moveNext();
               }
             },
@@ -14024,10 +14024,10 @@ isTargetPlatform(behavior, platformKey) {
               title: this.t('guide.add-provider-card'),
               description: this.t('guide.add-provider-card-notice'),
               side: 'right',
-              // 使用 onNextClick 替代 onNext
+              // Use onNextClick instead of onNext
               onNextClick: () => {
                 this.showAddDialog = true;
-                setTimeout(() => d.moveNext(), 100); // 手动触发下一步导航
+                setTimeout(() => d.moveNext(), 100); // Manually advance tour
               }
             }
           },
@@ -14037,26 +14037,26 @@ isTargetPlatform(behavior, platformKey) {
               title: this.t('guide.show-Add-Dialog'),
               description: this.t('guide.show-Add-Dialog-notice'),
               side: 'top',
-              // 添加 onNextClick 处理逻辑
+              // Handle onNextClick
               onNextClick: async () => {
-                // 1. 判断是否已选择供应商 (假设 newProviderTemp.vendor 为空即未选)
+                // 1. Check whether a provider is selected
                 if (!this.newProviderTemp.vendor) {
-                  // 2. 确保供应商列表至少有3个，防止报错
+                  // 2. Ensure provider list has at least three entries
                   if (this.vendorOptions && this.vendorOptions.length >= 3) {
-                    // 取出第三个供应商的值 (数组索引从0开始，所以是2)
+                    // Select third provider at zero-based index two
                     const thirdVendorValue = this.vendorOptions[2].value;
                     
-                    // 调用你的选择方法，或者直接赋值
+                    // Call selection method or assign directly
                     // this.newProviderTemp.vendor = thirdVendorValue; 
                     this.handleSelectVendor(thirdVendorValue);
                     
-                    // 3. 等待 Vue 更新 DOM (这一步很重要，因为下一步要高亮"确认"按钮，
-                    // 需要确保按钮的 disable 状态已被移除)
+                    // 3. Wait for Vue DOM update before highlighting confirmation,
+                    // so the button is enabled.
                     await this.$nextTick(); 
                   }
                 }
                 
-                // 4. 手动触发下一步
+                // 4. Advance manually
                 d.moveNext();
               }
             }
@@ -14066,10 +14066,10 @@ isTargetPlatform(behavior, platformKey) {
             popover: {
               title: this.t('guide.confirm-Add-Provider-Button'),
               side: 'right',
-              // 使用 onNextClick 替代 onNext
+              // Use onNextClick instead of onNext
               onNextClick: async () => {
                 this.confirmAddProvider();
-                // 手动触发下一步导航
+                // Manually advance tour
                 d.moveNext();
               }
             }
@@ -14082,7 +14082,7 @@ isTargetPlatform(behavior, platformKey) {
               side: 'right',
               onPrevClick: () => {
                 this.showAddDialog = true;
-                setTimeout(() => d.moveNext(), 100); // 手动触发下一步导航
+                setTimeout(() => d.moveNext(), 100); // Manually advance tour
               },
             }
           },
@@ -14113,7 +14113,7 @@ isTargetPlatform(behavior, platformKey) {
         ]
       });
 
-      // 监听高亮元素点击
+      // Listen for clicks on highlighted element
       const checkClick = (e) => {
         if (e.target.closest('#model-config')) {
           d.moveNext();
@@ -14131,19 +14131,19 @@ isTargetPlatform(behavior, platformKey) {
           d.moveNext();
         }
         if (e.target.closest('#vendor-Option')) {
-          setTimeout(() => d.moveNext(), 100); // 手动触发下一步导航
+          setTimeout(() => d.moveNext(), 100); // Manually advance tour
         }
       };
       document.addEventListener('click', checkClick);
 
-      // 清理监听
+      // Remove listener
       d.onDestroyed = () => document.removeEventListener('click', checkClick);
 
       setTimeout(() => d.drive(), 300);
     },
 
 
-  // 手动重开引导（可绑定到按钮）
+  // Manually restart the tour
   restartDriverGuide() {
     localStorage.removeItem('driver_guide_shown');
     this.startDriverGuide();
@@ -14158,67 +14158,67 @@ isTargetPlatform(behavior, platformKey) {
     }
 
     this.isPttMode = false;
-    console.log('切换助手模式，当前状态:', this.isAssistantMode);
+    console.log('Toggle assistant mode; current state:', this.isAssistantMode);
 
     if (this.isAssistantMode && !this.isMac) {
-      // 退出助手模式，最大化窗口
-      console.log('退出助手模式，最大化窗口');
-      window.electronAPI.windowAction('maximize'); // 恢复默认大小
+      // Exit assistant mode and maximize
+      console.log('Exiting assistant mode; maximizing window');
+      window.electronAPI.windowAction('maximize'); // Restore default size
     } else {
-      // 进入助手模式，设置为300x屏幕高度
-      console.log('进入助手模式，设置大小为:', 340, 800);
+      // Enter assistant mode at compact size
+      console.log('Entering assistant mode; window size:', 340, 800);
       window.electronAPI.toggleWindowSize(340, 800);
     }
 
     this.sidePanelOpen = false;
     this.isAssistantMode = !this.isAssistantMode;
-    console.log('切换完成，新状态:', this.isAssistantMode);
+    console.log('Mode changed; new state:', this.isAssistantMode);
   },
     fixedWindow() {
-    // 把新状态取反
+    // Invert state
     const next = !this.isFixedWindow;
-    // 告诉主进程设置置顶
+    // Tell main process to set always-on-top
     window.electronAPI.setAlwaysOnTop(next);
-    // 本地状态同步
+    // Synchronize local state
     this.isFixedWindow = next;
   },
   handleScreenshotCommand(command) {
     if (command === 'hide') {
-      // 点击了"隐藏窗口截图" -> 传入 true
+      // Capture with main window hidden
       this.toggleScreenshot(true);
     } else if (command === 'no-hide') {
-      // 点击了"当前窗口截图" -> 传入 false
+      // Capture current window
       this.toggleScreenshot(false);
     }
   },
 
-  // 修改：保留原有的截图逻辑，参数 hideMainWindow 决定是否隐藏
+  // hideMainWindow determines whether to hide the main window during capture
   async toggleScreenshot(hideMainWindow = true) {
     try {
-      // 1. 调用遮罩
+      // 1. Open selection overlay
       const rect = await window.electronAPI.showScreenshotOverlay(hideMainWindow)
       
-      if (!rect) return // 用户取消
+      if (!rect) return // User cancelled
 
-      // 2. 裁剪
+      // 2. Crop
       const buf = await window.electronAPI.cropDesktop({ rect })
 
-      // 3. 创建 Blob 和 File
+      // 3. Create Blob and File
       const blob = new Blob([buf], { type: 'image/png' })
       const file = new File([blob], `desktop_${Date.now()}.png`, { type: 'image/png' })
 
-      // 4. ★ 关键修复：创建本地 URL 用于预览，并推入 images 数组
+      // 4. Create local preview URL and append to images
       const localUrl = URL.createObjectURL(blob)
       
-      // 推入 images 数组（假设 allItems 是计算属性包含 images）
+      // Append to images; allItems includes the computed image list
       this.images.push({ 
         file, 
         name: file.name, 
-        path: localUrl,  // ★ 使用 blob URL 而不是空字符串
-        type: 'image'    // ★ 明确标记类型，便于 allItems 处理
+        path: localUrl,  // Use blob URL rather than empty string
+        type: 'image'    // Mark as image for allItems
       })
 
-      // ★ 如果 allItems 是独立数组，也需要同步推送
+      // Synchronize allItems if it is a separate array
       // this.allItems.push({
       //   name: file.name,
       //   path: localUrl,
@@ -14227,9 +14227,9 @@ isTargetPlatform(behavior, platformKey) {
       // })
 
     } catch (e) {
-      console.error('截图失败:', e)
+      console.error('Screenshot failed:', e)
     } finally {
-      // 5. 清理并恢复窗口
+      // 5. Clean up and restore window
       await window.electronAPI.cancelScreenshotOverlay();
       window.electronAPI.windowAction('show');
     }
@@ -14255,18 +14255,18 @@ isTargetPlatform(behavior, platformKey) {
   },
   toggleMinimalMode() {
     if (!this.isMinimalMode) {
-      // 进入极简模式：打开独立极简窗口
+      // Enter compact mode in separate window
       window.electronAPI.openMinimalWindow();
       this.isMinimalMode = true;
 
-      // 监听极简窗口关闭事件（同步状态）
+      // Synchronize state when compact window closes
       if (window.electronAPI.onMinimalWindowClosed) {
         window.electronAPI.onMinimalWindowClosed(() => {
           this.isMinimalMode = false;
         });
       }
     } else {
-      // 退出极简模式：关闭极简窗口
+      // Exit compact mode and close window
       window.electronAPI.closeMinimalWindow();
       this.isMinimalMode = false;
     }
@@ -14286,17 +14286,17 @@ isTargetPlatform(behavior, platformKey) {
       return
     }
     if (!this.promptForm.id) {
-      // 新增
+      // Add entry
       this.SystemPromptsList.push({
         id: Date.now(),
         name: this.promptForm.name,
         content: this.promptForm.content
       })
     } else {
-      // 编辑：找到索引直接替换
+      // Edit by replacing indexed entry
       const idx = this.SystemPromptsList.findIndex(p => p.id === this.promptForm.id)
       if (idx > -1) {
-        // 直接赋值即可，不需要 $set
+        // Vue 3 supports direct assignment
         this.SystemPromptsList[idx] = { ...this.promptForm }
       }
     }
@@ -14309,13 +14309,13 @@ isTargetPlatform(behavior, platformKey) {
     if (idx > -1) this.SystemPromptsList.splice(idx, 1);
     this.autoSaveSettings();
   },
-  /* 点击“使用”按钮 */
+  /* Use button handler */
   usePrompt(content) {
     this.messages[0].content = content;
-    this.activeMenu = 'home';      // 切换到主界面
+    this.activeMenu = 'home';      // Switch to home view
     this.showEditDialog = false;
   },
-  /* 主入口 */
+  /* Main entry point */
   async handleTranslate() {
     if (!this.sourceText.trim() || this.isTranslating) return;
     this.isTranslating = true;
@@ -14324,14 +14324,14 @@ isTargetPlatform(behavior, platformKey) {
     const controller = new AbortController();
     this.translateAbortController = controller;
 
-    // 构造 TTS 提示（与 translateMessage 保持一致）
+    // Build TTS prompt consistent with translateMessage
     let newttsList = [];
     if (this.ttsSettings?.newtts) {
       for (const key in this.ttsSettings.newtts) {
         if (this.ttsSettings.newtts[key].enabled) newttsList.push(key);
       }
     }
-    const ttsPrompt = '如果被翻译的文字与目标语言一致，则返回原文即可'
+    const ttsPrompt = 'If the text is already in the target language, return it unchanged.'
 
     try {
       const res = await fetch('/simple_chat', {
@@ -14342,11 +14342,11 @@ isTargetPlatform(behavior, platformKey) {
           messages: [
             {
               role: 'system',
-              content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${this.target_lang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。${ttsPrompt}`
+              content: `You are a professional translator. Translate the user's content strictly into ${this.target_lang}, preserving formatting such as Markdown and line breaks. Add no extra content. Return only the translation.${ttsPrompt}`
             },
             {
               role: 'user',
-              content: `请翻译以下内容到${this.target_lang}：\n\n${this.sourceText}`
+              content: `Translate the following content into ${this.target_lang}:\n\n${this.sourceText}`
             }
           ],
           stream: true,
@@ -14366,7 +14366,7 @@ isTargetPlatform(behavior, platformKey) {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = ''; // 残余半截行
+      let buffer = ''; // Residual partial line
       let result = '';
 
       while (true) {
@@ -14375,19 +14375,19 @@ isTargetPlatform(behavior, platformKey) {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // 最后一行可能不完整，留到下一轮
+        buffer = lines.pop(); // Keep the potentially incomplete last line for the next iteration
 
         for (const line of lines) {
-          if (!line) continue; // 跳过空行
+          if (!line) continue; // Skip blank lines
           try {
             const chunk = JSON.parse(line);
             const delta = chunk.choices?.[0]?.delta?.content ?? '';
             if (delta) {
               result += delta;
-              this.translatedText = result; // 实时渲染
+              this.translatedText = result; // Render incrementally
             }
           } catch {
-            // 忽略解析失败
+            // Ignore parse failures
           }
         }
       }
@@ -14435,29 +14435,29 @@ isTargetPlatform(behavior, platformKey) {
     const controller = new AbortController();
     this.QuickGenAbortController = controller;
 
-    const systemPrompt = `你是一名专业的角色设计师。  
-  生成的角色卡内容必须与用户输入的语言保持一致。 比如，用户输入的是中文，那么角色卡内容也必须是中文。如果用户输入的是英文，那么角色卡内容也必须是英文。以此类推！
-  用户会提供一个简短的创意，你必须仅回复一段**有效的 JSON**，并放在一个标准的Markdown 代码块中。  
-  JSON的值必须用双引号括起来，而值内部的内容如果需要引号，一律改成单引号。
-  mesExample包含5-10轮示例，alternateGreetings包含5-10条开场白，characterBook包含10条以上的关键词和内容。
-  JSON 结构必须为：
+    const systemPrompt = `You are a professional character designer.
+  Generate the card in the same language as the user's input.
+  The user provides a brief idea. Respond only with valid JSON inside a standard Markdown code block.
+  Use double quotes for JSON strings, and single quotes for quotations within values.
+  Include 5-10 dialogue exchanges in mesExample, 5-10 alternateGreetings and at least 10 characterBook keyword entries.
+  The JSON structure must be:
 
     {
-      "name": "角色名称",
-      "description": "简要背景/世界观设定，尽可能详细",
-      "personality": "性格特征",
-      "mesExample": "展示 5-10 轮聊天示例，对话示例中禁止出现非对话表达（不要出现心理描写、动作描写等等，只要纯说话的部分），格式：用户:xxx\n角色:xxx",
-      "systemPrompt": "用于驱动角色的系统提示",
-      "firstMes": "角色的第一句问候语，问候语禁止出现非对话表达（不要出现心理描写、动作描写等等，只要纯说话的部分）",
-      "alternateGreetings": ["可选问候2","可选问候3"],
+      "name": "Character name",
+      "description": "Detailed background and world setting",
+      "personality": "Personality traits",
+      "mesExample": "Show 5-10 dialogue exchanges using spoken dialogue only, without inner thoughts or action descriptions. Format: User: xxx\\nCharacter: xxx",
+      "systemPrompt": "System instructions for the character",
+      "firstMes": "First greeting, spoken dialogue only, without thoughts or action descriptions",
+      "alternateGreetings": ["Alternative greeting 2","Alternative greeting 3"],
       "characterBook": [
-          {"keysRaw":"关键词1\n关键词2","content":"这里填入当用户提到关键词1或关键词2时，需要返回给AI看的内容……"},
-          {"keysRaw":"关键词3","content":"这里填入当用户提到关键词3时，需要返回给AI看的内容……"}
+          {"keysRaw":"keyword1\\nkeyword2","content":"Information to provide to the AI when the user mentions keyword1 or keyword2."},
+          {"keysRaw":"keyword3","content":"Information to provide to the AI when the user mentions keyword3."}
       ]
     }
 
-  所有字段都必须提供；characterBook也请尽可能的丰富，最好可以在10条以上，每条的字数可以不用太多。alternateGreetings最好也有5条以上。
-  绝不可包含 avatar 字段。`;
+  Supply every field. Make characterBook rich, preferably with at least 10 concise entries, and include at least five alternate greetings.
+  Do not include an avatar field.`;
 
     try {
       const res = await fetch('/simple_chat', {
@@ -14468,7 +14468,7 @@ isTargetPlatform(behavior, platformKey) {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: this.quickCreatePrompt }
           ],
-          stream: true,   // ★ 打开流式
+          stream: true,   // Enable streaming
           temperature: 0.8
         }),
         signal: controller.signal
@@ -14482,17 +14482,17 @@ isTargetPlatform(behavior, platformKey) {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';      // 残余半截行
-      let fullText = '';    // 累积完整回复
+      let buffer = '';      // Residual partial line
+      let fullText = '';    // Accumulate full reply
 
-      // 1. 实时读流
+      // 1. Read stream incrementally
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // 最后一行可能不完整
+        buffer = lines.pop(); // Keep potentially incomplete last line
 
         for (const line of lines) {
           if (!line) continue;
@@ -14501,24 +14501,24 @@ isTargetPlatform(behavior, platformKey) {
             const delta = chunk.choices?.[0]?.delta?.content ?? '';
             if (delta) {
               fullText += delta;
-              this.quickCreatePrompt = fullText; // 实时显示
+              this.quickCreatePrompt = fullText; // Display live
             }
           } catch {
-            // 忽略解析失败
+            // Ignore parse failures
           }
         }
       }
 
-      // 2. 流结束，再走原来的解析逻辑
+      // 2. Parse after stream ends
       let raw = fullText.trim();
 
-      // 去 code-block
+      // Remove code fence
       const codeBlock = raw.match(/^```json\s*([\s\S]*?)```$/);
       if (codeBlock) raw = codeBlock[1];
       const tildeBlock = raw.match(/^```\s*([\s\S]*?)```$/);
       if (tildeBlock) raw = tildeBlock[1];
 
-      // 解析 JSON
+      // Parse JSON
       let json;
       try {
         json = JSON.parse(raw);
@@ -14526,7 +14526,7 @@ isTargetPlatform(behavior, platformKey) {
         throw new Error('The AI returned invalid JSON: ' + e.message);
       }
 
-      // 3. 写入 newMemory 并保存
+      // 3. Write newMemory and save
       Object.assign(this.newMemory, {
         name: json.name ?? '',
         infer:false,
@@ -14586,9 +14586,9 @@ isTargetPlatform(behavior, platformKey) {
           messages: [
             {
               role: 'system',
-              content: `你需要将用户发给你的简短的系统提示词优化成可以驱动大模型更好的工作的详细的系统提示词。
-  注意！生成的系统提示词必须与用户输入的语言保持一致。如果用户说英文，你就必须生成英文的系统提示词；如果用户说中文，你就必须生成中文的系统提示词。以此类推！
-  你可以从这几个方面来写，但也不要限于这些方面：角色名、角色定位、核心能力、回答风格、约束、输出格式示例等等`,
+              content: `Expand the user's brief system prompt into detailed instructions that help a language model perform its task more effectively.
+  Generate the optimized system prompt in the same language as the user's input.
+  Consider the character name, role, core capabilities, response style, constraints and output examples, among other relevant details`,
             },
             {
               role: 'user',
@@ -14626,18 +14626,18 @@ isTargetPlatform(behavior, platformKey) {
           try {
             const data = JSON.parse(line);
             
-            // 适配新的流式响应格式
+            // Handle streaming response format
             if (data.choices && data.choices[0]) {
               const choice = data.choices[0];
               
-              // 处理流式响应中的增量内容
+              // Handle streamed increments
               if (choice.delta && choice.delta.content) {
                 result += choice.delta.content;
                 this.quickCreateSystemPrompt = result;
               }
-              // 或者处理 finish_reason 为 stop 的最终响应
+              // Or handle final stop response
               else if (choice.finish_reason === 'stop') {
-                // 最终完成，不需要额外处理
+                // Finished; no additional processing needed
               }
             }
           } catch (e) {
@@ -14648,7 +14648,7 @@ isTargetPlatform(behavior, platformKey) {
         buffer = lines[lines.length - 1];
       }
       
-      // 处理可能剩余的缓冲数据
+      // Process remaining buffer
       if (buffer.trim()) {
         try {
           const data = JSON.parse(buffer);
@@ -14661,7 +14661,7 @@ isTargetPlatform(behavior, platformKey) {
         }
       }
       
-      // 保存生成的提示词
+      // Save generated prompt
       this.promptForm.content = this.quickCreateSystemPrompt;
       this.promptForm.id = null;
       await this.savePrompt();
@@ -14671,7 +14671,7 @@ isTargetPlatform(behavior, platformKey) {
       
     } catch (e) {
       if (e.name === 'AbortError') {
-        // 用户取消了生成，不需要显示错误
+        // Do not show an error for user cancellation
         console.log('System prompt generation was aborted');
       } else {
         console.error('System prompt generation failed:', e);
@@ -14707,9 +14707,9 @@ isTargetPlatform(behavior, platformKey) {
           messages: [
             {
               role: 'system',
-              content: `你需要将用户发给你的简短的系统提示词优化成可以驱动大模型更好的工作的详细的系统提示词。
-  注意！生成的系统提示词必须与用户输入的语言保持一致。如果用户说英文，你就必须生成英文的系统提示词；如果用户说中文，你就必须生成中文的系统提示词。以此类推！
-  你可以从这几个方面来写，但也不要限于这些方面：角色名、角色定位、核心能力、回答风格、约束、输出格式示例等等`
+              content: `Expand the user's brief system prompt into detailed instructions that help a language model perform its task more effectively.
+  Generate the optimized system prompt in the same language as the user's input.
+  Consider the character name, role, core capabilities, response style, constraints and output examples, among other relevant details`
             },
             {
               role: 'user',
@@ -14747,19 +14747,19 @@ isTargetPlatform(behavior, platformKey) {
           try {
             const data = JSON.parse(line);
             
-            // 适配新的流式响应格式
+            // Handle streaming response format
             if (data.choices && data.choices[0]) {
               const choice = data.choices[0];
               
-              // 处理流式响应中的增量内容
+              // Handle streamed increments
               if (choice.delta && choice.delta.content) {
                 result += choice.delta.content;
                 this.messages[index].content = result;
                 this.requestScrollToBottom();
               }
-              // 或者处理 finish_reason 为 stop 的最终响应
+              // Or handle final stop response
               else if (choice.finish_reason === 'stop') {
-                // 最终完成，不需要额外处理
+                // Finished; no additional processing needed
               }
             }
           } catch (e) {
@@ -14770,7 +14770,7 @@ isTargetPlatform(behavior, platformKey) {
         buffer = lines[lines.length - 1];
       }
       
-      // 处理可能剩余的缓冲数据
+      // Process remaining buffer
       if (buffer.trim()) {
         try {
           const data = JSON.parse(buffer);
@@ -14788,7 +14788,7 @@ isTargetPlatform(behavior, platformKey) {
       
     } catch (e) {
       if (e.name === 'AbortError') {
-        // 用户取消了生成，不需要显示错误
+        // Do not show an error for user cancellation
         console.log('Quick generation was aborted');
       } else {
         console.error('Quick generation failed:', e);
@@ -14809,10 +14809,10 @@ isTargetPlatform(behavior, platformKey) {
   },
   async browseDirectory() {
     if (!this.isElectron) {
-      // 浏览器环境
+      // Browser environment
       return;
     } else {
-      // Electron 环境
+      // Electron environment
       try {
         const result = await window.electronAPI.openDirectoryDialog();
         if (!result.canceled && result.filePaths.length > 0) {
@@ -14820,7 +14820,7 @@ isTargetPlatform(behavior, platformKey) {
           this.autoSaveSettings();
         }
       } catch (error) {
-        console.error('选择目录出错:', error);
+        console.error('Directory selection failed:', error);
         showNotification('Failed to select directory', 'error');
       }
     }
@@ -14835,10 +14835,10 @@ isTargetPlatform(behavior, platformKey) {
     this.editContent = this.SystemPromptsList.find(prompt => prompt.id === this.selectSystemPromptId)?.content;
   },
 /* -------------------------------------------------- */
-/* 1. 自动分段（复用全文算法）                       */
+/* 1. Automatically segment using the full-text algorithm */
 /* -------------------------------------------------- */
 reSegment() {
-  this.stopSegmentTTS();          // 停旧音频
+  this.stopSegmentTTS();          // Stop previous audio
     const {
       chunks,
       chunks_voice,
@@ -14851,22 +14851,22 @@ reSegment() {
       chunks_voice.push(remaining_voice);
     }
 
-      /* ================= 新增：去标签 + 去空白并同步删除 ================= */
-      // 1. 去 HTML 标签
+      /* Strip tags and whitespace, keeping arrays aligned */
+      // 1. Strip HTML tags
       const cleanedChunks = chunks.map(txt => txt.replace(/<\/?[^>]+>/g, '').trim());
 
-      // 2. 过滤空白并同步删除 chunks_voice 对应项
+      // 2. Remove empty text and corresponding chunks_voice entries
       const finalChunks       = [];
       const finalChunksVoice  = [];
 
       cleanedChunks.forEach((txt, idx) => {
-        if (txt) {                      // 非空才保留
+        if (txt) {                      // Keep only nonempty text
           finalChunks.push(txt);
           finalChunksVoice.push(chunks_voice[idx]);
         }
       });
 
-      // 3. 覆盖原来的数组
+      // 3. Replace original arrays
       chunks.length       = 0;
       chunks_voice.length = 0;
       chunks.push(...finalChunks);
@@ -14880,7 +14880,7 @@ reSegment() {
 },
 
 /* -------------------------------------------------- */
-/* 2. 播放单句（含 VRM 同步）                        */
+/* 2. Play one segment with VRM synchronization */
 /* -------------------------------------------------- */
 async playSingleSegment(idx) {
   try{
@@ -14891,9 +14891,9 @@ async playSingleSegment(idx) {
     const voice = this.readState.chunks_voice[idx];
     const cachedAudio = this.readState.audioChunks[idx];
 
-    // ★ 核心修复：独立播放时，也将其视作一次全新的会话
+    // Treat isolated playback as a fresh session
     this.sendTTSStatusToVRM('stopSpeaking', {});
-    this.readState.vrmIndex = 0; // 无论点第几行，VRM 那边收到的都是 0 
+    this.readState.vrmIndex = 0; // VRM receives index zero for any selected row
     this.sendTTSStatusToVRM('ttsStarted', { totalChunks: 1 });
 
     if (cachedAudio?.url && cachedAudio?.buffer && cachedAudio?.text === chunk && cachedAudio?.voice === voice) {
@@ -14901,7 +14901,7 @@ async playSingleSegment(idx) {
       return;
     }
     
-    // 未命中先合成
+    // Synthesize on cache miss
     await this.synthSegment(idx);
     this.doPlayAudio(this.readState.audioChunks[idx].url, idx, false);
   } finally {
@@ -14910,7 +14910,7 @@ async playSingleSegment(idx) {
 },
 
 /* -------------------------------------------------- */
-/* 3. 连续播放开关                                   */
+/* 3. Toggle continuous playback */
 /* -------------------------------------------------- */
 async toggleContinuousPlay() {
   if (this.readState.isPlaying) {          
@@ -14922,9 +14922,9 @@ async toggleContinuousPlay() {
     this.readState.currentChunk = 0;         
   }
 
-  // ★ 核心修复：强行中止之前不管有没有播完的状态，并重置 VRM 的期待序号
+  // Interrupt previous playback and reset expected VRM index
   this.sendTTSStatusToVRM('stopSpeaking', {});
-  this.readState.vrmIndex = 0; // 重置虚拟序号
+  this.readState.vrmIndex = 0; // Reset virtual index
   this.sendTTSStatusToVRM('ttsStarted', {
     totalChunks: this.readState.ttsChunks.length - this.readState.currentChunk
   });
@@ -14933,7 +14933,7 @@ async toggleContinuousPlay() {
 },
 
 /* -------------------------------------------------- */
-/* 4. 新增：仅播放下一句（播完即停）                  */
+/* 4. Play only the next segment */
 /* -------------------------------------------------- */
 async playNextSegmentOnce() {
   let next = this.readState.currentChunk + 1;
@@ -14942,12 +14942,12 @@ async playNextSegmentOnce() {
     next = 0;
     this.readState.currentChunk = next;
   }
-  this.readState.isPlaying = false;      // 确保不自动连播
-  await this.playSingleSegment(next);    // 播完即停
+  this.readState.isPlaying = false;      // Disable automatic continuation
+  await this.playSingleSegment(next);    // Stop after playback
 },
 
 /* -------------------------------------------------- */
-/* 5. 停止所有分段音频                               */
+/* 5. Stop all segmented audio */
 /* -------------------------------------------------- */
 stopSegmentTTS(isEnd = true) {
   this.stopTTSActivities();
@@ -14961,29 +14961,29 @@ stopSegmentTTS(isEnd = true) {
   this.readState.isPlaying   = false;
 },
 /* -------------------------------------------------- */
-/* 6. 编辑段文本                                      */
+/* 6. Edit segment text */
 /* -------------------------------------------------- */
 toggleEditSegment(idx) {
   if (this.activeSegmentIdx === idx) {
-    // 保存：把临时值写回正式字段
+    // Save temporary value into actual field
     this.readState.ttsChunks[idx] = this.segmentEditBuffer
     this.readState.chunks_voice[idx] = this.segmentVoiceEditBuffer[idx] ?? this.readState.chunks_voice[idx]
     this.activeSegmentIdx = -1
   } else {
-    // 进入编辑：先给“音色临时数组”对应位置塞个初始值
+    // Initialize temporary voice array when entering edit mode
     this.segmentEditBuffer = this.readState.ttsChunks[idx]
-    // Vue3 直接赋值即可
+    // Assign directly in Vue 3
     this.segmentVoiceEditBuffer[idx] = this.readState.chunks_voice[idx]
     this.activeSegmentIdx = idx
   }
 },
 
-/* 1. 合成时顺便转 base64 */
+/* 1. Synthesis and audio conversion */
 async synthSegment(idx) {
   try {
     const text  = this.readState.ttsChunks[idx];
     const voice = this.readState.chunks_voice[idx] || 'default';
-    /* —— 文本清洗 —— */
+    /* Clean text */
     let chunk_text = text;
     let chunk_expressions =[];
     if (text.indexOf('<') !== -1) {
@@ -15001,15 +15001,15 @@ async synthSegment(idx) {
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
 
-    /* 关键修改：直接获取二进制 ArrayBuffer，不转 Base64 */
+    /* Get binary ArrayBuffer directly rather than Base64 */
     const audioBuffer = await blob.arrayBuffer();
 
-    /* 缓存数据 */
+    /* Cache data */
     this.readState.audioChunks[idx] = {
-      url,                       // 本地播放用
+      url,                       // Local playback URL
       expressions: chunk_expressions,
-      buffer: audioBuffer,       // VRM 二进制播放用
-      mimeType: blob.type,       // 记录真实格式
+      buffer: audioBuffer,       // Binary data for VRM playback
+      mimeType: blob.type,       // Actual MIME type
       text: chunk_text,
       idx,
       voice
@@ -15026,7 +15026,7 @@ async synthSegment(idx) {
   }
 },
 scrollToCurrentChunk(idx) {
-  // 使用 nextTick 确保 DOM 更新完成
+  // Wait for DOM update with nextTick
   this.$nextTick(() => {
     const segmentList = document.querySelector('.segment-list');
     const segmentItem = document.querySelector(`.segment-item:nth-child(${idx + 1})`);
@@ -15040,9 +15040,9 @@ scrollToCurrentChunk(idx) {
 },
 
 async doPlayAudio(url, idx, continuous = false) {
-  // 1. 安全地清理上一段音频
+  // 1. Safely clean up previous audio
   if (this._curAudio) {
-    // 只有在音频被强行打断（还没播完/没暂停）时，才通知 VRM 停止。自然播完不发！
+    // Notify VRM of interruption only when audio is forcibly stopped, not naturally ended
     const isActuallyPlaying = !this._curAudio.paused && !this._curAudio.ended;
     this._curAudio.pause();
     if (isActuallyPlaying) {
@@ -15055,12 +15055,12 @@ async doPlayAudio(url, idx, continuous = false) {
     const audio = new Audio(url);
     this._curAudio = audio;
 
-    // 滚动到当前行
+    // Scroll to current row
     this.scrollToCurrentChunk(idx);
 
     const chunk = this.readState.audioChunks[idx];
 
-    // 2. 防止二进制被底层消耗导致二次点击没声音
+    // 2. Prevent binary buffer consumption from breaking replay
     if (!chunk.buffer || chunk.buffer.byteLength === 0) {
         if (chunk.url) {
             try {
@@ -15073,17 +15073,17 @@ async doPlayAudio(url, idx, continuous = false) {
         }
     }
 
-    // 3. ★ 核心修复：获取专属的 VRM 虚拟序号
+    // 3. Get dedicated VRM virtual index
     if (this.readState.vrmIndex === undefined) {
         this.readState.vrmIndex = 0;
     }
     const currentVrmIndex = this.readState.vrmIndex;
 
-    // 4. 发送纯二进制数据到 VRM (使用虚拟序号)
+    // 4. Send binary data to VRM with virtual index
     if ((this.vrmOnline || this.vtsOnline) && chunk.buffer && chunk.buffer.byteLength > 0) {
         const metadata = {
             type: 'audio_chunk',
-            chunkIndex: currentVrmIndex, // <--- 使用虚拟序号
+            chunkIndex: currentVrmIndex, // Use virtual index
             text: chunk.text,
             expressions: chunk.expressions,
             mimeType: chunk.mimeType || 'audio/wav'
@@ -15091,21 +15091,21 @@ async doPlayAudio(url, idx, continuous = false) {
         this.sendBinaryToVRM(metadata, chunk.buffer.slice(0));
     }
 
-    this._curAudio.volume = this.vrmOnline ? 0.0000001 : 1; // VRM在线时静音
+    this._curAudio.volume = this.vrmOnline ? 0.0000001 : 1; // Mute local playback while VRM is online
 
-    // 5. 仅发送状态指令 (使用虚拟序号)
+    // 5. Send state command with virtual index
     this.sendTTSStatusToVRM('startSpeaking', {
-      chunkIndex: currentVrmIndex, // <--- 使用虚拟序号
+      chunkIndex: currentVrmIndex, // Use virtual index
       totalChunks: this.readState.ttsChunks.length,
       text: chunk.text,
       expressions: chunk.expressions || [],
       voice: this.readState.chunks_voice[idx] || 'default',
     });
 
-    // 6. ★ 序号递增，为连播下一句准备完美的 0,1,2 顺位
+    // 6. Advance index for sequential playback
     this.readState.vrmIndex++;
 
-    // 监听错误事件
+    // Listen for errors
     audio.addEventListener('error', (e) => {
       console.error('Audio load error', e);
       this.readState.currentChunk++;
@@ -15118,7 +15118,7 @@ async doPlayAudio(url, idx, continuous = false) {
 
     await new Promise(resolve => {
       this._curAudio.addEventListener('ended', () => {
-        // 使用同样的虚拟序号通知结束
+        // Use same virtual index in end notification
         this.sendTTSStatusToVRM('chunkEnded', { chunkIndex: currentVrmIndex });
         
         if (continuous && this.readState.isPlaying) {
@@ -15159,23 +15159,23 @@ async doPlayAudio(url, idx, continuous = false) {
   }
 },
 
-// 连续播放专用：自动合成&播放下一帧
+// Continuous playback: synthesize and play next segment
 async playNextInQueue(continuous) {
-  const idx = this.readState.currentChunk;   // 当前要播的索引
+  const idx = this.readState.currentChunk;   // Current segment index
   const chunk = this.readState.ttsChunks[idx];
   const voice = this.readState.chunks_voice[idx];
   const cachedAudio = this.readState.audioChunks[idx];
 
-  // --- 核心修复：将 base64 改为 buffer ---
+  // Use buffer rather than Base64
   if (cachedAudio?.url && cachedAudio?.buffer && cachedAudio?.text === chunk && cachedAudio?.voice === voice) {
-    // 命中就无事发生
+    // No action on cache hit
   } else {
     await this.synthSegment(idx);
   }
   this.doPlayAudio(this.readState.audioChunks[idx].url, idx, continuous);
 },
 
-// 清空分段
+// Clear segments
 clearSegments() {
   this.stopSegmentTTS();
   this.readState.ttsChunks   = [];
@@ -15183,10 +15183,10 @@ clearSegments() {
   this.readState.audioChunks  = [];
   this.readState.currentChunk = -1;
 },
-  // 扫描扩展但不自动加载
+  // Scan extensions without auto-loading
   async scanExtensions() {
     try {
-      // 使用API获取扩展列表
+      // Retrieve extension list via API
       const response = await fetch('/api/extensions/list');
       if (!response.ok) {
         const errorData = await response.json();
@@ -15196,16 +15196,16 @@ clearSegments() {
       const data = await response.json();
       this.extensions = data.extensions || [];
       
-      // 不再自动加载第一个扩展
-      // 默认显示 sidePanelText 内容
+      // Do not automatically open the first extension
+      // Show sidePanelText by default
       this.currentExtension = null;
       this.sidePanelURL = '';
     } catch (error) {
-      console.error('扫描扩展出错:', error);
+      console.error('Extension scan failed:', error);
     }
   },
   
-    // 加载指定扩展
+    // Load selected extension
   async loadExtension(extension) {
     if (!extension) {
       this.currentExtension = null;
@@ -15213,177 +15213,177 @@ clearSegments() {
       return;
     }
     
-    /* 1. 尝试 Node 模式 */
+    /* 1. Try Node mode */
     try {
       const r = await fetch(`/api/extensions/${extension.id}/start-node`, { method: 'POST' });
       const res = await r.json();
 
       if (res.mode === 'node') {
-        // ✅ Node 成功
+        // Node startup succeeded
         this.currentExtension = extension;
         this.sidePanelURL = `/api/extensions/${extension.id}/node/`;
         showNotification(`${this.t('loadExtension(node)')}: ${extension.name}`, 'success');
         return;
       } else if (res.mode === 'error') {
-        // ❌ Node 服务启动失败！必须拦截并展示错误，不能往下走
+        // Stop and report Node startup errors instead of falling through
         showNotification(`Extension service failed to start: ${res.message}`, 'error');
-        console.error("【Node Extension 报错】:", res.message);
+        console.error("[Node extension error]:", res.message);
         return; 
       }
       
-      // 只有 res.mode === 'static'，才允许跳出 if，去走下面的静态路由兜底
+      // Fall back to static route only when res.mode is static
     } catch (e) {
-      // 网络断开或解析异常，也建议拦截
+      // Also stop on network or parse errors
       showNotification(`Extension service request failed: ${e.message}`, 'error');
       console.error(e);
       return; 
     }
 
-    /* 2. 回退静态路由 */
+    /* 2. Static route fallback */
     this.currentExtension = extension;
     this.sidePanelURL = `/ext/${extension.id}/index.html`;
     showNotification(`${this.t('loadExtension(static)')}: ${extension.name}`, 'success');
-    this.extensionsSystemPromptsDict[extension.id] = extension.systemPrompt || ""; // 更新提示词
+    this.extensionsSystemPromptsDict[extension.id] = extension.systemPrompt || ""; // Update prompt
   },
   
-// 切换到默认视图 (主页书签)
+// Switch to default home/bookmark view
   resetToDefaultView() {
-    // 1. 切换焦点为 null，利用 v-show 机制隐藏所有 iframe，展示主页内容
+    // 1. Clear focus to hide iframes via v-show and display home
     this.currentExtension = null;
-    this.sidePanelURL = ''; // 清除旧的全局URL状态，防止污染
-    this.activeSideView = 'list'; // 确保侧边栏内部路由切回“列表”
+    this.sidePanelURL = ''; // Clear old global URL
+    this.activeSideView = 'list'; // Return sidebar routing to list
 
-    // 2. 关闭可能开着的弹窗
+    // 2. Close any open dialogs
     this.showExtensionsDialog = false;
 
-    // 3. ✨ 核心修改：移除这下面两行代码！
-    // this.expandChatArea();     // ❌ 不要强行扩张聊天区
-    // this.collapseSidePanel();  // ❌ 不要强行收起侧边栏，用户只是切回主标签，侧边栏应该开着！
+    // 3. Do not force changes to panel width
+    // this.expandChatArea(); // Do not force chat expansion
+    // this.collapseSidePanel(); // Keep sidebar open on home tab
 
-    // 4. 重置当前对话的附加提示词（切回默认对话，清空扩展的系统 Prompt 是合理的）
+    // 4. Clear extension system prompt on return to default conversation
     this.extensionsSystemPromptsDict = {}; 
 
-    // 5. 如果离开任务中心，清除任务刷新定时器以节省性能（保持原逻辑）
+    // 5. Stop task refresh timer when leaving task center
     if (this.taskRefreshTimer) {
       clearInterval(this.taskRefreshTimer);
-      this.taskRefreshTimer = null; // 顺手置空是个好习惯
+      this.taskRefreshTimer = null; // Clear timer reference
     }
 
-    console.log('已切换到侧边栏主视图 (Home Tab)');
+    console.log('Switched to sidebar home view');
   },
-  // 打开扩展选择对话框
+  // Open extension picker
   openExtensionsDialog() {
     this.showExtensionsDialog = true;
   },
   
-// 切换（或新开）扩展标签页
+// Switch to or open extension tab
   async switchExtension(extension) {
-    // 1. 关闭扩展弹窗，展开侧边栏
+    // 1. Close extension dialog and expand sidebar
     this.showExtensionsDialog = false; 
     const sidePanel = this.$refs.sidePanelRef;
     if (sidePanel.style.width == 0 ){
         this.expandSidePanel();
     }
 
-    // 2. 检查这个扩展是否已经在多开数组里了
+    // 2. Check whether extension is already open
     const existingExt = this.openedExtensions.find(e => e.id === extension.id);
 
     if (existingExt) {
-      // 🌟 【已打开过】：直接切换焦点，不重新加载，保留页面状态！
+      // Existing tab: focus without reloading to preserve state
       this.currentExtension = existingExt;
-      this.activeSideView = 'iframe'; // 确保视图模式是 iframe
+      this.activeSideView = 'iframe'; // Ensure iframe view mode
       
-      // 如果你的底层代码仍依赖全局的 sidePanelURL，这里做个同步
+      // Synchronize sidePanelURL for compatibility
       if (existingExt.iframeUrl) {
         this.sidePanelURL = existingExt.iframeUrl;
       }
       
     } else {
-      // 🌟 【第一次打开】：需要走加载逻辑
-      // 为了让 loading 动画立刻出来，先将当前扩展指向它
+      // First open: run loading logic
+      // Set current extension immediately to display loading state
       this.currentExtension = extension;
       this.activeSideView = 'iframe';
-      this.sidePanelURL = ''; // 清空全局URL防止闪烁旧画面
+      this.sidePanelURL = ''; // Clear global URL to prevent old content flashing
       
-      // 加入顶部标签栏数组
+      // Add to top tab array
       this.openedExtensions.push(extension);
 
-      // 执行你原本的获取 URL/Token 逻辑
+      // Run existing URL/token retrieval
       await this.loadExtension(extension);
 
-      // 💡 极其关键的一步：loadExtension 执行完后，通常会给 this.sidePanelURL 赋值。
-      // 我们需要把这个生成的专属 URL，保存到当前这个扩展对象里，这样下次切换回来才不会丢！
+      // loadExtension sets sidePanelURL after completion.
+      // Store the generated URL on this extension object for later tab switches.
       const targetExt = this.openedExtensions.find(e => e.id === extension.id);
       if (targetExt) {
-        // 将全局生成的 URL 永久绑定给这个 Tab
+        // Bind generated URL to tab
         targetExt.iframeUrl = this.sidePanelURL; 
       }
     }
   },
 
-  // ✨ 配套新增：关闭扩展标签页
+  // Close extension tab
   closeExtensionTab(extId) {
-    // 1. 从已打开数组中移除
+    // 1. Remove from open tabs
     const index = this.openedExtensions.findIndex(e => e.id === extId);
     if (index === -1) return;
     
     this.openedExtensions.splice(index, 1);
 
-    // 2. 如果关闭的刚好是【当前正在看】的标签页，需要处理焦点回退
+    // 2. If closing the active tab, select a fallback
     if (this.currentExtension && this.currentExtension.id === extId) {
       if (this.openedExtensions.length > 0) {
-        // 如果还有其他标签，自动跳到最后一个标签
+        // Focus last remaining tab
         const lastExt = this.openedExtensions[this.openedExtensions.length - 1];
         this.switchExtension(lastExt);
       } else {
-        // 如果全关光了，退回默认的列表主页
+        // Return to home/list when none remain
         this.resetToDefaultView();
       }
     }
   },
 
-  // 工具函数：返回扩展真正能访问的地址（Node > 静态）
+  // Helper: resolve accessible extension URL, preferring Node over static
   async getExtensionURL(ext) {
-    console.log('获取扩展URL', ext);
-    // 1. 先尝试启动 Node
+    console.log('Get extension URL', ext);
+    // 1. Try Node startup
     try {
       const r = await fetch(`/api/extensions/${ext.id}/start-node`, { method: 'POST' });
       const res = await r.json();
       if (res.mode === 'node') {
-        return `/api/extensions/${ext.id}/node/`;   // ✅ Node 代理路径
+        return `/api/extensions/${ext.id}/node/`;   // Node proxy path
       }
-      console.log('启动 Node 失败，回退静态',res);
+      console.log('Node startup failed; falling back to static',res);
     } catch { 
      }
-    // 2. 回退静态
+    // 2. Static fallback
     return `/ext/${ext.id}/index.html`;
   }, 
 
     async openExtension(extension) {
-      const url = await this.getExtensionURL(extension);   // ⬅️ 异步拿地址
-      console.log('打开扩展', `${this.partyURL}${url}`);
+      const url = await this.getExtensionURL(extension);   // Resolve URL asynchronously
+      console.log('Open extension', String(this.partyURL) + url);
       if (isElectron) {
         window.electronAPI.openExternal(`${this.partyURL}${url}`);
       } else {
         window.open(url, '_blank');
       }
     },
-    // 删除扩展
+    // Delete extension
     async removeExtension(ext) {
-      // 若是 Node 模式就停进程，忽略错误
+      // Stop Node process if applicable, ignoring errors
       await fetch(`/api/extensions/${ext.id}/stop-node`, { method: 'POST' }).catch(() => {});
       try {
         const res = await fetch(`/api/extensions/${ext.id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Deletion failed');
         showNotification(this.t('deleteSuccess'), 'success');
-        this.scanExtensions(); // 刷新列表
+        this.scanExtensions(); // Refresh list
       } catch (e) {
 
          showNotification(e.message, 'error');
       }
     },
 
-    // 打开「添加扩展」对话框
+    // Open Add extension dialog
     openAddExtensionDialog() {
       this.newExtensionUrl = '';
       this.showExtensionForm = true;
@@ -15397,33 +15397,33 @@ clearSegments() {
           const data = await res.json();
 
           if (data.status === 'success') {
-            // 安装成功
+            // Installation succeeded
             onSuccess(data.detail);
           } else if (data.status === 'error') {
-            // 安装失败
+            // Installation failed
             onError(data.detail);
           } else if (data.status === 'installing') {
-             // 仍在安装中，继续轮询 (这里可以顺便更新界面提示，如果你有对应UI的话)
-             // 例如：console.log(data.detail); 
-             setTimeout(poll, 1000); // 1秒后再次检查
+             // Continue polling while installation is in progress
+             // Example: console.log(data.detail);
+             setTimeout(poll, 1000); // Check again in one second
           } else {
-             // 未知状态，可能是重启了或者ID错了
-             onError("任务状态丢失");
+             // Unknown state, possibly caused by restart or invalid ID
+             onError("Task state lost");
           }
         } catch (e) {
-          onError("网络请求错误");
+          onError("Network request failed");
         }
       };
-      // 开始第一次轮询
+      // Start polling
       poll();
     },
 
-    // 真正「安装」按钮触发
+    // Install button handler
     async addExtension() {
       const url = this.newExtensionUrl.trim();
       if (!url) return showNotification('Enter a GitHub URL', 'error');
       
-      this.installLoading = true; // 开启 Loading 遮罩
+      this.installLoading = true; // Show loading overlay
       
       try {
         const res = await fetch('/api/extensions/install-from-github', {
@@ -15444,20 +15444,20 @@ clearSegments() {
         const resData = await res.json();
         const extId = resData.ext_id;
 
-        // --- 核心修改：开始轮询 ---
+        // --- Start polling ---
         showNotification('Downloading in the background...', 'info');
         
         this.pollInstallStatus(
           extId,
           (msg) => {
-            // 成功回调
+            // Success callback
             this.installLoading = false;
             showNotification(msg || 'Installed successfully', 'success');
-            this.showExtensionForm = false; // 关闭弹窗
-            this.scanExtensions(); // 立即刷新列表
+            this.showExtensionForm = false; // Close dialog
+            this.scanExtensions(); // Refresh list immediately
           },
           (errMsg) => {
-            // 失败回调
+            // Failure callback
             this.installLoading = false;
             showNotification(`Installation failed: ${errMsg}`, 'error');
           }
@@ -15468,12 +15468,12 @@ clearSegments() {
         showNotification(e.message, 'error');
       }
     },
-    // 打开文件选择器
+    // Open file picker
     selectLocalZip() {
       this.$refs.zipInput.click();
     },
 
-    // 选中文件后自动上传
+    // Upload selected file automatically
     async onZipSelected(e) {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -15497,7 +15497,7 @@ clearSegments() {
         const resData = await res.json();
         const extId = resData.ext_id;
         
-        // 开始轮询，与 GitHub 安装一致
+        // Poll as for GitHub installation
         showNotification(this.t('waitExtensionInstall'), 'info');
         this.showExtensionForm = false;
         
@@ -15524,9 +15524,9 @@ clearSegments() {
 
     async fetchRemotePlugins() {
       try {
-        await this.scanExtensions(); // 刷新
+        await this.scanExtensions(); // Refresh list
         const res = await fetch('/api/extensions/remote-list');
-        const { plugins } = await res.json();   // 取出 plugins 数组
+        const { plugins } = await res.json();   // Extract plugins array
         console.log(plugins);
         const localRes = await fetch('/api/extensions/list');
         const { extensions } = await localRes.json();
@@ -15541,18 +15541,18 @@ clearSegments() {
     },
     async togglePlugin(plugin) {
       if (plugin.installed) {
-        // 卸载逻辑保持不变...
+        // Existing uninstall handling
         await this.removeExtension(plugin);
         plugin.installed = false;
       } else {
-        // --- 安装逻辑 ---
+        // --- Installation ---
         
-        // 1. 设置局部 loading 状态
+        // 1. Set local loading state
         plugin.installing = true;
         this.installLoading = true; 
 
         try {
-          // 获取用户设置的 GitHub 仓库代理网址
+          // Get user-configured GitHub repository proxy
           const githubProxy = this.systemSettings.githubProxy || "";
 
           const res = await fetch('/api/extensions/install-from-github', {
@@ -15560,7 +15560,7 @@ clearSegments() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               url: plugin.repository,
-              githubProxy: githubProxy // 使用用户自定义代理，不使用旧 backupRepository 
+              githubProxy: githubProxy // Use custom proxy rather than legacy backupRepository
             }),
           });
 
@@ -15572,19 +15572,19 @@ clearSegments() {
 
           showNotification('Download started...', 'info');
 
-          // --- 核心修改：开始轮询 ---
+          // --- Start polling ---
           this.pollInstallStatus(
             extId,
             (msg) => {
-              // 成功
+              // Success
               this.installLoading = false;
               if (plugin) plugin.installing = false;
-              plugin.installed = true; // 更新前端状态
+              plugin.installed = true; // Update frontend state
               showNotification('Installed successfully', 'success');
-              this.scanExtensions(); // 刷新完整列表以确保数据一致
+              this.scanExtensions(); // Refresh complete list to synchronize data
             },
             (errMsg) => {
-              // 失败
+              // Failure
               this.installLoading = false;
               if (plugin) plugin.installing = false;
               showNotification(`Installation failed: ${errMsg}`, 'error');
@@ -15601,22 +15601,22 @@ clearSegments() {
   handleRefreshClick() {
     this.refreshing = true;
     
-    // 调用原有的刷新方法
+    // Call existing refresh method
     this.fetchRemotePlugins().then(() => {
-      // 请求完成后
+      // After request completes
       this.refreshing = false;
-      this.refreshButtonText = this.t('refreshedSuccess') || '已刷新';
+      this.refreshButtonText = this.t('refreshedSuccess') || 'Refreshed';
       
-      // 2秒后恢复按钮文字
+      // Restore button text after two seconds
       setTimeout(() => {
         this.refreshButtonText = this.t('refreshList');
       }, 2000);
     }).catch(error => {
-      // 处理错误情况
+      // Handle errors
       this.refreshing = false;
-      this.refreshButtonText = this.t('refreshFailed') || '刷新失败';
+      this.refreshButtonText = this.t('refreshFailed') || 'Refresh failed';
       
-      // 2秒后恢复按钮文字
+      // Restore button text after two seconds
       setTimeout(() => {
         this.refreshButtonText = this.t('refreshList');
       }, 2000);
@@ -15624,7 +15624,7 @@ clearSegments() {
   },
   openRepository(url) {
     if (isElectron) {
-      window.electronAPI.openExternal(url)   // 主进程会新建可关闭的独立窗口
+      window.electronAPI.openExternal(url)   // Main process opens a separate closable window
     } else {
       window.open(url, '_blank')
     }
@@ -15661,31 +15661,31 @@ clearSegments() {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   },
-  // 开始拖拽调整大小
+  // Start drag resize
   startResize(e) {
     if (!this.chatAreaOpen || !this.sidePanelOpen) return;
     
     const container = this.$refs.chatWrapperRef;
-    // 获取当前历史侧边栏是否可见并获取宽度
+    // Determine history sidebar visibility and width
     const historySidebar = container.querySelector('.chat-history-sidebar');
     const isSidebarVisible = this.showHistorySidebar && !this.isMobile;
     const sidebarWidth = isSidebarVisible ? historySidebar.offsetWidth : 0;
 
     this.isResizing = true;
     const containerRect = container.getBoundingClientRect();
-    const availableWidth = containerRect.width - sidebarWidth; // 减去历史栏宽度
+    const availableWidth = containerRect.width - sidebarWidth; // Subtract history sidebar width
     
     container.classList.add('resizing');
 
     const handleMouseMove = (e) => {
       if (!this.isResizing) return;
       
-      // 这里的 mouseX 必须相对于聊天区的左边缘
+      // mouseX must be relative to left edge of chat area
       const mouseXInChat = e.clientX - (containerRect.left + sidebarWidth);
       const clampedMouseX = Math.max(0, Math.min(mouseXInChat, availableWidth));
       
       const leftWidth = clampedMouseX;
-      const rightWidth = availableWidth - clampedMouseX - 10; // 10 是分割条宽
+      const rightWidth = availableWidth - clampedMouseX - 10; // Divider width is 10
       
       const leftPercent = (leftWidth / availableWidth) * 100;
       const rightPercent = (rightWidth / availableWidth) * 100;
@@ -15721,14 +15721,14 @@ clearSegments() {
   handleHistoryToggle() {
       this.showHistorySidebar = !this.showHistorySidebar;
       console.log('showHistorySidebar:',this.showHistorySidebar)
-      // 强制触发一次 recalculate，让右侧聊天区重新适应剩余宽度
+      // Recalculate so remaining chat area fits available width
       this.$nextTick(() => {
           this.handleResize(); 
       });
       this.autoSaveSettings();
   },
 
-  // 使用像素宽度更新面板
+  // Update panels using pixel widths
   updatePanelWidthsWithPixels(leftWidth, rightWidth) {
     this.$nextTick(() => {
       const chatArea = this.$refs.chatAreaRef;
@@ -15745,13 +15745,13 @@ clearSegments() {
     });
   },
 
-  // 重新计算百分比（用于保存状态和响应式）
+  // Recalculate percentages for persistence and responsive layout
   recalculatePercentages(providedAvailableWidth) {
     const container = this.$refs.chatWrapperRef;
     const historySidebar = container?.querySelector('.chat-history-sidebar');
     const sidebarWidth = (historySidebar && !this.isMobile) ? historySidebar.offsetWidth : 0;
     
-    // 如果没有传入宽度，则实时计算
+    // Calculate width if not provided
     const availableWidth = providedAvailableWidth || (container.offsetWidth - sidebarWidth);
     
     const chatArea = this.$refs.chatAreaRef;
@@ -15761,19 +15761,19 @@ clearSegments() {
       const chatAreaWidthPx = chatArea.offsetWidth;
       const sidePanelWidthPx = sidePanel.offsetWidth;
       
-      // 基于可用宽度计算比例
+      // Calculate proportions from available width
       this.chatAreaWidth = (chatAreaWidthPx / availableWidth) * 100;
       this.sidePanelWidth = (sidePanelWidthPx / availableWidth) * 100;
     }
   },  
 
-  // 处理分割条点击
+  // Handle divider click
   handleResizerClick(e) {
     if (e.target.closest('.expand-chat-btn') || e.target.closest('.expand-side-btn')) {
       return;
     }
     
-    // 双击重置为50:50
+    // Double-click resets to 50:50
     if (e.detail === 2) {
       this.resetPanelSizes();
     }
@@ -15787,16 +15787,16 @@ clearSegments() {
     }
   },
 
-  // 移动端专用面板单屏切换
+  // Mobile single-panel switching
   toggleSidePanelOnMobile() {
     if (this.sidePanelOpen) {
-      this.collapseSidePanel(); // 还原为 100% 对话流
+      this.collapseSidePanel(); // Restore full-width conversation
     } else {
-      this.expandSidePanel(); // 扩展为 100% 面板流
+      this.expandSidePanel(); // Expand to full-width panel
     }
   },
 
- // 收起对话区域
+ // Collapse conversation area
   collapseChatArea() {
     const sidePanel = this.$refs.sidePanelRef;
     const chatArea = this.$refs.chatAreaRef;
@@ -15812,7 +15812,7 @@ clearSegments() {
     this.updatePanelWidths();
   },
 
-  // 收起右侧侧边栏
+  // Collapse right sidebar
   collapseSidePanel() {
     const chatArea = this.$refs.chatAreaRef;
     const sidePanel = this.$refs.sidePanelRef;
@@ -15835,11 +15835,11 @@ clearSegments() {
     this.updatePanelWidths();
   },
 
-  // 展开对话区域
+  // Expand conversation area
   expandChatArea() {
     this.chatAreaOpen = true;
     if (this.isMobile) {
-      // 移动端排他性全屏
+      // Exclusive full-screen mobile layout
       this.sidePanelOpen = false;
       this.chatAreaWidth = 100;
       this.sidePanelWidth = 0;
@@ -15851,11 +15851,11 @@ clearSegments() {
     this.updatePanelWidths();
   },
 
-  // 展开侧边栏
+  // Expand sidebar
   expandSidePanel() {
     this.sidePanelOpen = true;
     if (this.isMobile) {
-      // 移动端排他性全屏
+      // Exclusive full-screen mobile layout
       this.chatAreaOpen = false;
       this.chatAreaWidth = 0;
       this.sidePanelWidth = 100;
@@ -15874,7 +15874,7 @@ clearSegments() {
   },
 
 
-  // 重置面板大小
+  // Reset panel sizes
   resetPanelSizes() {
     this.chatAreaWidth = 50;
     this.sidePanelWidth = 50;
@@ -15884,7 +15884,7 @@ clearSegments() {
     this.updatePanelWidths();
   },
 
-  // 更新面板宽度样式
+  // Update panel width styles
   updatePanelWidths() {
     this.$nextTick(() => {
       const chatArea = this.$refs.chatAreaRef;
@@ -15892,7 +15892,7 @@ clearSegments() {
       
       if (!chatArea || !sidePanel) return;
       
-      // ✨ 清除之前可能遗留的 px 宽度
+      // Clear old pixel widths
       chatArea.style.width = '';
       sidePanel.style.width = '';
       
@@ -15905,22 +15905,22 @@ clearSegments() {
         sidePanel.style.width = '100%';
       }
       
-      // 🔧 关键修复：强制浏览器重排（读取布局属性）
-      sidePanel.offsetWidth;   // 或者 chatArea.offsetWidth
+      // Force browser reflow by reading a layout property
+      sidePanel.offsetWidth;   // Or read chatArea.offsetWidth
     });
   },
 
-  // 处理窗口大小变化
+  // Handle window resize
   handleResize() {
     if (this.chatAreaOpen && this.sidePanelOpen) {
       this.updatePanelWidths();
     }
   },
-  // 修改 openExtensionInWindow 方法
+  // openExtensionInWindow
   async openExtensionInWindow(extension) {
-    const url = await this.getExtensionURL(extension);   // ⬅️ 同样先启动/拿地址
+    const url = await this.getExtensionURL(extension);   // Resolve address after startup
 
-    // 下面逻辑你原来就有，只把 url 换成异步得到的即可
+    // Use asynchronously resolved URL
     this.showExtensionsDialog = false;
     let windowWidth = 800;
     let windowHeight = 600;
@@ -15956,7 +15956,7 @@ clearSegments() {
     if (!res.ok) return
     const { exists, model } = await res.json()
     this.sherpaModelExists = exists
-    this.sherpaModelName  = model ?? ''   // 后端没返回时留空
+    this.sherpaModelName  = model ?? ''   // Use empty value if backend does not return model name
   },
 
   async sherpaDownload(source = 'huggingface') {
@@ -15964,13 +15964,13 @@ clearSegments() {
       this.sherpaDownloading = true
       this.sherpaPercent = 0
       
-      // 确保在 EventSource 实例化之前设置状态
+      // Set state before creating EventSource
       this.sherpaEventSource = null
 
       const es = new EventSource(`/sherpa-model/download/${source}`)
       this.sherpaEventSource = es
       
-      // 监听消息流
+      // Listen to message stream
       es.onmessage = e => {
           let data
           try {
@@ -15981,10 +15981,10 @@ clearSegments() {
           }
 
           // --------------------------------------
-          // 核心修复逻辑：处理多文件聚合进度
+          // Aggregate progress across multiple files
           // --------------------------------------
           
-          // 1. 检查下载是否完成或失败
+          // 1. Check for completion or failure
           if (data.status === 'complete') {
               es.close()
               this.sherpaDownloading = false
@@ -16001,7 +16001,7 @@ clearSegments() {
               return
           }
 
-          // 2. 聚合所有文件的进度
+          // 2. Aggregate file progress
           let totalDone = 0
           let grandTotal = 0
 
@@ -16009,7 +16009,7 @@ clearSegments() {
               data.files.forEach(file => {
                   totalDone += file.done || 0
                   grandTotal += file.total || 0
-                  // 检查是否有任何单个文件失败
+                  // Check for individual file failure
                   if (file.failed) {
                       es.close()
                       this.sherpaDownloading = false
@@ -16018,17 +16018,17 @@ clearSegments() {
               })
           }
 
-          // 3. 计算整体百分比
+          // 3. Calculate overall percentage
           this.sherpaPercent = grandTotal > 0 ? Math.round((totalDone / grandTotal) * 100) : 0
       }
       
-      // 监听错误
+      // Listen for errors
       es.onerror = () => {
-          // 如果 EventSource 在没有收到 close 消息的情况下关闭，通常意味着错误
+          // EventSource closure without a close message usually signals failure
           es.close()
           this.sherpaDownloading = false
           showNotification(this.t('modelDownloadFailed'), 'error')
-          this.sherpaModelStatus() // 再次检查状态，以防实际已下载完成
+          this.sherpaModelStatus() // Recheck status in case download actually completed
       }
   },
 
@@ -16047,7 +16047,7 @@ clearSegments() {
     await this.sherpaModelStatus()
   },
 
-// 1. 获取 MOSS 模型状态
+// 1. Get MOSS model status
   async mossModelStatus() {
     try {
       const res = await fetch('/moss-model/status')
@@ -16055,10 +16055,10 @@ clearSegments() {
       const data = await res.json()
       this.mossModelExists = data.exists
       
-      // 同步后台下载状态（比如刷新页面后恢复 UI）
+      // Synchronize backend download state after page refresh
       if (data.downloading) {
         this.mossDownloading = true
-        // 自动恢复轮询
+        // Resume polling automatically
         if (!this.mossPollInterval) this.startMossPolling()
       } else {
         this.mossDownloading = false
@@ -16068,11 +16068,11 @@ clearSegments() {
     }
   },
 
-// 触发下载时把进度清零
+// Reset progress when starting download
   async mossDownload(source = 'huggingface') {
     this.mossDownloading = true
     this.mossDownloadSource = source
-    this.mossPercent = 0 // 初始化为 0
+    this.mossPercent = 0 // Initialize to zero
     
     try {
       const res = await fetch(`/moss-model/download/${source}`, { method: 'POST' })
@@ -16092,7 +16092,7 @@ clearSegments() {
         const statusRes = await fetch('/moss-model/status')
         const data = await statusRes.json()
         
-        // 更新真实进度 (后台根据文件夹大小计算出的)
+        // Update actual progress calculated from directory size
         if (data.percent !== undefined) {
           this.mossPercent = data.percent
         }
@@ -16104,7 +16104,7 @@ clearSegments() {
           this.mossModelExists = data.exists
           
           if (data.exists) {
-            this.mossPercent = 100 // 完成强制打满
+            this.mossPercent = 100 // Set 100 percent on completion
             showNotification(this.t('modelDownloadSuccess') || 'MOSS model downloaded')
           } else if (data.download_error) {
             showNotification((this.t('modelDownloadFailed') || 'Download failed: ') + data.download_error, 'error')
@@ -16113,10 +16113,10 @@ clearSegments() {
       } catch (err) {
         console.error('MOSS Polling error', err)
       }
-    }, 1000) // 每 1 秒轮询一次，让进度条更顺滑
+    }, 1000) // Poll once per second
   },
 
-  // 4. 删除 MOSS 模型
+  // 4. Delete MOSS model
   async mossRemove() {
     try {
       const res = await fetch('/moss-model/remove', { method: 'DELETE' })
@@ -16128,13 +16128,13 @@ clearSegments() {
     }
   },
 
-  // 5. 在初始化时调用 (类似于 loadSherpaStatus)
+  // 5. Call at initialization, like loadSherpaStatus
   async loadMossStatus() {
     await this.mossModelStatus()
   },
 
     /**
-     * 检查 MiniLM 模型状态 (是否存在)
+     * Check whether MiniLM model exists.
      */
     async minilmModelStatus() {
         try {
@@ -16144,12 +16144,12 @@ clearSegments() {
             this.minilmModelExists = data.exists;
         } catch (error) {
             console.error("Error checking MiniLM model status:", error);
-            this.minilmModelExists = false; // 假设网络错误导致无法检查，也视为不存在
+            this.minilmModelExists = false; // Treat network errors as unavailable model status
         }
     },
 
     /**
-     * 下载 MiniLM 模型
+     * Download MiniLM model.
      * @param {string} source - Download source, Hugging Face
      */
     async minilmDownload(source = 'huggingface') {
@@ -16162,14 +16162,14 @@ clearSegments() {
         const es = new EventSource(`/minilm-model/download/${source}`);
         this.minilmEventSource = es;
         
-        // 监听消息流
+        // Listen to message stream
         es.onmessage = async e => {
             let data;
             try {
-                // 后端会发送 JSON 格式的进度数据
+                // Backend sends progress as JSON
                 data = JSON.parse(e.data);
             } catch (error) {
-                // 后端可能会发送 'close' 这样的非 JSON 消息
+                // Backend may send non-JSON close messages
                 if (e.data === 'close') {
                     es.close();
                 }
@@ -16177,16 +16177,16 @@ clearSegments() {
                 return;
             }
 
-            // 1. 检查下载是否完成或失败
+            // 1. Check for completion or failure
             if (data.status === 'complete') {
                 es.close();
                 this.minilmDownloading = false;
                 this.minilmPercent = 100;
 
-                // 1. 通知后端热重载
+                // 1. Notify backend to reload model
                 await fetch('/minilm/reload', { method: 'POST' });
 
-                // 2. 再刷新一次存在状态（此时一定为 true）
+                // 2. Refresh availability status
                 await this.minilmModelStatus();
 
                 if (typeof showNotification === 'function') {
@@ -16198,7 +16198,7 @@ clearSegments() {
             if (data.status === 'failed') {
                 es.close();
                 this.minilmDownloading = false;
-                // 尝试从 files 列表中提取具体的错误信息
+                // Extract specific errors from files list
                 const firstError = data.files.find(f => f.failed)?.error || '';
                 if (typeof showNotification === 'function') {
                     showNotification(this.t('modelDownloadFailed') + (firstError ? `: ${firstError}` : ''), 'error');
@@ -16206,7 +16206,7 @@ clearSegments() {
                 return;
             }
 
-            // 2. 聚合所有文件的进度
+            // 2. Aggregate file progress
             let totalDone = 0;
             let grandTotal = 0;
 
@@ -16216,14 +16216,14 @@ clearSegments() {
                     totalDone += file.done || 0;
                     grandTotal += file.total || 0;
                     
-                    // 检查是否有任何单个文件失败 (后端已经在 status='failed' 中处理了，这里做冗余检查)
+                    // Check individual failures as a fallback to backend status
                     if (file.failed) {
                         hasFailedFile = true;
                     }
                 });
 
                 if (hasFailedFile) {
-                      // 如果检测到文件失败，但 status 还没有被后端更新为 'failed'，则手动关闭和报错
+                      // If a file failed before status is updated, close and report the error
                       es.close();
                       this.minilmDownloading = false;
                       const failedFile = data.files.find(f => f.failed);
@@ -16234,13 +16234,13 @@ clearSegments() {
                 }
             }
 
-            // 3. 计算整体百分比
+            // 3. Calculate overall percentage
             this.minilmPercent = grandTotal > 0 ? Math.round((totalDone / grandTotal) * 100) : 0;
         };
         
-        // 监听错误
+        // Listen for errors
         es.onerror = () => {
-            // 如果 EventSource 在没有收到 close 消息的情况下关闭，通常意味着错误
+            // EventSource closure without a close message usually signals failure
             if (this.minilmEventSource) {
                 this.minilmEventSource.close();
             }
@@ -16248,17 +16248,17 @@ clearSegments() {
             if (typeof showNotification === 'function') {
                 showNotification(this.t('modelDownloadFailed') + ' (Network/Connection Error)', 'error');
             }
-            this.minilmModelStatus(); // 再次检查状态，以防实际已下载完成
+            this.minilmModelStatus(); // Recheck status in case download actually completed
         };
     },
 
     /**
-     * 删除本地 MiniLM 模型
+     * Delete local MiniLM model.
      */
     async minilmRemove() {
         try {
-            // 使用 Element Plus 确认对话框来增加安全性（如果可用）
-            // 示例：await this.$confirm('确定删除 MiniLM 模型吗？', '警告', { type: 'warning' })
+            // Use Element Plus confirmation if available
+            // Example: await this.$confirm('Delete the MiniLM model?', 'Warning', { type: 'warning' })
 
             const res = await fetch('/minilm-model/remove', { method: 'DELETE' });
             if (!res.ok) throw new Error();
@@ -16266,7 +16266,7 @@ clearSegments() {
             if (typeof showNotification === 'function') {
                 showNotification(this.t('deleteSuccess'));
             }
-            this.minilmModelStatus(); // 刷新模型存在状态
+            this.minilmModelStatus(); // Refresh model availability
         } catch (error) {
             if (typeof showNotification === 'function') {
                 showNotification(this.t('deleteFailed') + (error.message || ''), 'error');
@@ -16275,13 +16275,13 @@ clearSegments() {
     },
 
   async updatePlugin(plugin) {
-    // 临时响应式标记
-    plugin._updating = true // 发送更新请求
+    // Temporary reactive state
+    plugin._updating = true // Send update request
     try {
       const res = await fetch(`/api/extensions/${plugin.id}/update`, { method: 'PUT' })
       if (!res.ok) throw new Error(await res.text())
       showNotification(this.t('updateSuccess'))
-      // 更新完后刷新本地列表，重新标 installed 状态
+      // Refresh local list and installed flags after update
       this.fetchRemotePlugins();
     } catch (e) {
       showNotification(this.t('updateFailed') + ': ' + e.message, 'error')
@@ -16290,22 +16290,22 @@ clearSegments() {
     }
   },
 
-    // 打开向量库交互主弹窗
+    // Open vector memory dialog
     async openVectorDialog(mid) {
       this.vectorDialogVisible = true
       this.vectorDialogMemoryId = mid
-      // 取 memory 名字只是为了标题展示
+      // Use memory name for dialog title
       this.vectorDialogMemoryName = this.memories.find(m => m.id === mid)?.name || mid
       await this.loadVectorTable(mid)
     },
 
-    // 读取记忆内容
+    // Read memory entries
     async loadVectorTable(mid) {
       this.vectorLoading = true
       try {
         const res = await fetch(`/memory/${mid}`)
         if (!res.ok) throw new Error(await res.text())
-        // 后端已平铺，直接赋值
+        // Backend already returns flattened data
         this.vectorTable = await res.json()
       } catch (e) {
         this.vectorTable = []
@@ -16315,7 +16315,7 @@ clearSegments() {
       }
     },
 
-    // 新增记忆
+    // Add memory
     async addVectorRow() {
       if (!this.newVectorText.trim()) return
       this.vectorLoading = true
@@ -16370,14 +16370,14 @@ clearSegments() {
       showNotification(e.message, 'error')
     }
   },
-  /* 探针 */
+  /* Availability probe */
   async probeNode() {
     const res = await fetch('/api/node/probe');
     const { installed } = await res.json();
     this.nodeInstalled = installed;
   },
 
-    /* ===== uv 相关 ===== */
+    /* ===== uv ===== */
   async probeUv() {
     const res = await fetch('/api/uv/probe');
     const { installed } = await res.json();
@@ -16387,7 +16387,7 @@ clearSegments() {
   async openLogDialog() {
     this.showLogDialog = true;
     await this.fetchLogs();
-    // 自动滚动到底部
+    // Scroll to bottom automatically
     this.$nextTick(() => {
       if (this.$refs.logContainer) {
         this.$refs.logContainer.scrollTop = this.$refs.logContainer.scrollHeight;
@@ -16407,11 +16407,11 @@ clearSegments() {
   async fetchSystemVoices() {
       this.isLoadingSystemVoices = true;
       try {
-        // 使用 fetch API 调用后端接口
-        const response = await fetch('/system/voices'); // 请根据你的API前缀调整
+        // Call backend with fetch
+        const response = await fetch('/system/voices'); // Use appropriate API prefix
         
         if (!response.ok) {
-            // 处理 HTTP 错误状态（如 404, 500）
+            // Handle HTTP error status
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
@@ -16420,17 +16420,17 @@ clearSegments() {
         if (data && data.voices) {
           this.systemVoices = data.voices;
           
-          // 如果当前没有选中的音色，或者选中的音色不在列表里，默认选中第一个
+          // Select first voice if current selection is empty or unavailable
           const currentVoiceValid = this.systemVoices.some(v => v.id === this.ttsSettings.systemVoiceName);
           if (!this.ttsSettings.systemVoiceName || !currentVoiceValid) {
              if (this.systemVoices.length > 0) {
                this.ttsSettings.systemVoiceName = this.systemVoices[0].id;
-               this.autoSaveSettings(); // 保存默认选择
+               this.autoSaveSettings(); // Persist default selection
              }
           }
         }
       } catch (error) {
-        console.error("获取系统音色失败:", error);
+        console.error("Failed to retrieve system voices:", error);
         if (this.$message) {
            this.$message.error(`Failed to retrieve system voices: ${error.message}`);
         }
@@ -16446,31 +16446,31 @@ clearSegments() {
       tables.forEach((table) => {
         if (table.parentElement.classList.contains('markdown-table-wrapper')) return;
 
-        // 1. 创建容器
+        // 1. Create container
         const wrapper = document.createElement('div');
         wrapper.className = 'markdown-table-wrapper';
         table.parentNode.insertBefore(wrapper, table);
         wrapper.appendChild(table);
 
-        // 2. 创建按钮
+        // 2. Create button
         const btn = document.createElement('button');
         btn.className = 'table-download-btn';
-        // 使用 fa-file-excel 图标，更直观
+        // Use fa-file-excel icon
         btn.innerHTML = '<i class="fa-solid fa-file-excel"></i> XLSX';
-        btn.title = '导出为 Excel 文件';
+        btn.title = 'Export to Excel';
         
-        // 3. 绑定点击事件 (调用新的 exceljs 逻辑)
+        // 3. Bind click event to ExcelJS export
         btn.onclick = async (e) => {
           e.stopPropagation();
-          // 添加加载状态反馈（可选）
+          // Optional loading feedback
           const originalText = btn.innerHTML;
-          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 导出中...';
+          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting...';
           btn.disabled = true;
           
           try {
             await this.downloadTableAsXLSX(table);
           } catch (error) {
-            console.error('Excel 导出失败:', error);
+            console.error('Excel export failed:', error);
             this.$message?.error('Export failed. Please try again.');
           } finally {
             btn.innerHTML = originalText;
@@ -16483,19 +16483,19 @@ clearSegments() {
     });
   },
 
-  // 全局点击事件代理
+  // Global click delegation
   handleGlobalClick(event) {
-    // 1. 检查点击的是否是 Excel 导出按钮
-    // closest 处理用户可能点到图标 <i> 的情况
+    // 1. Check if Excel export button was clicked
+    // closest handles clicks on nested icon
     const btn = event.target.closest('.download-xlsx-trigger');
     
     if (btn) {
       event.preventDefault();
       event.stopPropagation();
       
-      // 找到同级的前一个兄弟元素 (即 table)
-      // 根据上面 markdown-it 的结构: <table>...</table> <button>...</button>
-      // 所以 button.previousElementSibling 就是 table
+      // Locate previous sibling table
+      // Markdown renderer emits table followed by button
+      // button.previousElementSibling is the table
       const table = btn.previousElementSibling;
       
       if (table && table.tagName === 'TABLE') {
@@ -16505,7 +16505,7 @@ clearSegments() {
   },
 
     handleMessageLinkClick(event) {
-        // 1. 如果你原有的 handleGlobalClick 有逻辑（比如点击空白处关闭菜单），在这里调用它
+        // 1. Retain existing global click handling if applicable
         this.handleGlobalClick(event); 
 
         if(isElectron){
@@ -16515,15 +16515,15 @@ clearSegments() {
           if (link && link.href) {
               const href = link.href;
 
-              // 2. 过滤逻辑：只拦截 http/https 网络链接
+              // 2. Intercept HTTP and HTTPS links only
               if (href.startsWith('http') || href.startsWith('https')) {
                   
-                  // ★ 关键：同时调用 stopPropagation 和 preventDefault
-                  event.preventDefault();  // 阻止链接默认跳转
-                  event.stopPropagation(); // 阻止事件继续传播
+                  // Call both stopPropagation and preventDefault
+                  event.preventDefault();  // Prevent default link navigation
+                  event.stopPropagation(); // Stop event propagation
                   
-                  // 3. 打开内部浏览器
-                  console.log('拦截到链接，正在内部浏览器打开:', href);
+                  // 3. Open internal browser
+                  console.log('Opening intercepted link in internal browser:', href);
                   this.openUrlInNewTab(href);
               }
           }
@@ -16532,19 +16532,19 @@ clearSegments() {
 
     },
 
-  // 这里的逻辑跟您原来的 click 类似，只是参数变了
+  // Click handler with explicit parameters
   async exportTable(btn, tableElement) {
-    if (btn.disabled) return; // 防止重复点击
+    if (btn.disabled) return; // Prevent duplicate clicks
 
     const originalHtml = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 导出中...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting...';
     btn.disabled = true;
 
     try {
       await this.downloadTableAsXLSX(tableElement);
     } catch (error) {
-      console.error('导出失败', error);
-      // 如果有 Element Plus
+      console.error('Export failed', error);
+      // If Element Plus is available
       if (this.$message) this.$message.error('Export failed');
     } finally {
       btn.innerHTML = originalHtml;
@@ -16553,57 +16553,57 @@ clearSegments() {
   },
 
   /**
-   * 使用 ExcelJS 生成真正的 .xlsx 文件
+   * Generate an actual .xlsx file with ExcelJS.
    */
   async downloadTableAsXLSX(tableElement) {
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('数据导出');
+    const worksheet = workbook.addWorksheet('Data Export');
 
-    // --- 1. 提取 HTML 表格数据 ---
+    // --- 1. Extract HTML table data ---
     const rows = tableElement.querySelectorAll('tr');
     
-    // 遍历 HTML 行
+    // Iterate HTML rows
     rows.forEach((row, rowIndex) => {
       const cells = row.querySelectorAll('td, th');
       const rowData = [];
       
       cells.forEach(cell => {
-        // 获取纯文本
+        // Get plain text
         rowData.push(cell.innerText.trim());
       });
       
-      // 添加到 Worksheet
+      // Add to worksheet
       const excelRow = worksheet.addRow(rowData);
     });
 
-    // --- 2. 美化 Excel 样式 (Pro 模式) ---
+    // --- 2. Format Excel workbook ---
     
-    // 2.1 设置表头样式 (第一行)
+    // 2.1 Style header row
     const headerRow = worksheet.getRow(1);
     headerRow.font = { 
-      name: '微软雅黑', 
+      name: 'Calibri',
       bold: true, 
-      color: { argb: 'FFFFFFFF' } // 白字
+      color: { argb: 'FFFFFFFF' } // White text
     };
     headerRow.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF1E849B' } // 使用你的主题色 (深青色)
+      fgColor: { argb: 'FF1E849B' } // Dark teal theme color
     };
     headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
 
-    // 2.2 自动计算列宽
+    // 2.2 Calculate column widths
     worksheet.columns.forEach(column => {
       let maxLength = 0;
       column.eachCell({ includeEmpty: true }, cell => {
         const columnLength = cell.value ? cell.value.toString().length : 10;
         if (columnLength > maxLength) maxLength = columnLength;
       });
-      // 限制最大宽度，防止太宽
+      // Limit maximum column width
       column.width = maxLength < 10 ? 10 : (maxLength > 50 ? 50 : maxLength + 2);
     });
 
-    // 2.3 添加边框
+    // 2.3 Add borders
     worksheet.eachRow((row, rowNumber) => {
       row.eachCell((cell) => {
         cell.border = {
@@ -16612,12 +16612,12 @@ clearSegments() {
           bottom: { style: 'thin', color: { argb: 'FFDCDFE6' } },
           right: { style: 'thin', color: { argb: 'FFDCDFE6' } }
         };
-        // 内容垂直居中
+        // Vertically center content
         cell.alignment = { ...cell.alignment, vertical: 'middle', wrapText: true };
       });
     });
 
-    // --- 3. 生成并下载文件 ---
+    // --- 3. Generate and download file ---
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     
@@ -16631,14 +16631,14 @@ clearSegments() {
     URL.revokeObjectURL(link.href);
   },
 
-    // [A2UI 新增] 处理用户点击操作
+    // A2UI user action handling
     handleA2UIAction(msg) {
       console.log('A2UI Action Triggered:', msg);
       this.userInput = msg;
       this.sendMessage();
     },
 
-    // [A2UI 新增] 拆分消息内容为 文本/UI 段
+    // Split message into text and UI segments
     splitMessageContent(content) {
       if (!content) return [];
       const segments = [];
@@ -16671,12 +16671,12 @@ clearSegments() {
 
     async fetchTetosNewVoices(provider) {
         this.newTTSConfig.isFetchingVoices = true;
-        this.newTTSConfig.tetosVoices = []; // 清空现有列表
+        this.newTTSConfig.tetosVoices = []; // Clear existing voices
         
         let config = {};
         const s = this.newTTSConfig;
 
-        // 根据 provider 构建 config
+        // Build config based on provider
         switch(provider) {
             case 'azure':
                 config = { speech_key: s.azureSpeechKey, speech_region: s.azureRegion };
@@ -16685,7 +16685,7 @@ clearSegments() {
                 config = { api_key: s.fishApiKey };
                 break;
             case 'google':
-                // 尝试解析 JSON 字符串
+                // Try parsing JSON string
                 try {
                     if (s.googleServiceAccount) {
                          config = { service_account: JSON.parse(s.googleServiceAccount) };
@@ -16719,12 +16719,12 @@ clearSegments() {
 
     async fetchTetosVoices(provider) {
         this.ttsSettings.isFetchingVoices = true;
-        this.ttsSettings.tetosVoices = []; // 清空现有列表
+        this.ttsSettings.tetosVoices = []; // Clear existing voices
         
         let config = {};
         const s = this.ttsSettings;
 
-        // 根据 provider 构建 config
+        // Build config based on provider
         switch(provider) {
             case 'azure':
                 config = { speech_key: s.azureSpeechKey, speech_region: s.azureRegion };
@@ -16733,7 +16733,7 @@ clearSegments() {
                 config = { api_key: s.fishApiKey };
                 break;
             case 'google':
-                // 尝试解析 JSON 字符串
+                // Try parsing JSON string
                 try {
                     if (s.googleServiceAccount) {
                          config = { service_account: JSON.parse(s.googleServiceAccount) };
@@ -16765,37 +16765,37 @@ clearSegments() {
         }
     },
 
-    // 1. 获取音色显示名称 (Label)
+    // 1. Get voice display label
     getVoiceLabel(v) {
-        // 情况 A: 数据是纯字符串 (你刚才展示的情况)
+        // Case A: string
         if (typeof v === 'string') return v;
         
-        // 情况 B: 数据是对象 (Azure等)
+        // Case B: object, such as Azure
         if (v && typeof v === 'object') {
-            // 优先查找显示名称，如果没有则找 id 或 name
+            // Prefer display name, then ID or name
             return v.DisplayName || v.local_name || v.name || v.Name || v.id || v.Id || v.ShortName || 'Unknown Voice';
         }
         return 'Unknown';
     },
 
-    // 2. 获取音色实际值 (Value - 传给后端的)
+    // 2. Get actual voice value passed to backend
     getVoiceValue(v) {
-        // 情况 A: 纯字符串
+        // Case A: string
         if (typeof v === 'string') return v;
         
-        // 情况 B: 对象
+        // Case B: object
         if (v && typeof v === 'object') {
             return v.ShortName || v.id || v.Id || v.name || '';
         }
         return '';
     },
 
-    // 3. 获取辅助信息 (显示在右侧的灰色小字，如语言)
+    // 3. Get auxiliary label such as language
     getVoiceDesc(v) {
-        // 纯字符串没有额外信息，返回空
+        // Strings have no auxiliary information
         if (typeof v === 'string') return '';
         
-        // 对象可能包含语言信息
+        // Object may include language information
         if (v && typeof v === 'object') {
             const lang = v.Locale || v.locale || v.Language || v.language || (v.language_codes ? v.language_codes[0] : '');
             return lang ? `[${lang}]` : '';
@@ -16804,9 +16804,9 @@ clearSegments() {
     },
 
 
-    // AI浏览器相关
+    // AI browser
     openUrlInNewTab(url) {
-        // 如果 url 为空或者无效，可以做个判断，或者直接打开
+        // Validate URL if necessary
         if (!url) return;
 
         const newTab = {
@@ -16823,21 +16823,21 @@ clearSegments() {
         this.activeMenu = 'ai-browser';
     },
 
-    // 切换标签
+    // Switch tab
     switchTab(id) {
         this.currentTabId = id;
         const tab = this.browserTabs.find(t => t.id === id);
         if (tab) {
-            // --- ✅ 修改此处 ---
-            // 优先显示页面实际所在的 currentUrl，否则显示 tab.url
+            // --- Address display ---
+            // Prefer actual currentUrl, otherwise tab.url
             this.urlInput = tab.currentUrl || tab.url;
             
-            // 如果是欢迎页，清空地址栏显示
+            // Clear address bar on welcome page
             if (!tab.url) this.urlInput = '';
         }
     },
 
-    // 添加新标签
+    // Add tab
     addNewTab() {
         const newTab = {
             id: Date.now(),
@@ -16852,24 +16852,24 @@ clearSegments() {
         this.switchTab(newTab.id);
     },
 
-    // 关闭标签
+    // Close tab
     closeTab(id, event) {
-        if (event) event.stopPropagation(); // 防止触发点击切换
+        if (event) event.stopPropagation(); // Prevent triggering tab selection
         
         const index = this.browserTabs.findIndex(t => t.id === id);
         if (index === -1) return;
 
-        // 如果关闭的是当前标签，需要切换到另一个
+        // If closing active tab, select another
         if (this.currentTabId === id) {
             if (this.browserTabs.length > 1) {
-                // 优先切到右边，没右边切左边
+                // Prefer right neighbor, otherwise left
                 const nextTab = this.browserTabs[index + 1] || this.browserTabs[index - 1];
                 this.currentTabId = nextTab.id;
                 this.urlInput = nextTab.url;
             } else {
-                // 如果只剩这一个，重置它而不是删除
-                this.addNewTab(); // 加个新的
-                this.browserTabs.splice(index, 1); // 删掉旧的
+                // If only tab remains, replace with a new one
+                this.addNewTab(); // Add new tab
+                this.browserTabs.splice(index, 1); // Remove old tab
                 return;
             }
         }
@@ -16877,18 +16877,18 @@ clearSegments() {
         this.browserTabs.splice(index, 1);
     },
 
-    // 地址栏回车
+    // Address bar Enter handler
     handleUrlEnter() {
         let val = this.urlInput.trim();
         if (!val) return;
 
-        // 简单的 URL 补全逻辑
+        // Complete URL
         if (!/^https?:\/\//i.test(val)) {
-            // 如果看起来像域名
+            // If input resembles a domain
             if (/^([\w-]+\.)+[\w-]+/.test(val) && !val.includes(' ')) {
                 val = 'https://' + val;
             } else {
-                // 否则当做搜索
+                // Otherwise use search
                 if (this.searchEngine === 'google') {
                     val = `https://www.google.com/search?q=${encodeURIComponent(val)}`;
                 } else if (this.searchEngine === 'bing') {
@@ -16915,16 +16915,16 @@ clearSegments() {
         return null;
     },
 
-    // 欢迎页搜索回车
+    // Welcome page search handler
     handleWelcomeSearch() {
         const query = this.welcomeSearchQuery.trim();
-        this.welcomeSearchQuery = ''; // 清空输入框
+        this.welcomeSearchQuery = ''; // Clear input
         if (!query) return;
 
-        // --- 新增逻辑：URL 检测与直接跳转 ---
+        // --- Detect URLs and navigate directly ---
         if (this.isUrl(query)) {
             let targetUrl = query;
-            // 如果没有以 http:// 或 https:// 开头，默认补全 https://
+            // Prepend https if scheme missing
             if (!/^https?:\/\//i.test(targetUrl)) {
                 targetUrl = 'https://' + targetUrl;
             }
@@ -16952,54 +16952,54 @@ clearSegments() {
     },
 
     /**
-     * 辅助函数：判断字符串是否为 URL
-     * 规则：
-     * 1. 以 http/https 开头
-     * 2. 或者符合 域名.后缀 (如 google.com)
-     * 3. 或者 localhost
-     * 4. 或者 IP 地址
-     * 5. 且不包含空格
+     * Determine whether a string is a URL.
+     * Rules:
+     * 1. Starts with HTTP or HTTPS
+     * 2. Or matches a domain such as google.com
+     * 3. Or localhost
+     * 4. Or IP address
+     * 5. Contains no spaces
      */
     isUrl(str) {
-        // 简单判断：如果包含空格，通常是搜索词（除非是编码后的URL，但用户输入通常带空格）
+        // Treat spaces as a sign of search input
         if (str.includes(' ')) return false;
 
-        // 正则解释：
-        // ^(https?:\/\/)?  -> 可选的 http:// 或 https://
+        // Regex explanation:
+        // Optional HTTP or HTTPS scheme
         // (
-        //   ([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}  -> 标准域名 (如 a.com, b.co.uk)
-        //   | localhost                     -> 本地 localhost
-        //   | (\d{1,3}\.){3}\d{1,3}         -> IP 地址 (如 192.168.1.1)
+        // Domain name
+        // Localhost
+        // IPv4 address
         // )
-        // (:\d+)?          -> 可选端口号 (如 :8080)
-        // (\/.*)?$         -> 可选路径
+        // Optional port
+        // Optional path
         const pattern = /^(https?:\/\/)?(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|localhost|(\d{1,3}\.){3}\d{1,3})(:\d+)?(\/.*)?$/i;
         
         return pattern.test(str);
     },
 
-    // 核心导航方法
+    // Navigation method
     navigateTo(url) {
         if (!this.currentTab) return;
         
-        // 如果是刷新当前页面（URL 没变）
-        // 注意：这里比较时最好也比较 currentUrl
+        // Refresh if URL unchanged
+        // Compare currentUrl as well
         const activeUrl = this.currentTab.currentUrl || this.currentTab.url;
         
         if (activeUrl === url) {
-            // ... (保持原有的 reload 逻辑)
+            // ... (retain reload logic)
             const wv = document.getElementById('webview-' + this.currentTabId);
             if (wv) wv.reload();
             return;
         }
 
-        // 2. 如果是新 URL
-        this.currentTab.url = url;      // 这会触发 :src 更新，开始加载
-        this.currentTab.currentUrl = url; // 同步更新实际地址状态
+        // 2. New URL
+        this.currentTab.url = url;      // Updating src triggers loading
+        this.currentTab.currentUrl = url; // Synchronize actual address state
         this.urlInput = url;
     },
     
-    // 回到主页 (新标签页)
+    // Return to home/new tab
     goHome() {
         if(this.currentTab) {
             this.currentTab.url = '';
@@ -17009,26 +17009,26 @@ clearSegments() {
         }
     },
 
-    // --- Webview 导航控制 ---
+    // --- Webview navigation controls ---
     getWebview(id) {
         const wv = document.getElementById('webview-' + (id || this.currentTabId));
         
-        // 1. 基础非空检查
+        // 1. Basic existence check
         if (!wv) {
             console.warn("getWebview: Element not found for ID", id || this.currentTabId);
             return null;
         }
 
-        // 2. ★ 核心修改：检查元素是否真正连接在 DOM 树上
-        // 如果元素存在但 isConnected 为 false，说明 Vue 正在销毁它或还没挂载好
-        // 此时返回 null，让 Python 端捕获 "No active webview" 错误并触发重试
+        // 2. Check whether element is connected to DOM
+        // isConnected false indicates destruction or incomplete mounting
+        // Return null so Python can handle No active webview and retry
         if (!wv.isConnected) {
             console.warn("getWebview: Element found but detached from DOM (Zombie node).");
             return null;
         }
 
-        // 3. (可选) 检查 Electron 内部状态
-        // getWebContentsId 是 Electron webview 的原生方法，如果报错说明内部未初始化
+        // 3. Optional Electron readiness check
+        // getWebContentsId may fail if webview is not initialized
         try {
             if (typeof wv.getWebContentsId !== 'function') {
                 return null;
@@ -17060,15 +17060,15 @@ clearSegments() {
         }
     },
 
-    // --- Webview 事件监听 ---
-    // 注意：这些事件在 HTML 中通过 @did-start-loading="..." 绑定
+    // --- Webview event listeners ---
+    // Events bound in HTML through did-start-loading and related handlers
     
     onDidStartLoading(id) {
         const tab = this.browserTabs.find(t => t.id === id);
         if (tab) tab.isLoading = true;
     },
 
-    // 修改前
+    // Previous implementation
     onDidStopLoading(id) {
         const tab = this.browserTabs.find(t => t.id === id);
         if (tab) {
@@ -17078,12 +17078,12 @@ clearSegments() {
                 tab.canGoBack = wv.canGoBack();
                 tab.canGoForward = wv.canGoForward();
                 
-                // --- ✅ 修正后的代码 ---
+                // --- Updated URL handling ---
                 if (wv.getURL()) {
-                    // 1. 将实际 URL 存入一个新字段，不触碰 tab.url (src)
+                    // 1. Store actual URL separately without changing tab.url/src
                     tab.currentUrl = wv.getURL(); 
                     
-                    // 2. 只更新顶部的地址栏 UI
+                    // 2. Update only address bar
                     if (this.currentTabId === id) {
                         this.urlInput = tab.currentUrl;
                     }
@@ -17104,9 +17104,9 @@ clearSegments() {
         }
     },
 
-    // 处理网页内部 window.open
+    // Handle window.open from web content
     onNewWindow(id, event) {
-        // 在应用内新建标签页打开，而不是弹出新窗口
+        // Open in internal tab rather than external window
         const { url } = event;
         const newTab = {
             id: Date.now(),
@@ -17121,92 +17121,92 @@ clearSegments() {
         this.switchTab(newTab.id);
     },
     
-    // 在 methods 中添加或修改 onDomReady
+    // onDomReady handler
     onDomReady(tabId) {
         const webview = document.getElementById('webview-' + tabId);
         if (!webview) return;
 
         webview.addEventListener('context-menu', (e) => {
-            // ★★★ 关键调试点：打印出 Electron 传来的所有参数 ★★★
+            // Log parameters from Electron for debugging
             console.log('Webview Context Menu Params:', e.params);
             
             const params = e.params;
             let menuType = 'default';
             let data = {};
 
-            // 重新审视和调整判断逻辑的顺序，确保最具体的匹配优先
+            // Check the most specific context matches first
             if (params.mediaType === 'image' && params.srcURL && params.srcURL.length > 0) {
                 menuType = 'image';
                 data = { src: params.srcURL };
-                console.log('Detected Image Context:', data); // 调试
+                console.log('Detected Image Context:', data); // Debug
             } else if (params.linkURL && params.linkURL.length > 0) {
                 menuType = 'link';
                 data = { 
                     url: params.linkURL, 
                     text: params.linkText || params.selectionText || '' 
                 };
-                console.log('Detected Link Context:', data); // 调试
+                console.log('Detected Link Context:', data); // Debug
             } else if (params.selectionText && params.selectionText.length > 0) {
                 menuType = 'text';
                 data = { text: params.selectionText };
-                console.log('Detected Text Context:', data); // 调试
+                console.log('Detected Text Context:', data); // Debug
             } else {
                 menuType = 'default';
-                console.log('Detected Default Context'); // 调试
+                console.log('Detected Default Context'); // Debug
             }
 
-            // 再次打印最终决定发送的类型和数据
+            // Log selected context type and data
             console.log(`Sending context menu request: Type = ${menuType}, Data =`, data);
 
             window.electronAPI.showContextMenu(menuType, data);
         });
         webview.send('set-i18n', {
-            translate: this.t('translate') || '翻译',
-            askAI: this.t('ask_ai') || '问 AI',
-            read: this.t('read') || '朗读',
-            copy: this.t('copy') || '复制'
+            translate: this.t('translate') || 'Translate',
+            askAI: this.t('ask_ai') || 'Ask AI',
+            read: this.t('read') || 'Read aloud',
+            copy: this.t('copy') || 'Copy'
         });
         //webview.openDevTools();
     },
 
-    // 1. 修改 IPC 消息处理函数
+    // 1. IPC message handler
     async handleWebviewIpcMessage(event) {
         if (event.channel === 'ai-toolbar-action') {
             const { action, text } = event.args[0];
             if (!text) return;
 
-            // 获取 webview 实例，用于回传数据
-            // 注意：event.target 就是 webview 元素
+            // Get webview instance for returning data
+            // event.target is webview element
             const webview = event.target; 
 
             switch (action) {
                 case 'translate':
-                    // --- 1. 翻译/总结：直接调用后端 + 流式回传 ---
-                    // 不打开侧边栏，直接在 webview 原地显示
+                    // --- 1. Translate or summarize using backend stream ---
+                    // Display in webview without opening sidebar
                     this.streamTranslateInWebview(webview, text);
                     break;
 
                 case 'ask':
-                    // --- 2. 问 AI：保留原逻辑，去侧边栏 ---
+                    // --- 2. Ask AI: open sidebar ---
                     this.showBrowserChat = true;
-                    // 如果你想自动添加提示词：
+                    // To add a prompt automatically:
                     this.userInput = `${text}`; 
-                    // this.sendMessage(); // 也就是让用户自己点发送，或者你取消注释自动发
+                    // this.sendMessage(); // Uncomment to send automatically; otherwise let the user send it.
                     break;
 
                 case 'read':
-                    // --- 3. 朗读：调用 TTS ---
+                    // --- 3. Read aloud: call TTS ---
                     this.handleBrowserTTS(text);
                     break;
             }
         }
     },
 
-    // 2. 新增：流式请求后端并发送给 Webview
+    // 2. Stream the backend response to the Webview
     async streamTranslateInWebview(webview, text) {
         if (!webview) return;
         
-        console.log('开始请求翻译:', text);
+        console.log('Requesting translation:', text);
         webview.send('ai-stream-start');
 
         try {
@@ -17250,14 +17250,14 @@ clearSegments() {
                     let trimmed = line.trim();
                     if (!trimmed || trimmed === 'data: [DONE]') continue;
                     
-                    // --- 修改核心：兼容多种格式 ---
+                    // --- Support multiple response formats ---
                     
-                    // 1. 如果是以 data: 开头（SSE标准格式），去掉前缀
+                    // 1. Strip the data: prefix from SSE lines
                     if (trimmed.startsWith('data:')) {
                         trimmed = trimmed.replace(/^data:\s?/, '');
                     }
                     
-                    // 2. 尝试解析 JSON（现在无论是纯JSON还是去掉data后的JSON，都能解析）
+                    // 2. Parse JSON with or without the SSE prefix
                     try {
                         const data = JSON.parse(trimmed);
                         const content = data.choices?.[0]?.delta?.content;
@@ -17267,14 +17267,14 @@ clearSegments() {
                             webview.send('ai-stream-chunk', content);
                         }
                     } catch (e) {
-                        // 忽略非 JSON 行（比如心跳包或注释）
+                        // Ignore non-JSON lines, such as heartbeats or comments
                         // console.log('Json parse failed for line:', trimmed);
                     }
                 }
             }
             
             webview.send('ai-stream-end');
-            console.log('流式传输结束');
+            console.log('Streaming complete');
 
         } catch (error) {
             console.error('Translation error:', error);
@@ -17282,40 +17282,40 @@ clearSegments() {
         }
     },
 
-    // 3. 修改：TTS 处理逻辑
+    // 3. TTS handling
     handleBrowserTTS(text) {
-        // 停止之前的播放（如果有）
+        // Stop previous playback, if any
         this.stopTTSActivities();
         
-        // 设置长文本内容
+        // Set the long text content
         this.readConfig.longText = text;
         
-        // 稍微延迟确保状态更新，然后开始朗读
+        // Allow state to update before starting playback
         setTimeout(() => {
             this.startRead();
             
-            // 提示用户 (可选)
+            // Notify the user (optional)
             // showNotification(this.t('tts_started'), 'success');
         }, 500);
     },
 
-    // 切换引擎下拉
+    // Toggle engine dropdown
     toggleEngineDropdown() {
         this.showEngineDropdown = !this.showEngineDropdown;
     },
 
-    // 设置引擎并关闭下拉
+    // Set engine and close dropdown
     setSearchEngine(engine) {
         this.searchEngine = engine;
         this.showEngineDropdown = false;
-        // 如果想要切换后自动聚焦输入框
+        // Optionally focus the input after switching
         this.$nextTick(() => {
             const input = document.querySelector('.ios-search-input');
             if(input) input.focus();
         });
     },
 
-    // 搜索框失焦处理 (延迟关闭下拉，防止点击菜单项时菜单先消失)
+    // Delay closing the dropdown on blur so menu items can be clicked
     handleSearchBlur() {
         this.isSearchFocused = false;
         setTimeout(() => {
@@ -17323,7 +17323,7 @@ clearSegments() {
         }, 200);
     },
 
-    // 修改原有的 addNewTab，确保样式正确
+    // Ensure new tabs have the correct style
     addNewTab() {
         const newTab = {
             id: Date.now(),
@@ -17337,7 +17337,7 @@ clearSegments() {
         this.browserTabs.push(newTab);
         this.switchTab(newTab.id);
         
-        // 自动聚焦到欢迎页搜索框
+        // Focus the welcome page search field
         this.$nextTick(() => {
              const input = document.querySelector('.ios-search-input');
              if(input) input.focus();
@@ -17349,54 +17349,54 @@ clearSegments() {
         this.showEngineDropdown = true;
     },
 
-    // 鼠标离开区域：延迟 200ms 关闭，给用户移动鼠标的时间
+    // Delay closing by 200ms on mouse leave
     handleSelectorLeave() {
         this.dropdownTimer = setTimeout(() => {
             this.showEngineDropdown = false;
-        }, 200); // 200ms 延迟
+        }, 200); // 200ms delay
     },
 
-    // ★★★ 核心：处理边缘滚动 ★★★
+    // Edge scrolling
     handleTabsMouseMove(e) {
-      // 在 Options API 中，通过 this.$refs 访问 DOM
+      // Access DOM through this.$refs in the Options API
       const container = this.$refs.tabsContainerRef;
       
       if (!container) return;
 
       const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left; // 鼠标相对于容器左侧的距离
+      const x = e.clientX - rect.left; // Mouse offset from the left edge of the container
       const width = rect.width;
-      const threshold = 60; // 边缘触发滚动的范围 (px)
-      const speed = 8;      // 滚动速度
+      const threshold = 60; // Edge scrolling threshold (px)
+      const speed = 8;      // Scroll speed
 
-      // 先清除可能存在的旧定时器
+      // Clear any existing timer
       this.stopEdgeScroll();
 
-      // 定义滚动函数
+      // Define the scrolling function
       const scroll = (direction) => {
         if (direction === 'left') {
           container.scrollLeft -= speed;
         } else {
           container.scrollLeft += speed;
         }
-        // 持续循环
+        // Continue scrolling
         this.scrollInterval = requestAnimationFrame(() => scroll(direction));
       };
 
-      // 判断鼠标位置
+      // Check mouse position
       if (x < threshold) {
-        // 鼠标在左边缘 -> 向左滑
+        // Left edge: scroll left
         scroll('left');
       } else if (x > width - threshold) {
-        // 鼠标在右边缘 -> 向右滑
+        // Right edge: scroll right
         scroll('right');
       } else {
-        // 在中间 -> 停止滚动
+        // Center: stop scrolling
         this.stopEdgeScroll();
       }
     },
 
-    // 停止滚动
+    // Stop scrolling
     stopEdgeScroll() {
       if (this.scrollInterval) {
         cancelAnimationFrame(this.scrollInterval);
@@ -17411,10 +17411,10 @@ clearSegments() {
 
     handleStopOrRemove(item) {
         if (item.state === 'progressing' || item.state === 'paused') {
-            // 如果还在下载，就是取消
+            // Cancel an active download
             this.controlDownload(item.id, 'cancel');
         } else {
-            // 如果已完成或已取消，就是从列表中删除记录
+            // Remove completed or canceled records from the list
             this.downloads = this.downloads.filter(d => d.id !== item.id);
         }
     },
@@ -17424,11 +17424,11 @@ clearSegments() {
     },
 
     clearFinishedDownloads() {
-        // 只保留正在下载的项目
+        // Keep only active downloads
         this.downloads = this.downloads.filter(d => d.state === 'progressing' || d.state === 'paused');
     },
 
-    // 字节格式化工具
+    // Byte formatting utility
     formatBytes(bytes, decimals = 1) {
         if (!bytes) return '0 B';
         const k = 1024;
@@ -17438,18 +17438,18 @@ clearSegments() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     },
     handleDropdownEnter() {
-        // 1. 如果有关闭的定时器正在倒计时，立刻取消它！
+        // 1. Cancel any pending close timer
         if (this.dropdownTimer) {
             clearTimeout(this.dropdownTimer);
             this.dropdownTimer = null;
         }
-        // 2. 显示面板
+        // 2. Show the panel
         this.showDownloadDropdown = true;
     },
 
-    // ★ 鼠标离开
+    // Mouse leave
     handleDropdownLeave() {
-        // 给用户 300ms 的反应时间
+        // Give the user 300ms to move the mouse
         this.dropdownTimer = setTimeout(() => {
             this.showDownloadDropdown = false;
             this.dropdownTimer = null;
@@ -17459,28 +17459,28 @@ clearSegments() {
     async initChromeMCPSettings() {
         if (!window.electronAPI) return;
 
-        // 1. 询问主进程：你现在开 CDP 了吗？端口是多少？
+        // 1. Ask the main process whether CDP is enabled and which port it uses
         const cdpInfo = await window.electronAPI.getInternalCDPInfo();
         
-        // 2. 如果主进程确实开启了内部模式
+        // 2. If internal mode is enabled in the main process
         if (cdpInfo.active) {
-            console.log(`[Frontend] 检测到内部 CDP 已激活，端口: ${cdpInfo.port}`);
+            console.log("[Frontend] Internal CDP active on port: " + cdpInfo.port);
             
-            // 强制同步前端数据
+            // Synchronize frontend data
             this.chromeMCPSettings.type = 'internal'; 
             this.chromeMCPSettings.CDPport = cdpInfo.port;
             
-            // 这里不一定强制 enabled = true，因为 enabled 代表“Python服务是否在运行”
-            // 但如果 Electron 开了端口，通常意味着配置里 enabled 是 true
-            // 我们更新配置文件，确保端口是最新的
+            // Do not force enabled = true; enabled represents whether the Python service is running
+            // An open Electron port usually indicates enabled is true in the configuration
+            // Update configuration to reflect the current port
             await this.autoSaveSettings();
         }
     },
     // ===============================================
-    // Python Agent 专用接口 (Electron API 桥接)
+    // Python Agent interface (Electron API bridge)
     // ===============================================
 
-    // --- 基础信息与导航 ---
+    // --- Basic information and navigation ---
 
     getPagesInfo() {
         const info = this.browserTabs.map((tab, index) => ({
@@ -17517,7 +17517,7 @@ clearSegments() {
         if (!wv) return "Error: No active webview";
 
         try {
-            this.activeMenu = 'ai-browser'; // 切换到 AI Browser 菜单
+            this.activeMenu = 'ai-browser'; // Switch to AI Browser menu
             switch (type) {
                 case 'url':
                     if (!url) return "Error: URL is required";
@@ -17540,7 +17540,7 @@ clearSegments() {
                     else wv.reload();
                     return "Reloaded";
                 default:
-                    // 默认为 URL 导航
+                    // Default to URL navigation
                     if (url) {
                         this.navigateTo(url);
                         return "Navigated to " + url;
@@ -17553,17 +17553,17 @@ clearSegments() {
     },
 
     // ===============================================
-    // Python Agent 专用接口 (稳定 JS 注入版)
+    // Python Agent interface (JavaScript injection)
     // ===============================================
 
-    // --- 0. 拟人化延迟辅助函数 ---
+    // --- 0. Interaction delay helper ---
     async _humanDelay() {
-        // 随机延迟 100ms 到 1000ms (0.1s - 1s)
+        // Random delay from 100ms to 1000ms
         const delay = Math.floor(Math.random() * 900) + 100;
         await new Promise(resolve => setTimeout(resolve, delay));
     },
 
-    // --- 1. 伪装成 A11y 树的快照 (无延迟，读取操作越快越好) ---
+    // --- 1. Accessibility-style snapshot (no delay for read operations) ---
     async getWebviewSnapshot(verbose = false) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
@@ -17628,7 +17628,7 @@ clearSegments() {
         }
     },
 
-    // --- 2. 点击 (增加延迟) ---
+    // --- 2. Click (with delay) ---
     async webviewClick(uid, dblClick = false) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
@@ -17638,25 +17638,25 @@ clearSegments() {
             const el = document.querySelector('[data-ai-id="${uid}"]');
             if (!el) return "Element not found: ${uid}";
             
-            // 1. 滚动到可见 (平滑滚动更像人)
+            // 1. Smoothly scroll into view
             el.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
             
-            // 等待一小会儿让滚动完成
+            // Wait briefly for scrolling to finish
             await new Promise(r => setTimeout(r, 200));
 
-            // 2. 计算随机坐标 (核心改进)
+            // 2. Calculate random coordinates
             const rect = el.getBoundingClientRect();
-            // 不点边缘，只在中心 80% 区域内随机
-            // Math.random() - 0.5 生成 -0.5 到 0.5 的数
+            // Choose a position within the central 80% of the element
+            // Math.random() - 0.5 yields a value between -0.5 and 0.5
             const randomX = (Math.random() - 0.5) * (rect.width * 0.8); 
             const randomY = (Math.random() - 0.5) * (rect.height * 0.8);
             
-            // 加上 rect.left 等于视口绝对坐标，加上 rect.width/2 等于中心点
-            // clientX/Y 是相对于视口的
+            // Offset from the element bounds and center to obtain viewport coordinates
+            // clientX/Y are relative to the viewport
             const clientX = rect.left + (rect.width / 2) + randomX;
             const clientY = rect.top + (rect.height / 2) + randomY;
 
-            // 3. 构造事件对象 (带真实坐标)
+            // 3. Construct event object with coordinates
             const opts = { 
                 bubbles: true, 
                 cancelable: true, 
@@ -17664,14 +17664,14 @@ clearSegments() {
                 buttons: 1,
                 clientX: clientX,
                 clientY: clientY,
-                screenX: clientX + window.screenX, // 模拟屏幕坐标
+                screenX: clientX + window.screenX, // Simulated screen coordinates
                 screenY: clientY + window.screenY
             };
 
-            // 4. 触发完整的事件链
+            // 4. Dispatch the complete event sequence
             el.dispatchEvent(new MouseEvent('mouseover', opts));
             el.dispatchEvent(new MouseEvent('mousedown', opts));
-            // 鼠标按下和抬起之间极短的停顿
+            // Brief pause between mouse down and mouse up
             await new Promise(r => setTimeout(r, Math.floor(Math.random() * 50) + 10)); 
             el.dispatchEvent(new MouseEvent('mouseup', opts));
             el.dispatchEvent(new MouseEvent('click', opts));
@@ -17685,7 +17685,7 @@ clearSegments() {
         
         try {
             const result = await wv.executeJavaScript(script);
-            // 操作后的大延迟（模拟思考下一步）
+            // Post-interaction delay
             await this._humanDelay();
             return result;
         } catch (e) {
@@ -17693,12 +17693,12 @@ clearSegments() {
         }
     },
 
-    // --- 3. 输入 (增加延迟) ---
+    // --- 3. Input (with delay) ---
     async webviewFill(uid, value) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
         wv.focus();
-        // 注意：这里需要把 value 传给 JS，使用 JSON.stringify 确保安全
+        // Pass value to JavaScript using JSON.stringify for safe serialization
         const script = `
         (async function() {
             const el = document.querySelector('[data-ai-id="${uid}"]');
@@ -17708,10 +17708,10 @@ clearSegments() {
             
             const text = ${JSON.stringify(value)};
             
-            // 获取原生 Setter (解决 React/Vue 无法监听 js 赋值的问题)
+            // Obtain the native setter so React/Vue can observe the assignment
             const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
             
-            // 清空现有内容 (如果需要追加模式，可以去掉这行)
+            // Clear existing content (omit for append mode)
             if (nativeInputValueSetter) {
                 nativeInputValueSetter.call(el, '');
             } else {
@@ -17719,15 +17719,15 @@ clearSegments() {
             }
             el.dispatchEvent(new Event('input', { bubbles: true }));
 
-            // ★ 核心：逐字输入循环
+            // Character-by-character input loop
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
                 
-                // 1. 模拟按键按下 (keydown)
+                // 1. Simulate keydown
                 el.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
                 el.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
 
-                // 2. 更新值 (模拟输入进去的效果)
+                // 2. Update the input value
                 const currentVal = el.value + char;
                 if (nativeInputValueSetter && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
                     nativeInputValueSetter.call(el, currentVal);
@@ -17735,22 +17735,22 @@ clearSegments() {
                     el.value = currentVal;
                 }
 
-                // 3. 触发 input 事件 (让框架知道值变了)
+                // 3. Dispatch input so the framework observes the change
                 el.dispatchEvent(new InputEvent('input', { data: char, inputType: 'insertText', bubbles: true }));
                 
-                // 4. 模拟按键抬起 (keyup)
+                // 4. Simulate keyup
                 el.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
 
-                // ★ 5. 随机打字延迟 (30ms - 150ms)
-                // 模拟人打字忽快忽慢
+                // 5. Random typing delay (30ms - 150ms)
+                // Vary the typing interval
                 const delay = Math.floor(Math.random() * 120) + 30;
                 await new Promise(r => setTimeout(r, delay));
             }
 
-            // 完成后的 change 事件
+            // Dispatch change when finished
             el.dispatchEvent(new Event('change', { bubbles: true }));
             
-            // 稍微停顿后失焦
+            // Pause briefly before blurring
             await new Promise(r => setTimeout(r, 200));
             el.blur();
 
@@ -17760,7 +17760,7 @@ clearSegments() {
         
         try {
             const result = await wv.executeJavaScript(script);
-            // 操作后的大延迟
+            // Post-interaction delay
             await this._humanDelay();
             return result;
         } catch (e) {
@@ -17768,7 +17768,7 @@ clearSegments() {
         }
     },
 
-    // --- 4. 批量填表 (增加延迟) ---
+    // --- 4. Batch form filling (with delay) ---
     async webviewFillForm(elements) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
@@ -17795,13 +17795,13 @@ clearSegments() {
         
         const result = await wv.executeJavaScript(script);
         
-        // ★ 批量操作后等待
+        // Wait after batch operation
         await this._humanDelay();
         
         return result;
     },
 
-    // --- 5. 拖拽 (增加延迟) ---
+    // --- 5. Drag (with delay) ---
     async webviewDrag(fromUid, toUid) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
@@ -17837,13 +17837,13 @@ clearSegments() {
         
         const result = await wv.executeJavaScript(script);
         
-        // ★ 拖拽动作幅度大，等待时间可以稍微长一点（这里复用随机等待）
+        // Allow a slightly longer delay after dragging; reuse the random wait
         await this._humanDelay();
         
         return result;
     },
 
-    // --- 6. 悬停 (增加延迟) ---
+    // --- 6. Hover (with delay) ---
     async webviewHover(uid) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
@@ -17861,15 +17861,15 @@ clearSegments() {
         
         const result = await wv.executeJavaScript(script);
         
-        // ★ 悬停通常是为了看东西，稍微等一下合理
+        // Allow a brief wait after hovering
         await this._humanDelay();
         
         return result;
     },
 
-    // --- 8. 处理弹窗 (无延迟) ---
+    // --- 8. Handle dialogs (no delay) ---
     async webviewHandleDialog(action, promptText) {
-        // ... (代码保持不变，弹窗处理通常是瞬时的) ...
+        // Dialog handling is usually instantaneous
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
         wv.focus();
@@ -17886,22 +17886,22 @@ clearSegments() {
         return await wv.executeJavaScript(script);
     },
 
-    // --- 9. 按键 (增加延迟) ---
+    // --- 9. Key press (with delay) ---
     async webviewPressKey(keyCombo, uid) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
         wv.focus();
 
-        // 1. 获取元素坐标 (JS 只负责告诉我们它在哪)
+        // 1. Obtain element coordinates from JavaScript
         const rectScript = `
         (function() {
             const el = document.querySelector('[data-ai-id="${uid}"]');
             if (!el) return null;
             
-            // 滚动到屏幕中间
+            // Scroll to the center of the screen
             el.scrollIntoView({behavior: "auto", block: "center", inline: "center"});
             
-            // 获取相对于视口的精确坐标
+            // Obtain precise viewport-relative coordinates
             const rect = el.getBoundingClientRect();
             return {
                 x: rect.left + (rect.width / 2),
@@ -17914,11 +17914,11 @@ clearSegments() {
             const rect = await wv.executeJavaScript(rectScript);
             if (!rect) return "Element not found: " + uid;
 
-            // ★ 关键修复：使用 sendInputEvent 发送真实的鼠标点击
-            // 这会强制操作系统将焦点转移到该坐标下的输入框
-            // 注意：x, y 是相对于 Webview 左上角的坐标
+            // Use sendInputEvent to dispatch a native mouse click
+            // This transfers focus to the input at those coordinates
+            // x and y are relative to the top-left of the Webview
             
-            // 1. 移动并按下鼠标
+            // 1. Move and press the mouse
             wv.sendInputEvent({ 
                 type: 'mouseDown', 
                 x: rect.x, 
@@ -17927,7 +17927,7 @@ clearSegments() {
                 clickCount: 1 
             });
             
-            // 2. 抬起鼠标 (完成点击)
+            // 2. Release the mouse to complete the click
             wv.sendInputEvent({ 
                 type: 'mouseUp', 
                 x: rect.x, 
@@ -17936,32 +17936,32 @@ clearSegments() {
                 clickCount: 1 
             });
 
-            // 等待点击生效，输入框激活光标
+            // Wait for focus and cursor activation
             await new Promise(r => setTimeout(r, 400));
 
-            // 3. 处理按键
+            // 3. Handle the key
             const parts = keyCombo.split('+').map(k => k.trim());
             let key = parts.pop(); 
             const modifiers = parts.map(m => m.toLowerCase());
             
             if (key.toLowerCase() === 'enter') key = 'Enter';
 
-            // 4. 发送原生按键
-            // 模拟按下
+            // 4. Send native key events
+            // Simulate keydown
             wv.sendInputEvent({ type: 'keyDown', keyCode: key, modifiers });
             
-            // ★ 补充 char 事件：Enter 键经常需要配套一个 char code 13 (\r)
-            // 许多网页(特别是旧一点的或 React 封装的)依赖这个 char 事件来触发表单提交
+            // Enter often requires a char event with character code 13 (\r)
+            // Some older pages and React wrappers rely on this event for submission
             if (key === 'Enter') {
                 wv.sendInputEvent({ type: 'char', keyCode: '\r', modifiers });
             } else if (key.length === 1) {
                 wv.sendInputEvent({ type: 'char', keyCode: key, modifiers });
             }
 
-            // 模拟按住停顿
+            // Simulate a brief key hold
             await new Promise(r => setTimeout(r, Math.floor(Math.random() * 50) + 30));
 
-            // 模拟抬起
+            // Simulate keyup
             wv.sendInputEvent({ type: 'keyUp', keyCode: key, modifiers });
             
             await this._humanDelay();
@@ -17972,7 +17972,7 @@ clearSegments() {
         }
     },
 
-    // --- 10. 等待文本 (无延迟，这是轮询操作) ---
+    // --- 10. Wait for text (polling, no delay) ---
     async webviewWaitFor(text, timeout) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
@@ -17982,22 +17982,22 @@ clearSegments() {
             return new Promise((resolve) => {
                 const start = Date.now();
                 const check = () => {
-                    // 1. 优先检查文本是否存在
+                    // 1. Check whether the text exists
                     if (document.body.innerText.includes(${JSON.stringify(text)})) {
                         resolve("Found: " + ${JSON.stringify(text)});
                     } 
-                    // 2. 检查是否超时
+                    // 2. Check timeout
                     else if (Date.now() - start > ${timeout}) {
-                        // 3. 关键修改：超时后，检查页面加载状态
+                        // 3. Check page load status after timeout
                         if (document.readyState === 'complete') {
-                            // 页面已加载完毕，但文本未找到
+                            // Page loaded, but text not found
                             resolve("Page loaded");
                         } else {
-                            // 页面还在加载中，且超时
+                            // Page is still loading at timeout
                             resolve("Timeout waiting for text");
                         }
                     } 
-                    // 4. 继续轮询
+                    // 4. Continue polling
                     else {
                         setTimeout(check, 100);
                     }
@@ -18009,37 +18009,37 @@ clearSegments() {
         return await wv.executeJavaScript(script);
     },
 
-    // --- 11. 截图 (无延迟) ---
+    // --- 11. Screenshot (no delay) ---
     async captureWebviewScreenshot(fullPage = false, uid = null) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
         wv.focus();
         try {
-            // 1. 滚动 (如果指定元素)
+            // 1. Scroll if an element is specified
             if (uid) {
                 await this.webviewClick(uid);
                 await this._humanDelay();
             }
 
-            // 2. 捕获页面
+            // 2. Capture page
             const image = await wv.capturePage();
 
-            // 3. 缩放 (AI 不需要 4K，1280 宽足够，节省 Token)
+            // 3. Resize to 1280 pixels wide to reduce image token usage
             const size = image.getSize();
             let resized = image;
             if (size.width > 1280) {
                 resized = image.resize({ width: 1280 });
             }
 
-            // 4. 转为 JPEG Buffer (质量 70)
+            // 4. Convert to JPEG buffer (quality 70)
             const buffer = resized.toJPEG(70);
 
-            // 5. 调用主进程保存文件
-            // 注意：Buffer 通过 IPC 传输非常快，比 Base64 字符串快得多
+            // 5. Ask the main process to save the file
+            // IPC buffer transfer is faster than Base64 string transfer
             const filename = await window.electronAPI.saveScreenshotDirect(buffer);
             
-            // 6. 拼接 URL
-            // window.electron.server.port 是在 preload 里暴露的后端端口
+            // 6. Construct URL
+            // window.electron.server.port is the backend port exposed by preload
             const host = window.electron.server.host || '127.0.0.1';
             const port = window.electron.server.port || 3456;
             
@@ -18052,7 +18052,7 @@ clearSegments() {
         }
     },
     
-    // --- 12. 通用 JS 执行 (增加延迟) ---
+    // --- 12. General JavaScript execution (with delay) ---
     async executeInActiveWebview(codeStr, args = []) {
         const wv = this.getWebview();
         if (!wv) return "Error: No active webview";
@@ -18061,7 +18061,7 @@ clearSegments() {
             const script = `(${codeStr})(...${JSON.stringify(args || [])})`;
             const result = await wv.executeJavaScript(script);
             
-            // ★ 自定义脚本执行后也等待，防止 Agent 连续高频调用
+            // Wait after custom script execution to avoid high-frequency calls
             await this._humanDelay();
 
             if (result === undefined) return "undefined";
@@ -18074,40 +18074,40 @@ clearSegments() {
         }
     },
     getFaviconUrl(tab) {
-      // 1. 浏览器已经给的就直接用
+      // 1. Use the favicon supplied by the browser
       if (tab.favicon) return tab.favicon;
 
-      // 2. 用 Chrome 官方提供的“小彩蛋”API，0 成本
-      //    注意：这个 API 不需要额外权限，也不会触发网络请求，只是读缓存
+      // 2. Use Chrome's built-in favicon API
+      // This API reads the cache without additional permissions or network requests
       if (chrome && chrome.tabs && typeof chrome.tabs.get === 'function') {
-        // 同步读缓存，拿不到也不报错
+        // Read cache synchronously; ignore missing entries
         try {
           const url = new URL(tab.url);
           return `chrome://favicon/size/16@2x/${url.origin}`;
         } catch (_) {}
       }
 
-      // 3. 兜底：拼一个最可能的地址
+      // 3. Fallback: construct the likely favicon URL
       try {
         const u = new URL(tab.url);
         return `${u.origin}/favicon.ico`;
       } catch (_) {}
 
-      // 4. 实在没有就空字符串
+      // 4. Return an empty string if unavailable
       return '';
     },
 
-    // 切换当前标签页的收藏状态
+    // Toggle bookmark for the current tab
     toggleFavorite(tab) {
         if (!tab || !tab.url) return;
 
         const index = this.favorites.findIndex(f => f.url === tab.url);
         if (index !== -1) {
-            // 已存在 -> 移除
+            // Existing bookmark: remove
             this.favorites.splice(index, 1);
             showNotification(this.t('favoriteRemoved') || 'Favorite removed', 'info');
         } else {
-            // 不存在 -> 添加
+            // No bookmark: add
             this.favorites.push({
                 title: tab.title || 'New Tab',
                 url: tab.url,
@@ -18118,7 +18118,7 @@ clearSegments() {
         this.saveFavorites();
     },
 
-    // 从网格中移除特定收藏
+    // Remove a specific bookmark from the grid
     removeFavorite(url) {
         const index = this.favorites.findIndex(f => f.url === url);
         if (index !== -1) {
@@ -18127,33 +18127,33 @@ clearSegments() {
         }
     },
 
-    // 点击收藏图标时，在当前标签页加载 URL
+    // Load bookmark URL in the current tab
     loadUrlInCurrentTab(url) {
         if (this.currentTab) {
-            // 更新当前标签的 URL
+            // Update current tab URL
             this.currentTab.url = url;
-            // 更新地址栏输入框显示
+            // Update address bar display
             this.urlInput = url; 
-            // 触发加载状态 (如果您的 webview逻辑依赖这个)
+            // Trigger loading state if required by the Webview
             this.currentTab.isLoading = true;
         } else {
-            // 如果没有当前标签，创建一个新的
+            // Create a tab if none is active
             this.addNewTab(url);
         }
     },
 
-    // 持久化：保存收藏到本地存储
+    // Persistence: save bookmarks to local storage
     saveFavorites() {
         try {
             localStorage.setItem('browser_favorites', JSON.stringify(this.favorites));
-            // 保存显示状态配置
+            // Save visibility preference
             localStorage.setItem('browser_show_favorites', JSON.stringify(this.showFavorites));
         } catch (e) {
             console.error('Failed to save favorites:', e);
         }
     },
 
-    // 持久化：从本地存储加载
+    // Persistence: load from local storage
     loadFavorites() {
         try {
             const storedFavs = localStorage.getItem('browser_favorites');
@@ -18185,7 +18185,7 @@ clearSegments() {
 
 // Methods
 
-// 1. 获取技能列表
+// 1. Fetch skills
 async fetchSkills() {
   try {
     const response = await fetch('/api/skills/list');
@@ -18199,7 +18199,7 @@ async fetchSkills() {
   }
 },
 
-// 2. 删除技能
+// 2. Delete skill
 async removeSkill(id) {
   try {
     const response = await fetch(`/api/skills/${id}`, {
@@ -18211,13 +18211,13 @@ async removeSkill(id) {
     }
     
     showNotification(this.t('deleteSuccess'), 'success');
-    this.fetchSkills(); // 刷新
+    this.fetchSkills(); // Refresh
   } catch (error) {
     showNotification(this.t('deleteFailed'), 'error');
   }
 },
 
-// 3. GitHub 安装
+// 3. Install from GitHub
 async installSkillFromGithub() {
   if (!this.newSkillUrl) return;
   this.isSkillInstalling = true;
@@ -18234,7 +18234,7 @@ async installSkillFromGithub() {
     });
 
     if (!response.ok) {
-      // 尝试解析后端返回的 JSON 错误信息
+      // Parse JSON error returned by backend
       const errorData = await response.json().catch(() => ({})); 
       const errorMessage = errorData.detail || response.statusText || 'Unknown Error';
       throw new Error(errorMessage);
@@ -18243,7 +18243,7 @@ async installSkillFromGithub() {
     showNotification(this.t('installSuccess'), 'success');
     this.showAddSkillDialog = false;
     this.newSkillUrl = '';
-    // 稍微延迟后刷新一下，虽然是后台任务，但可能很快完成
+    // Refresh after a short delay to allow the background task to complete
     setTimeout(() => this.fetchSkills(), 2000);
   } catch (error) {
     showNotification(this.t('installFailed') + ': ' + error.message, 'error');
@@ -18252,24 +18252,24 @@ async installSkillFromGithub() {
   }
 },
 
-// 4. 点击 DIV 时，模拟点击隐藏的 input
+// 4. Clicking the DIV activates the hidden input
 triggerSkillFileSelect() {
-  // 注意：如果你使用的是 Vue 3 <script setup>，需要 const skillFileInput = ref(null) 并使用 skillFileInput.value.click()
-  // 如果是 Options API (export default):
+  // For Vue 3 script setup, use const skillFileInput = ref(null) and skillFileInput.value.click()
+  // For Options API (export default):
   this.$refs.skillFileInput.click();
 },
 
-// 5. 处理“点击选择”后的文件变化
+// 5. Handle file selection changes
 handleSkillFileChange(e) {
   const files = e.target.files;
   if (files && files.length > 0) {
     this.processSkillUpload(files[0]);
   }
-  // 清空 input，防止同一个文件无法再次触发 change
+  // Clear input so selecting the same file again triggers change
   e.target.value = ''; 
 },
 
-// 6. 处理“拖拽释放”后的文件
+// 6. Handle dropped files
 handleSkillDrop(e) {
   const files = e.dataTransfer.files;
   if (files && files.length > 0) {
@@ -18277,16 +18277,16 @@ handleSkillDrop(e) {
   }
 },
 
-// 7. 统一的上传逻辑 (核心)
+// 7. Shared upload logic
 async processSkillUpload(file) {
-  // 校验文件类型
+  // Validate file type
   if (!file.name.toLowerCase().endsWith('.zip')) {
-    // 这里原来的 ElMessage.error 改为了 showNotification
+    // Use showNotification instead of ElMessage.error
     showNotification(this.t('skillZipNote'), 'error'); 
     return;
   }
 
-  this.isUploading = true; // 开启遮罩
+  this.isUploading = true; // Show loading overlay
 
   const formData = new FormData();
   formData.append('file', file);
@@ -18295,8 +18295,8 @@ async processSkillUpload(file) {
     const response = await fetch('/api/skills/upload-zip', {
       method: 'POST',
       body: formData
-      // 注意：使用 fetch 发送 FormData 时，千万不要手动设置 Content-Type！
-      // 浏览器会自动计算 boundary 并设置为 multipart/form-data
+      // Do not manually set Content-Type when sending FormData with fetch
+      // The browser sets the multipart/form-data boundary automatically
     });
     
     if (!response.ok) {
@@ -18306,11 +18306,11 @@ async processSkillUpload(file) {
 
     showNotification(this.t('installSuccess'), 'success');
     this.showAddSkillDialog = false;
-    this.fetchSkills(); // 刷新列表
+    this.fetchSkills(); // Refresh list
   } catch (error) {
     showNotification(error.message, 'error');
   } finally {
-    this.isUploading = false; // 关闭遮罩
+    this.isUploading = false; // Hide loading overlay
   }
 },
 
@@ -18318,7 +18318,7 @@ isSkillInProject(skillId) {
   return this.skillsInProject && this.skillsInProject.includes(skillId);
 },
 
-    // 1. 升级获取项目状态：顺便保存详细信息
+    // 1. Fetch project status and retain details
     async fetchProjectSkillsStatus() {
       if (!this.CLISettings.cc_path) {
         this.skillsInProject = [];
@@ -18330,14 +18330,14 @@ isSkillInProject(skillId) {
         if (res.ok) {
           const data = await res.json();
           this.skillsInProject = data.installed_ids || [];
-          this.projectSkillsDetails = data.project_skills || []; // 存入详情
+          this.projectSkillsDetails = data.project_skills || []; // Store details
         }
       } catch (e) {
-        console.error("获取项目技能状态失败", e);
+        console.error("Failed to fetch project skill status", e);
       }
     },
 
-    // 2. 反向同步：从项目 -> 全局
+    // 2. Reverse sync: project to global
     async syncToGlobal(skillId) {
       try {
         const response = await fetch('/api/skills/sync', {
@@ -18348,7 +18348,7 @@ isSkillInProject(skillId) {
         const data = await response.json();
         if (response.ok && data.status === 'success') {
           showNotification('Skill synced to Global', 'success');
-          this.fetchSkills(); // 刷新全局状态即可
+          this.fetchSkills(); // Refresh global status
         } else {
           throw new Error(data.detail || 'Sync failed');
         }
@@ -18357,7 +18357,7 @@ isSkillInProject(skillId) {
       }
     },
 
-    // 3. 正向同步：从全局 -> 项目 (原逻辑略微简化)
+    // 3. Forward sync: global to project
     async syncToProject(skillId) {
       if (!this.CLISettings.cc_path) return;
       try {
@@ -18368,7 +18368,7 @@ isSkillInProject(skillId) {
         });
         if (response.ok) {
           showNotification('Skill synced to Workspace', 'success');
-          this.fetchProjectSkillsStatus(); // 刷新项目状态
+          this.fetchProjectSkillsStatus(); // Refresh project status
         } else {
           throw new Error('Sync failed');
         }
@@ -18377,7 +18377,7 @@ isSkillInProject(skillId) {
       }
     },
 
-    // 4. 从全局删除（智能提示）
+    // 4. Delete globally with appropriate warning
     async removeGlobalSkill(skill) {
       const execDelete = async () => {
         try {
@@ -18393,17 +18393,17 @@ isSkillInProject(skillId) {
         }
       };
 
-      // 核心判断：如果项目里也没有了，说明这是彻底删除，必须警告！
+      // Warn if the skill is also absent from the project; this is a complete deletion
       if (!skill.isProject) {
         this.$confirm(this.t('deleteSkillConfirm'), this.t('warning'), { type: 'warning' })
           .then(execDelete).catch(() => {});
       } else {
-        // 项目里还有，属于安全操作，静默删除
+        // If the project retains a copy, delete silently
         execDelete();
       }
     },
 
-    // 5. 从项目删除（智能提示）
+    // 5. Delete from project with appropriate warning
     async removeProjectSkill(skill) {
       const execDelete = async () => {
         try {
@@ -18423,17 +18423,17 @@ isSkillInProject(skillId) {
         }
       };
 
-      // 核心判断：如果全局里也没有了，说明这是彻底删除，必须警告！
+      // Warn if the skill is also absent globally; this is a complete deletion
       if (!skill.isGlobal) {
         this.$confirm('This will permanently delete the skill file. Continue?', 'Warning', { type: 'warning' })
           .then(execDelete).catch(() => {});
       } else {
-        // 全局里还有，属于安全操作，静默删除
+        // If the global copy remains, delete silently
         execDelete();
       }
     },
 
-// 切换技能同步状态
+// Toggle skill synchronization
 async toggleSkillInProject(skillId, isInstall) {
   if (!this.CLISettings.cc_path) return;
 
@@ -18451,7 +18451,7 @@ async toggleSkillInProject(skillId, isInstall) {
 
     if (!response.ok) throw new Error('Sync failed');
 
-    // 更新本地状态列表
+    // Update local status list
     if (isInstall) {
       if (!this.skillsInProject.includes(skillId)) this.skillsInProject.push(skillId);
     } else {
@@ -18461,46 +18461,46 @@ async toggleSkillInProject(skillId, isInstall) {
     showNotification(this.t('operationSuccess'), 'success');
   } catch (error) {
     showNotification(this.t('operationFailed'), 'error');
-    // 刷新状态以回滚 UI 开关
+    // Refresh status to revert the UI toggle
     this.fetchProjectSkillsStatus();
   }
 },
 
-// --- 增强原有的监听和初始化 ---
+// --- Extended watchers and initialization ---
 
-// 修改 handleSkillsPolling，在进入技能标签页时同时刷新项目状态
+// Refresh project status when entering the skills tab
 handleSkillsPolling(activeMenu, menu, tab) {
   if (activeMenu === 'toolkit' && menu === 'CLI' && tab === 'skills') {
-    this.fetchProjectSkillsStatus(); // 额外执行这一步
+    this.fetchProjectSkillsStatus(); // Also fetch project skill status
     this.startSkillsPolling();
   } else {
     this.stopSkillsPolling();
   }
 },
 
-  // 启动轮询
+  // Start polling
   startSkillsPolling() {
-    if (this.skillsPollingTimer) return; // 如果已经在轮询了，就不重复启动
+    if (this.skillsPollingTimer) return; // Do not start a duplicate polling timer
     
-    // 立即先执行一次，不要等第一个 5 秒
+    // Run immediately rather than waiting five seconds
     this.fetchSkills(); 
 
-    // 设置每 5 秒执行一次
+    // Run every five seconds
     this.skillsPollingTimer = setInterval(() => {
-      console.log('正在轮询获取 Skills...');
+      console.log('Polling skills...');
       this.fetchSkills();
     }, 5000);
   },
 
-  // 停止轮询
+  // Stop polling
   stopSkillsPolling() {
     if (this.skillsPollingTimer) {
       clearInterval(this.skillsPollingTimer);
       this.skillsPollingTimer = null;
-      console.log('已停止轮询 Skills');
+      console.log('Skills polling stopped');
     }
   },
-// 核心逻辑：判断并控制扩展页面的轮询
+// Control polling for the extensions page
   handleExtensionsPolling(menu, sub) {
     if (menu === 'api-group' && sub === 'extension') {
       this.startExtensionsPolling();
@@ -18509,29 +18509,29 @@ handleSkillsPolling(activeMenu, menu, tab) {
     }
   },
 
-  // 启动扩展轮询
+  // Start extension polling
   startExtensionsPolling() {
     if (this.extensionsPollingTimer) return;
     
-    // 立即执行一次刷新
+    // Refresh immediately
     this.scanExtensions(); 
 
     this.extensionsPollingTimer = setInterval(() => {
-      console.log('正在轮询获取 Extensions...');
+      console.log('Polling extensions...');
       this.scanExtensions();
     }, 5000);
   },
 
-  // 停止扩展轮询
+  // Stop extension polling
   stopExtensionsPolling() {
     if (this.extensionsPollingTimer) {
       clearInterval(this.extensionsPollingTimer);
       this.extensionsPollingTimer = null;
-      console.log('已停止轮询 Extensions');
+      console.log('Extension polling stopped');
     }
   },
 
-  // 刷新扩展列表，并在之后对比版本状态
+  // Refresh extensions and compare versions
   async scanExtensions() {
     try {
       const response = await fetch('/api/extensions/list');
@@ -18539,18 +18539,18 @@ handleSkillsPolling(activeMenu, menu, tab) {
       const data = await response.json();
       this.extensions = data.extensions;
       
-      // 同步本地与远程的“已安装”和“可更新”状态
+      // Synchronize local and remote installed/update status
       this.syncExtensionUpdateStatus();
     } catch (e) {
-      console.error('刷新扩展列表失败', e);
+      console.error('Failed to refresh extensions', e);
     }
   },
   
-  // 辅助方法：对比本地和远程，同步更新状态
+  // Helper: compare local and remote versions and synchronize status
   syncExtensionUpdateStatus() {
     if (!this.extensions || !this.remotePlugins) return;
 
-    // 1. 遍历远程列表，标记 "installed" 和 "hasUpdate" 状态
+    // 1. Mark installed and hasUpdate on remote items
     this.remotePlugins = this.remotePlugins.map(r => {
       const local = this.extensions.find(l => 
           (l.repository && r.repository && l.repository.trim().toLowerCase() === r.repository.trim().toLowerCase()) || 
@@ -18567,7 +18567,7 @@ handleSkillsPolling(activeMenu, menu, tab) {
       return { ...r, installed, hasUpdate };
     });
 
-    // 2. 遍历本地列表，标记 "hasUpdate" 状态
+    // 2. Mark hasUpdate on local items
     this.extensions = this.extensions.map(l => {
       const remote = this.remotePlugins.find(r => 
           (l.repository && r.repository && l.repository.trim().toLowerCase() === r.repository.trim().toLowerCase()) || 
@@ -18583,7 +18583,7 @@ handleSkillsPolling(activeMenu, menu, tab) {
     });
   },
 
-  // 辅助方法：语义化版本比较
+  // Helper: compare semantic versions
   compareVersions(v1, v2) {
     if (!v1 || !v2) return 0;
     const parts1 = v1.toString().replace(/[^0-9.]/g, '').split('.').map(Number);
@@ -18596,7 +18596,7 @@ handleSkillsPolling(activeMenu, menu, tab) {
     }
     return 0;
   },
-// 预览技能
+// Preview skill
 async previewSkill(id) {
   this.showSkillPreviewDialog = true;
   this.skillPreviewLoading = true;
@@ -18608,15 +18608,15 @@ async previewSkill(id) {
     const data = await response.json();
     let rawContent = data.content || '';
 
-    // 1. 剥离 YAML Frontmatter (--- ... ---)
-    // 这样预览时不会显示冗余的元数据
+    // 1. Strip YAML frontmatter (--- ... ---)
+    // Hide redundant metadata in preview
     const yamlRegex = /^---\s*\n([\s\S]*?)\n---\s*\n?/;
     const contentToRender = rawContent.replace(yamlRegex, '');
 
-    // 2. 使用你已有的 md 实例进行渲染
-    // 注意：这里直接调用 md.render。
-    // 如果你希望保持和聊天框完全一致的逻辑（含 LaTeX、think 标签处理等），
-    // 可以调用你写的 this.formatMessage(contentToRender)
+    // 2. Render using existing md instance
+    // Call md.render directly
+    // To match chat rendering, including LaTeX and think tags,
+    // call this.formatMessage(contentToRender)
     this.renderedSkillContent = this.formatMessage(contentToRender);
 
   } catch (error) {
@@ -18630,35 +18630,35 @@ async previewSkill(id) {
   handleRemoteMCPInstall(data) {
     console.log('handleRemoteMCPInstall', data);
 
-    // 1. 自动切换路由/菜单到 MCP 管理页面
+    // 1. Switch route/menu to MCP management
     this.activeMenu = 'toolkit'; 
     this.subMenu = 'mcp';
 
-    // 2. 初始化对话框状态为“添加模式”
+    // 2. Initialize dialog in add mode
     this.isEditMode = false;
-    this.activeDialogTab = 'config'; // 默认显示配置标签
+    this.activeDialogTab = 'config'; // Show configuration tab by default
     
     if (data.mcpType) {
         this.newMCPType = data.mcpType;
     } else {
-        this.newMCPType = 'stdio'; // 默认值
+        this.newMCPType = 'stdio'; // Default value
     }
 
-    // 3. 设置输入模式为 JSON（因为远程传来的通常是完整配置对象）
+    // 3. Set JSON input mode for complete remote configuration objects
     this.mcpInputType = 'json';
-    this.updateMCPExample(); // 更新示例配置
-    // data 现在包含 { type: 'mcp', config: '...', repo: null }
+    this.updateMCPExample(); // Update example configuration
+    // data now contains { type: 'mcp', config: '...', repo: null }
     let configStr = data.config;
     
-    // 1. 尝试解码（因为主进程发过来的是原始 URL 参数，可能还带着编码）
+    // 1. Decode the original URL parameter received from main process if needed
     try {
       configStr = decodeURIComponent(configStr);
     } catch(e) {}
 
-    this.newMCPJson = configStr; // 填入文本框
-    this.showAddMCPDialog = true; // 弹窗
+    this.newMCPJson = configStr; // Populate input
+    this.showAddMCPDialog = true; // Open dialog
   },
-// 在 methods 中添加
+// Add to methods
 async openSkillsFolder() {
   try {
     const response = await fetch('/api/skills/get_path', {
@@ -18668,7 +18668,7 @@ async openSkillsFolder() {
     if (response.ok) {
       const data = await response.json();
       if (this.isElectron && data.path) {
-        // 调用 Electron 接口打开本地路径
+        // Call Electron API to open local path
         window.electronAPI.openPath(data.path);
       }
     }
@@ -18680,29 +18680,29 @@ async openSkillsFolder() {
 async handleRefreshSkills() {
   this.skillsLoading = true;
   try {
-    // 假设你已定义了 fetchSkills 方法来获取列表
+    // Use fetchSkills to retrieve the list
     await this.fetchSkills(); 
   } finally {
     this.skillsLoading = false;
   }
 },
 
-    // 打开编辑/新增对话框
+    // Open edit/add dialog
     openBehaviorDialog(index) {
       this.currentBehaviorIndex = index;
       if (index === -1) {
-        // 新增模式：创建默认模板的深拷贝
+        // Add mode: deep copy default template
         this.tempBehavior = this.createDefaultBehavior();
       } else {
-        // 编辑模式：创建现有数据的深拷贝（切断引用）
-        // 假设您的数据在 behaviorSettings.behaviorList 中
+        // Edit mode: deep copy current data to break references
+        // Data is stored in behaviorSettings.behaviorList
         this.tempBehavior = JSON.parse(JSON.stringify(this.behaviorSettings.behaviorList[index]));
       }
       
       this.showBehaviorDialog = true;
     },
 
-    // 创建默认行为模板
+    // Create default behavior template
     createDefaultBehavior() {
       return {
         enabled: true,
@@ -18717,56 +18717,56 @@ async handleRefreshSkills() {
           prompt: '',
           random: { type: 'random', events: [''] }
         },
-        platforms: ["chat"],  // 新增多选渠道字段（字符串数组）
+        platforms: ["chat"],  // Multi-select channel field (array of strings)
       };
     },
 
-    // 关闭对话框后的清理
+    // Clean up after dialog closes
     resetBehaviorDialogState() {
       this.tempBehavior = null;
       this.currentBehaviorIndex = -1;
     },
 
-    // 保存行为设置（新增或更新）
+    // Save behavior (add or update)
     saveBehavior() {
       if (!this.tempBehavior) return;
 
-      // 1. 核心修复：确保 platforms 字段一定是数组且有值
+      // 1. Ensure platforms is a nonempty array
       if (!Array.isArray(this.tempBehavior.platforms)) {
-        // 如果没有数组，根据旧的单选字段转换，或者给默认值
+        // Convert legacy single-select field or use default
         let oldVal = this.tempBehavior.platform || 'chat';
         this.tempBehavior.platforms = [oldVal];
       }
       
-      // 如果用户一个都没选（空数组），强制给个 'chat'
+      // Use chat if the user selected no channels
       if (this.tempBehavior.platforms.length === 0) {
         this.tempBehavior.platforms = ['chat'];
       }
 
-      // 2. 同步旧字段 platform，取数组第一个元素
+      // 2. Synchronize legacy platform field to first array item
       this.tempBehavior.platform = this.tempBehavior.platforms[0];
 
-      // 3. 保存逻辑
+      // 3. Save
       if (this.isEditingBehavior) {
-        // 查找并替换旧项
+        // Find and replace existing item
         const idx = this.behaviorSettings.behaviorList.findIndex(b => b === this.editingItemOrigin);
         if (idx !== -1) {
           this.behaviorSettings.behaviorList[idx] = JSON.parse(JSON.stringify(this.tempBehavior));
         }
       } else {
-        // 新增项
+        // Add new item
         this.behaviorSettings.behaviorList.push(JSON.parse(JSON.stringify(this.tempBehavior)));
       }
 
       this.showBehaviorDialog = false;
       
-      // 4. 保存后刷新计时器
+      // 4. Refresh timers after saving
       this.$nextTick(() => {
         this.resetCycleTimers();
       });
     },
 
-    // 确认删除行为
+    // Confirm behavior deletion
     confirmRemoveBehavior(index) {
       this.$confirm(
         this.t('confirmDeleteBehavior') || 'Are you sure you want to delete this behavior?',
@@ -18781,35 +18781,35 @@ async handleRefreshSkills() {
       }).catch(() => {});
     },
 
-    // 执行删除
+    // Delete
     removeBehavior(index) {
       this.behaviorSettings.behaviorList.splice(index, 1);
       this.resetCycleTimers();
       this.autoSaveSettings();
     },
 
-    // 处理全局开关变化
+    // Handle global toggle change
     handleGlobalSwitchChange() {
       this.resetCycleTimers();
       this.autoSaveSettings();
     },
 
-    // 处理单个行为开关变化
+    // Handle individual behavior toggle change
     handleBehaviorChange() {
       this.resetCycleTimers();
       this.autoSaveSettings();
     },
 
-    // --- 弹窗内部的辅助方法 (Random Events) ---
+    // --- Dialog helpers (Random Events) ---
 
-    // 添加临时随机事件条目
+    // Add temporary random event
     addTempEvent() {
       if (this.tempBehavior && this.tempBehavior.action.random) {
         this.tempBehavior.action.random.events.push('');
       }
     },
 
-    // 删除临时随机事件条目
+    // Remove temporary random event
     removeTempEvent(eIdx) {
       if (this.tempBehavior && 
           this.tempBehavior.action.random && 
@@ -18818,9 +18818,9 @@ async handleRefreshSkills() {
       }
     },
 
-    // --- UI 显示辅助方法 ---
+    // --- UI display helpers ---
 
-    // 根据触发类型返回图标类名
+    // Return icon class for trigger type
     getTriggerIcon(type) {
       const map = {
         'time': 'fa-regular fa-clock',
@@ -18830,14 +18830,14 @@ async handleRefreshSkills() {
       return map[type] || 'fa-solid fa-bolt';
     },
 
-    // 生成卡片上的摘要文本
+    // Generate card summary
     getBehaviorSummary(b) {
       if (!b || !b.trigger) return '';
       
       if (b.trigger.type === 'time') {
         const time = b.trigger.time.timeValue;
         const days = b.trigger.time.days.length;
-        const daysText = this.t('repeatDays') || 'Days'; // 简单处理，实际根据你的 t 函数逻辑
+        const daysText = this.t('repeatDays') || 'Days'; // Use translation function for label
         return `${time} (${daysText}: ${days})`;
       } else if (b.trigger.type === 'noInput') {
         return `${this.t('noInputLatency') || 'Latency'}: ${b.trigger.noInput.latency}s`;
@@ -18847,27 +18847,27 @@ async handleRefreshSkills() {
       }
       return '';
     },
-  // 添加新事件行
+  // Add event row
   addTempEvent() {
     if (this.tempBehavior && this.tempBehavior.action.random) {
-      this.tempBehavior.action.random.events.push(''); // 增加一个空字符串（即空输入框）
+      this.tempBehavior.action.random.events.push(''); // Append an empty string for a new input
     }
   },
 
-  // 删除指定行
+  // Remove specified row
   removeTempEvent(index) {
     if (this.tempBehavior && this.tempBehavior.action.random) {
-      // 检查：如果只剩一个了，就不让删了（或者您可以去掉这个判断，允许删光）
+      // Keep at least one row; remove this guard to allow an empty list
       if (this.tempBehavior.action.random.events.length > 1) {
         this.tempBehavior.action.random.events.splice(index, 1);
       } else {
-        // 如果只剩一个，清空内容而不是删除行
+        // Clear the last row instead of removing it
         this.tempBehavior.action.random.events[0] = '';
       }
     }
   },
 
-    // 辅助工具：生成数字范围数组
+    // Helper: generate a numeric range
     makeRange(start, end) {
       const result = [];
       for (let i = start; i <= end; i++) {
@@ -18876,25 +18876,25 @@ async handleRefreshSkills() {
       return result;
     },
 
-    // 禁用小时
+    // Disabled hours
     disabledHours() {
-      // 只有在最小值的小时大于 0 时才需要禁用
-      // 如果最小是 00:00:01，则不禁用任何小时
+      // Disable hours only if the minimum hour exceeds zero
+      // For a minimum of 00:00:01, no hours are disabled
       return this.makeRange(0, 23).filter(h => h < this.minLimit.h);
     },
 
-    // 禁用分钟 (selectedHour 是当前转盘选中的小时)
+    // Disabled minutes (selectedHour is the selected hour)
     disabledMinutes(selectedHour) {
-      // 只有当选中的小时等于最小值的小时时，才限制分钟
+      // Restrict minutes only when selectedHour equals the minimum hour
       if (selectedHour === this.minLimit.h) {
         return this.makeRange(0, 59).filter(m => m < this.minLimit.m);
       }
       return [];
     },
 
-    // 禁用秒钟 (selectedHour 和 selectedMinute 是当前选中的时和分)
+    // Disabled seconds (selectedHour and selectedMinute are the selected hour and minute)
     disabledSeconds(selectedHour, selectedMinute) {
-      // 只有当时和分都处于最小值临界点时，才限制秒钟
+      // Restrict seconds only when both hour and minute are at their minimum
       if (selectedHour === this.minLimit.h && selectedMinute === this.minLimit.m) {
         return this.makeRange(0, 59).filter(s => s < this.minLimit.s);
       }
@@ -18907,37 +18907,37 @@ async handleRefreshSkills() {
         const data = await res.json();
         this.dockerInstalled = data.installed;
       } catch (error) {
-        console.error("Docker 探测失败:", error);
+        console.error("Docker detection failed:", error);
         this.dockerInstalled = false;
       }
     },
 
-    // 打开任务中心
+    // Open task center
     openTaskCenter() {
         this.activeSideView = 'tasks';
-        this.sidePanelURL = ''; // 确保 iframe 关闭
+        this.sidePanelURL = ''; // Ensure iframe is closed
         this.currentExtension = null;
-        this.showExtensionsDialog = false; // 关闭对话框
+        this.showExtensionsDialog = false; // Close dialog
         this.expandSidePanel();
         this.fetchTasks();
-        // 开启轮询
+        // Start polling
         if (this.taskRefreshTimer) clearInterval(this.taskRefreshTimer);
         this.taskRefreshTimer = setInterval(this.fetchTasks, 3000);
     },
     openWorkspace() {
         this.activeSideView = 'workspace'
-        this.sidePanelURL = ''; // 确保 iframe 关闭
+        this.sidePanelURL = ''; // Ensure iframe is closed
         this.currentExtension = null;
-        this.showExtensionsDialog = false; // 关闭对话框
+        this.showExtensionsDialog = false; // Close dialog
         this.expandSidePanel();
     },
-    // 关闭任务中心（返回列表）
+    // Close task center and return to list
     closeTaskCenter() {
         this.activeSideView = 'list';
         if (this.taskRefreshTimer) clearInterval(this.taskRefreshTimer);
     },
 
-    // 获取任务列表
+    // Fetch tasks
     async fetchTasks() {
         if (!this.hasWorkspacePath || !this.sidePanelOpen || this.activeSideView !== 'tasks') return;
         
@@ -18952,7 +18952,7 @@ async handleRefreshSkills() {
         }
     },
 
-    // 创建任务
+    // Create task
     async submitCreateTask() {
         if (!this.newTaskForm.title || !this.newTaskForm.description) {
             showNotification(this.t('fillRequired'), 'error');
@@ -18961,7 +18961,7 @@ async handleRefreshSkills() {
 
         this.isCreatingTask = true;
         try {
-            console.log(this.newTaskForm); // 打印表单数据
+            console.log(this.newTaskForm); // Log form data
             const res = await fetch(`/v1/tasks/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -18971,7 +18971,7 @@ async handleRefreshSkills() {
                     agent_type: this.newTaskForm.agent_type,
                     task_type: this.newTaskForm.task_type,
                     platforms: this.newTaskForm.platforms,
-                    trigger_config: this.newTaskForm.trigger_config // 发送完整配置
+                    trigger_config: this.newTaskForm.trigger_config // Send complete configuration
                 })
             });
             const data = await res.json();
@@ -18979,7 +18979,7 @@ async handleRefreshSkills() {
             if (data.success) {
                 showNotification(this.t('success'));
                 this.showCreateTaskDialog = false;
-                // 重置表单
+                // Reset form
                 this.newTaskForm = { 
                     title: '', description: '', task_type: 'once', agent_type: 'default',
                     trigger_config: { timeValue: '09:00:00', days: [1,2,3,4,5], cycleValue: '01:00:00', repeatNumber: 1, isInfiniteLoop: true }
@@ -18996,7 +18996,7 @@ async handleRefreshSkills() {
     },
 
 
-    // 取消任务
+    // Cancel task
     async handleCancelTask(taskId) {
         try {
             await fetch(`/v1/tasks/cancel/${taskId}`, { method: 'POST' });
@@ -19005,7 +19005,7 @@ async handleRefreshSkills() {
         } catch (e) { console.error(e); }
     },
 
-    // 删除任务
+    // Delete task
     async handleDeleteTask(taskId) {
         try {
             this.handleCancelTask(taskId);
@@ -19015,7 +19015,7 @@ async handleRefreshSkills() {
             
             if (res.ok) {
                 showNotification(this.t('deleteSuccess') || 'Task deleted');
-                this.fetchTasks(); // 刷新列表
+                this.fetchTasks(); // Refresh list
             } else {
                 console.error("Delete failed with status:", res.status);
             }
@@ -19024,7 +19024,7 @@ async handleRefreshSkills() {
         }
     },
 
-    // 跳转设置
+    // Navigate to settings
     jumpToCLIConfig() {
         this.activeMenu = 'toolkit';
         this.subMenu = 'CLI';
@@ -19046,13 +19046,13 @@ async handleRefreshSkills() {
         };
         return map[status] || 'info';
     },
-  // 打开任务结果弹窗
-// 在 Vue 组件的 methods 中
+  // Open task result dialog
+// In Vue component methods
 openTaskResult(task) {
     this.selectedTaskTitle = task.title;
     
-    // 1. 获取该任务的所有历史产出记录
-    // 如果没有历史记录（比如旧任务），我们造一个包含当前结果的伪记录
+    // 1. Retrieve task output history
+    // For legacy tasks without history, create a record containing the current result
     const rawHistory = task.context?.results_history || [];
     
     if (rawHistory.length === 0 && task.result) {
@@ -19061,14 +19061,14 @@ openTaskResult(task) {
             result: task.result
         }];
     } else {
-        // 将历史记录倒序排列（最新的在最上面）
+        // Sort history in reverse chronological order
         this.selectedTaskHistory = [...rawHistory].reverse();
     }
     
-    // 2. 默认选中第一项（即最新的一项）
+    // 2. Select newest record by default
     this.currentResultIdx = 0;
     
-    // 3. 打开弹窗
+    // 3. Open dialog
     this.showTaskResultDialog = true;
 },
     
@@ -19078,12 +19078,12 @@ openTaskResult(task) {
             'time': 'fa-regular fa-clock',
             'cycle': 'fa-solid fa-arrows-rotate'
         };
-        // 如果 type 为空或不在 map 中，返回默认图标
+        // Return default icon if type is empty or unknown
         return iconMap[type] || 'fa-solid fa-terminal';
     },
 
 
-    // 重置表单到初始状态
+    // Reset form to initial state
     resetTaskForm() {
         this.newTaskForm = {
             title: '',
@@ -19103,38 +19103,38 @@ openTaskResult(task) {
         this.editingTaskId = null;
     },
 
-    // 打开新建窗口
+    // Open create dialog
     openCreateTaskDialog() {
-        this.resetTaskForm(); // 确保每次新建前都干净
+        this.resetTaskForm(); // Reset before creating each task
         this.showCreateTaskDialog = true;
     },
 
     openEditTaskDialog(task) {
-        // 1. 先重置，清除上一次可能残留的状态
+        // 1. Reset previous state
         this.resetTaskForm();
         
-        // 2. 标记为编辑模式
+        // 2. Mark edit mode
         this.isEditing = true;
         this.editingTaskId = task.task_id;
         
-        // 3. 填充基础数据
+        // 3. Populate basic data
         this.newTaskForm.title = task.title;
         this.newTaskForm.description = task.description;
         this.newTaskForm.platforms = task.platforms || [];
         this.newTaskForm.agent_type = task.agent_type || 'default';
         this.newTaskForm.task_type = task.context?.task_type || task.task_type || 'once';
         
-        // 4. 填充触发器配置
+        // 4. Populate trigger configuration
         const savedConfig = task.context?.trigger_config;
         if (savedConfig) {
-            // 使用 assign 或 spread 确保响应式更新
+            // Use assign or spread to retain reactivity
             Object.assign(this.newTaskForm.trigger_config, JSON.parse(JSON.stringify(savedConfig)));
         }
         
         this.showCreateTaskDialog = true;
     },
 
-    // 2. 统一的提交处理函数
+    // 2. Shared submission handler
     async submitTaskForm() {
         if (!this.newTaskForm.title || !this.newTaskForm.description) {
             showNotification(this.t('fillRequired'), 'error');
@@ -19144,16 +19144,16 @@ openTaskResult(task) {
         this.isCreatingTask = true;
 
         try {
-            // 如果是编辑模式，先停止并删除旧任务
+            // In edit mode, stop and delete the previous task first
             if (this.isEditing && this.editingTaskId) {
-                // A. 停止原有任务
+                // A. Stop existing task
                 await fetch(`/v1/tasks/cancel/${this.editingTaskId}`, { method: 'POST' });
-                // B. 删除原有任务
+                // B. Delete existing task
                 await fetch(`/v1/tasks/${this.editingTaskId}`, { method: 'DELETE' });
                 console.log(`Old task ${this.editingTaskId} removed for re-creation`);
             }
 
-            // C. 创建新任务 (无论是新建还是编辑后的“重建”，都走这个接口)
+            // C. Create task through the same endpoint for both new and edited tasks
             const res = await fetch(`/v1/tasks/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -19163,9 +19163,9 @@ openTaskResult(task) {
             
             if (data.success) {
                 showNotification(this.t('success'));
-                this.showCreateTaskDialog = false; // 关闭窗口
-                this.resetTaskForm();             // ⭐ 提交成功后重置表单
-                this.fetchTasks();                // 刷新列表
+                this.showCreateTaskDialog = false; // Close dialog
+                this.resetTaskForm();             // Reset form after successful submission
+                this.fetchTasks();                // Refresh list
             } else {
                 showNotification(data.error, 'error');
             }
@@ -19173,13 +19173,13 @@ openTaskResult(task) {
             showNotification(this.t('networkError'), 'error');
         } finally {
             this.isCreatingTask = false;
-            // 提交完成后重置编辑状态
+            // Reset edit state after submission
             this.isEditing = false;
             this.editingTaskId = null;
         }
     },
 
-    // 3. 这里的 reset 函数在对话框关闭时调用 (el-dialog 的 @closed 事件)
+    // 3. Reset is called when the dialog closes (el-dialog @closed)
     resetTaskForm() {
         this.isEditing = false;
         this.editingTaskId = null;
@@ -19188,17 +19188,17 @@ openTaskResult(task) {
             trigger_config: { timeValue: '09:00:00', days: [1,2,3,4,5], cycleValue: '01:00:00', repeatNumber: 1, isInfiniteLoop: true }
         };
     },
-// 打开详情页
+// Open details
 openTaskDetailView(task) {
     this.viewingTaskDetail = task;
 },
 
-// 关闭详情页回到列表
+// Close details and return to list
 closeTaskDetail() {
     this.viewingTaskDetail = null;
 },
 
-// 修改 fetchTasks 方法，增加同步详情逻辑
+// Fetch tasks and synchronize details
 async fetchTasks() {
     if (!this.hasWorkspacePath || !this.sidePanelOpen || this.activeSideView !== 'tasks') return;
     
@@ -19208,7 +19208,7 @@ async fetchTasks() {
         if (data.tasks) {
             this.taskList = data.tasks;
             
-            // ⭐ 核心逻辑：如果当前正在看某个任务的详情，实时更新它
+            // Update the task details currently being viewed
             if (this.viewingTaskDetail) {
                 const updatedTask = data.tasks.find(t => t.task_id === this.viewingTaskDetail.task_id);
                 if (updatedTask) {
@@ -19221,40 +19221,40 @@ async fetchTasks() {
     }
 },
 
-// 重置任务中心状态（关闭时调用）
+// Reset task center when closed
 closeTaskCenter() {
     this.activeSideView = 'list';
-    this.viewingTaskDetail = null; // 清除详情状态
+    this.viewingTaskDetail = null; // Clear detail state
     if (this.taskRefreshTimer) clearInterval(this.taskRefreshTimer);
 },
 
-  // 处理启动开关的点击事件
+  // Handle enable switch
   handleEnableToggle(newValue) {
-    // 只有在用户试图“开启”开关时 (newValue === true) 才进行校验
+    // Validate only when the user enables the switch (newValue === true)
     if (newValue === true) {
-      // 检查 cc_path 是否为空
+      // Check whether cc_path is empty
       if (!this.CLISettings.cc_path || this.CLISettings.cc_path.trim() === '') {
         
-        // 1. 调用你提供的报错函数 
-        // 这里的提示语使用了你模板里现成的 t('pleaseSelectWorkspaceFirst')
-        const errorMsg = this.t ? this.t('pleaseSelectWorkspaceFirst') : '请先配置 Workspace 工作区路径';
+        // 1. Show error
+        // Use the existing pleaseSelectWorkspaceFirst translation
+        const errorMsg = this.t ? this.t('pleaseSelectWorkspaceFirst') : 'Configure the workspace path first';
         showNotification(errorMsg, 'error', 'Error');
 
-        // 2. 强制把开关重置回关闭状态 (阻止启动)
-        // 使用 $nextTick 确保 Vue 能正确更新 DOM
+        // 2. Reset switch to off to prevent startup
+        // Use $nextTick to ensure Vue updates the DOM
         this.$nextTick(() => {
           this.CLISettings.enabled = false;
         });
 
-        // 3. 跳转到 CLI 配置页面，让用户填入工作区路径
+        // 3. Navigate to CLI configuration to set workspace path
         this.jumpToCLIConfig();
 
-        // 4. 拦截执行，直接 return，不触发后续的保存
+        // 4. Return without saving
         return; 
       }
     }
 
-    // 如果校验通过（或者用户只是在关闭开关），则正常执行原来的保存逻辑
+    // Proceed with normal saving if validation passes or the switch is being disabled
     this.autoSaveSettings();
   },
 
@@ -19278,7 +19278,7 @@ closeTaskCenter() {
       const settings = this.webSearchSettings;
       let errorMsg = '';
 
-      // --- 1. 校验搜索引擎配置 ---
+      // --- 1. Validate search engine configuration ---
       switch (settings.engine) {
         case 'searxng':
           if (!settings.searxng_url?.trim()) errorMsg = this.t('pleaseConfigSearxngUrl');
@@ -19299,10 +19299,10 @@ closeTaskCenter() {
         case 'serper':
           if (!settings.serper_api_key?.trim()) errorMsg = this.t('pleaseConfigSerperApiKey');
           break;
-        // duckduckgo 无需强制配置，直接放行
+        // DuckDuckGo requires no configuration
       }
 
-      // --- 2. 校验网页解析器配置 (前提是搜索引擎已经通过校验) ---
+      // --- 2. Validate page parser configuration after search engine validation ---
       if (!errorMsg) {
         switch (settings.crawler) {
           case 'crawl4ai':
@@ -19310,42 +19310,42 @@ closeTaskCenter() {
             break;
           case 'firecrawl':
             if (!settings.firecrawl_url?.trim()) errorMsg = this.t('pleaseConfigFirecrawlUrl');
-            // 如果你觉得 Firecrawl 的 API Key 也必须强制填写，可以解除下面这行的注释：
+            // Uncomment the following line if a Firecrawl API key must be required:
             // else if (!settings.firecrawl_api_key?.trim()) errorMsg = this.t('pleaseConfigFirecrawlApiKey');
             break;
           
-          // 注意：jina API Key 是可选的，所以这里不写 case 'jina' 的报错逻辑，直接放行
-          // simpleRequest 和 mdnew 也没有必填项，直接放行
+          // Jina API key is optional; no validation error is required
+          // simpleRequest and mdnew have no required fields
         }
       }
 
-      // --- 3. 拦截与报错 ---
+      // --- 3. Block invalid configuration and report error ---
       if (errorMsg) {
-        // 报错提醒，标题也国际化
+        // Show localized error and title
         const errorTitle = this.t ? this.t('configIncomplete') : 'Config Incomplete';
         showNotification(errorMsg, 'error', errorTitle);
 
-        // 强制重置开关为关闭状态
+        // Reset switch to off
         this.$nextTick(() => {
           this.webSearchSettings.enabled = false;
         });
 
-        // 阻断执行，不触发保存
+        // Return without saving
         return;
       }
     }
 
-    // 校验全部通过，或者用户是主动关闭开关，则正常执行保存
+    // Save normally when validation passes or the user disables the switch
     this.autoSaveSettings();
   },
 
-  // 代码解释器启动开关的拦截处理
+  // Validate code interpreter enable switch
   handleInterpreterToggle(newValue) {
     if (newValue === true) {
       const settings = this.codeSettings;
       let errorMsg = '';
 
-      // 根据选择的引擎校验必填项
+      // Validate required fields for selected engine
       switch (settings.engine) {
         case 'e2b':
           if (!settings.e2b_api_key?.trim()) {
@@ -19359,35 +19359,35 @@ closeTaskCenter() {
           break;
       }
 
-      // 如果有报错信息，进行拦截
+      // Block startup if an error exists
       if (errorMsg) {
-        // 报错提醒 (复用刚才加的 configIncomplete)
+        // Show error using configIncomplete
         const errorTitle = this.t ? this.t('configIncomplete') : 'Config Incomplete';
         showNotification(errorMsg, 'error', errorTitle);
 
-        // 强制重置开关为关闭状态
+        // Reset switch to off
         this.$nextTick(() => {
           this.codeSettings.enabled = false;
         });
 
-        // 阻断执行，不触发保存
+        // Return without saving
         return;
       }
     }
 
-    // 校验通过或关闭开关，正常执行保存
+    // Save normally if validation passes or switch is disabled
     this.autoSaveSettings();
   },
-// 1. 懒加载读取文件目录
+// 1. Lazy-load file directories
   async loadWorkspaceNode(node, resolve) {
-    // 顶层节点：加载工作区根目录
+    // Root node: load workspace directory
     if (node.level === 0) {
       if (!this.CLISettings || !this.CLISettings.cc_path) {
         return resolve([]); 
       }
       
-      // ⚠️ 暴力触发：只要根节点加载，就立刻启动监听器！
-      console.log('准备启动文件监听:', this.CLISettings.cc_path);
+      // Start file watcher as soon as the root node loads
+      console.log('Starting file watcher:', this.CLISettings.cc_path);
       this.setupWorkspaceWatcher(this.CLISettings.cc_path);
 
       try {
@@ -19404,7 +19404,7 @@ closeTaskCenter() {
       }
     }
 
-    // 子节点：加载被点击的子目录
+    // Child node: load selected subdirectory
     if (node.level > 0 && node.data.isDirectory) {
       try {
         const res = await window.electronAPI.readDirectory(node.data.path);
@@ -19423,23 +19423,23 @@ closeTaskCenter() {
     resolve([]);
   },
 
-  // 2. 使用系统默认程序打开文件
+  // 2. Open file with system default application
   openWorkspaceFile(filePath) {
     if (window.electronAPI && window.electronAPI.openPath) {
       window.electronAPI.openPath(filePath);
     }
   },
 
-  // 3. 删除文件/文件夹
+  // 3. Delete file or directory
   async deleteWorkspaceFile(data, node) {
     try {
-      // 弹出确认框 (兼容 Element Plus 的 this.$confirm)
+      // Show confirmation dialog using Element Plus this.$confirm
       await this.$confirm(
-        (this.t('confirmDelete') || '确认将该文件放入回收站吗？') + `\n${data.name}`,
-        this.t('warning') || '警告',
+        (this.t('confirmDelete') || 'Move this file to the recycle bin?') + `\n${data.name}`,
+        this.t('warning') || 'Warning',
         { 
-          confirmButtonText: this.t('confirm') || '确定', 
-          cancelButtonText: this.t('cancel') || '取消', 
+          confirmButtonText: this.t('confirm') || 'Confirm',
+          cancelButtonText: this.t('cancel') || 'Cancel',
           type: 'warning' 
         }
       );
@@ -19447,7 +19447,7 @@ closeTaskCenter() {
       const res = await window.electronAPI.deleteWorkspaceFile(data.path);
       if (res.success) {
         showNotification(this.t('deleteSuccess'),'success');
-        // 从前端界面中动态移除该节点，避免重新读取整个目录树
+        // Remove node from the UI without reloading the entire directory tree
         const parent = node.parent;
         const children = parent.data.children || parent.childNodes;
         const index = children.findIndex(d => d.data.path === data.path);
@@ -19459,30 +19459,30 @@ closeTaskCenter() {
         showNotification(this.t('deleteFailed'),'error');
       }
     } catch (error) {
-      // 用户点击了取消，不做任何处理
+      // Do nothing if the user cancels
     }
   },
 
-  // 5. 刷新整个工作区树
+  // 5. Refresh workspace tree
   refreshWorkspaceTree() {
-    // 改变 key 值会让 Vue 销毁并重建 el-tree，从而重新触发 load()
+    // Changing key recreates el-tree and triggers load()
     this.workspaceTreeKey += 1;
   },
 
-    // 核心上传逻辑
+    // Upload logic
     async executeUpload(targetPath) {
         try {
-            // 1. 调用选择文件对话框
+            // 1. Open file selection dialog
             const result = await window.electronAPI.openFileDialog();
             
             if (result.canceled || result.filePaths.length === 0) return;
 
-            // 2. 执行上传
+            // 2. Upload
             const uploadRes = await window.electronAPI.uploadToWorkspace(targetPath, result.filePaths);
             
             if (uploadRes.success) {
                 showNotification(this.t('uploadSuccess'),'success');
-                this.refreshWorkspaceTree(); // 刷新显示新文件
+                this.refreshWorkspaceTree(); // Refresh to display new files
             } else {
                 showNotification(this.t('uploadFailed'),'error');
             }
@@ -19492,7 +19492,7 @@ closeTaskCenter() {
         }
     },
 
-    // 顶部按钮：上传到根目录
+    // Top button: upload to root
     handleRootUpload() {
         const rootPath = this.CLISettings.cc_path;
         if (!rootPath) {
@@ -19502,22 +19502,22 @@ closeTaskCenter() {
         this.executeUpload(rootPath);
     },
 
-    // 文件夹按钮：上传到子目录
+    // Folder button: upload to subdirectory
     handleFolderUpload(folderPath) {
-        console.log("正在上传到子目录:", folderPath);
+        console.log("Uploading to subdirectory:", folderPath);
         this.executeUpload(folderPath);
     },
 
-  // 添加好感度维度
+  // Add affection dimension
   addLoveDimension() {
     if (!this.loveSettings.dimensions) {
       this.loveSettings.dimensions = [];
     }
-    this.loveSettings.dimensions.push(""); // 压入一个空字符串
+    this.loveSettings.dimensions.push(""); // Append an empty string
     this.autoSaveSettings();
   },
 
-  // 删除好感度维度
+  // Remove affection dimension
   removeLoveDimension(idx) {
     if (this.loveSettings.dimensions && this.loveSettings.dimensions.length > 1) {
       this.loveSettings.dimensions.splice(idx, 1);
@@ -19525,7 +19525,7 @@ closeTaskCenter() {
     }
   },
 
-  // ---------------- 羁绊系统：系统配置相关 ----------------
+  // ---------------- Relationship system: configuration ----------------
   addLoveDimension() {
     if (!this.loveSettings.dimensions) this.loveSettings.dimensions = [];
     this.loveSettings.dimensions.push("");
@@ -19538,7 +19538,7 @@ closeTaskCenter() {
     }
   },
 
-  // ---------------- 羁绊系统：数据管理相关 ----------------
+  // ---------------- Relationship system: data management ----------------
   
   handleAffectionTabChange(tabName) {
     if (tabName === 'data') {
@@ -19548,7 +19548,7 @@ closeTaskCenter() {
 
   async fetchAffectionData() {
     try {
-      // 请求我们刚才写的 FastAPI 路由
+      // Request FastAPI route
       const response = await fetch('/api/affection/get_data');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -19557,7 +19557,7 @@ closeTaskCenter() {
       
       this.affectionRawData = data || {};
       
-      // 将 Object 转换为 Array，供 el-table 渲染
+      // Convert object to array for el-table
       this.affectionDataList = Object.keys(this.affectionRawData).map(userName => {
         return {
           userName: userName,
@@ -19565,26 +19565,26 @@ closeTaskCenter() {
         };
       });
       
-      console.log("✅ 羁绊数据加载成功:", this.affectionDataList); // 调试日志，按 F12 可以在控制台看到
+      console.log("Relationship data loaded:", this.affectionDataList); // Debug output
     } catch (error) {
-      console.error("❌ 获取羁绊数据失败:", error);
+      console.error("Failed to fetch relationship data:", error);
       if (this.$message) this.$message.error("Could not load relationship data. Check that the backend is running.");
     }
   },
 
-  // 3. 将前端的修改同步保存到后端
+  // 3. Save frontend changes to backend
   async syncAffectionDataToBackend() {
     try {
-      // 将 Array 转回 Object 结构 {"小包": {love: 10}}
+      // Convert array back to object structure, e.g. {"companion": {love: 10}}
       const newData = {};
       this.affectionDataList.forEach(item => {
         const { userName, ...dimensionsData } = item;
         newData[userName] = dimensionsData;
       });
 
-      this.affectionRawData = newData; // 更新本地缓存
+      this.affectionRawData = newData; // Update local cache
 
-      // 使用 fetch 发送 POST 请求
+      // Send POST request using fetch
       const response = await fetch('/api/affection/save_data', {
         method: 'POST',
         headers: {
@@ -19599,20 +19599,20 @@ closeTaskCenter() {
       
       if (this.$message) this.$message.success("Relationship data synchronized");
     } catch (error) {
-      console.error("❌ 保存羁绊数据失败:", error);
+      console.error("Failed to save relationship data:", error);
       if (this.$message) this.$message.error("Failed to save relationship data");
     }
   },
 
-  // 3. 打开新增/编辑对话框
+  // 3. Open add/edit dialog
   openAffectionDataDialog(row = null) {
-    this.isEditingAffection = !!row; // 如果传了 row 说明是编辑
+    this.isEditingAffection = !!row; // A supplied row indicates edit mode
     
     if (row) {
-      // 编辑：深拷贝当前行数据
+      // Edit: deep copy current row
       this.currentAffectionForm = JSON.parse(JSON.stringify(row));
     } else {
-      // 新增：初始化表单，把所有维度默认设为 0
+      // Add: initialize all dimensions to zero
       const newForm = { userName: '' };
       if (this.loveSettings.dimensions) {
         this.loveSettings.dimensions.forEach(dim => {
@@ -19625,55 +19625,55 @@ closeTaskCenter() {
     this.showAffectionDataDialog = true;
   },
 
-  // 4. 保存对话框表单
+  // 4. Save dialog form
   saveAffectionData() {
     const form = this.currentAffectionForm;
     if (!form.userName) return;
 
     if (this.isEditingAffection) {
-      // 寻找并替换
+      // Find and replace
       const index = this.affectionDataList.findIndex(item => item.userName === form.userName);
       if (index !== -1) {
         this.affectionDataList.splice(index, 1, { ...form });
       }
     } else {
-      // 查重：防止用户名重复
+      // Check for duplicate usernames
       const exists = this.affectionDataList.find(item => item.userName === form.userName);
       if (exists) {
         this.$message.warning("This username already exists");
         return;
       }
-      // 追加新用户
+      // Append new user
       this.affectionDataList.push({ ...form });
     }
 
     this.showAffectionDataDialog = false;
-    this.syncAffectionDataToBackend(); // 触发网络请求同步到后端
+    this.syncAffectionDataToBackend(); // Synchronize changes to backend
   },
 
-  // 5. 删除用户数据
+  // 5. Delete user data
   deleteAffectionData(userName) {
     this.$confirm(this.t('confirmDelete') || "Delete this user's data?", this.t('warning') || 'Warning', {
-      confirmButtonText: this.t('confirm') || '确定',
-      cancelButtonText: this.t('cancel') || '取消', 
+      confirmButtonText: this.t('confirm') || 'Confirm',
+      cancelButtonText: this.t('cancel') || 'Cancel',
       type: 'warning'
     }).then(() => {
       const index = this.affectionDataList.findIndex(item => item.userName === userName);
       if (index !== -1) {
         this.affectionDataList.splice(index, 1);
-        this.syncAffectionDataToBackend(); // 触发网络请求同步到后端
+        this.syncAffectionDataToBackend(); // Synchronize changes to backend
       }
     }).catch(() => {});
   },
 
-    // ---------------- 日记系统 ----------------
+    // ---------------- Diary system ----------------
     handleDiaryTabChange(tabName) {
       if (tabName === 'data') {
         this.refreshDiaryView();
       }
     },
 
-    // 刷新整个日记本视图（先拉本子列表，再拉当前本子内容）
+    // Refresh diary view (book list, then current book contents)
     async refreshDiaryView() {
       await this.fetchDiaryBooks();
       await this.fetchDiaryData();
@@ -19685,12 +19685,12 @@ closeTaskCenter() {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         this.diaryBooks = (data && Array.isArray(data.books)) ? data.books : [];
-        // 当前选中的本子若已不存在，回落到 default
+        // Fall back to default if selected book no longer exists
         if (!this.diaryBooks.some(b => b.bookId === this.diaryCurrentBook)) {
           this.diaryCurrentBook = 'default';
         }
       } catch (error) {
-        console.error("获取日记本列表失败:", error);
+        console.error("Failed to fetch diary books:", error);
       }
     },
 
@@ -19702,12 +19702,12 @@ closeTaskCenter() {
         const data = await response.json();
         this.diaryEntries = (data && Array.isArray(data.entries)) ? data.entries : [];
       } catch (error) {
-        console.error("获取日记数据失败:", error);
+        console.error("Failed to fetch diary entries:", error);
         if (this.$message) this.$message.error("Could not load diary data. Check that the backend is running.");
       }
     },
 
-    // 切换查看的日记本
+    // Switch displayed diary book
     switchDiaryBook(bookId) {
       if (!bookId || bookId === this.diaryCurrentBook) return;
       this.diaryCurrentBook = bookId;
@@ -19715,19 +19715,19 @@ closeTaskCenter() {
       this.fetchDiaryData();
     },
 
-    // 日记本的显示名称：优先用角色卡当前名，其次本子里存的名字，default 用兜底文案
+    // Display current character card name, then stored book name; use fallback for default
     diaryBookLabel(book) {
       if (!book) return '';
       if (book.isDefault || book.bookId === 'default') {
-        return this.t('diaryDefaultBook') || '默认日记本';
+        return this.t('diaryDefaultBook') || 'Default diary';
       }
       const mem = (this.memories || []).find(m => String(m.id) === String(book.characterId || book.bookId));
       if (mem && mem.name) return mem.name;
       if (book.characterName) return book.characterName;
-      return this.t('diaryUnknownRole') || '未知角色';
+      return this.t('diaryUnknownRole') || 'Unknown character';
     },
 
-    // 日记本头像：从角色卡解析，没有则用默认头像
+    // Use character card avatar or default avatar
     diaryBookAvatar(book) {
       if (!book || book.isDefault || book.bookId === 'default') return '';
       const mem = (this.memories || []).find(m => String(m.id) === String(book.characterId || book.bookId));
@@ -19747,8 +19747,8 @@ closeTaskCenter() {
 
     deleteDiaryEntryById(id) {
       this.$confirm(this.t('confirmDelete') || 'Delete this diary entry?', this.t('warning') || 'Warning', {
-        confirmButtonText: this.t('confirm') || '确定',
-        cancelButtonText: this.t('cancel') || '取消',
+        confirmButtonText: this.t('confirm') || 'Confirm',
+        cancelButtonText: this.t('cancel') || 'Cancel',
         type: 'warning'
       }).then(async () => {
         try {
@@ -19763,16 +19763,16 @@ closeTaskCenter() {
           this.fetchDiaryBooks();
           if (this.$message) this.$message.success(this.t('deleted') || 'Deleted');
         } catch (error) {
-          console.error("删除日记失败:", error);
+          console.error("Failed to delete diary entry:", error);
           if (this.$message) this.$message.error("Failed to delete diary entry");
         }
       }).catch(() => {});
     },
 
-    // 用户手动切换日记动作开关时，自动开启对应的底层工具
+    // Enable corresponding underlying tools when diary actions are toggled
     async onDiaryActionToggle(key) {
       const enabled = this.diarySettings.actions[key].enabled;
-      // 先保存日记配置
+      // Save diary configuration first
       await this.autoSaveSettings();
 
       if (!enabled) return;
@@ -19836,19 +19836,19 @@ closeTaskCenter() {
             break;
         }
       } catch (e) {
-        console.error('[Diary] 自动开启工具失败:', e);
+        console.error('[Diary] Failed to enable tool automatically:', e);
         showNotification(this.t('diaryAutoTool_error') || ('Failed to enable tools: ' + (e.message || 'Unknown error')), 'error');
       }
     },
 
-    // 动作类型的图标/标签颜色（供模板使用）
+    // Action type icons and label colors for template
     diaryMeta(type) {
       return (this.diaryActionMeta && this.diaryActionMeta[type]) || { icon: 'fa-solid fa-book', type: 'info' };
     },
 
-    // 将后端推送的日记原样展示到当前对话
+    // Display diary entries received from backend in current conversation
     pushDiaryToChat(content, actionType) {
-      // 若正在查看日记本，顺手刷新一下列表
+      // Refresh list if diary is open
       if (this.subMenu === 'diary' && this.activeDiaryTab === 'data') {
         this.refreshDiaryView();
       }
@@ -19857,10 +19857,10 @@ closeTaskCenter() {
       const entry = {
         id: Date.now() + Math.random(),
         role: 'assistant',
-        agentName: (this.t('DiarySystem') || '日记'),
+        agentName: (this.t('DiarySystem') || 'Diary'),
         content: diaryContent,
         pure_content: diaryContent,
-        // 使用标准新架构 displayBlocks，与普通助手消息一致
+        // Use standard displayBlocks structure, matching assistant messages
         displayBlocks: [{ type: 'text', content: diaryContent, segments: [{ type: 'text', content: diaryContent }] }],
         segments: [{ type: 'text', content: diaryContent }],
         isDiary: true,
@@ -19869,7 +19869,7 @@ closeTaskCenter() {
         timestamp: Date.now()
       };
       this.messages.push(entry);
-      // 同步回当前对话，确保持久化与主对话界面正确显示
+      // Synchronize to current conversation for persistence and display
       const conv = this.conversations.find(c => c.id === this.conversationId);
       if (conv) {
         conv.messages = this.messages;
@@ -19880,43 +19880,43 @@ closeTaskCenter() {
       this.$nextTick(() => { if (typeof this.scrollToBottom === 'function') this.scrollToBottom(); });
     },
 
-    // 处理单击文件自动添加 @ 快捷方式
+    // Add @ shortcut when a file is clicked
     handleFileShortcut(fullPath) {
         if (!fullPath) return;
 
-        // 1. 获取工作区根路径
+        // 1. Get workspace root
         const rootPath = this.CLISettings.cc_path;
         let relativePath = fullPath;
 
-        // 2. 将绝对路径转换为相对于工作区的路径
+        // 2. Convert absolute path to workspace-relative path
         if (rootPath && fullPath.startsWith(rootPath)) {
-            // 截掉根目录部分，并去掉路径开头多余的斜杠
+            // Remove root prefix and extra leading separators
             relativePath = fullPath.substring(rootPath.length).replace(/^[/\\]+/, '');
         }
 
-        // 3. 统一将路径分隔符替换为正斜杠 / (方便 AI 识别并保持跨平台一致性)
+        // 3. Normalize path separators to forward slashes for cross-platform consistency
         relativePath = relativePath.replace(/\\/g, '/');
 
-        // 4. 构造快捷指令字符串
+        // 4. Construct shortcut string
         const shortcut = `@${relativePath} `;
 
-        // 5. 将指令追加到输入框
+        // 5. Append shortcut to input
         if (!this.userInput) {
-            // 如果输入框是空的，直接赋值
+            // Assign directly if input is empty
             this.userInput = shortcut;
         } else if (this.userInput.endsWith(' ')) {
-            // 如果末尾已经有空格，直接加内容
+            // Append directly if input ends with a space
             this.userInput += shortcut;
         } else {
-            // 如果末尾没有空格，先加个空格再加内容
+            // Otherwise insert a space before appending
             this.userInput += ' ' + shortcut;
         }
 
-        // 6. (可选) 自动聚焦聊天输入框，让用户可以直接接着打字
-        // 如果你的输入框组件设置了 ref="chatInput"
+        // 6. Optionally focus chat input for continued typing
+        // If input component uses ref="chatInput"
         this.$nextTick(() => {
             if (this.$refs.chatInput) {
-                // 如果是 el-input 需要访问内部的 input 元素
+                // For el-input, access underlying input element
                 const inputEl = this.$refs.chatInput.$el.querySelector('input') || this.$refs.chatInput.$el.querySelector('textarea');
                 if (inputEl) inputEl.focus();
                 else this.$refs.chatInput.focus();
@@ -19934,27 +19934,27 @@ closeTaskCenter() {
 
     async handleFullScreenChange(val) {
       if (!val) {
-        // 如果开关变成 false（关闭全屏），主动调起选区界面
+        // When disabling full screen, open region selector
         await this.reselectRegion();
       } else {
-        // 如果开关变成 true（开启全屏），直接保存设置
+        // When enabling full screen, save settings directly
         this.autoSaveSettings();
       }
     },
 
     /**
-     * 呼出边框让用户重新选择屏幕区域
+      * Show region selector so the user can choose a new screen region
      */
     async reselectRegion() {
       try {
-        // 调用 preload 暴露的方法，传入 true 让主窗口暂时隐藏
+        // Call preload method with true to temporarily hide main window
         const rect = await window.electronAPI.showScreenshotOverlay(true);
         
-        // 选区结束后，恢复显示主窗口
+        // Restore main window after selection
         window.electronAPI.windowAction('show');
         
         if (rect) {
-          // 用户成功框选，记录选区：[x, y, 宽度, 高度]
+          // Store selected rectangle: [x, y, width, height]
           this.visionControlSettings.ScreenSize = [
             Math.floor(rect.x), 
             Math.floor(rect.y), 
@@ -19963,44 +19963,44 @@ closeTaskCenter() {
           ];
           this.visionControlSettings.isFullScreen = false;
         } else {
-          // 如果 rect 为空（比如用户按 Esc 取消了截图），自动恢复为全屏模式
+          // Restore full screen if rect is empty, e.g. when user presses Escape
           this.visionControlSettings.isFullScreen = true;
         }
         
-        // 触发自动保存
+        // Trigger autosave
         this.autoSaveSettings();
         
       } catch (error) {
-        console.error("选区失败:", error);
-        // 如果发生错误，确保主窗口重新出现并恢复状态
+        console.error("Region selection failed:", error);
+        // Restore main window and state on error
         window.electronAPI.windowAction('show');
         this.visionControlSettings.isFullScreen = true;
         this.autoSaveSettings();
       }
     },
 
-    // 开启工作区监控
+    // Start workspace monitoring
     setupWorkspaceWatcher(path) {
       if (window.electronAPI && window.electronAPI.startWorkspaceWatch) {
         window.electronAPI.startWorkspaceWatch(path);
         
         window.electronAPI.onWorkspaceChanged((data) => {
-          console.log('前端收到文件系统变化:', data.action, data.path);
+          console.log('Filesystem change received:', data.action, data.path);
           
-          // ⚠️ 关键修复：使用原生定时器彻底解决 this 指向丢失的问题
+          // Use native timer to preserve this binding
           if (this.workspaceRefreshTimer) {
             clearTimeout(this.workspaceRefreshTimer);
           }
           
           this.workspaceRefreshTimer = setTimeout(() => {
-            console.log('触发防抖更新 UI ...');
+            console.log('Refreshing UI after debounce...');
             this.refreshWorkspaceTreeKeepExpanded();
           }, 500);
         });
       }
     },
 
-    // 刷新前保留展开状态
+    // Preserve expanded nodes before refresh
     refreshWorkspaceTreeKeepExpanded() {
       const treeRef = this.$refs.workspaceTreeRef;
       if (treeRef) {
@@ -20012,20 +20012,20 @@ closeTaskCenter() {
           }
         }
         this.expandedNodeKeys = expandedKeys;
-        console.log('当前记录的展开文件夹节点:', this.expandedNodeKeys);
+        console.log('Recorded expanded folder nodes:', this.expandedNodeKeys);
       } else {
-        console.warn('未找到 el-tree 的引用 (workspaceTreeRef)');
+        console.warn('el-tree reference (workspaceTreeRef) not found');
       }
       
       this.refreshWorkspaceTree();
     },
 
-// 1. 修改后的流式随机话题生成逻辑
+// 1. Streaming random topic generation
 async generateRandomTopic() {
   if (this.isTopicGenerating) return;
   this.isTopicGenerating = true;
   
-  // 开始前清空输入框，方便看到打字机效果
+  // Clear input before streaming to show typing effect
   this.userInput = ''; 
 
   try {
@@ -20045,7 +20045,7 @@ async generateRandomTopic() {
           }
         ],
         temperature: 1,
-        stream: true // 开启流式
+        stream: true // Enable streaming
       })
     });
 
@@ -20063,17 +20063,17 @@ async generateRandomTopic() {
       const { done, value } = await reader.read();
       if (done) break;
 
-      // 解码并合并到缓冲区
+      // Decode and append to buffer
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
-      // 留下最后一行可能不完整的在 buffer 中
+      // Retain potentially incomplete final line in buffer
       buffer = lines.pop(); 
 
       for (const line of lines) {
         let trimmed = line.trim();
         if (!trimmed || trimmed === 'data: [DONE]') continue;
 
-        // 兼容 SSE 格式 (去掉 data: 前缀)
+        // Support SSE by stripping data: prefix
         if (trimmed.startsWith('data:')) {
           trimmed = trimmed.replace(/^data:\s?/, '');
         }
@@ -20082,18 +20082,18 @@ async generateRandomTopic() {
           const data = JSON.parse(trimmed);
           const content = data.choices?.[0]?.delta?.content;
           if (content) {
-            // 实时追加到 userInput，实现打字机效果
+            // Append to userInput as content arrives
             this.userInput += content;
           }
         } catch (e) {
-          // 忽略解析失败的行
+          // Ignore lines that fail parsing
         }
       }
     }
 
   } catch (e) {
-    console.error("生成话题失败", e);
-    // 降级处理：直接显示一个随机话题
+    console.error("Failed to generate topic", e);
+    // Fallback: display a random topic directly
     const fallbackTopics = ["Will future AI have emotions?", "Recommend a book you've read recently", "If you could teleport instantly, where would you want to go?"];
     this.userInput = fallbackTopics[Math.floor(Math.random() * fallbackTopics.length)];
   } finally {
@@ -20101,34 +20101,34 @@ async generateRandomTopic() {
   }
 },
 
-// 2. 仪表盘发送逻辑
+// 2. Send from dashboard
 handleDashboardSend() {
   if (!this.userInput.trim()) return;
-  // 跳转到聊天页
+  // Navigate to chat
   this.activeMenu = 'home';
   this.clearMessages();
-  // 调用原本的发送方法
+  // Call existing send method
   this.$nextTick(() => {
     this.sendMessage();
   });
 },
 
-// 3. 万能智能体确认
+// 3. Confirm general-purpose agent
 confirmOmniAgent() {
   if (!this.CLISettings.cc_path) {
     showNotification(this.t('pleaseSelectWorkspaceFirst'), 'error');
     return;
   }
-  // 开启 CLI
+  // Enable CLI
   this.CLISettings.enabled = true;
   this.handleEnableToggle(true);
-  // 关闭弹窗并跳转
+  // Close dialog and navigate
   this.showOmniAgentDialog = false;
   this.activeMenu = 'home';
   showNotification(this.t('omniAgentEnabled'));
 },
 
-// 4. 扩展收藏逻辑
+// 4. Extension bookmarks
 toggleFavoriteExtension(ext) {
   const index = this.favoriteExtensionIds.indexOf(ext.id);
   if (index > -1) {
@@ -20136,7 +20136,7 @@ toggleFavoriteExtension(ext) {
   } else {
     this.favoriteExtensionIds.push(ext.id);
   }
-  // 持久化存储
+  // Persist data
   localStorage.setItem('favorite_extensions', JSON.stringify(this.favoriteExtensionIds));
 },
 
@@ -20169,16 +20169,16 @@ gotoAddExtension(){
   this.openAddExtensionDialog();
 },
 
-  // 2. 添加这两个处理鼠标状态的方法
+  // 2. Mouse state handlers
   handleExtMouseMove() {
     this.extButtonVisible = true;
     
-    // 清除上一次的定时器
+    // Clear previous timer
     if (this.extMouseTimer) {
       clearTimeout(this.extMouseTimer);
     }
     
-    // 如果鼠标停止移动 1.5 秒，自动隐藏按钮
+    // Hide button after 1.5 seconds without mouse movement
     this.extMouseTimer = setTimeout(() => {
       this.extButtonVisible = false;
     }, 1500);
@@ -20192,22 +20192,22 @@ gotoAddExtension(){
   },
 
   async toggleVTSConnection() {
-    // 如果正在连接中，禁止重复点击
+    // Prevent repeated clicks while connecting
     if (this.isVTSStarting) return;
     
-    this.isVTSStarting = true; // 开启 Loading 动画 (按钮转圈)
+    this.isVTSStarting = true; // Show loading spinner
     
     try {
       if (this.VTSConfig.enabled) {
-        // 动作：停止连接
-        // 注意：这里不直接设 enabled = false，而是等待后端确认后再改
+        // Action: disconnect
+        // Wait for backend confirmation before setting enabled to false
         this.sendTTSStatusToVRM('stopVTS_Driver', {});
       } else {
-        // 动作：发起连接
+        // Action: connect
         this.sendTTSStatusToVRM('startVTS_Driver', this.VTSConfig);
         
-        // 设置一个 10 秒的超时逻辑
-        // 如果 10 秒内后端没有通过 WS 返回任何 status 消息，则自动回退状态
+        // Set ten-second timeout
+        // Revert state if no backend WebSocket status arrives within ten seconds
         setTimeout(() => {
           if (this.isVTSStarting) {
             this.isVTSStarting = false;
@@ -20216,14 +20216,14 @@ gotoAddExtension(){
         }, 10000);
       }
     } catch (e) {
-      console.error("VTS 操作失败:", e);
+      console.error("VTS operation failed:", e);
       this.isVTSStarting = false;
       showNotification('Failed to send command. Check the network.', 'error');
     }
   },
   
   async startVTS() {
-    // 模拟或实际发送 WS 指令
+    // Send simulated or actual WebSocket command
     this.sendTTSStatusToVRM('startVTS_Driver', this.VTSConfig);
     this.VTSConfig.enabled = true;
     this.autoSaveSettings();
@@ -20272,7 +20272,7 @@ gotoAddExtension(){
     }
   },
 
-  // 1. 初始化获取当前路径
+  // 1. Fetch current path on initialization
   async fetchDataPath() {
     try {
       const response = await fetch('/api/system/data-path');
@@ -20286,26 +20286,26 @@ gotoAddExtension(){
     }
   },
 
-  // 2. 浏览目录 (调用 Electron 对话框)
+  // 2. Browse directory using Electron dialog
   async browseDataDirectory() {
     if (!this.isElectron) {
       showNotification('Available only in the desktop app', 'warning');
       return;
     }
     try {
-      // 注意：根据您 main.js 里的定义，这里调用对应的 preload 映射方法
-      // 如果您的 preload 映射的是 dialog:openDirectory，则使用如下：
+      // Call the preload method mapped in main.js
+      // If preload maps dialog:openDirectory, use the following:
       const result = await window.electronAPI.openDirectoryDialog(); 
       if (!result.canceled && result.filePaths.length > 0) {
         this.customDataPath = result.filePaths[0];
       }
     } catch (error) {
-      console.error('选择目录出错:', error);
+      console.error('Directory selection failed:', error);
       showNotification('Failed to select directory', 'error');
     }
   },
 
-  // 3. 应用并保存路径
+  // 3. Apply and save path
   async saveDataPath() {
     if (!this.customDataPath || !this.customDataPath.trim()) {
       showNotification(this.t('pathCannotBeEmpty'), 'warning');
@@ -20327,7 +20327,7 @@ gotoAddExtension(){
       const data = await response.json();
       if (response.ok && data.success) {
         showNotification(this.t('pathUpdateSuccess'), 'success');
-        this.showRestartDialog = true; // 触发重启询问弹窗
+        this.showRestartDialog = true; // Open restart confirmation
       } else {
         showNotification(data.detail || 'Update failed', 'error');
       }
@@ -20336,7 +20336,7 @@ gotoAddExtension(){
     }
   },
 
-  // 4. 重置路径
+  // 4. Reset path
   async resetDataPath() {
     try {
       await this.$confirm(this.t('confirmResetPathText'), this.t('warning'), {
@@ -20358,12 +20358,12 @@ gotoAddExtension(){
     }
   },
 
-  // 5. 在资源管理器中直接进入当前文件夹内部
+  // 5. Open current folder in file explorer
   async openDataFolder() {
     if (this.customDataPath) {
       if (this.isElectron) {
-        // 使用 electronAPI 下的 openPath 
-        // 它的底层调用的是 shell.openPath，会直接打开并进入该目录
+        // Use electronAPI.openPath
+        // It calls shell.openPath to open the directory
         window.electronAPI.openPath(this.customDataPath);
       } else {
         showNotification('Available only in the desktop app', 'warning');
@@ -20373,10 +20373,10 @@ gotoAddExtension(){
     }
   },
 
-    // 打开保存背景图的弹窗
+    // Open save background dialog
     openSaveBgDialog() {
       if (!this.systemSettings.backgroundURL) {
-        // 使用 showNotification 和 this.t()
+        // Use showNotification and this.t()
         showNotification(this.t('noBgToSave'), 'warning');
         return;
       }
@@ -20384,49 +20384,49 @@ gotoAddExtension(){
       this.saveBgDialogVisible = true;
     },
 
-    // 确认保存背景图到历史列表
+    // Confirm saving background to history
     confirmSaveBg() {
       if (!this.newBgName.trim()) {
-        // 使用 showNotification 和 this.t()
+        // Use showNotification and this.t()
         showNotification(this.t('pleaseInputBgName'), 'warning');
         return;
       }
 
-      // 确保列表已初始化(防范旧数据不存在该字段的情况)
+      // Initialize list if missing in legacy data
       if (!this.systemSettings.bgHistoryList) {
         this.systemSettings.bgHistoryList = [];
       }
 
-      // 检查当前URL是否已经在历史记录中
+      // Check whether current URL already exists in history
       const existingIndex = this.systemSettings.bgHistoryList.findIndex(
         bg => bg.url === this.systemSettings.backgroundURL
       );
 
       if (existingIndex !== -1) {
-        // 如果存在，直接覆盖名字
+        // Update name if it exists
         this.systemSettings.bgHistoryList[existingIndex].name = this.newBgName.trim();
       } else {
-        // 如果不存在，新增一条记录
+        // Otherwise append a record
         this.systemSettings.bgHistoryList.push({
           name: this.newBgName.trim(),
           url: this.systemSettings.backgroundURL
         });
       }
 
-      // 自动保存设置 
+      // Autosave settings
       this.autoSaveSettings();
 
       this.saveBgDialogVisible = false;
       
-      // 使用 showNotification 提示成功
+      // Show success notification
       showNotification(this.t('bgSavedSuccess'), 'success');
     },
 
-    // 切换历史背景图
+    // Select background from history
     handleBgHistorySelect(url) {
       this.systemSettings.backgroundURL = url;
       if (!url) {
-        // 选择"无背景图片"时，触发原有的清除逻辑
+        // Use existing clearing logic when no background is selected
         if (typeof this.clearBgImage === 'function') {
           this.clearBgImage();
         } else {
@@ -20437,7 +20437,7 @@ gotoAddExtension(){
       }
     },
 
-    // 删除某条历史背景图记录
+    // Delete a background history record
     deleteBgHistory(url) {
       if (!this.systemSettings.bgHistoryList) return;
       
@@ -20445,10 +20445,10 @@ gotoAddExtension(){
         item => item.url !== url
       );
       
-      // 删除记录后，调用自动保存
+      // Save automatically after deletion
       this.autoSaveSettings();
       
-      // 使用 showNotification 提示删除成功
+      // Show deletion success notification
       showNotification(this.t('bgRemovedSuccess'), 'success');
     },
 
@@ -20470,7 +20470,7 @@ gotoAddExtension(){
     },
 
     // ============================================================
-    // 账户管理方法
+    // Account management methods
     // ============================================================
     async loadAccountList() {
       if (!isElectron) return;
@@ -20482,7 +20482,7 @@ gotoAddExtension(){
           this.currentAccountInfo = result.accounts.find(a => a.id === result.currentAccountId) || null;
         }
       } catch (e) {
-        console.error('加载账户列表失败:', e);
+        console.error('Failed to load accounts:', e);
       }
     },
 
@@ -20494,7 +20494,7 @@ gotoAddExtension(){
           this.newAccountDataPath = result.filePaths[0];
         }
       } catch (e) {
-        console.error('选择目录失败:', e);
+        console.error('Directory selection failed:', e);
       }
     },
 
@@ -20524,7 +20524,7 @@ gotoAddExtension(){
           showNotification(result.error || (this.t('accountCreateFailed') || 'Failed to create account'), 'error');
         }
       } catch (e) {
-        console.error('创建账户失败:', e);
+        console.error('Failed to create account:', e);
         showNotification(this.t('accountCreateFailed') || 'Failed to create account', 'error');
       }
     },
@@ -20548,7 +20548,7 @@ gotoAddExtension(){
           showNotification(result.error || (this.t('accountDeleteFailed') || 'Failed to delete account'), 'error');
         }
       } catch (e) {
-        console.error('删除账户失败:', e);
+        console.error('Failed to delete account:', e);
         showNotification(this.t('accountDeleteFailed') || 'Failed to delete account', 'error');
       }
     },
@@ -20573,7 +20573,7 @@ gotoAddExtension(){
           showNotification(result.error || (this.t('accountRenameFailed') || 'Rename failed'), 'error');
         }
       } catch (e) {
-        console.error('重命名失败:', e);
+        console.error('Failed to rename account:', e);
       }
     },
 
@@ -20587,7 +20587,7 @@ gotoAddExtension(){
           showNotification(result.error || (this.t('defaultAccountSetFailed') || 'Failed to save setting'), 'error');
         }
       } catch (e) {
-        console.error('设置默认账户失败:', e);
+        console.error('Failed to set default account:', e);
       }
     },
 
@@ -20600,7 +20600,7 @@ gotoAddExtension(){
           showNotification(result.error || (this.t('accountLaunchFailed') || 'Startup failed'), 'error');
         }
       } catch (e) {
-        console.error('启动账户失败:', e);
+        console.error('Failed to launch account:', e);
       }
     },
 
@@ -20613,7 +20613,7 @@ gotoAddExtension(){
           showNotification(result.error || (this.t('accountSwitchFailed') || 'Switch failed'), 'error');
         }
       } catch (e) {
-        console.error('切换账户失败:', e);
+        console.error('Failed to switch account:', e);
       }
     },
   
