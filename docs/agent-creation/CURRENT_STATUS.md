@@ -41,3 +41,8 @@ Legal source attribution and unmodified user-authored multilingual content are d
 
 - Source CI for `ca82b097bc8df8a871f551bdd5b6f0416d24d274` passed: https://github.com/Blaco/super-agent-party/actions/runs/45911282256. The task, diary, relationship, behavior, scheduler and MCP modules were localized after the earlier status snapshot above.
 - This follow-up localizes additional provider, knowledge and media tools and residual group-memory, image/speech and deep-search prompts in server.py. See the append-only change ledger. The remaining inventory and Windows runtime validation must still be completed. No fresh package is asserted.
+
+## Follow-up source checkpoint — settings and companion diagnostics
+
+- Source audit for `632a5f43fb530addb6dc53202dba172ab1079b8c` passed: https://github.com/Blaco/super-agent-party/actions/runs/45915297343. That checkpoint includes the regional Docker cleanup, English native MOSS default, alternate browser chat cleanup and corrected HTTP JSON samples.
+- This pass translates settings/data-path diagnostics, sleep prevention and VTube Studio integration comments and logs. These three modules have no remaining Han characters in a precommit text scan. Automated source checks for this pass are pending; Windows runtime and the full repository language inventory remain outstanding. No new package was requested or produced.

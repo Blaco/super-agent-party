@@ -10,7 +10,7 @@ import aiosqlite
 from pathlib import Path
 from appdirs import user_data_dir
 
-# ----------------- 1. 基础环境检测 (极速版) -----------------
+# ----------------- 1. Basic environment detection (fast path) -----------------
 APP_NAME = "Super-Agent-Party"
 HOST = None
 PORT = None
@@ -28,17 +28,17 @@ def get_base_path():
 
 base_path = get_base_path()
 
-# ----------------- 2. 路径定义 -----------------
-# 1. 定义“锚点”路径（系统默认配置目录，无论怎么改路径，这个引导文件永远放在这）
+# ----------------- 2. Path definitions -----------------
+# 1. Define the anchor path (the bootstrap file always stays in the system default configuration directory)
 ANCHOR_USER_DATA_DIR = user_data_dir(APP_NAME, roaming=True)
 PATH_REDIRECT_FILE = os.path.join(ANCHOR_USER_DATA_DIR, 'path_config.json')
 
 def get_effective_user_data_dir():
-    """获取当前生效的数据目录"""
+    """Get the currently active data directory."""
     if IS_DOCKER:
         return '/app/data'
 
-    # 多账户支持：通过环境变量指定数据目录
+    # Multi-account support: specify the data directory through an environment variable
     custom_data_dir = os.environ.get('SUPER_AGENT_PARTY_DATA_DIR')
     if custom_data_dir:
         os.makedirs(custom_data_dir, exist_ok=True)
@@ -51,16 +51,16 @@ def get_effective_user_data_dir():
                 custom_path = config.get("custom_user_data_dir")
                 
                 if custom_path:
-                    # --- 增强防呆逻辑 ---
-                    # 1. 必须是绝对路径 (防止用户输入 aaaa 这种相对路径)
+                    # --- Additional input validation ---
+                    # 1. Require an absolute path (reject relative paths such as aaaa)
                     if not os.path.isabs(custom_path):
-                        logging.error(f"[Path] 自定义路径不是绝对路径: {custom_path}")
+                        logging.error(f"[Path] Custom path is not absolute: {custom_path}")
                         return ANCHOR_USER_DATA_DIR
 
-                    # 2. 尝试创建目录并检查权限
+                    # 2. Try to create the directory and check permissions
                     os.makedirs(custom_path, exist_ok=True)
                     
-                    # 3. 验证是否真的有写权限 (创建一个临时文件试试)
+                    # 3. Verify write access by creating a temporary file
                     test_file = os.path.join(custom_path, '.path_test')
                     try:
                         with open(test_file, 'w') as f:
@@ -68,19 +68,19 @@ def get_effective_user_data_dir():
                         os.remove(test_file)
                         return custom_path
                     except Exception:
-                        logging.error(f"[Path] 自定义路径无写权限: {custom_path}")
+                        logging.error(f"[Path] Custom path is not writable: {custom_path}")
                         return ANCHOR_USER_DATA_DIR
                         
         except Exception as e:
-            logging.error(f"[Path] 读取路径配置异常，回退默认: {e}")
+            logging.error(f"[Path] Failed to read path configuration; falling back to the default: {e}")
             pass
             
     return ANCHOR_USER_DATA_DIR
 
-# 2. 动态获取 USER_DATA_DIR
+# 2. Resolve USER_DATA_DIR dynamically
 USER_DATA_DIR = get_effective_user_data_dir()
 
-# --- 核心目录 --- (这部分保持原样，但它们现在会跟随 USER_DATA_DIR 动态改变)
+# --- Core directories --- (unchanged definitions, now resolved relative to USER_DATA_DIR)
 LOG_DIR = os.path.join(USER_DATA_DIR, 'logs')
 MEMORY_CACHE_DIR = os.path.join(USER_DATA_DIR, 'memory_cache')
 UPLOAD_FILES_DIR = os.path.join(USER_DATA_DIR, 'uploaded_files')
@@ -95,10 +95,10 @@ DEFAULT_THA_DIR = os.path.join(base_path, 'tha_models')
 THA_USER_MODELS_DIR = os.path.join(UPLOAD_FILES_DIR, 'tha_models')
 DEFAULT_SOULX_IMAGES_DIR = os.path.join(base_path, 'default_soulx_images')
 SOULX_IMAGES_DIR = os.path.join(UPLOAD_FILES_DIR, 'soulx_images')
-# --- 跨平台全局Skills路径 ---
+# --- Cross-platform global Skills path ---
 def get_global_skills_dir():
     """
-    获取标准的全局Agent Skills目录，支持跨平台
+    Get the standard global Agent Skills directory across platforms
     """
     home_dir = Path.home()
     if IS_DOCKER:
@@ -112,21 +112,21 @@ def get_global_skills_dir():
 
 SKILLS_DIR = get_global_skills_dir()
 
-# --- 配置文件 ---
+# --- Configuration files ---
 SETTINGS_FILE = os.path.join(USER_DATA_DIR, 'settings.json')
 CONFIG_BASE_PATH = os.path.join(base_path, 'config')
 SETTINGS_TEMPLATE_FILE = os.path.join(CONFIG_BASE_PATH, 'settings_template.json')
 BLOCKLIST_FILE = os.path.join(CONFIG_BASE_PATH, 'blocklist.json')
 
-# --- 静态资源 ---
+# --- Static assets ---
 DEFAULT_VRM_DIR = os.path.join(base_path, 'vrm')
 STATIC_DIR = os.path.join(base_path, "static")
 
-# --- 数据库 ---
+# --- Database ---
 DATABASE_PATH = os.path.join(USER_DATA_DIR, 'super_agent_party.db')
 COVS_PATH = os.path.join(USER_DATA_DIR, "conversations.db")
 
-# 批量创建目录
+# Create directories in batches
 dirs_to_create =[
     USER_DATA_DIR, LOG_DIR, MEMORY_CACHE_DIR, UPLOAD_FILES_DIR, 
     TOOL_TEMP_DIR, AGENT_DIR, KB_DIR, EXT_DIR, 
@@ -139,40 +139,40 @@ for d in set(dirs_to_create):
     except Exception:
         pass
 
-# ================== 新增：路径管理函数 ==================
+# ================== Data path management functions ==================
 def set_custom_user_data_dir(new_path):
-    """设置新的数据目录并写入引导文件"""
+    """Set a new data directory and write the bootstrap file."""
     if IS_DOCKER:
-        return False, "Docker环境下无法修改数据路径"
+        return False, "The data path cannot be changed in Docker"
     
     try:
-        # 1. 转换为绝对路径
+        # 1. Convert to an absolute path
         abs_path = os.path.abspath(new_path)
         
-        # 2. 基本校验：不能是文件，必须是绝对路径
+        # 2. Basic validation: must be an absolute directory path, not a file
         if os.path.isfile(abs_path):
-            return False, "目标路径是一个文件，请输入文件夹路径"
+            return False, "The target path is a file. Enter a directory path instead."
             
-        # 3. 尝试创建并测试写入 (提前发现错误)
+        # 3. Try to create the directory and test write access (catch errors early)
         os.makedirs(abs_path, exist_ok=True)
         test_file = os.path.join(abs_path, '.write_test')
         with open(test_file, 'w') as f:
             f.write('test')
         os.remove(test_file)
         
-        # 4. 写入引导文件
+        # 4. Write the bootstrap file
         os.makedirs(ANCHOR_USER_DATA_DIR, exist_ok=True)
         with open(PATH_REDIRECT_FILE, 'w', encoding='utf-8') as f:
             json.dump({"custom_user_data_dir": abs_path}, f, ensure_ascii=False, indent=2)
             
         return True, abs_path
     except Exception as e:
-        return False, f"路径无效或无权限: {str(e)}"
+        return False, f"Invalid path or insufficient permissions: {str(e)}"
 
 def reset_user_data_dir():
-    """重置回系统默认路径"""
+    """Reset to the system default path."""
     if IS_DOCKER:
-        return False, "Docker环境下无法修改数据路径"
+        return False, "The data path cannot be changed in Docker"
     try:
         if os.path.exists(PATH_REDIRECT_FILE):
             os.remove(PATH_REDIRECT_FILE)
@@ -180,9 +180,9 @@ def reset_user_data_dir():
     except Exception as e:
         return False, str(e)
 
-# ----------------- 3. 关键修复：恢复全局 BLOCKLIST 变量 -----------------
-# 兼容 py/load_files.py 的导入需求
-# 虽然有一点点 I/O，但为了保证不报错，这里必须直接执行
+# ----------------- 3. Restore the global BLOCKLIST variable -----------------
+# Required for imports in py/load_files.py
+# Perform this small amount of I/O immediately to ensure the variable is available
 blocklist_data = []
 if os.path.exists(BLOCKLIST_FILE):
     try:
@@ -192,14 +192,14 @@ if os.path.exists(BLOCKLIST_FILE):
         pass
 BLOCKLIST = set(blocklist_data)
 
-# ----------------- 4. 工具函数 -----------------
+# ----------------- 4. Utility functions -----------------
 
 _cached_default_settings = None
 _db_init_done = False
 _covs_db_init_done = False
 
 def get_blocklist():
-    """保留这个函数供未来使用"""
+    """Reserved for future use."""
     return BLOCKLIST
 
 def configure_host_port(host, port):
@@ -211,7 +211,7 @@ def get_host():
     return HOST or "127.0.0.1"
 
 def get_port():
-    # 优先级：环境变量 > 全局PORT > 默认3456
+    # Priority: environment variable > global PORT > default 3456
     env_port = os.environ.get('DYNAMIC_PORT')
     if env_port:
         return int(env_port)
@@ -236,14 +236,14 @@ def get_default_settings_sync():
         _cached_default_settings = {}
     return _cached_default_settings
 
-# ----------------- Agent Skills 初始化 -----------------
+# ----------------- Agent Skills initialization -----------------
 
 def _copy_default_skills_sync():
-    """同步复制默认技能目录（在独立线程中执行以避免阻塞事件循环）"""
+    """Copy default skills synchronously (run in a separate thread to avoid blocking the event loop)."""
     src_skills_root = os.path.join(base_path, 'skills')
     dst_skills_root = SKILLS_DIR
     if not os.path.isdir(src_skills_root):
-        logging.info("[Skills] 项目根目录无 skills/ 文件夹，跳过初始化复制。")
+        logging.info("[Skills] No skills/ directory in the project root; skipping initial copy.")
         return
     os.makedirs(dst_skills_root, exist_ok=True)
     try:
@@ -253,20 +253,20 @@ def _copy_default_skills_sync():
             dst_path = os.path.join(dst_skills_root, item_name)
             if os.path.isdir(src_path):
                 if os.path.exists(dst_path):
-                    logging.debug(f"[Skills] 目标技能已存在，跳过: {item_name}")
+                    logging.debug(f"[Skills] Destination skill already exists; skipping: {item_name}")
                     continue
                 shutil.copytree(src_path, dst_path)
-                logging.info(f"[Skills] 已安装默认技能: {item_name}")
+                logging.info(f"[Skills] Installed default skill: {item_name}")
             else:
-                logging.debug(f"[Skills] 忽略非文件夹项: {item_name}")
+                logging.debug(f"[Skills] Ignoring non-directory entry: {item_name}")
     except Exception as e:
-        logging.error(f"[Skills] 复制默认技能时发生错误: {e}", exc_info=True)
+        logging.error(f"[Skills] Failed to copy default skills: {e}", exc_info=True)
 
 async def _copy_default_skills():
-    """异步包装：将技能复制操作卸载到独立线程"""
+    """Async wrapper: offload the skill copy operation to a separate thread."""
     await asyncio.to_thread(_copy_default_skills_sync)
 
-# ----------------- 5. 初始化逻辑 -----------------
+# ----------------- 5. Initialization -----------------
 
 async def init_db():
     global _db_init_done
@@ -317,7 +317,7 @@ async def init_covs_db():
         await db.commit()
     _covs_db_init_done = True
 
-# ----------------- 6. 业务功能函数 -----------------
+# ----------------- 6. Application functions -----------------
 
 async def clean_temp_files_task():
     try:
@@ -390,30 +390,30 @@ def convert_to_opus_simple(audio_data):
 
 def convert_to_amr_simple(audio_data: bytes) -> bytes:
     """
-    将音频转换为企业微信 AMR 格式
+    Convert audio to narrowband AMR (8 kHz mono) for legacy compatibility.
     """
     try:
         from pydub import AudioSegment
         import io, os, subprocess, tempfile, shutil
 
-        # 1. 自动定位 ffmpeg
+        # 1. Locate ffmpeg automatically
         ffmpeg_path = shutil.which("ffmpeg")
         if not ffmpeg_path:
-            logging.error("未找到 ffmpeg，请确保已安装并加入环境变量")
+            logging.error("ffmpeg was not found. Install it and add it to PATH.")
             return None
 
-        # 2. 读取音频并标准化 (8000Hz, Mono)
+        # 2. Read and normalize the audio (8000 Hz, mono)
         audio = AudioSegment.from_file(io.BytesIO(audio_data))
         audio = audio.set_frame_rate(8000).set_channels(1)
         
-        # 3. 创建临时文件
+        # 3. Create temporary files
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             audio.export(tmp.name, format="wav")
             wav_name = tmp.name
         amr_name = wav_name.replace(".wav", ".amr")
         
         try:
-            # 4. 执行转换并捕获错误输出
+            # 4. Run the conversion and capture error output
             cmd = [
                 ffmpeg_path, "-y", "-i", wav_name, 
                 "-ar", "8000", "-ab", "12.2k", "-ac", "1", 
@@ -422,9 +422,9 @@ def convert_to_amr_simple(audio_data: bytes) -> bytes:
             process = subprocess.run(cmd, capture_output=True, text=True)
             
             if process.returncode != 0:
-                # 【核心日志】这里会告诉你为什么 exit 8
-                logging.error(f"FFmpeg 转换失败 (Code {process.returncode})")
-                logging.error(f"FFmpeg 错误详情: {process.stderr}")
+                # Diagnostic output explains the conversion failure (including exit code 8)
+                logging.error(f"FFmpeg conversion failed (Code {process.returncode})")
+                logging.error(f"FFmpeg error details: {process.stderr}")
                 return None
             
             with open(amr_name, "rb") as f:
@@ -434,7 +434,7 @@ def convert_to_amr_simple(audio_data: bytes) -> bytes:
             if os.path.exists(amr_name): os.remove(amr_name)
 
     except Exception as e:
-        logging.error(f"AMR 转换流程异常: {e}")
+        logging.error(f"AMR conversion failed: {e}")
         return None
 
 
@@ -451,10 +451,10 @@ def _wrap_pcm_to_wav(pcm_data):
     except Exception:
         return pcm_data
 
-# ----------------- 7. 配置读写 -----------------
+# ----------------- 7. Configuration reading and writing -----------------
 
 def _migrate_old_tha_models():
-    """将旧版THA模型从 uploaded_files/根目录 迁移到 uploaded_files/tha_models/ 子目录"""
+    """Migrate legacy THA models from uploaded_files/ to uploaded_files/tha_models/."""
     if not os.path.isdir(UPLOAD_FILES_DIR):
         return
     target_dir = THA_USER_MODELS_DIR
@@ -462,13 +462,13 @@ def _migrate_old_tha_models():
     
     for entry in os.listdir(UPLOAD_FILES_DIR):
         entry_path = os.path.join(UPLOAD_FILES_DIR, entry)
-        # 跳过 tha_models 子目录自身
+        # Skip the tha_models subdirectory itself
         if entry_path == target_dir:
             continue
-        # 只处理子目录
+        # Only process subdirectories
         if not os.path.isdir(entry_path):
             continue
-        # 检查是否包含 THA 模型文件
+        # Check for THA model files
         onnx_file = os.path.join(entry_path, "model.onnx")
         mlp_dir = os.path.join(entry_path, "model.mlpackage")
         if os.path.exists(onnx_file) or os.path.isdir(mlp_dir):
@@ -477,12 +477,12 @@ def _migrate_old_tha_models():
                 try:
                     import shutil
                     shutil.move(entry_path, dest)
-                    logging.info(f"[Migration] 已迁移THA模型目录: {entry} -> tha_models/{entry}")
+                    logging.info(f"[Migration] Moved THA model directory: {entry} -> tha_models/{entry}")
                 except Exception as e:
-                    logging.warning(f"[Migration] 迁移THA模型失败 {entry}: {e}")
+                    logging.warning(f"[Migration] Failed to migrate THA model {entry}: {e}")
 
 def _cleanup_model_paths_sync(user_settings, has_changes):
-    """同步清理 VRM/THA 模型中文件不存在的残留条目（在独立线程中执行）"""
+    """Remove stale VRM/THA entries whose files are missing (run in a separate thread)."""
     from urllib.parse import urlparse
     
     vrm_config = user_settings.get("VRMConfig", {})
@@ -501,7 +501,7 @@ def _cleanup_model_paths_sync(user_settings, has_changes):
                     cleaned_vrm.append(model)
                 else:
                     has_changes[0] = True
-                    logging.info(f"[Cleanup] 移除无效VRM模型条目: {model.get('name', model.get('id', ''))} (文件不存在: {local_path})")
+                    logging.info(f"[Cleanup] Removing invalid VRM model entry: {model.get('name', model.get('id', ''))} (file missing: {local_path})")
             else:
                 cleaned_vrm.append(model)
         if len(cleaned_vrm) != len(vrm_user_models):
@@ -530,7 +530,7 @@ def _cleanup_model_paths_sync(user_settings, has_changes):
                     cleaned_tha.append(model)
                 else:
                     has_changes[0] = True
-                    logging.info(f"[Cleanup] 移除无效THA模型条目: {model.get('name', model_id)} (目录不存在或缺少model.onnx)")
+                    logging.info(f"[Cleanup] Removing invalid THA model entry: {model.get('name', model_id)} (directory or model.onnx missing)")
             else:
                 cleaned_tha.append(model)
         if len(cleaned_tha) != len(tha_user_models):
@@ -547,7 +547,7 @@ def _cleanup_model_paths_sync(user_settings, has_changes):
                     tha_config["selectedModelId"] = ""
 
 def deep_update(target: dict, source: dict):
-    """递归合并 source 到 target，source 中的值优先。用于防止 autoSaveSettings 覆盖数据库中的完整配置。"""
+    """Recursively merge source into target, preferring source values. Prevent autoSaveSettings from overwriting the complete stored configuration."""
     for key, value in source.items():
         if key not in target:
             target[key] = value
@@ -582,29 +582,29 @@ async def load_settings():
                 
                 merge_defaults(defaults, user_settings)
                 
-                # 清理 VRMConfig.userModels 和 THAConfig.userModels 中文件已不存在的残留条目（线程化避免阻塞事件循环）
+                # Remove stale entries with missing files from VRMConfig.userModels and THAConfig.userModels in a thread
                 await asyncio.to_thread(
                     _cleanup_model_paths_sync, user_settings, has_changes
                 )
                 
-                # 迁移旧版THA模型: 从 uploaded_files/根目录 迁移到 uploaded_files/tha_models/
+                # Migrate legacy THA models from uploaded_files/ to uploaded_files/tha_models/
                 await asyncio.to_thread(_migrate_old_tha_models)
                 
                 if has_changes[0]:
                     await save_settings(user_settings)
                 return user_settings
             else:
-                # 尝试从旧 settings.json 迁移（兼容旧版本数据）
+                # Try migrating the old settings.json for backwards compatibility
                 if os.path.exists(SETTINGS_FILE):
                     try:
                         with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
                             user_settings = json.load(f)
-                        logging.info(f"从旧版 settings.json 迁移用户设置: {SETTINGS_FILE}")
+                        logging.info(f"Migrating user settings from legacy settings.json: {SETTINGS_FILE}")
                         merge_defaults(defaults, user_settings)
                         await save_settings(user_settings)
                         return user_settings
                     except Exception as e:
-                        logging.warning(f"从旧版 settings.json 迁移失败: {e}")
+                        logging.warning(f"Failed to migrate legacy settings.json: {e}")
                 
                 if IS_DOCKER:
                     defaults["isdocker"] = True

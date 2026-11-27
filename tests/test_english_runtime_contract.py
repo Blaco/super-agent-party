@@ -1,4 +1,5 @@
 """Regression checks for the English-only runtime and first-run defaults."""
+import ast
 import json
 from pathlib import Path
 import unittest
@@ -24,6 +25,22 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         locale_script = (ROOT / "static/js/locales.js").read_text(encoding="utf-8")
         self.assertNotIn('js/locales/zh-CN.js', html)
         self.assertNotIn("lang_zhCN", locale_script)
+
+    def test_settings_sleep_and_vts_modules_are_english(self):
+        for relative in ("py/get_setting.py", "py/sleep_guard.py", "py/vts_manager.py"):
+            with self.subTest(module=relative):
+                source = (ROOT / relative).read_text(encoding="utf-8")
+                ast.parse(source, filename=relative)
+                self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
+
+    def test_sleep_and_vts_integration_contracts(self):
+        sleep_source = (ROOT / "py/sleep_guard.py").read_text(encoding="utf-8")
+        vts_source = (ROOT / "py/vts_manager.py").read_text(encoding="utf-8")
+        self.assertIn("SetThreadExecutionState(flags)", sleep_source)
+        self.assertIn("'--why=Application is running'", sleep_source)
+        self.assertIn('"apiName": "VTubeStudioPublicAPI"', vts_source)
+        self.assertIn('"messageType": "InjectParameterDataRequest"', vts_source)
+        self.assertIn("pcm_data = pcm_data[:-1]", vts_source)
 
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")

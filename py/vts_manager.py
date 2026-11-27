@@ -34,7 +34,7 @@ class VTSManager:
         self.sample_rate = 24000     
         self.frame_ms = 0.035        
         
-        # 匹配 TTS 的真实高音量
+        # Match the high volume of actual TTS audio
         self.rms_threshold = 15000.0  
         self.smooth_factor = 0.45     
 
@@ -70,10 +70,10 @@ class VTSManager:
             await self.authenticate()
             if self.worker_task is None or self.worker_task.done():
                 self.worker_task = asyncio.create_task(self.vts_worker())
-            logger.info("VTS: 连接并初始化成功")
+            logger.info("VTS: Connected and initialized successfully")
             return True
         except Exception as e:
-            logger.error(f"VTS: 连接失败: {e}")
+            logger.error(f"VTS: Connection failed: {e}")
             return False
 
     async def send(self, msg_type, data):
@@ -136,11 +136,11 @@ class VTSManager:
             try:
                 pcm_data = await self.audio_queue.get()
                 
-                # ====== 核心修复区：处理单数个字节的情况 ======
+                # ====== Handle an odd number of PCM bytes ======
                 if len(pcm_data) % 2 != 0:
-                    pcm_data = pcm_data[:-1] # 如果是单数，丢弃最后 1 个字节
+                    pcm_data = pcm_data[:-1] # Drop the last byte if the length is odd
                 
-                if not pcm_data: # 如果丢弃后为空，跳过
+                if not pcm_data: # Skip if no bytes remain
                     self.audio_queue.task_done()
                     continue
                 # ===============================================
@@ -187,7 +187,7 @@ class VTSManager:
                     debug_counter += 1
                     if debug_counter % 10 == 0 and rms >= 400:
                         pass
-                        # logger.info(f"[LipSync Debug] RMS: {rms:.1f} | 缩放后音量: {volume_factor:.2f} | 元音比例: {vowel_ratio:.2f} | 最终计算-> 张嘴: {self.mouth_value:.2f}")
+                        # logger.info(f"[LipSync Debug] RMS: {rms:.1f} | Scaled volume: {volume_factor:.2f} | Vowel ratio: {vowel_ratio:.2f} | Final mouth opening: {self.mouth_value:.2f}")
 
                     if self.vts_ws:
                         msg = {
@@ -203,12 +203,12 @@ class VTSManager:
                         try: 
                             await self.vts_ws.send(json.dumps(msg))
                         except Exception as e: 
-                            logger.error(f"[VTS] 发送 WS 数据失败: {e}")
+                            logger.error(f"[VTS] Failed to send WebSocket data: {e}")
                             
                     await asyncio.sleep(self.frame_ms)
                 self.audio_queue.task_done()
             except Exception as e:
-                logger.error(f"[VTS] Worker 全局崩溃，正在重试: {e}", exc_info=True)
+                logger.error(f"[VTS] Worker failed; retrying: {e}", exc_info=True)
                 await asyncio.sleep(0.1)
 
     async def listen_vts(self):
