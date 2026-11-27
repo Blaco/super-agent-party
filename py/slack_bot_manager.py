@@ -17,7 +17,7 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel
 from py.get_setting import get_port, load_settings
 
-# ------------------ 配置模型 ------------------
+# ------------------ Configuration model ------------------
 class SlackBotConfig(BaseModel):
     bot_token: str
     app_token: str
@@ -31,7 +31,7 @@ class SlackBotConfig(BaseModel):
     behaviorSettings: Optional[Any] = None 
     behaviorTargetChatIds: List[str] = []
 
-# ------------------ Slack 机器人管理器 ------------------
+# ------------------ Slack bot manager ------------------
 class SlackBotManager:
     def __init__(self):
         self.bot_thread: Optional[threading.Thread] = None
@@ -43,16 +43,16 @@ class SlackBotManager:
         
         self.bot_user_id: Optional[str] = None
         
-        # 状态存储
+        # State storage
         self.memory: Dict[str, List[dict]] = {}      
         self.async_tools: Dict[str, List[str]] = {}  
         self.file_links: Dict[str, List[str]] = {}
-        # 核心：追踪每个频道正在运行的任务，实现打断功能
+        # Track running tasks by channel to support interruption
         self.active_tasks: Dict[str, asyncio.Task] = {}
 
     def start_bot(self, config: SlackBotConfig):
         if self.is_running:
-            raise RuntimeError("Slack 机器人已在运行")
+            raise RuntimeError("Slack bot is already running")
         self.config = config
         self._ready_complete.clear()
 
@@ -63,7 +63,7 @@ class SlackBotManager:
 
         if not self._ready_complete.wait(timeout=30):
             self.stop_bot()
-            raise RuntimeError("Slack 机器人启动超时")
+            raise RuntimeError("Slack bot startup timed out")
 
     def _run_bot_thread(self, config: SlackBotConfig):
         self.loop = asyncio.new_event_loop()
@@ -81,7 +81,7 @@ class SlackBotManager:
                 target_ids = config.behaviorTargetChatIds or settings.get("slackBotConfig", {}).get("behaviorTargetChatIds", [])
                 
                 if behavior_data:
-                    logging.info(f"Slack 线程: 同步行为配置... 目标频道数: {len(target_ids)}")
+                    logging.info(f"Slack thread: syncing behavior configuration... target channels: {len(target_ids)}")
                     global_behavior_engine.update_config(behavior_data, {"slack": target_ids})
                     config.behaviorSettings = behavior_data if isinstance(behavior_data, BehaviorSettings) else BehaviorSettings(**behavior_data)
                     config.behaviorTargetChatIds = target_ids
@@ -92,14 +92,14 @@ class SlackBotManager:
                 await self._async_start(config)
 
             except Exception as e:
-                logging.exception(f"Slack 启动过程异常: {e}")
+                logging.exception(f"Slack startup failed: {e}")
                 self.is_running = False 
                 self._ready_complete.set()
 
         try:
             self.loop.run_until_complete(main_startup())
         except Exception as e:
-            logging.error(f"Slack 线程 Loop 异常: {e}")
+            logging.error(f"Slack thread event loop failed: {e}")
         finally:
             self._cleanup()
 
@@ -117,7 +117,7 @@ class SlackBotManager:
                 if event.get("user") == self.bot_user_id or event.get("bot_id") or "subtype" in event:
                     return
                 if event.get("type") in ["message", "app_mention"]:
-                    # 调度消息处理入口
+                    # Dispatch message processing
                     await self._dispatch_message(event, web_client)
 
         self.socket_client.socket_mode_request_listeners.append(process_listener)
@@ -138,7 +138,7 @@ class SlackBotManager:
         self.is_running = False
         if self.socket_client:
             asyncio.run_coroutine_threadsafe(self.socket_client.close(), self.loop)
-        # 取消所有活跃任务
+        # Cancel all active tasks
         for task in self.active_tasks.values():
             task.cancel()
         if self.loop:
@@ -147,12 +147,12 @@ class SlackBotManager:
     def get_status(self):
         return {"is_running": self.is_running}
 
-    # ---------- 消息调度入口（含打断逻辑） ----------
+    # ---------- Message dispatch (including interruption) ----------
     async def _dispatch_message(self, event: dict, web_client: AsyncWebClient):
         cid = event["channel"]
         text = event.get("text", "").strip()
 
-        # 1. 快捷指令检查（统一快捷指令，受系统设置全局开关控制）
+        # 1. Check shared shortcuts (controlled by the global shortcut switch)
         from py import shortcut_commands
         if await shortcut_commands.im_shortcuts_enabled():
             action = shortcut_commands.parse_im_action(text)
@@ -186,25 +186,25 @@ class SlackBotManager:
                 await web_client.chat_postMessage(channel=cid, text=await shortcut_commands.build_mode_info_text("en"))
                 return
 
-        # 2. 如果该频道有正在运行的任务，打断它
+        # 2. Interrupt any running task for this channel
         if cid in self.active_tasks:
-            logging.info(f"Slack: 检测到新消息，打断频道 {cid} 的旧任务")
+            logging.info(f"Slack: new message detected; interrupting the previous task in channel {cid}")
             self.active_tasks[cid].cancel()
 
-        # 3. 创建新任务
+        # 3. Create a new task
         new_task = asyncio.create_task(self._handle_message_logic(event, web_client))
         self.active_tasks[cid] = new_task
         
         try:
             await new_task
         except asyncio.CancelledError:
-            logging.info(f"Slack: 频道 {cid} 的任务已被打断/取消")
+            logging.info(f"Slack: task in channel {cid} was interrupted or cancelled")
         finally:
             if self.active_tasks.get(cid) == new_task:
                 self.active_tasks.pop(cid, None)
 
     async def _handle_message_logic(self, event: dict, web_client: AsyncWebClient):
-        """核心处理：AI 逻辑部分"""
+        """Core AI message processing."""
         cid = event["channel"]
         text = event.get("text", "").strip()
 
@@ -232,7 +232,7 @@ class SlackBotManager:
 
         state = {"text_buffer": "", "image_buffer": "", "image_cache": []}
         
-        # 发送占位
+        # Send a placeholder
         initial_resp = await web_client.chat_postMessage(channel=cid, text="...")
         reply_ts = initial_resp["ts"]
 
@@ -259,7 +259,7 @@ class SlackBotManager:
                 if not chunk.choices: continue
                 delta = chunk.choices[0].delta
 
-                # 工具逻辑
+                # Tool handling
                 if getattr(delta, "tool_link", None) and settings.get("tools", {}).get("toolMemorandum", {}).get("enabled"):
                     if delta.tool_link not in self.file_links[cid]: self.file_links[cid].append(delta.tool_link)
                 
@@ -276,7 +276,7 @@ class SlackBotManager:
                 state["text_buffer"] += display_content
                 state["image_buffer"] += display_content
 
-                # 控制更新频率
+                # Control update frequency
                 now = time.time()
                 if (now - last_update_time > 1.2) or any(sep in content for sep in self.config.separators):
                     seg = self._clean_text(state["text_buffer"])
@@ -287,7 +287,7 @@ class SlackBotManager:
             full_content = "".join(full_response)
             await web_client.chat_update(channel=cid, ts=reply_ts, text=self._clean_text(full_content) or "Reply complete.")
 
-            # 图片提取与发送
+            # Extract and send images
             self._extract_images(state)
             for img_url in state["image_cache"]:
                 await self._send_image(cid, img_url, web_client)
@@ -304,7 +304,7 @@ class SlackBotManager:
                 logging.error(f"Slack Bot Logic Error: {e}")
                 await web_client.chat_update(channel=cid, ts=reply_ts, text=f"❌ Error: {e}")
 
-    # ---------- 工具函数 (保持原样) ----------
+    # ---------- Helper functions (unchanged) ----------
     def _extract_images(self, state: Dict[str, Any]):
         pattern = r'!\[.*?\]\((https?://[^\s)]+)'
         for m in re.finditer(pattern, state["image_buffer"]):
@@ -331,7 +331,7 @@ class SlackBotManager:
             async with aiohttp.ClientSession() as s:
                 async with s.post(f"http://127.0.0.1:{get_port()}/tts", json=payload) as r:
                     if r.status == 200:
-                        await web_client.files_upload_v2(channel=cid, file=await r.read(), filename="voice.mp3", title="语音回复")
+                        await web_client.files_upload_v2(channel=cid, file=await r.read(), filename="voice.mp3", title="Voice reply")
         except: pass
 
     def update_behavior_config(self, config: SlackBotConfig):

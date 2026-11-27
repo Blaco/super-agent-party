@@ -50,3 +50,8 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — file and image tools
 
 - The document and image ingestion schemas, parser errors, file headers, category labels and comments in py/load_files.py are now English. File extensions, parser logic, user content, and existing tool contracts remain intact. Full language inventory and runtime file-format tests remain outstanding. No new package was requested.
+
+## Follow-up source checkpoint — shortcuts and optional messaging
+
+- Source audit for `c7f64e8a708eb95fde36d37ddcba14aa83277b59` passed: https://github.com/Blaco/super-agent-party/actions/runs/45916332308.
+- Shortcut help, command aliases and retained Western messaging adapters now use English system text; removed stale platform mappings. User-authored text and English command behavior remain intact. New CI and live service checks pending. No new Windows package requested.

@@ -25,10 +25,10 @@ class TelegramClient:
         self.offset = 0
         self.session: Optional[aiohttp.ClientSession] = None
         self.port = get_port()
-        # 核心：用于管理每个 chat_id 的当前任务，实现打断功能
+        # Track the current task for each chat_id to support interruption
         self.active_tasks: Dict[int, asyncio.Task] = {}
         
-        # --- 注册到行为引擎 ---
+        # --- Register with the behavior engine ---
         from py.behavior_engine import global_behavior_engine
         global_behavior_engine.register_handler("telegram", self.execute_behavior_event)
 
@@ -43,7 +43,7 @@ class TelegramClient:
                 manager._ready_complete.set()
                 manager.is_running = True
 
-        logging.info("Telegram 轮询开始")
+        logging.info("Telegram polling started")
         try:
             while not self._shutdown_requested:
                 try:
@@ -73,7 +73,7 @@ class TelegramClient:
         self.offset = u["update_id"] + 1
         chat_id = msg["chat"]["id"]
 
-        # 快捷指令检查与打断（统一快捷指令，受系统设置全局开关控制）
+        # Check shared shortcuts and interruption (controlled by the global shortcut switch)
         if "text" in msg:
             from py import shortcut_commands
             text = msg["text"].strip()
@@ -109,23 +109,23 @@ class TelegramClient:
                     await self._send_text(chat_id, await shortcut_commands.build_mode_info_text("en"))
                     return
 
-        # 自动打断旧任务
+        # Automatically interrupt the previous task
         if chat_id in self.active_tasks:
-            logging.info(f"Telegram: 检测到新消息，打断会话 {chat_id} 的旧任务")
+            logging.info(f"Telegram: new message detected; interrupting the previous task in chat {chat_id}")
             self.active_tasks[chat_id].cancel()
 
-        # 创建新处理任务
+        # Create a new processing task
         task = asyncio.create_task(self._dispatch_message(chat_id, msg))
         self.active_tasks[chat_id] = task
         
-        # 任务清理
+        # Task cleanup
         def _on_finish(_):
             if self.active_tasks.get(chat_id) == task:
                 self.active_tasks.pop(chat_id, None)
         task.add_done_callback(_on_finish)
 
     async def _dispatch_message(self, chat_id: int, msg: dict):
-        """异步分发消息处理"""
+        """Dispatch message processing asynchronously."""
         try:
             if "text" in msg:
                 await self._handle_text(chat_id, msg)
@@ -134,9 +134,9 @@ class TelegramClient:
             elif "voice" in msg or "audio" in msg:
                 await self._handle_voice(chat_id, msg)
         except asyncio.CancelledError:
-            logging.info(f"Telegram 会话 {chat_id} 的任务已被打断")
+            logging.info(f"Telegram task in chat {chat_id} was interrupted")
         except Exception as e:
-            logging.error(f"Telegram 消息处理异常: {e}")
+            logging.error(f"Telegram message processing failed: {e}")
 
     async def _handle_text(self, chat_id: int, msg: dict):
         text = msg["text"]
@@ -174,7 +174,7 @@ class TelegramClient:
         base64_data = base64.b64encode(img_bytes).decode()
         user_content = [
             {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_data}"}},
-            {"type": "text", "text": "用户发送了一张图片"}
+            {"type": "text", "text": "The user sent an image"}
         ]
         await self._process_llm(chat_id, "", user_content, msg.get("message_id"))
 
@@ -226,11 +226,11 @@ class TelegramClient:
                 content = getattr(delta, 'content', '') or ""
                 reasoning = getattr(delta, 'reasoning_content', '') or ""
                 
-                # 捕获 Omni 音频
+                # Capture Omni audio
                 if hasattr(delta, "audio") and delta.audio and "data" in delta.audio:
                     state["audio_buffer"].append(delta.audio["data"])
 
-                # 处理 Tool 逻辑
+                # Tool handling
                 if getattr(delta, 'tool_link', '') and settings["tools"]["toolMemorandum"]["enabled"]:
                     self.fileLinks[chat_id].append(delta.tool_link)
                 if getattr(delta, 'async_tool_id', ''):
@@ -242,7 +242,7 @@ class TelegramClient:
                 state["text_buffer"] += seg
                 full_response.append(content)
 
-                # 分段发送文本 (非 TTS 模式)
+                # Send text in segments (non-TTS mode)
                 if state["text_buffer"] and not self.enableTTS:
                     buffer = state["text_buffer"]
                     split_pos = -1
@@ -258,7 +258,7 @@ class TelegramClient:
                         clean = self._clean_text(chunk_to_send)
                         if clean: await self._send_text(chat_id, clean)
 
-            # 扫尾
+            # Flush remaining output
             if state["text_buffer"] and not self.enableTTS:
                 clean = self._clean_text(state["text_buffer"])
                 if clean: await self._send_text(chat_id, clean)
@@ -266,7 +266,7 @@ class TelegramClient:
             self._extract_images("".join(full_response), state)
             for img_url in state["image_cache"]: await self._send_photo(chat_id, img_url)
 
-            # 处理 Omni 音频
+            # Handle Omni audio
             has_omni = False
             if state["audio_buffer"]:
                 final_audio, is_opus = await asyncio.to_thread(convert_to_opus_simple, base64.b64decode("".join(state["audio_buffer"])))
@@ -283,8 +283,8 @@ class TelegramClient:
                 
         except Exception as e:
             if not isinstance(e, asyncio.CancelledError):
-                logging.error(f"LLM 处理异常: {e}")
-                await self._send_text(chat_id, f"处理出错: {e}")
+                logging.error(f"LLM processing failed: {e}")
+                await self._send_text(chat_id, f"Processing failed: {e}")
 
     async def _send_omni_voice(self, chat_id: int, audio_data: bytes, is_opus: bool):
         try:

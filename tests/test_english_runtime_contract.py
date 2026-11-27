@@ -75,6 +75,33 @@ class EnglishRuntimeContractTests(unittest.TestCase):
         self.assertIn('"messageType": "InjectParameterDataRequest"', vts_source)
         self.assertIn("pcm_data = pcm_data[:-1]", vts_source)
 
+    def test_english_shortcuts_and_optional_messaging(self):
+        import runpy
+        for relative in ("py/shortcut_commands.py", "py/discord_bot_manager.py",
+                         "py/telegram_client.py", "py/telegram_bot_manager.py",
+                         "py/slack_bot_manager.py"):
+            source = (ROOT / relative).read_text(encoding="utf-8")
+            ast.parse(source, filename=relative)
+            self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source), relative)
+        commands = runpy.run_path(str(ROOT / "py/shortcut_commands.py"))
+        self.assertEqual(set(commands["PLATFORM_CONFIG_KEY"]), {"discord", "telegram", "slack"})
+        self.assertEqual(commands["build_help_text"](), commands["build_help_text"]("zh"))
+        self.assertIn("Available shortcut commands:", commands["build_help_text"]())
+        for command, action in (("/?", "help"), ("/restart", "reset"), ("/stop", "stop"),
+                                ("/retry", "retry"), ("/model test", "model"),
+                                ("/persona test", "personality"), ("/skills", "skills"),
+                                ("/plan", "mode"), ("/read", "mode"), ("/edit", "mode"),
+                                ("/yolo", "mode"), ("/cowork", "mode"), ("/goal", "mode")):
+            self.assertEqual(commands["parse_im_action"](command), action)
+        for command in ("/sub", "/unsub"):
+            self.assertEqual(commands["parse_subscribe_action"](command), command[1:])
+        self.assertFalse(commands["is_shortcuts_enabled"]({"systemSettings": {"enableShortcuts": False}}))
+        source = (ROOT / "static/js/vue_methods.js").read_text(encoding="utf-8")
+        handler = source.split("    handleShortcutCommand(raw) {", 1)[1].split("    async sendMessage(", 1)[0]
+        self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in handler))
+        for mode, value in commands["MODE_COMMAND_MAP"].items():
+            self.assertIn(f"'{mode}':'{value}'", handler)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

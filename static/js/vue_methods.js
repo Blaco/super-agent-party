@@ -2698,23 +2698,23 @@ formatMessage(content, index) {
         const arg = raw.slice(1 + parts[0].length).trim();
         const inAny = (list) => list.includes(cmd);
         try {
-            if (inAny(['/help', '/帮助', '/?'])) { this.showShortcutHelp = true; return true; }
-            if (inAny(['/stop', '/停止'])) { this.stopGenerate(); return true; }
-            if (inAny(['/new', '/reset', '/restart', '/重启', '/新建'])) { this.clearMessages(); return true; }
-            if (inAny(['/retry', '/重试'])) { this.shortcutRetry(); return true; }
-            if (inAny(['/model', '/模型'])) { this.shortcutSwitchModel(arg); return true; }
-            if (inAny(['/personality', '/persona', '/角色'])) { this.shortcutSwitchPersonality(arg); return true; }
-            if (inAny(['/skills', '/技能'])) { this.shortcutShowSkills(); return true; }
-            const modeMap = {'/plan':'plan','/计划':'plan','/read':'default','/只读':'default','/edit':'auto-approve','/编辑':'auto-approve','/yolo':'yolo','/cowork':'cowork','/协作':'cowork','/goal':'goal','/目标':'goal'};
+            if (inAny(['/help', '/?'])) { this.showShortcutHelp = true; return true; }
+            if (inAny(['/stop'])) { this.stopGenerate(); return true; }
+            if (inAny(['/new', '/reset', '/restart'])) { this.clearMessages(); return true; }
+            if (inAny(['/retry'])) { this.shortcutRetry(); return true; }
+            if (inAny(['/model'])) { this.shortcutSwitchModel(arg); return true; }
+            if (inAny(['/personality', '/persona'])) { this.shortcutSwitchPersonality(arg); return true; }
+            if (inAny(['/skills'])) { this.shortcutShowSkills(); return true; }
+            const modeMap = {'/plan':'plan':'plan','/read':'default':'default','/edit':'auto-approve':'auto-approve','/yolo':'yolo','/cowork':'cowork':'cowork','/goal':'goal':'goal'};
             if (modeMap[cmd]) { this.shortcutSwitchMode(modeMap[cmd]); return true; }
         } catch (e) {
-            console.error('快捷指令处理异常:', e);
+            console.error('Shortcut command failed:', e);
             return true;
         }
-        // 其它 /<技能名> 注入及 # / @ 指令交由后端 / 正常流程处理
+        // Other skill injection (/<skill-name>) and # / @ commands use the normal backend flow
         return false;
     },
-    // /retry：重新生成最后一条助手回复
+    // /retry: regenerate the last assistant reply
     shortcutRetry() {
         let idx = -1;
         for (let i = this.messages.length - 1; i >= 0; i--) {
@@ -2723,7 +2723,7 @@ formatMessage(content, index) {
         if (idx > 0) { this.rewrite(idx); }
         else { showNotification(this.t('cmd_nothing_to_retry'), 'warning'); }
     },
-    // /model：无参打开模型选择，有参尝试匹配并切换
+    // /model: open the model picker without an argument, or match and switch
     shortcutSwitchModel(arg) {
         if (!arg) { this.showModelDialog = true; return; }
         const q = arg.toLowerCase().trim();
@@ -2744,7 +2744,7 @@ formatMessage(content, index) {
             showNotification(this.t('cmd_model_notfound'), 'warning');
         }
     },
-    // /personality：无参提示，有参匹配角色卡 / 系统提示词
+    // /personality: show the picker or match a character card / system prompt
     shortcutSwitchPersonality(arg) {
         if (!arg) {
             this.activeMenu = 'role';
@@ -2769,13 +2769,13 @@ formatMessage(content, index) {
         }
         showNotification(this.t('cmd_personality_notfound'), 'warning');
     },
-    // /skills：跳转到技能管理
+    // /skills: open skill management
     shortcutShowSkills() {
         this.activeMenu = 'toolkit';
         this.subMenu = 'CLI';
         this.activeCLITab = 'skills';
     },
-    // /plan /read /edit /yolo /cowork /goal：切换当前引擎的权限模式（需开启电脑命令行控制）
+    // /plan /read /edit /yolo /cowork /goal: switch current engine permission mode (requires CLI control)
     shortcutSwitchMode(modeValue) {
         if (!this.CLISettings || !this.CLISettings.enabled) {
             showNotification(this.t('cmd_mode_need_cli'), 'warning');

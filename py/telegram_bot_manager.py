@@ -31,9 +31,9 @@ class TelegramBotManager:
 
     def start_bot(self, config: TelegramBotConfig):
         if self.bot_thread and self.bot_thread.is_alive():
-            raise Exception("Telegram 机器人正在停止中，请稍后")
+            raise Exception("Telegram bot is stopping. Try again shortly.")
         if self.is_running:
-            raise Exception("Telegram 机器人已在运行")
+            raise Exception("Telegram bot is already running")
         
         self.config = config
         self._shutdown_event.clear()
@@ -49,13 +49,13 @@ class TelegramBotManager:
 
         if not self._startup_complete.wait(timeout=30):
             self.stop_bot()
-            raise Exception("Telegram 机器人连接超时")
+            raise Exception("Telegram bot connection timed out")
         if self._startup_error:
             self.stop_bot()
-            raise Exception(f"Telegram 机器人启动失败: {self._startup_error}")
+            raise Exception(f"Telegram bot failed to start: {self._startup_error}")
         if not self._ready_complete.wait(timeout=30):
             self.stop_bot()
-            raise Exception("Telegram 机器人就绪超时")
+            raise Exception("Telegram bot readiness timed out")
 
     def _run_bot_thread(self, config: TelegramBotConfig):
         self.loop = asyncio.new_event_loop()
@@ -67,14 +67,14 @@ class TelegramBotManager:
                 from py.behavior_engine import global_behavior_engine
                 settings = await load_settings()
                 
-                # 同步行为配置
+                # Sync behavior configuration
                 behavior_data = settings.get("behaviorSettings", {})
                 target_ids = config.behaviorTargetChatIds or settings.get("telegramBotConfig", {}).get("behaviorTargetChatIds", [])
                 if behavior_data:
                     global_behavior_engine.update_config(behavior_data, {"telegram": target_ids})
 
                 self.bot_client = TelegramClient()
-                # 属性赋值
+                # Assign properties
                 for attr in ["TelegramAgent", "memoryLimit", "reasoningVisible", "quickRestart", "enableTTS", "wakeWord", "bot_token"]:
                     setattr(self.bot_client, attr, getattr(config, attr))
                 self.bot_client.separators = config.separators or []
@@ -115,7 +115,7 @@ class TelegramBotManager:
         self.is_running = False
         if self.bot_client:
             self.bot_client._shutdown_requested = True
-            # 取消所有活跃任务
+            # Cancel all active tasks
             for task in self.bot_client.active_tasks.values():
                 task.cancel()
         if self.bot_thread and self.bot_thread.is_alive():
