@@ -459,7 +459,7 @@ window.lang_enUS = {
             "description": "The age of the person",
             "minimum": 0,
             "maximum": 120,
-            "default": 30,
+            "default": 30
         }
     },
     "required": ["name", "age"]

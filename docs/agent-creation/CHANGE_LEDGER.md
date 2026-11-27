@@ -319,3 +319,8 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Alternate browser chat regional cleanup and JSON example correction
 
 - Parent `2f6c04f1dc26b5bbe6fa030351e53b612e02662a`. The previous commit's curated vendor test failed because static/chat.html still used four retired messaging labels. Remove those unsupported task-delivery options and their remaining locale keys while retaining Telegram, Discord, Slack and implicit chat delivery. Remove the obsolete Chinese locale script reference and obsolete regional community/documentation links from the browser chat license dialog. Preserve upstream GitHub, AGPL notice/link and upstream licensing email; remove duplicate Chinese translation of the license/contact notice, not attribution. English task dialog fallback. Correct the HTTP headers example to use actual JSON double quotes and strengthen the parsing test. Add alternate chat regression checks. Existing task routing, saved configurations and user data unchanged. CI rerun required; previous failure recorded at https://github.com/Blaco/super-agent-party/actions/runs/45915136800. No build requested. Revert for rollback.
+
+
+## 2026-11-26 — Correct trailing comma in HTTP body example
+
+- Parent `86c0c2fc6962038125946968a04f115a2d3b9510`. The stricter JSON sample regression test in run 45915240498 caught an inherited trailing comma after the age default. Remove it from the bodyPlaceholder in static/js/locales/en-US.js. Both example objects now parse as strict JSON in the precommit check; no HTTP execution, endpoint or permission change. Rerun source CI. Revert for rollback. No build requested.
