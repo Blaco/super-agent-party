@@ -4989,7 +4989,7 @@ body {
 /* Overall scrollbar dimensions */
 .log-container::-webkit-scrollbar {
   width: 10px;  /* Vertical scrollbar width */
-  height: 10px; /* 水平滚动条高度 */
+  height: 10px; /* Horizontal scrollbar height */
 }
 
 /* Scrollbar track (background) */
@@ -5803,21 +5803,21 @@ body {
 }
 
 .a2ui-list-meta .tag {
-  /* 使用透明度混合的主色，适配任何背景 */
+  /* Use the primary color blended with transparency to suit any background */
   background-color: var(--el-color-primary-light-9); 
   color: var(--el-color-primary);
   padding: 2px 6px;
   border-radius: 4px;
   margin-right: 8px;
   font-weight: 500;
-  /* 确保在深色模式下 Tag 不会太刺眼 */
+  /* Ensure tags are not too bright in dark mode */
   filter: brightness(0.95);
 }
 
-/* 修复 A2UI 内 Markdown 内容的间距 */
+/* Fix Markdown content spacing inside A2UI */
 .a2ui-text-content p, 
 .a2ui-card-desc p {
-  margin-bottom: 8px; /* 减小段落间距 */
+  margin-bottom: 8px; /* Reduce paragraph spacing */
   margin-top: 0;
 }
 .a2ui-text-content p:last-child, 
@@ -5826,16 +5826,16 @@ body {
 }
 .a2ui-text-content ul, 
 .a2ui-card-desc ul {
-  padding-left: 20px; /* 确保列表符号显示 */
+  padding-left: 20px; /* Ensure list markers are visible */
   margin: 5px 0;
 }
 
 /* ========================================= */
-/* A2UI 新增交互组件样式 (Form Controls) */
+/* A2UI additional interactive component styles (Form Controls) */
 /* ========================================= */
 
-/* 1. 单选框 & 多选框组 (Radio & Checkbox) */
-/* 让选项组自动换行，避免手机端溢出 */
+/* 1. Radio and checkbox groups */
+/* Allow option groups to wrap and avoid overflow on mobile */
 .a2ui-root .el-radio-group,
 .a2ui-root .el-checkbox-group {
   display: flex;
@@ -5844,23 +5844,23 @@ body {
   width: 100%;
 }
 
-/* 增强带边框的选项样式 (使其看起来像小卡片) */
+/* Enhance bordered option styles (make them look like small cards) */
 .a2ui-root .el-radio.is-bordered,
 .a2ui-root .el-checkbox.is-bordered {
-  margin-right: 0 !important; /* 移除 Element 默认右边距，改用 gap 控制 */
-  background-color: rgba(125, 125, 125, 0.04); /* 微弱的背景填充 */
-  border-color: rgba(128, 128, 128, 0.2);     /* 半透明边框 */
+  margin-right: 0 !important; /* Remove Element default right margin; use gap instead */
+  background-color: rgba(125, 125, 125, 0.04); /* Subtle background fill */
+  border-color: rgba(128, 128, 128, 0.2);     /* Translucent border */
   transition: all 0.2s;
 }
 
-/* 选中状态：使用主题主色，并增加不透明度 */
+/* Selected state: use theme primary color and increase opacity */
 .a2ui-root .el-radio.is-bordered.is-checked,
 .a2ui-root .el-checkbox.is-bordered.is-checked {
   background-color: var(--el-color-primary-light-9);
   border-color: var(--el-color-primary);
 }
 
-/* 2. 评分组件 (Rate) */
+/* 2. Rating component (Rate) */
 .a2ui-root .el-rate {
   height: auto;
   padding: 5px 0;
@@ -5868,37 +5868,37 @@ body {
   align-items: center;
 }
 .a2ui-root .el-rate__text {
-  /* 确保评分后的文字 (如"满意") 颜色跟随主题 */
+  /* Ensure rating text (e.g. "Satisfied") follows the theme color */
   color: var(--el-text-color-regular) !important;
   margin-left: 10px;
 }
 
-/* 3. 滑块组件 (Slider) */
+/* 3. Slider component */
 .a2ui-root .el-slider__runway {
-  /* 滑块轨道背景适配 */
+  /* Adapt slider track background */
   background-color: var(--el-border-color-lighter);
 }
-/* 修复滑块输入框在某些主题下的背景 */
+/* Fix slider input background in certain themes */
 .a2ui-root .el-slider__input .el-input__wrapper {
   background-color: transparent; 
   box-shadow: 0 0 0 1px var(--el-border-color) inset;
 }
 
-/* 4. 警告/提示条 (Alert) */
+/* 4. Alert component */
 .a2ui-root .el-alert {
   margin: 0;
   border: 1px solid transparent;
-  /* 稍微圆润一点，符合聊天气泡风格 */
+  /* Slightly round the corners to match chat bubbles */
   border-radius: 8px;
 }
 
-/* 针对不同类型的 Alert 微调背景透明度 (可选，Element Plus 默认其实不错) */
-/* 这里主要是为了修复 Markdown 在 Alert 里的边距问题 */
+/* Fine-tune background opacity for different alert types (optional; Element Plus defaults are good) */
+/* Mainly fix Markdown margins inside alerts */
 .a2ui-root .el-alert .el-alert__content {
-  width: 100%; /* 确保内容占满 */
+  width: 100%; /* Ensure content fills available width */
 }
 
-/* 修复：Alert 内部 Markdown <p> 标签会导致垂直间距过大 */
+/* Fix excessive vertical spacing caused by Markdown <p> tags inside alerts */
 .a2ui-root .el-alert .el-alert__description p {
   margin: 4px 0;
   line-height: 1.5;
@@ -5910,59 +5910,59 @@ body {
   margin-bottom: 0;
 }
 
-/* 5. 日期选择器 (DatePicker) */
+/* 5. Date picker (DatePicker) */
 .a2ui-root .el-date-editor.el-input,
 .a2ui-root .el-date-editor.el-input__wrapper {
-  width: 100%; /* 强制占满容器 */
+  width: 100%; /* Force full container width */
   box-sizing: border-box;
 }
 
 /* ========================================= */
-/* 移动端适配微调 */
+/* Mobile layout adjustments */
 /* ========================================= */
 @media (max-width: 768px) {
-  /* 手机上 Radio/Checkbox 占满一行，便于点击 */
+  /* On phones, make radio and checkbox options fill a row for easier tapping */
   .a2ui-root .el-radio.is-bordered,
   .a2ui-root .el-checkbox.is-bordered {
     width: 100%; 
-    justify-content: center; /* 文字居中 */
+    justify-content: center; /* Center text */
   }
   
-  /* 手机上 Slider 的输入框可能太挤，可以隐藏或缩小 */
+  /* Slider input may be too crowded on phones; hide or shrink it if needed */
   .a2ui-root .el-slider__input {
     width: 60px;
   }
   .a2ui-root .el-slider__runway.show-input {
-    margin-right: 75px; /* 给输入框留位置 */
+    margin-right: 75px; /* Leave room for the input */
   }
 }
 
 /* ========================================= */
-/* A2UI Code 组件样式 (Mac 风格终端) */
+/* A2UI Code component styles (Mac-style terminal) */
 /* ========================================= */
 
 .a2ui-code-block {
   margin-bottom: 15px;
   border-radius: 8px;
-  overflow: hidden; /* 确保圆角不被内部溢出破坏 */
+  overflow: hidden; /* Ensure internal overflow does not break rounded corners */
   font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
   border: 1px solid rgba(128, 128, 128, 0.2);
   
-  /* 自动适配背景色：
-     亮色模式：非常浅的灰色
-     深色模式：深黑灰色 (接近 VSCode)
+  /* Automatically adapt background color:
+     Light mode: very light gray
+     Dark mode: dark charcoal gray (similar to VSCode)
   */
   background-color: var(--code-bg-color, #282c34);
 }
 
 
-/* 顶部栏 (语言标签 + 复制按钮) */
+/* Top bar (language label and copy button) */
 .a2ui-code-block .code-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  /* 顶部栏背景：稍微比代码区深一点或浅一点，形成层次感 */
+  /* Top bar background: slightly darker or lighter than code area to create visual hierarchy */
   background-color: rgba(128, 128, 128, 0.1);
   border-bottom: 1px solid rgba(128, 128, 128, 0.1);
   user-select: none;
@@ -5976,7 +5976,7 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* 复制按钮 */
+/* Copy button */
 .a2ui-code-block .copy-btn {
   display: flex;
   align-items: center;
@@ -5994,13 +5994,13 @@ body {
   color: var(--el-color-primary);
 }
 
-/* 代码内容区 */
+/* Code content area */
 .a2ui-code-block .code-body {
   padding: 12px;
-  overflow-x: auto; /* 超出宽度横向滚动 */
+  overflow-x: auto; /* Scroll horizontally when content exceeds width */
 }
 
-/* 核心 Pre/Code 样式 */
+/* Core Pre/Code styles */
 .a2ui-code-block .code-body pre {
   margin: 0;
   padding: 0;
@@ -6012,28 +6012,28 @@ body {
 
 .a2ui-code-block .code-body pre code {
   font-size: 13px;
-  /* 确保代码颜色在深浅模式下可见 */
+  /* Ensure code colors are visible in both light and dark modes */
   color: var(--el-text-color-secondary);
-  white-space: pre; /* 保持格式 */
+  white-space: pre; /* Preserve formatting */
   word-wrap: normal;
 }
 
-/* 移除 markdown 内容中最后一个元素的底部边距 */
+/* Remove bottom margin from the last element in Markdown content */
 .markdown-body > *:last-child,
 .markdown-body > div > *:last-child {
     margin-bottom: 0 !important;
 }
 
-/* 针对你代码中的特定结构，可能还需要深入一层 */
+/* The specific structure of the code may require targeting one level deeper */
 .markdown-body p:last-child {
     margin-bottom: 0 !important;
 }
 
-/* A2UI TTS Block 样式 */
+/* A2UI TTS Block styles */
 .a2ui-tts-block {
   display: flex;
   align-items: flex-start;
-  background-color: var(--el-bg-color-page); /* 适配亮/暗模式 */
+  background-color: var(--el-bg-color-page); /* Adapt to light/dark mode */
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   padding: 12px 16px;
@@ -6060,13 +6060,13 @@ body {
   margin-right: 12px;
   font-size: 18px;
   color: var(--el-color-primary);
-  margin-top: 2px; /* 图标微调 */
+  margin-top: 2px; /* Fine-tune icon positioning */
   flex-shrink: 0;
 }
 
 .a2ui-tts-block .tts-body {
   flex: 1;
-  min-width: 0; /* 防止 flex 子项溢出 */
+  min-width: 0; /* Prevent flex item overflow */
 }
 
 .a2ui-tts-block .tts-label {
@@ -6081,7 +6081,7 @@ body {
   line-height: 1.5;
 }
 
-/* 去除 Markdown 默认的 margin */
+/* Remove default Markdown margin */
 .a2ui-tts-block .tts-content p {
   margin: 0;
 }
@@ -6101,38 +6101,38 @@ body {
   opacity: 1;
 }
 
-/* --- 脚注样式修正 --- */
+/* --- Footnote style fixes --- */
 
-/* 1. 针对正文右上角的引用链接 */
+/* 1. Reference links displayed at the upper right of inline text */
 .footnote-ref a {
-    /* 强制重置样式，清除可能的背景图或边框 */
+    /* Force style reset; clear any background image or border */
     text-decoration: none !important;
-    background: #eee !important; /* 浅灰背景 */
+    background: #eee !important; /* Light gray background */
     border: none !important;
     outline: none !important;
     
-    /* 核心：固定宽高 + Flex 居中 = 完美圆形 */
+    /* Key: fixed width and height plus flex centering creates a perfect circle */
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    width: 16px !important;    /* 强制宽度 */
-    height: 16px !important;   /* 强制高度 */
+    width: 16px !important;    /* Force width */
+    height: 16px !important;   /* Force height */
     border-radius: 50% !important;
     
-    /* 文字样式 */
+    /* Text styles */
     color: #555 !important;
     font-size: 10px !important;
     font-weight: 700;
-    line-height: 1 !important; /* 防止行高撑开 */
-    padding: 0 !important;     /* 清除内边距 */
-    margin: 0 2px;             /* 左右留点缝隙 */
+    line-height: 1 !important; /* Prevent line height from stretching the circle */
+    padding: 0 !important;     /* Clear padding */
+    margin: 0 2px;             /* Leave a small gap on either side */
     
-    /* 动画 */
+    /* Animation */
     transition: all 0.2s ease;
 }
 
-/* 2. 核心修复：屏蔽伪元素产生的“链接图标” */
-/* 大多数全局链接图标是通过 ::after 或 ::before 添加的 */
+/* 2. Key fix: suppress the link icon generated by pseudo-elements */
+/* Most global link icons are added via ::after or ::before */
 .footnote-ref a::after,
 .footnote-ref a::before {
     content: none !important;
@@ -6141,48 +6141,48 @@ body {
     margin: 0 !important;
 }
 
-/* 3. 如果图标是作为子元素 <i> 存在的，也隐藏它 */
+/* 3. Also hide the icon if it exists as an <i> child element */
 .footnote-ref a i,
 .footnote-ref a svg {
     display: none !important;
 }
 
-/* 4. 悬停高亮 */
+/* 4. Highlight on hover */
 .footnote-ref a:hover {
     background-color: var(--el-color-primary) !important;
     color: #fff !important;
     transform: scale(1.1);
 }
 
-/* 调整 sup 标签位置，让圆圈跟文字对齐稍微舒服点 */
+/* Adjust sup positioning so the circle aligns more comfortably with text */
 sup.footnote-ref {
     top: -0.6em;
-    font-size: 100%; /* 防止sup再次缩小字体 */
+    font-size: 100%; /* Prevent sup from shrinking font size again */
 }
 
-/* 隐藏插件默认生成的分割线 */
+/* Hide the divider generated by the plugin */
 hr.footnotes-sep {
     display: none !important;
 }
 
-/* 确保底部脚注区域只有一个上边框 */
+/* Ensure the bottom footnote area has only one top border */
 .footnotes {
     margin-top: 0px;
     padding-top: 20px;
-    border-top: 1px solid #e0e0e0; /* 这里保留你自己想要的分割线 */
+    border-top: 1px solid #e0e0e0; /* Retain the desired custom divider here */
     color: #666;
     font-size: 0.9em;
 }
 
 .footnote-backref {
-    text-decoration: none !important; /* 去掉下划线 */
-    border: none !important;          /* 去掉可能的边框 */
-    margin-left: 4px;                 /* 与文字隔开一点距离 */
-    color: #409eff;                   /* 设置为你想要的主题色 */
-    font-family: sans-serif;          /* 确保符号显示正常 */
+    text-decoration: none !important; /* Remove underline */
+    border: none !important;          /* Remove any border */
+    margin-left: 4px;                 /* Leave a little space between the link and text */
+    color: #409eff;                   /* Set the desired theme color */
+    font-family: sans-serif;          /* Ensure symbols render correctly */
 }
 
-/* 核心：隐藏该链接自动附加的图标 (伪元素) */
+/* Key: hide the icon automatically appended to this link (pseudo-element) */
 .footnote-backref::after,
 .footnote-backref::before {
     content: none !important;
@@ -6190,42 +6190,42 @@ hr.footnotes-sep {
     width: 0 !important;
 }
 
-/* 防御性代码：如果图标是通过内部 i/svg 标签实现的，也隐藏掉 */
+/* Defensive rule: also hide icons implemented as inner i/svg elements */
 .footnote-backref i,
 .footnote-backref svg {
     display: none !important;
 }
 
-/* 鼠标悬停效果 */
+/* Mouse hover effect */
 .footnote-backref:hover {
     color: var(--el-color-primary) !important;
     cursor: pointer;
 }
 /* --- START OF STREAMDOWN OPTIMIZATIONS --- */
 
-/* 1. 解决表格/布局抖动核心修复 */
-/* 强制表格容器块级化，防止内容撑开导致父级跳动 */
+/* 1. Core fix for table/layout jitter */
+/* Force table container to block layout to prevent content from shifting the parent */
 .markdown-body table {
-  display: block !important;       /* 覆盖原本的 display: table */
+  display: block !important;       /* Override original display: table */
   width: 100% !important;
-  overflow-x: auto !important;     /* 允许横向滚动 */
-  table-layout: auto !important;   /* 让浏览器自动布局 */
+  overflow-x: auto !important;     /* Allow horizontal scrolling */
+  table-layout: auto !important;   /* Let the browser calculate table layout */
   margin-bottom: 1em !important;
   border-collapse: collapse !important;
-  /* 防止空表头导致高度塌陷 */
+  /* Prevent empty table headers from collapsing in height */
   min-height: 40px; 
 }
 
-/* 固定单元格行为，减少文字输入时的微小跳动 */
+/* Stabilize cell behavior to reduce small shifts while text is streamed */
 .markdown-body th, 
 .markdown-body td {
-  min-width: 60px;               /* 最小宽度 */
+  min-width: 60px;               /* Minimum width */
   word-break: break-word;        /* Allow wrapping */
   white-space: normal;
-  transition: background-color 0.2s; /* 仅颜色过渡，不过渡宽高 */
+  transition: background-color 0.2s; /* Transition color only, not width or height */
 }
 
-/* 2. 丝滑扫描进场动画 (Stream Effect) */
+/* 2. Smooth scanning entrance animation (Stream Effect) */
 @keyframes stream-slide-in {
   0% {
     opacity: 0;
@@ -6239,7 +6239,7 @@ hr.footnotes-sep {
   }
 }
 
-/* 应用动画到 Markdown 的块级元素 */
+/* Apply animation to Markdown block-level elements */
 .markdown-body > p,
 .markdown-body > ul,
 .markdown-body > ol,
@@ -6251,14 +6251,14 @@ hr.footnotes-sep {
   will-change: transform, opacity, filter;
 }
 
-/* 列表项逐个出现 */
+/* Show list items one by one */
 .markdown-body li {
   animation: stream-slide-in 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   will-change: transform, opacity, filter;
 }
 
-/* 3. 光标特效 (仅在正在生成的最后一段显示) */
-/* 我们通过 JS 给正在生成的容器加 .streaming 类 */
+/* 3. Cursor effect (only shown in the final paragraph during generation) */
+/* JS adds the .streaming class to the container being generated */
 .streaming > *:last-child::after {
   content: '';
   display: inline-block;
@@ -6271,7 +6271,7 @@ hr.footnotes-sep {
   box-shadow: 0 0 8px var(--el-color-primary);
 }
 
-/* 代码块里不显示光标 */
+/* Do not display cursor inside code blocks */
 .streaming > pre:last-child::after {
   display: none;
 }
@@ -6299,40 +6299,40 @@ hr.footnotes-sep {
   }
 }
 
-/* 4. 代码块防抖优化 */
+/* 4. Reduce code block layout jitter */
 .markdown-body pre code {
-  /* 强制换行，防止代码过长导致布局瞬间撑开 */
+  /* Force wrapping to prevent long code from suddenly widening the layout */
   white-space: pre-wrap !important; 
   word-break: break-all !important; 
 }
 
-/* --- 修复表格底部空隙 --- */
+/* --- Fix gap below tables --- */
 
-/* 1. 强制去除 Wrapper 内部 Table 的所有外边距 */
-/* markdown-body 通常给 table 设了 margin-bottom: 1rem，这会导致 Wrapper 底部有大片空白 */
+/* 1. Force removal of all table margins inside the wrapper */
+/* markdown-body usually gives tables margin-bottom: 1rem, leaving a large blank area at the bottom of the wrapper */
 .markdown-table-wrapper table {
   margin: 0 !important;
-  border-bottom: none !important; /* 避免双重边框 */
+  border-bottom: none !important; /* Avoid double borders */
 }
 
-/* 2. 确保 Wrapper 紧贴内容 */
+/* 2. Ensure wrapper fits tightly around content */
 .markdown-table-wrapper {
-  /* 确保 wrapper 自身没有多余的 padding */
+  /* Ensure wrapper has no extra padding */
   padding: 0 !important; 
-  /* 确保溢出处理正确 */
+  /* Ensure overflow is handled correctly */
   overflow: hidden; 
-  /* 重新把圆角加回来，防止直角表格刺破圆角容器 */
+  /* Restore rounded corners to prevent square table corners from breaking through the rounded container */
   border-radius: 8px;
 }
 
-/* 3. 去掉最后一行单元格的底部边框 (可选，为了完美视觉) */
-/* 因为 Wrapper 已经有边框了，如果最后一行也有 border-bottom，看起来会变粗 */
+/* 3. Remove bottom border from last row cells (optional, for visual consistency) */
+/* The wrapper already has a border; a border-bottom on the last row would make it look thicker */
 .markdown-table-wrapper table tr:last-child td {
   border-bottom: none !important;
 }
 
-/* 4. 修复水平滚动条导致的高度 (可选) */
-/* 如果你需要横向滚动，确保滚动条不占据非滚动状态的高度 */
+/* 4. Fix height caused by horizontal scrollbar (optional) */
+/* If horizontal scrolling is needed, ensure the scrollbar takes no height when not scrolling */
 .markdown-table-wrapper::-webkit-scrollbar {
   height: 6px; 
   background: transparent;
@@ -6345,20 +6345,20 @@ hr.footnotes-sep {
    IOS Minimalist Browser Theme (Theme Adapted)
    ========================================= */
 
-/* 容器 */
+/* Container */
 .ai-browser-container {
     display: flex;
     flex-direction: column;
-    height: 100% !important; /* 强制占满父容器高度 */
-    /* 使用页面背景变量 */
+    height: 100% !important; /* Force full parent container height */
+    /* Use page background variable */
     background-color: var(--el-bg-color-page); 
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     transition: background-color 0.3s;
 }
 
-/* --- 顶部 Header --- */
+/* --- Top header --- */
 .browser-header {
-    /* 使用混合色实现半透明：取85%的主题背景色，混入透明色 */
+    /* Use a color mix for translucency: 85% theme background mixed with transparency */
     background: color-mix(in srgb, var(--el-bg-color) 85%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -6367,7 +6367,7 @@ hr.footnotes-sep {
     padding-bottom: 8px;
 }
 
-/* --- 标签栏 --- */
+/* --- Tab bar --- */
 .browser-tabs {
     display: flex;
     align-items: center;
@@ -6376,7 +6376,7 @@ hr.footnotes-sep {
     overflow-x: auto;
 }
 
-/* 标签样式 */
+/* Tab styles */
 .browser-tab {
     display: flex;
     align-items: center;
@@ -6387,16 +6387,16 @@ hr.footnotes-sep {
     border-radius: 8px;
     padding: 0 10px;
     font-size: 12px;
-    color: var(--el-text-color-regular); /* 适配文字颜色 */
+    color: var(--el-text-color-regular); /* Adapt text color */
     cursor: pointer;
     transition: all 0.2s ease;
     border: 1px solid transparent;
 }
 
 .browser-tab.active {
-    background: var(--el-bg-color); /* 激活时使用卡片背景 */
+    background: var(--el-bg-color); /* Use card background when active */
     color: var(--el-text-color-primary);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05); /* 阴影保持微弱 */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); /* Keep shadow subtle */
     border: 1px solid var(--el-border-color-lighter);
 }
 
@@ -6416,7 +6416,7 @@ hr.footnotes-sep {
 }
 
 .browser-tab.active .tab-icon i {
-    color: var(--el-color-primary); /* 激活图标使用主色 */
+    color: var(--el-color-primary); /* Use primary color for active icon */
 }
 
 .tab-title {
@@ -6464,7 +6464,7 @@ hr.footnotes-sep {
     background: var(--el-bg-color-page);
 }
 
-/* --- 工具栏 & 地址栏 --- */
+/* --- Toolbar and address bar --- */
 .browser-toolbar {
     display: flex;
     align-items: center;
@@ -6507,9 +6507,9 @@ hr.footnotes-sep {
     margin: 0 auto;
 }
 
-/* 地址栏 Input */
+/* Address bar input */
 .ios-address-input .el-input__wrapper {
-    /* 使用稍深的填充色 */
+    /* Use slightly darker fill color */
     background: var(--el-bg-color-page) !important; 
     border-radius: 10px !important;
     box-shadow: none !important;
@@ -6520,7 +6520,7 @@ hr.footnotes-sep {
 
 .ios-address-input .el-input__wrapper.is-focus {
     background-color: var(--el-bg-color) !important;
-    /* 聚焦光环使用主色 */
+    /* Focus ring uses primary color */
     box-shadow: 0 0 0 2px var(--el-color-primary) !important; 
 }
 
