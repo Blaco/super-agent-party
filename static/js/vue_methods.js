@@ -3525,8 +3525,9 @@ formatMessage(content, index) {
                                     continue;
                                 }
                                 const block = getBlock('approval', originalId, toolName);
-                                block.data = null;
-                                this.approvalMap[originalId] = approvalData;
+                                const { approval_token, ...displayData } = approvalData;
+                                block.data = displayData;
+                                this.approvalMap[originalId] = { ...displayData, approval_token };
                                 currentMsg.backend_content.push({
                                     role: 'tool', tool_call_id: originalId, name: toolName,
                                     content: 'Tool execution is waiting for user approval.'
@@ -3920,9 +3921,9 @@ formatMessage(content, index) {
                     type: 'tool_result',
                     name: action === 'deny' ? this.t('denying') : `${this.t('executing')} ${toolName}...`,
                     content: '',
-                    segments: [] 
+                    segments: []
                 };
-                
+
                 if (typeof this.$set === 'function') {
                     this.$set(currentMsg.displayBlocks, targetIdx, updatedBlock);
                 } else {
@@ -3936,91 +3937,88 @@ formatMessage(content, index) {
             return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         };
 
-        const feedbackTitle = action === 'deny' ? (this.t('denying') || 'Denying...') : `${this.t('executing') || 'Executing'} ${toolName}...`;
         this.updateUIBlock(currentMsg, blockId, `\n`);
 
-        this.isSending = true; 
+        this.isSending = true;
         this.isTyping = true;
-        const currentController = new AbortController(); 
-        this.abortController = currentController; 
+        const currentController = new AbortController();
+        this.abortController = currentController;
 
         try {
             let resultText = "";
-            
-            {
-                // 2. Send HTTP request
-                const response = await fetch('/execute_tool_manually', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        approval_token: data.approval_token,
-                        tool_call_id: toolCallId,
-                        approval_type: action
-                    }),
-                    signal: this.abortController.signal
-                });
 
-                if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(`Server Error (${response.status}): ${errText}`);
+            // 2. Send HTTP request
+            const response = await fetch('/execute_tool_manually', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    approval_token: data.approval_token,
+                    tool_call_id: toolCallId,
+                    approval_type: action
+                }),
+                signal: this.abortController.signal
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server Error (${response.status}): ${errText}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+
+            // 3. Stream rendering for text/event-stream responses
+            if (contentType && contentType.includes('event-stream')) {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                // Replace loading text with the final title
+                if (targetIdx !== -1) {
+                    currentMsg.displayBlocks[targetIdx].name = `${toolName} ${this.t('tool_result')}`;
                 }
 
-                const contentType = response.headers.get('content-type');
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
 
-                // 3. Stream rendering for text/event-stream responses
-                if (contentType && contentType.includes('event-stream')) {
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    let buffer = '';
+                    while (buffer.includes('\n\n')) {
+                        const eventEndIndex = buffer.indexOf('\n\n');
+                        const eventData = buffer.slice(0, eventEndIndex);
+                        buffer = buffer.slice(eventEndIndex + 2);
 
-                    // Replace loading text with the final title
-                    if (targetIdx !== -1) {
-                        currentMsg.displayBlocks[targetIdx].name = `${toolName} ${this.t('tool_result')}`;
-                    }
-
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        buffer += decoder.decode(value, { stream: true });
-
-                        while (buffer.includes('\n\n')) {
-                            const eventEndIndex = buffer.indexOf('\n\n');
-                            const eventData = buffer.slice(0, eventEndIndex);
-                            buffer = buffer.slice(eventEndIndex + 2);
-
-                            if (eventData.startsWith('data: ')) {
-                                const jsonStr = eventData.slice(6).trim();
-                                try {
-                                    const parsed = JSON.parse(jsonStr);
-                                    if (parsed.chunk) {
-                                        resultText += parsed.chunk;
-                                        // Update frontend component reactively as stream arrives
-                                        if (targetIdx !== -1) {
-                                            currentMsg.displayBlocks[targetIdx].content = resultText;
-                                        }
-                                        this.requestScrollToBottom();
-                                    } else if (parsed.error) {
-                                        throw new Error(parsed.error);
+                        if (eventData.startsWith('data: ')) {
+                            const jsonStr = eventData.slice(6).trim();
+                            try {
+                                const parsed = JSON.parse(jsonStr);
+                                if (parsed.chunk) {
+                                    resultText += parsed.chunk;
+                                    // Update frontend component reactively as stream arrives
+                                    if (targetIdx !== -1) {
+                                        currentMsg.displayBlocks[targetIdx].content = resultText;
                                     }
-                                } catch (e) {
-                                    console.error("Parse event error:", e);
+                                    this.requestScrollToBottom();
+                                } else if (parsed.error) {
+                                    throw new Error(parsed.error);
                                 }
+                            } catch (e) {
+                                console.error("Parse event error:", e);
                             }
                         }
                     }
-                } else {
-                    // 4. Handle ordinary single JSON responses
-                    const jsonRes = await response.json();
-                    resultText = jsonRes.result || JSON.stringify(jsonRes);
-                    
-                    if (targetIdx !== -1) {
-                        currentMsg.displayBlocks[targetIdx].content = resultText;
-                        currentMsg.displayBlocks[targetIdx].name = `${toolName} ${this.t('tool_result')}`;
-                    }
                 }
+            } else {
+                // 4. Handle ordinary single JSON responses
+                const jsonRes = await response.json();
+                resultText = jsonRes.result || JSON.stringify(jsonRes);
 
-                pendingResult.content = this.truncateForAI(resultText);
+                if (targetIdx !== -1) {
+                    currentMsg.displayBlocks[targetIdx].content = resultText;
+                    currentMsg.displayBlocks[targetIdx].name = `${toolName} ${this.t('tool_result')}`;
+                }
             }
+
+            pendingResult.content = this.truncateForAI(resultText);
 
             // Update HTML compatibility backup block
             const blockClass = action === 'deny' ? 'type-error' : 'type-result';
