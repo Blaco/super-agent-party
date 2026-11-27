@@ -4299,7 +4299,7 @@ formatMessage(content, index) {
             }
         }
         let last = msg.displayBlocks[msg.displayBlocks.length - 1];
-        const canReuse = last && last.type === type && (!id || last.id === id);
+        const canReuse = last && last.type === type && !Object.isFrozen(last) && (!id || last.id === id);
         if (canReuse) {
             if (name && !last.name) last.name = name;
             return last;
