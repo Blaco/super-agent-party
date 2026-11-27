@@ -1,0 +1,59 @@
+name: Python dependency lock candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - agent-creation
+    paths:
+      - .github/workflows/resolve-python-lock.yml
+      - scripts/check_python_lock.py
+      - pyproject.toml
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+      - name: Resolve from existing pins using PyPI
+        env:
+          UV_DEFAULT_INDEX: https://pypi.org/simple
+          UV_NO_CONFIG: '1'
+        run: |
+          uv lock --python 3.12
+          uv lock --check --python 3.12
+      - name: Check retired packages and artifact sources
+        run: python scripts/check_python_lock.py --json python-lock-report.json
+      - name: Record candidate and dependency changes
+        run: |
+          git diff -- uv.lock > uv-lock.patch
+          sha256sum uv.lock > uv-lock.sha256
+          git rev-parse HEAD > source-commit.txt
+          uv --version > uv-version.txt
+          git diff --stat -- uv.lock >> "$GITHUB_STEP_SUMMARY"
+          cat python-lock-report.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload validated candidate for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-lock-candidate-${{ github.sha }}
+          path: |
+            uv.lock
+            uv-lock.patch
+            uv-lock.sha256
+            source-commit.txt
+            uv-version.txt
+            python-lock-report.json
+          if-no-files-found: error
+          retention-days: 14

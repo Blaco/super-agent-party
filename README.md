@@ -35,6 +35,17 @@ npm start
 
 `npm test` is a static smoke check; it does not validate chat, sound, GPU inference, agents, or first launch. If `npm ci` fails while downloading Electron, retry after confirming connectivity to the official Electron GitHub release distribution. Do not redirect dependency installs to unverified mirrors.
 
+### Dependency lock maintenance
+
+The [Python dependency lock candidate workflow](.github/workflows/resolve-python-lock.yml) resolves the inherited Python lock against the current manifest, checks removed SDKs and package source metadata, and uploads a candidate lockfile and patch for review. It does not commit the result or publish packages. Until the candidate is reviewed and committed, the repository lockfile remains stale. To reproduce locally using Python 3.12 and uv:
+
+```powershell
+uv lock --python 3.12
+uv lock --check --python 3.12
+python scripts/check_python_lock.py
+git diff -- uv.lock
+```
+
 ### Development packaging
 
 The branch's [Windows x64 development workflow](.github/workflows/build.yml) attempts to package a PyInstaller Python backend and an unpacked Electron desktop app into a ZIP. It uploads the ZIP, SHA-256 checksum and embedded build manifest as a short-lived GitHub Actions artifact when successful. This is **not** a signed installer or a published release.
