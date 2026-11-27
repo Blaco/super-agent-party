@@ -194,6 +194,14 @@ class EnglishRuntimeContractTests(unittest.TestCase):
                      "island_translate"):
             self.assertIn("name: '" + name + "'", source)
 
+    def test_vrm_renderer_source_is_english(self):
+        source = (ROOT / "static/js/vrm.js").read_text(encoding="utf-8")
+        self.assertFalse(any(0x3400 <= ord(c) <= 0x9FFF for c in source))
+        for contract in ("VRMLoaderPlugin", "VRMUtils.rotateVRM0(vrm)",
+                         "startLipSyncForChunk(task)", "/VMC/Ext/Bone/Pos",
+                         "ttsWebSocket.binaryType = 'arraybuffer'"):
+            self.assertIn(contract, source)
+
     def test_updater_disabled_pending_fork_feed(self):
         source = (ROOT / "main.js").read_text(encoding="utf-8")
         self.assertIn("const ENABLE_AUTO_UPDATES = false", source)

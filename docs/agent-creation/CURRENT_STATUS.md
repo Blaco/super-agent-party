@@ -92,3 +92,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Follow-up source checkpoint — VRM renderer, first comment pass
 
 - Translated 220 of 530 remaining Han-flagged lines in static/js/vrm.js, covering environment detection, scene loading, transforms, model setup, idle animations, speech/lip-sync and subtitle setup. No executable code changed; 310 flagged comment lines remain. Syntax checked with identical static imports excluded only from the precommit parser. Full module CI and renderer runtime remain pending. No new package requested.
+
+## Follow-up source checkpoint — VRM renderer localization complete
+
+- Translated all 310 remaining Han-flagged lines in static/js/vrm.js. Together with the preceding 220-line pass, the renderer now has zero detected literal Han characters. Changes are comment-only, including shader/CSS comments, subtitles, VMC, XR, PTT, audio synchronization and model switching. Multilingual punctuation handling remains intact. The full-file English regression check was added. Preliminary syntax check passed with unchanged static imports excluded solely for parser compatibility; full module CI and Windows rendering remain outstanding. Next: CLI and local application modules, skills/extensions, then repository-wide inventory. No package requested.

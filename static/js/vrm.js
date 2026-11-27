@@ -1931,30 +1931,30 @@ function startDragSubtitle(e) {
     subtitleOffsetX = e.clientX - (rect.left + rect.width / 2);
     subtitleOffsetY = e.clientY - rect.top;
     
-    // 禁用过渡效果
+    // Disable transitions
     subtitleElement.style.transition = 'none';
 }
 
 function dragSubtitle(e) {
     if (isDraggingSubtitle) {
-        // 计算字幕中心点的目标位置
+        // Calculate the target position of the subtitle center
         const centerX = e.clientX - subtitleOffsetX;
         const centerY = e.clientY - subtitleOffsetY;
         
-        // 限制在窗口范围内，保持水平居中
+        // Constrain the position to the window bounds while keeping it horizontally centered
         const halfWidth = subtitleElement.offsetWidth / 2;
         const clampedX = Math.max(halfWidth, Math.min(centerX, window.innerWidth - halfWidth));
         
-        // 设置位置时保持水平居中
+        // Keep horizontal centering when setting the position
         subtitleElement.style.left = `${clampedX}px`;
-        subtitleElement.style.transform = 'translateX(-50%)'; // 水平居中
+        subtitleElement.style.transform = 'translateX(-50%)'; // Center horizontally
         
-        // 垂直位置保持不变
+        // Keep the vertical position unchanged
         const maxY = window.innerHeight - subtitleElement.offsetHeight;
         const clampedY = Math.max(0, Math.min(centerY, maxY));
         
         subtitleElement.style.top = `${clampedY}px`;
-        subtitleElement.style.bottom = 'auto'; // 取消底部定位
+        subtitleElement.style.bottom = 'auto'; // Remove bottom positioning
     }
 }
 
@@ -1965,7 +1965,7 @@ function endDragSubtitle() {
     }
 }
 
-// 修改字幕显示/隐藏功能
+// Updated subtitle visibility handling
 function toggleSubtitle(enable) {
     isSubtitleEnabled = enable;
     if (subtitleElement) {
@@ -1974,7 +1974,7 @@ function toggleSubtitle(enable) {
 }
 
 /**
- * 提取出的尺寸调整逻辑
+ * Extracted resize logic
  */
 function adjustSubtitleSize() {
     if (!subtitleElement) return;
@@ -1991,13 +1991,13 @@ function adjustSubtitleSize() {
 
 let vmcLastSent = 0;
 const VMC_SEND_INTERVAL = 1000 / 30;          // 30 fps
-const VMC_BONES = [                           // VMC 标准骨骼列表
+const VMC_BONES = [                           // Standard VMC bone list
   'hips','spine','chest','upperChest','neck','head',
   'leftShoulder','leftUpperArm','leftLowerArm','leftHand',
   'rightShoulder','rightUpperArm','rightLowerArm','rightHand',
   'leftUpperLeg','leftLowerLeg','leftFoot','leftToes',
   'rightUpperLeg','rightLowerLeg','rightFoot','rightToes',
-  // 手指（可选）
+  // Fingers (optional)
   'leftThumbProximal','leftThumbIntermediate','leftThumbDistal',
   'leftIndexProximal','leftIndexIntermediate','leftIndexDistal',
   'leftMiddleProximal','leftMiddleIntermediate','leftMiddleDistal',
@@ -2015,38 +2015,38 @@ function getVMCBoneData() {
 
   const boneData = [];
   
-  // VMC 接收端通常期望 Hips 的位置是相对于地面的绝对高度
-  // 我们需要获取 Hips 的世界坐标
+  // VMC receivers usually expect the absolute hip height above the ground
+  // Obtain the world coordinates of the hips
   const hipsNode = currentVrm.humanoid.getNormalizedBoneNode('hips');
   let rootY = 0;
   if (hipsNode) {
       const worldPos = new THREE.Vector3();
       hipsNode.getWorldPosition(worldPos);
-      // 如果模型被缩放过，或者场景有位移，这里要用世界坐标
+      // Use world coordinates to account for model scaling or scene displacement
   }
 
   for (const name of VMC_BONES) {
     const node = currentVrm.humanoid.getNormalizedBoneNode(name);
     if (!node) continue;
 
-    // 获取相对于父级的旋转（局部旋转），因为 VMC 传输的是 Local Rotation
-    // 注意：Hips 需要特殊处理，它通常传输世界位置
+    // Get rotation relative to the parent because VMC transmits local rotation
+    // The hips need special handling because their world position is usually transmitted
     
-    // 1. 位置处理 (Position)
-    // 只有 Hips 需要传位置，其他骨骼位置通常由骨骼长度决定（VMC接收端会忽略非Hips的位置，或者用来缩放）
-    // 为了兼容性，我们只对 Hips 传真实位置，其他传 0 (或者传 node.position 也行，但要注意转换)
+    // 1. Position handling
+    // Only the hips need a position; other bone positions are generally determined by bone length (receivers may ignore them or use them for scaling)
+    // For compatibility, send the actual hip position and zero for other bones (node.position is another option if converted correctly)
     
     let x = node.position.x;
     let y = node.position.y;
     let z = node.position.z;
 
-    // ★ 关键坐标系转换：ThreeJS(右手) -> Unity(左手)
-    // Position: X 取反
+    // Key coordinate conversion: Three.js (right-handed) to Unity (left-handed)
+    // Position: negate X
     const vmcPos = { x: -x, y: y, z: z };
 
-    // 2. 旋转处理 (Rotation)
+    // 2. Rotation handling
     // ThreeJS: x, y, z, w
-    // Unity:   x, -y, -z, w (通常转换公式)
+    // Unity: x, -y, -z, w (usual conversion)
     
     let qx = node.quaternion.x;
     let qy = node.quaternion.y;
@@ -2074,7 +2074,7 @@ function getVMCBoneData() {
   return boneData;
 }
 
-// VRM1 → VRM0（VMC 事实标准）
+// VRM 1 to VRM 0 (de facto VMC standard)
 const VRM1_TO_VMC0 = {
   happy:  'Joy',
   angry:  'Angry',
@@ -2096,16 +2096,16 @@ const VRM1_TO_VMC0 = {
   lookRight:  'LookRight'
 };
 
-// 需要同步的表情（按需删减）
+// Expressions to synchronize (adjust as needed)
 const VMC_BLEND_SHAPES = [
-  // 五元音
+  // Five vowels
   'aa','ee','ih','oh','ou',
   'blink', 'blinkLeft', 'blinkRight',
   'surprised','happy','angry', 'sad', 'neutral', 'relaxed',
   'lookDown','lookUp','lookLeft','lookRight'
 ];
 
-let lastBlendWeights = {}; // 节流：变化了才发
+let lastBlendWeights = {}; // Throttle updates by sending only changes
 
 
 
@@ -2122,8 +2122,8 @@ function getVMCBlendData() {
     const vmcName = VRM1_TO_VMC0[vrmName];
     if (!vmcName) continue;
     
-    // 这里为了保证数据完整，Warudo 建议每帧都发，或者至少变化时发
-    // 如果为了带宽可以做节流，但最好打包发送
+    // For data completeness, Warudo recommends sending every frame or at least whenever values change
+    // Throttle if bandwidth is limited, preferably sending bundled messages
     blendData.push({
         name: vmcName,
         weight: weight
@@ -2159,8 +2159,8 @@ const vmcToVrmBone = {
 // animate
 const clock = new THREE.Clock();
 clock.start();
-let currentLookYaw = 0;   // 左右偏航角 (Y轴)
-let currentLookPitch = 0; // 上下俯仰角 (X轴)
+let currentLookYaw = 0;   // Horizontal yaw angle (Y axis)
+let currentLookPitch = 0; // Vertical pitch angle (X axis)
 
 let isPreviewing360 = false;
 let debugSphere, debugCamera, debugControls;
@@ -2173,12 +2173,12 @@ function animate() {
     const shouldSkipModelUpdate = isModelHiddenByHover && isAutoHideEnabled;
 
     if (currentVrm && !shouldSkipModelUpdate) {
-        // 1. Mixer 更新
+        // 1. Update the mixer
         if (currentMixer) {
             currentMixer.update(deltaTime);
         }
 
-        // 2. VMC 接收更新
+        // 2. Update VMC reception
         if (vmcReceiveEnabled) {
             for (const [vmcName, data] of vmcBoneBuffer) {
                 let boneName = vmcToVrmBone[vmcName] ??
@@ -2198,7 +2198,7 @@ function animate() {
             }
         } 
 
-        // 3. 仿生视线追踪 (彻底修复 VRM 0.x 坐标系朝向问题)
+        // 3. Natural gaze tracking (corrects VRM 0.x coordinate orientation)
         const neck = currentVrm.humanoid.getNormalizedBoneNode('neck');
         const head = currentVrm.humanoid.getNormalizedBoneNode('head');
 
@@ -2260,25 +2260,25 @@ function animate() {
             }
         }
 
-        // 4. VRM 最终更新
+        // 4. Final VRM update
         currentVrm.update(deltaTime);
     }
 
-    // --- 渲染逻辑分支 (全景渲染核心) ---
+    // --- Rendering branches (core panoramic rendering) ---
     if (isRenderMode) {
         if (isPreviewing360 && debugCamera) {
-            // A. 360 预览模式：使用调试相机旋转查看球体内部
+            // A. 360-degree preview: rotate the debug camera to inspect the inside of the sphere
             renderer.render(scene, debugCamera);
         } else {
-            // B. 标准全景模式 (2:1 展开图)
+            // B. Standard panorama (2:1 equirectangular image)
             if (cubeCamera) {
-                // 渲染前隐藏全景投影平面，防止遮挡立方体相机
+                // Hide the panorama projection plane before rendering so it does not obstruct the cube camera
                 if (panoMesh) panoMesh.visible = false;
                 
-                // 让立方体相机捕捉 360 度场景
+                // Capture the 360-degree scene with the cube camera
                 cubeCamera.update(renderer, scene);
                 
-                // 恢复投影平面并渲染到屏幕
+                // Restore the projection plane and render to the screen
                 if (panoMesh) {
                     panoMesh.visible = true;
                     renderer.render(panoMesh, panoCamera);
@@ -2286,11 +2286,11 @@ function animate() {
             }
         }
     } else {
-        // C. 普通模式
+        // C. Normal mode
         renderer.render(scene, camera);
     }
     
-    // 5. VMC 发送逻辑
+    // 5. VMC transmission logic
     const now = performance.now();
     if (window.vmcAPI && (now - vmcLastSent >= VMC_SEND_INTERVAL)) {
         vmcLastSent = now;
@@ -2304,7 +2304,7 @@ function animate() {
         }
     }
 
-    // 6. UI 字幕维护
+    // 6. Maintain UI subtitles
     if (subtitleElement && !isDraggingSubtitle) {
         const rect = subtitleElement.getBoundingClientRect();
         if (rect.bottom > window.innerHeight || rect.right > window.innerWidth) {
@@ -2316,48 +2316,48 @@ function animate() {
     }
 }
 
-// --- 全景预览切换逻辑：完整对齐高度版本 ---
+// --- Panorama preview toggle with matching camera height ---
 
 window.addEventListener('keydown', (e) => {
-    // 只有在渲染模式下才响应 V 键
+    // Respond to the V key only in render mode
     if (e.key.toLowerCase() === 'v' && isRenderMode) {
         if (!isPreviewing360) {
-            // 1. 创建全景调试球体
-            // 半径设为 5 即可，不要太大也不要太小
+            // 1. Create the panorama debug sphere
+            // Use a radius of 5, neither too large nor too small
             const geometry = new THREE.SphereGeometry(5, 60, 40);
-            geometry.scale(-1, 1, 1); // 翻转球体，从内向外看
+            geometry.scale(-1, 1, 1); // Invert the sphere to view it from the inside
             
             const material = new THREE.MeshBasicMaterial({
-                map: cubeRenderTarget.texture, // 实时采样全景相机的内容
-                side: THREE.BackSide // 确保只渲染内侧
+                map: cubeRenderTarget.texture, // Sample the panorama camera texture in real time
+                side: THREE.BackSide // Render only the interior-facing surface
             });
             
             debugSphere = new THREE.Mesh(geometry, material);
             
-            // --- 关键同步：球体中心也要设在 1.5m ---
+            // Match the sphere center to the 1.5 m camera height
             debugSphere.position.set(0, 1.5, 1);
             scene.add(debugSphere);
             
-            // 2. 创建预览用的调试相机
+            // 2. Create the preview debug camera
             debugCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
             
-            // --- 关键同步：相机位置与 cubeCamera 保持完全一致 ---
+            // Match the debug camera position exactly to cubeCamera
             debugCamera.position.set(0, 1.5, 1); 
             
-            // 3. 初始化控制器
+            // 3. Initialize the controls
             debugControls = new OrbitControls(debugCamera, renderer.domElement);
             
-            // --- 核心修复：将目标点设在 1.5m，实现平视视角 ---
+            // Set the target height to 1.5 m for a level view
             debugControls.target.set(0, 1.5, 0); 
             
-            debugControls.enableZoom = false; // 禁用缩放，模拟固定点视角
-            debugControls.enablePan = false;  // 禁用平移，防止跑出球体
-            debugControls.update(); // 必须调用，否则 target 不生效
+            debugControls.enableZoom = false; // Disable zoom to simulate a fixed viewpoint
+            debugControls.enablePan = false;  // Disable panning to keep the camera inside the sphere
+            debugControls.update(); // Apply the controls update so the target takes effect
             
             isPreviewing360 = true;
             console.log("Entering 360 preview mode at 1.5 m eye level");
         } else {
-            // 退出预览模式
+            // Exit preview mode
             if (debugSphere) {
                 scene.remove(debugSphere);
                 if (debugSphere.geometry) debugSphere.geometry.dispose();
@@ -2375,16 +2375,16 @@ window.addEventListener('keydown', (e) => {
 async function setVMCReceive (enable, syncExpr = false) {
   if (vmcReceiveEnabled!= enable){
     if (enable) {
-      // 进入 VMC 模式：停止本地一切动画
+      // Enter VMC mode: stop all local animations
       if (idleAnimationManager) idleAnimationManager.stopAllAnimations();
       if (breathAction) breathAction.stop();
       if (blinkAction)  blinkAction.stop();
       if (currentMixer) currentMixer.stopAllAction();
-      // 清空缓存，防止旧数据“跳变”
+      // Clear buffers to prevent jumps caused by stale data
       vmcBoneBuffer.clear();
       vmcBlendBuffer.clear();
 
-      // 开启程序化呼吸和眨眼
+      // Enable procedural breathing and blinking
       currentMixer = new THREE.AnimationMixer(currentVrm.scene);
       const breathClip = createBreathClip(currentVrm);
       breathAction = currentMixer.clipAction(breathClip);
@@ -2408,13 +2408,13 @@ async function setVMCReceive (enable, syncExpr = false) {
 
 
 };
-let pointerLocked = false;          // 当前是否处于 PointerLock 模式
-let orbitControlsSaved = null;      // 保存 OrbitControls 实例
-let pointerLockControls = null;     // PointerLockControls 实例
-const keyState = {};               // 按键记录
-const moveSpeed = 5;               // 每秒移动速度（米/秒）
+let pointerLocked = false;          // Whether pointer lock is currently active
+let orbitControlsSaved = null;      // Saved OrbitControls instance
+let pointerLockControls = null;     // PointerLockControls instance
+const keyState = {};               // Pressed-key state
+const moveSpeed = 5;               // Movement speed in meters per second
 
-// 监听按键
+// Listen for key events
 function onKeyDown(e) {
     keyState[e.code] = true;
 }
@@ -2422,40 +2422,40 @@ function onKeyUp(e) {
     keyState[e.code] = false;
 }
 
-// 每帧更新相机位置
+// Update camera position each frame
 function updatePointerLockMovement(delta) {
     if (!pointerLocked || !pointerLockControls) return;
 
     const direction = new THREE.Vector3();
-    const head = pointerLockControls.getObject();   // 相机容器
+    const head = pointerLockControls.getObject();   // Camera container
 
-    // 前后
+    // Forward and backward
     if (keyState['KeyW']) direction.z -= 1;
     if (keyState['KeyS']) direction.z += 1;
-    // 左右
+    // Left and right
     if (keyState['KeyA']) direction.x -= 1;
     if (keyState['KeyD']) direction.x += 1;
-    // 上下
+    // Up and down
     if (keyState['KeyQ']) direction.y -= 1;
     if (keyState['KeyE']) direction.y += 1;
 
     if (direction.lengthSq() === 0) return;
 
-    direction.normalize().applyQuaternion(head.quaternion); // 转成世界方向
+    direction.normalize().applyQuaternion(head.quaternion); // Convert to world-space direction
     head.position.addScaledVector(direction, moveSpeed * delta);
 }
 
-// 进入 PointerLock 时绑定事件
+// Bind events when entering pointer lock
 function enablePointerLockMovement() {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
 }
 
-// 退出 PointerLock 时清理
+// Clean up when exiting pointer lock
 function disablePointerLockMovement() {
     document.removeEventListener('keydown', onKeyDown);
     document.removeEventListener('keyup', onKeyUp);
-    // 清空按键缓存
+    // Clear pressed-key state
     for (const k in keyState) delete keyState[k];
 }
 
@@ -2463,11 +2463,11 @@ const pttStyle = document.createElement('style');
 pttStyle.textContent = `
     #ptt-floating-btn {
         position: fixed;
-        bottom: 80px; /* 抬高一点防底部小白条 */
+        bottom: 80px; /* Raise the button to avoid the bottom navigation bar */
         left: 50%;
         transform: translateX(-50%) scale(0);
-        width: 80px;   /* 增大尺寸，符合触控 */
-        height: 80px;  /* 增大尺寸 */
+        width: 80px;   /* Larger size for touch input */
+        height: 80px;  /* Larger size */
         background: linear-gradient(135deg, #ff6b35, #ff8c5a);
         border-radius: 50%;
         display: flex;
@@ -2478,8 +2478,8 @@ pttStyle.textContent = `
         z-index: 10002;
         transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
         user-select: none;
-        touch-action: none; /* 必须，防止滑动页面 */
-        -webkit-touch-callout: none; /* 防止长按弹出菜单 */
+        touch-action: none; /* Prevent page scrolling during touch input */
+        -webkit-touch-callout: none; /* Prevent the long-press context menu */
         opacity: 0;
         pointer-events: none;
     }
@@ -2494,7 +2494,7 @@ pttStyle.textContent = `
     }
     #ptt-floating-btn i { 
         color: white; 
-        font-size: 36px; /* 图标放大 */
+        font-size: 36px; /* Enlarge the icon */
     }
     .ptt-recording-pulse {
         position: absolute;
@@ -2511,14 +2511,14 @@ pttStyle.textContent = `
 `;
 document.head.appendChild(pttStyle);
 
-// 全局状态
+// Global state
 let pttMainWs = null;
 let pttAsrWs = null;
 let pttMediaRecorder = null;
 let pttAudioChunks = [];
 let isPttActive = false;
 let pttVisible = false;
-// 初始化通往主界面的控制 WS
+// Initialize the control WebSocket to the main interface
 function initPttMainWs() {
     if (pttMainWs && pttMainWs.readyState === WebSocket.OPEN) return;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -2526,7 +2526,7 @@ function initPttMainWs() {
     pttMainWs.onclose = () => setTimeout(initPttMainWs, 3000);
 }
 
-// 初始化 ASR WS
+// Initialize the ASR WebSocket
 async function initPttAsrWs() {
     if (pttAsrWs && pttAsrWs.readyState === WebSocket.OPEN) return pttAsrWs;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -2540,7 +2540,7 @@ async function initPttAsrWs() {
         pttAsrWs.onmessage = (e) => {
             const msg = JSON.parse(e.data);
             if (msg.type === "transcription" && msg.text && msg.is_final) {
-                // 识别成功，通过控制 WS 发送给主界面
+                // Forward successful recognition to the main interface via the control WebSocket
                 if (pttMainWs && pttMainWs.readyState === WebSocket.OPEN) {
                     pttMainWs.send(JSON.stringify({ type: "set_user_input", data: { text: msg.text } }));
                     setTimeout(() => {
@@ -2552,7 +2552,7 @@ async function initPttAsrWs() {
     });
 }
 
-// 核心转码：WebM -> 16kHz WAV (Sherpa 专用)
+// Core transcoding: WebM to 16 kHz WAV for Sherpa
 async function pttEncodeWav(blob) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
     const arrayBuffer = await blob.arrayBuffer();
@@ -2587,15 +2587,15 @@ async function pttEncodeWav(blob) {
     return new Blob([view], { type: 'audio/wav' });
 }
 
-// 初始化 PTT 按钮与录音逻辑
-// 初始化 PTT 按钮与录音逻辑 (支持长按、防快按误触、XR射线)
+// Initialize the push-to-talk button and recording logic
+// Initialize push-to-talk with long-press, rapid-click protection and XR ray input
 function setupPttInteraction() {
     const floatingBtn = document.createElement('div');
     floatingBtn.id = 'ptt-floating-btn';
     floatingBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
     document.body.appendChild(floatingBtn);
 
-    let isRecordingRequested = false; // 防极快点击导致异步 Bug
+    let isRecordingRequested = false; // Guard against asynchronous races caused by very rapid clicks
 
     const startRecording = async (e) => {
         if (e.cancelable) e.preventDefault();
@@ -2604,13 +2604,13 @@ function setupPttInteraction() {
         isRecordingRequested = true;
         pttAudioChunks = [];
         
-        floatingBtn.classList.add('active'); // 视觉反馈
+        floatingBtn.classList.add('active'); // Visual feedback
         floatingBtn.innerHTML = '<i class="fa-solid fa-microphone"></i><div class="ptt-recording-pulse"></div>';
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
-            // 如果用户松手太快，授权结束后立刻清理，不开始录音
+            // If released before permission is granted, clean up immediately without recording
             if (!isRecordingRequested) {
                 stream.getTracks().forEach(t => t.stop());
                 isPttActive = false;
@@ -2624,7 +2624,7 @@ function setupPttInteraction() {
             pttMediaRecorder.onstop = async () => {
                 stream.getTracks().forEach(t => t.stop());
                 
-                // 只有录到了数据才发送（防秒松手发空包）
+                // Send only when audio data was recorded to avoid empty packets on immediate release
                 if (pttAudioChunks.length > 0) {
                     const webmBlob = new Blob(pttAudioChunks, { type: 'audio/webm' });
                     const wavBlob = await pttEncodeWav(webmBlob);
@@ -2664,11 +2664,11 @@ function setupPttInteraction() {
         }
     };
 
-    // 使用 Pointer Events，完美兼顾 鼠标、触摸屏、XR射线
+    // Use pointer events for mouse, touch and XR ray input
     floatingBtn.addEventListener('pointerdown', startRecording);
     floatingBtn.addEventListener('pointerup', stopRecording);
     floatingBtn.addEventListener('pointercancel', stopRecording);
-    // 监听全局，防止手指/鼠标滑出按钮区域外松开导致没停止
+    // Listen globally so releasing outside the button still stops recording
     window.addEventListener('pointerup', stopRecording);
     
     initPttMainWs();
@@ -2683,7 +2683,7 @@ function setupTextInteraction() {
     textInputContainer.id = 'text-input-container';
     textInputContainer.style.cssText = `
         position: fixed;
-        bottom: 20px; /* 错开在橙色 PTT 按钮下方 */
+        bottom: 20px; /* Offset below the orange push-to-talk button */
         left: 50%;
         transform: translateX(-50%) translateY(20px);
         display: flex;
@@ -2715,7 +2715,7 @@ function setupTextInteraction() {
         padding: 8px 4px;
     `;
 
-    // 隔离事件：防止输入框打字时触发3D场景漫游等快捷键 (如 W, A, S, D, T, R等)
+    // Isolate input events so typing does not trigger 3D navigation shortcuts such as W, A, S, D, T or R
     ['keydown', 'keyup', 'keypress'].forEach(evt => {
         textInputField.addEventListener(evt, (e) => {
             e.stopPropagation();
@@ -2756,9 +2756,9 @@ function setupTextInteraction() {
         const text = textInputField.value.trim();
         if (!text) return;
         if (pttMainWs && pttMainWs.readyState === WebSocket.OPEN) {
-            // 1. 发送用户输入的文本
+            // 1. Send the text entered by the user
             pttMainWs.send(JSON.stringify({ type: "set_user_input", data: { text: text } }));
-            // 2. 稍微延迟确保主程序录入后，触发对话生成指令
+            // 2. Wait briefly for the main application to receive it before triggering generation
             setTimeout(() => {
                 pttMainWs.send(JSON.stringify({ type: "trigger_send_message", data: {} }));
             }, 300);
@@ -2769,7 +2769,7 @@ function setupTextInteraction() {
         }
     }
     
-    // 阻止点击面板时触发父级的交互折叠事件等
+    // Prevent panel clicks from triggering parent interactions such as collapsing
     textInputContainer.addEventListener('mousedown', (e) => e.stopPropagation());
     textInputContainer.addEventListener('touchstart', (e) => e.stopPropagation(), {passive: true});
 }
@@ -2783,9 +2783,9 @@ function addcontrolPanel() {
         return;
     }
 
-    // 等待一小段时间确保页面完全加载
+    // Wait briefly for the page to finish loading
     setTimeout(async () => {
-        // 创建控制面板容器
+        // Create the control panel container
         const controlPanel = document.createElement('div');
         controlPanel.id = 'control-panel';
         controlPanel.style.cssText = `
@@ -2803,7 +2803,7 @@ function addcontrolPanel() {
         pointer-events: none;
         `;
 
-        // 注入全局 CSS 清理移动端点击方块高亮
+        // Inject global CSS to suppress mobile tap highlighting
         const globalStyle = document.createElement('style');
         globalStyle.textContent = `
             #control-panel div, #sub-control-panel div {
@@ -2813,7 +2813,7 @@ function addcontrolPanel() {
         document.head.appendChild(globalStyle);
 
         // ==========================================
-        // ======= 创建左侧子面板 (用于收纳更多按钮) =======
+        // ======= Create the left subpanel for additional controls =======
         // ==========================================
         const subPanel = document.createElement('div');
         subPanel.id = 'sub-control-panel';
@@ -2827,11 +2827,11 @@ function addcontrolPanel() {
             gap: 8px;
             opacity: 0;
             visibility: hidden;
-            /* 修复点 1: 将 0 改为具体的 translateX，并加上 scale(1) 锁定比例 */
+            /* Use explicit translateX instead of zero and include scale(1) to fix the scale */
             transform: translateX(10px) scale(1); 
-            /* 修复点 2: 明确指定过渡属性，绝对不要用 all */
+            /* Specify transition properties explicitly rather than using all */
             transition: opacity 0.3s ease, transform 0.3s ease; 
-            /* 修复点 3: 锁定变形原点在右侧，这样它展开时是向左伸展，而不是中心放大 */
+            /* Anchor transforms on the right so the panel expands leftward instead of scaling from its center */
             transform-origin: right center; 
             pointer-events: none;
             background: transparent !important;
@@ -2840,7 +2840,7 @@ function addcontrolPanel() {
             backdrop-filter: none !important;
         `;
 
-        // 创建工具提示容器
+        // Create the tooltip container
         const tooltipContainer = document.createElement('div');
         tooltipContainer.id = 'control-tooltip-container';
         tooltipContainer.style.cssText = `
@@ -2869,7 +2869,7 @@ function addcontrolPanel() {
         tooltipContainer.appendChild(tooltip);
         document.body.appendChild(tooltipContainer);
         
-        // 工具提示显示函数 - 在左侧显示
+        // Show tooltips on the left
         function showTooltip(button, text) {
             const rect = button.getBoundingClientRect();
             tooltip.textContent = text;
@@ -2900,7 +2900,7 @@ function addcontrolPanel() {
             });
         };
 
-        // 【新增】绑定点击与触摸事件，解决移动端点击无响应或需要双击的问题
+        // Bind click and touch events to avoid unresponsive taps or required double taps on mobile
         function bindTapEvent(element, callback) {
             let touchMoved = false;
             element.addEventListener('touchstart', () => { touchMoved = false; }, { passive: true });
@@ -2919,7 +2919,7 @@ function addcontrolPanel() {
             });
         }
 
-        // 1. 拖拽按钮
+        // 1. Drag button
         const dragButton = document.createElement('div');
         dragButton.id = 'drag-handle';
         dragButton.style.cssText = `
@@ -2938,11 +2938,11 @@ function addcontrolPanel() {
         dragButton.appendChild(dragArea);
         dragButton.appendChild(iconContainer);
 
-        // 2. 锁定按钮逻辑
+        // 2. Lock button logic
         const lockButton = document.createElement('div');
         lockButton.id = 'lock-handle';
         let isMouseLocked = false;
-        const controlButtons = []; // 保存所有需要被隐藏的按钮
+        const controlButtons = []; // Store all buttons that must be hidden
 
         async function initLockButton() {
             lockButton.innerHTML = '<i class="fas fa-lock-open"></i>';
@@ -2971,14 +2971,14 @@ function addcontrolPanel() {
         }
 
         function hideOtherButtons() {
-            // 如果子面板开着，强制关闭
+            // Force the subpanel closed if open
             if (isSubPanelOpen) {
                 isSubPanelOpen = false;
                 updateMoreButtonState();
             }
             controlButtons.forEach(button => {
                 if (button && button !== lockButton) {
-                    button.style.display = 'none'; // 直接隐藏，让布局自然收缩
+                    button.style.display = 'none'; // Hide the button so the layout contracts naturally
                 }
             });
             lockButton.style.marginBottom = '0';
@@ -3028,7 +3028,7 @@ function addcontrolPanel() {
         }
         await initLockButton();
 
-        // 3. 自动隐藏按钮
+        // 3. Auto-hide button
         const hideButton = document.createElement('div');
         hideButton.id = 'hide-handle';
         let isAutoHideActive = false; 
@@ -3170,7 +3170,7 @@ function addcontrolPanel() {
             showModelWithTransition();
         }
 
-        // 4. 切换模型按钮
+        // 4. Model switching buttons
         await getAllModels();
         const prevModelButton = document.createElement('div');
         prevModelButton.id = 'prev-model-handle';
@@ -3239,7 +3239,7 @@ function addcontrolPanel() {
         }
         initModelButtons();
 
-        // 5. 新增的“更多功能”按钮
+        // 5. Additional features button
         const moreButton = document.createElement('div');
         moreButton.id = 'more-handle';
         let isSubPanelOpen = false;
@@ -3313,7 +3313,7 @@ function addcontrolPanel() {
             subtitleButton.title = isSubtitleEnabled ? await t('SubtitleEnabled') : await t('SubtitleDisabled');
         });
 
-        // 6. 刷新与关闭按钮
+        // 6. Refresh and close buttons
         const refreshButton = document.createElement('div');
         refreshButton.id = 'refresh-handle';
         refreshButton.innerHTML = '<i class="fas fa-redo-alt"></i>';
@@ -3350,9 +3350,9 @@ function addcontrolPanel() {
         });
         bindTapEvent(closeButton, (e) => { window.close(); });
 
-        // ======= 以下为收纳在子面板中的按钮 =======
+        // ======= Controls contained in the subpanel =======
 
-        // 子 1. 调整模式按钮
+        // Subpanel 1. Transform mode button
         const moveModeBtn = document.createElement('div');
         moveModeBtn.id = 'move-mode-handle';
         let transformState = 0; 
@@ -3391,7 +3391,7 @@ function addcontrolPanel() {
             }
         });
 
-        // 子 2. WS 状态
+        // Subpanel 2. WebSocket status
         const wsStatusButton = document.createElement('div');
         wsStatusButton.id = 'ws-status-handle';
         wsStatusButton.innerHTML = '<i class="fas fa-wifi"></i>';
@@ -3411,7 +3411,7 @@ function addcontrolPanel() {
         async function updateWSStatus() { wsStatusButton.style.color = wsConnected ? '#28a745' : '#dc3545'; wsStatusButton.title = wsConnected ? await t('WebSocketConnected') : await t('WebSocketDisconnected'); }
         setInterval(updateWSStatus, 1000);
 
-        // 子 4. 闲置动画按钮
+        // Subpanel 4. Idle animation button
         const idleAnimationButton = document.createElement('div');
         idleAnimationButton.id = 'idle-animation-handle';
         idleAnimationButton.innerHTML = useVRMAIdleAnimations ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-play"></i>';
@@ -3430,7 +3430,7 @@ function addcontrolPanel() {
             await toggleIdleAnimationMode();
         });
 
-        // 子 5. XR 按钮
+        // Subpanel 5. XR button
         const xrAutoBtn = document.createElement('div');
         xrAutoBtn.id = 'xr-auto-btn';
         xrAutoBtn.innerHTML = '<i class="fa-solid fa-vr-cardboard"></i>';
@@ -3448,19 +3448,19 @@ function addcontrolPanel() {
         let xrSession = null;
         let xrRefSpace = null;
         
-        // 确保使用原生的 click 事件
+        // Use the native click event
         xrAutoBtn.addEventListener('click', async (e) => {
             if (renderer.xr.isPresenting) {
                 await renderer.xr.getSession().end();
                 return;
             }
 
-            // 自动检测模式 (AR 优先)
+            // Detect the mode automatically, preferring AR
             const mode = canAR ? 'immersive-ar' : 'immersive-vr';
             let session;
 
             try {
-                // 尝试 1：带 UI 穿透 (dom-overlay) 和平面检测 (hit-test) 的全功能模式
+                // Attempt 1: full mode with DOM overlay and hit testing
                 session = await navigator.xr.requestSession(mode, {
                     optionalFeatures: ['local-floor', 'hit-test', 'dom-overlay'],
                     domOverlay: { root: document.body } 
@@ -3470,7 +3470,7 @@ function addcontrolPanel() {
             } catch (err1) {
                 console.warn('Full-feature XR startup failed; trying fallback...', err1);
                 try {
-                    // 尝试 2：剥离 dom-overlay (很多安卓浏览器死在 body 作为 root 上)
+                    // Attempt 2: omit DOM overlay because many Android browsers fail when body is the root
                     session = await navigator.xr.requestSession(mode, {
                         optionalFeatures: ['local-floor', 'hit-test']
                     });
@@ -3479,25 +3479,25 @@ function addcontrolPanel() {
                 } catch (err2) {
                     console.warn('XR fallback mode 1 failed; trying basic mode...', err2);
                     try {
-                        // 尝试 3：最基础的 XR 模式 (只要手机支持 ARCore/VR 就能开)
+                        // Attempt 3: basic XR mode for devices supporting ARCore or VR
                         session = await navigator.xr.requestSession(mode);
                         console.log("Entering XR: basic mode");
 
                     } catch (err3) {
-                        // 彻底不支持
+                        // XR is unsupported
                         alert('Your browser does not support these XR configurations. Try the latest version of Chrome.\nError: ' + err3.message);
                         return;
                     }
                 }
             }
 
-            // ========== 成功获取 session 后的处理 ==========
+            // ========== Handle a successfully acquired XR session ==========
             renderer.xr.setSession(session);
             xrSession = session;
 
             renderer.setAnimationLoop(xrAnimate);
             
-            // 隐藏控制面板
+            // Hide the control panel
             const ctrlPanel = document.getElementById('control-panel');
             if (ctrlPanel) ctrlPanel.style.display = 'none'; 
             
@@ -3505,11 +3505,11 @@ function addcontrolPanel() {
             if (pttBtn) pttBtn.classList.add('visible');
 
             if (currentVrm) {
-                // 在 VR/AR 中将模型稍微放远一点，避免“贴脸”
+                // Position the model farther away in VR or AR to avoid excessive proximity
                 currentVrm.scene.position.set(0, 0, -1.5);
             }
 
-            // 处理 XR 手柄或屏幕点击输入
+            // Handle XR controller or screen tap input
             session.addEventListener('select', (event) => {
                 console.log('XR screen/controller click');
             });
@@ -3520,9 +3520,9 @@ function addcontrolPanel() {
             animate(); 
             xrSession = null; 
             
-            // === 退出 XR 恢复 UI ===
+            // === Restore UI after leaving XR ===
             document.getElementById('control-panel').style.display = 'flex';
-            // 如果进 XR 之前没开语音，退出来后也把它隐藏回去
+            // Restore the hidden voice control if it was disabled before entering XR
             if (!pttVisible) {
                 document.getElementById('ptt-floating-btn').classList.remove('visible');
             }
@@ -3534,7 +3534,7 @@ function addcontrolPanel() {
           renderer.render(scene, camera);
         }
 
-        // 子 6. VMC 按钮
+        // Subpanel 6. VMC button
         const vmcButton = document.createElement('div');
         vmcButton.id = 'vmc-handle';
         vmcButton.innerHTML = '<i class="fas fa-broadcast-tower"></i>';
@@ -3605,7 +3605,7 @@ function addcontrolPanel() {
             vmcApp.use(ElementPlus); vmcApp.mount(vmcWrapper);
         });
 
-        // 子 7. 第一人称视角按钮
+        // Subpanel 7. First-person view button
         const switchCtrlBtn = document.createElement('div');
         switchCtrlBtn.id = 'switch-controls-handle';
         switchCtrlBtn.innerHTML = '<i class="fas fa-gamepad"></i>';
@@ -3645,7 +3645,7 @@ function addcontrolPanel() {
             if (document.pointerLockElement !== renderer.domElement && pointerLocked) toggleControls();
         });
 
-        // 1. 创建按钮并设置初始属性
+        // 1. Create the button and set initial properties
         const voiceControlBtn = document.createElement('div');
         voiceControlBtn.id = 'voice-toggle-handle';
         voiceControlBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
@@ -3657,19 +3657,19 @@ function addcontrolPanel() {
             user-select: none; pointer-events: auto; backdrop-filter: blur(10px);
         `;
 
-        // 2. 初始 Hover 提示 (使用你代码里的翻译函数 t)
+        // 2. Initial hover tooltip using the existing t translation function
         (async () => {
             const initialTitle = await t('EnableVoiceInput') || 'Enable voice input';
             voiceControlBtn.title = initialTitle;
-            addHoverEffect(voiceControlBtn, initialTitle); // 调用你现有的提示增强函数
+            addHoverEffect(voiceControlBtn, initialTitle); // Use the existing tooltip enhancement helper
         })();
 
-        // 3. 点击事件中增加标题动态更新
+        // 3. Dynamically update the title in the click handler
         bindTapEvent(voiceControlBtn, async (e) => {
             pttVisible = !pttVisible;
             const fBtn = document.getElementById('ptt-floating-btn');
             
-            // 获取新的标题文本
+            // Get the new title text
             const activeTitle = pttVisible 
                 ? (await t('DisableVoiceInput') || 'Disable voice input') 
                 : (await t('EnableVoiceInput') || 'Enable voice input');
@@ -3684,15 +3684,15 @@ function addcontrolPanel() {
                 voiceControlBtn.style.color = '#000000';
             }
 
-            // 更新原生标题和自定义 Tooltip
+            // Update the native title and custom tooltip
             voiceControlBtn.title = activeTitle;
-            showTooltip(voiceControlBtn, activeTitle); // 立即更新当前显示的黑色气泡
+            showTooltip(voiceControlBtn, activeTitle); // Immediately update the visible tooltip bubble
         });
 
-        // 1. 创建文字控制按钮
+        // 1. Create the text control button
         const textControlBtn = document.createElement('div');
         textControlBtn.id = 'text-toggle-handle';
-        textControlBtn.innerHTML = '<i class="fas fa-keyboard"></i>'; // 统一使用 fas
+        textControlBtn.innerHTML = '<i class="fas fa-keyboard"></i>'; // Use the same fas icon style
         textControlBtn.style.cssText = `
             width: ${btn_width}px; height: ${btn_height}px; background: rgba(255,255,255,0.95);
             border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; color: #333333; cursor: pointer;
@@ -3701,7 +3701,7 @@ function addcontrolPanel() {
             user-select: none; pointer-events: auto; backdrop-filter: blur(10px);
         `;
 
-        // 补上与其他按钮一致的悬浮动效，防止 Hover 时变色冲突
+        // Match the hover animation of other buttons to avoid conflicting hover colors
         textControlBtn.addEventListener('mouseenter', () => { 
             textControlBtn.style.background = 'rgba(255,255,255,1)'; 
             textControlBtn.style.transform = 'scale(1.1)'; 
@@ -3729,14 +3729,14 @@ function addcontrolPanel() {
                 : (await t('EnableTextInput') || 'Enable text input');
 
             if (textInputVisible) {
-                // 显示输入框，图标变蓝，背景维持白色
+                // Show the input field, turn the icon blue and keep the background white
                 container.style.opacity = '1';
                 container.style.pointerEvents = 'auto';
                 container.style.transform = 'translateX(-50%) translateY(0)';
                 textControlBtn.style.color = '#007bff'; 
                 setTimeout(() => document.getElementById('text-input-field').focus(), 300);
             } else {
-                // 隐藏输入框，图标恢复黑灰
+                // Hide the input field and restore the dark gray icon
                 container.style.opacity = '0';
                 container.style.pointerEvents = 'none';
                 container.style.transform = 'translateX(-50%) translateY(20px)';
@@ -3749,37 +3749,37 @@ function addcontrolPanel() {
         });
 
         // ==========================================
-        // ======= 组装所有面板与按钮 ===================
+        // ======= Assemble all panels and buttons =======
         // ==========================================
         
-        // 1. 组装主面板（按顺序排列）
-        controlPanel.appendChild(dragButton);          // 拖拽
-        controlPanel.appendChild(lockButton);          // 锁定穿透
-        controlPanel.appendChild(hideButton);          // 模型不遮挡
-        controlPanel.appendChild(prevModelButton);     // 上一个模型
-        controlPanel.appendChild(nextModelButton);     // 下一个模型
-        controlPanel.appendChild(subtitleButton);          // 字幕开关
-        controlPanel.appendChild(voiceControlBtn);        // 语音控制
+        // 1. Assemble the main panel in order
+        controlPanel.appendChild(dragButton);          // Drag
+        controlPanel.appendChild(lockButton);          // Lock and click-through
+        controlPanel.appendChild(hideButton);          // Model auto-hide
+        controlPanel.appendChild(prevModelButton);     // Previous model
+        controlPanel.appendChild(nextModelButton);     // Next model
+        controlPanel.appendChild(subtitleButton);          // Subtitle toggle
+        controlPanel.appendChild(voiceControlBtn);        // Voice control
         controlPanel.appendChild(textControlBtn); 
-        controlPanel.appendChild(moreButton);          // 🌟 更多按钮
-        controlPanel.appendChild(refreshButton);       // 刷新
-        controlPanel.appendChild(closeButton);         // 关闭
+        controlPanel.appendChild(moreButton);          // More controls
+        controlPanel.appendChild(refreshButton);       // Refresh
+        controlPanel.appendChild(closeButton);         // Close
 
 
-        // 2. 组装子面板（收纳次要按钮）
+        // 2. Assemble the subpanel for secondary controls
         if (isElectron) {
-            subPanel.appendChild(vmcButton);           // VMC 设置
+            subPanel.appendChild(vmcButton);           // VMC settings
         }
-        subPanel.appendChild(idleAnimationButton);     // 闲置动画
-        subPanel.appendChild(switchCtrlBtn);           // 第一人称
-        subPanel.appendChild(moveModeBtn);             // 物体平移缩放
-        subPanel.appendChild(wsStatusButton);          // WS 状态
+        subPanel.appendChild(idleAnimationButton);     // Idle animation
+        subPanel.appendChild(switchCtrlBtn);           // First-person view
+        subPanel.appendChild(moveModeBtn);             // Object translation and scaling
+        subPanel.appendChild(wsStatusButton);          // WebSocket status
         subPanel.appendChild(xrAutoBtn);               // XR
 
-        // 3. 把子面板挂载到主面板内部
+        // 3. Attach the subpanel inside the main panel
         controlPanel.appendChild(subPanel);
         
-        // 4. 将所有需要被“锁定”操作隐藏的按钮放入数组
+        // 4. Collect all buttons that must be hidden when locked
         controlButtons.push(
             dragButton,
             hideButton,
@@ -3787,10 +3787,10 @@ function addcontrolPanel() {
             nextModelButton, 
             voiceControlBtn,
             textControlBtn,
-            moreButton,          // 让"更多"按钮受锁定控制
+            moreButton,          // Include the more button in lock handling
             refreshButton, 
             closeButton,
-            // 以下为子面板内的按钮，一同加入数组确保状态一致
+            // Include subpanel buttons to keep states consistent
             subtitleButton, 
             idleAnimationButton, 
             switchCtrlBtn,
@@ -3800,10 +3800,10 @@ function addcontrolPanel() {
         );
         if (isElectron) controlButtons.push(vmcButton);
 
-        // 5. 添加到页面
+        // 5. Add to the page
         document.body.appendChild(controlPanel);
 
-        // 初始化所有提示文本
+        // Initialize all tooltip text
         dragButton.title = await t('dragWindow');
         refreshButton.title = await t('refreshWindow');
         closeButton.title = await t('closeWindow');
@@ -3849,7 +3849,7 @@ function addcontrolPanel() {
         }
         setInterval(updateButtonTooltips, 1000);
 
-        // ======= 显示/隐藏控制逻辑 (整个面板的自动淡出) =======
+        // ======= Show and hide logic (automatic panel fade-out) =======
         let hideTimeout;
         let isControlPanelHovered = false;
         
@@ -3863,7 +3863,7 @@ function addcontrolPanel() {
         
         function hideControlPanel() {
             if (!isControlPanelHovered) {
-                // 如果鼠标静止，自动折叠子面板
+                // Automatically collapse the subpanel if the mouse is idle
                 if (isSubPanelOpen) {
                     isSubPanelOpen = false;
                     updateMoreButtonState();
@@ -3884,10 +3884,10 @@ function addcontrolPanel() {
         document.body.addEventListener('mousemove', () => { showControlPanel(); scheduleHide(); });
         document.body.addEventListener('mouseleave', () => { if (!isControlPanelHovered) scheduleHide(); });
 
-        // 【新增移动端优化】点击屏幕呼出控制面板并隐藏 Tooltip
+        // Mobile optimization: tap the screen to show controls and hide the tooltip
         document.body.addEventListener('touchstart', (e) => {
             hideTooltip();
-            // 如果点击的是控制面板内的元素，不处理，让面板自己处理
+            // Let control panel elements handle their own clicks
             if (controlPanel.contains(e.target)) return;
             showControlPanel(); 
             scheduleHide(); 
@@ -3907,7 +3907,7 @@ function addcontrolPanel() {
             if (isMouseLocked && window.electronAPI) window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
         });
 
-        // 【新增移动端优化】触控面板时保持面板显示
+        // Mobile optimization: keep controls visible during touch interaction
         controlPanel.addEventListener('touchstart', () => {
             if (renderer.xr.isPresenting) return; 
             isControlPanelHovered = true;
@@ -3934,7 +3934,7 @@ function addcontrolPanel() {
         setupPttInteraction();
         setupTextInteraction();
 
-        // ======= 【新增】锁定状态下放行底部交互组件的鼠标穿透 =======
+        // ======= Allow bottom interactive controls to receive mouse input while locked =======
         const pttBtn = document.getElementById('ptt-floating-btn');
         if (pttBtn) {
             pttBtn.addEventListener('mouseenter', () => {
@@ -3952,19 +3952,19 @@ function addcontrolPanel() {
                 if (isMouseLocked && window.electronAPI) window.electronAPI.setIgnoreMouseEvents(false);
             });
             textInputContainer.addEventListener('mouseleave', () => {
-                // 如果鼠标移出且输入框没有聚焦，才恢复鼠标穿透
+                // Restore click-through only if the mouse leaves and the text input is not focused
                 if (isMouseLocked && window.electronAPI && document.activeElement !== textInputField) {
                     window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
                 }
             });
             textInputField.addEventListener('blur', () => {
-                // 输入框失去焦点时，如果鼠标已经不在容器内，恢复穿透
+                // Restore click-through on blur if the mouse is outside the container
                 if (isMouseLocked && window.electronAPI && !textInputContainer.matches(':hover')) {
                     window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
                 }
             });
             textInputField.addEventListener('focus', () => {
-                // 输入框聚焦时强制取消穿透，防止打字打一半鼠标乱晃导致键盘失焦
+                // Disable click-through while the input is focused to prevent accidental loss of keyboard focus
                 if (isMouseLocked && window.electronAPI) window.electronAPI.setIgnoreMouseEvents(false);
             });
         }
@@ -3976,15 +3976,15 @@ function addcontrolPanel() {
 }
 
 addcontrolPanel();
-// 在全局变量区域添加
+// Additional global state
 let ttsWebSocket = null;
 let wsConnected = false;
-let currentAudioContext = null; // 用于管理音频处理
-const chunkAnimations = new Map(); // 用于存储每个语音块的动画状态
-let vrmAudioQueue = [];            // 排序后的待播放队列
-let vrmReceiveBuffer = new Map();   // 排序缓冲区
-let nextExpectedIndex = 0;         // 期望的下一个 Index
-let isVrmPlaying = false;          // 播放状态锁
+let currentAudioContext = null; // Manage audio processing
+const chunkAnimations = new Map(); // Store animation state for each speech chunk
+let vrmAudioQueue = [];            // Ordered audio playback queue
+let vrmReceiveBuffer = new Map();   // Reordering buffer
+let nextExpectedIndex = 0;         // Next expected index
+let isVrmPlaying = false;          // Playback state lock
 
 function initTTSWebSocket() {
     const http_protocol = window.location.protocol;
@@ -3992,13 +3992,13 @@ function initTTSWebSocket() {
     const wsUrl = `${ws_protocol}//${window.location.host}/ws/vrm`;
     
     ttsWebSocket = new WebSocket(wsUrl);
-    ttsWebSocket.binaryType = 'arraybuffer'; // 必须！
+    ttsWebSocket.binaryType = 'arraybuffer'; // Required binary format
 
     ttsWebSocket.onopen = () => { wsConnected = true; console.log('VRM Binary Connected'); };
 
     ttsWebSocket.onmessage = async (event) => {
         if (event.data instanceof ArrayBuffer) {
-            // 1. 解析二进制
+            // 1. Parse binary data
             const buffer = event.data;
             const view = new DataView(buffer);
             const jsonLen = view.getUint32(0, true);
@@ -4025,10 +4025,10 @@ function initTTSWebSocket() {
                 });
             }
         } else {
-            // 处理指令 (JSON)
+            // Handle JSON commands
             try {
                 const message = JSON.parse(event.data);
-                // 确保两个指令处理函数均被执行
+                // Ensure both command handlers execute
                 handleVrmCoreLogic(message);
                 handleTTSMessage(message); 
             } catch (e) {
@@ -4039,13 +4039,13 @@ function initTTSWebSocket() {
     ttsWebSocket.onclose = () => { wsConnected = false; setTimeout(initTTSWebSocket, 3000); };
 }
 
-// --- 处理指令的函数 ---
+// --- Command handling ---
 function handleVrmCoreLogic(message) {
     const { type, data } = message;
     
-    // 【核心修复】当对话开始或停止时，重置所有你定义的打字机变量
+    // Reset all typewriter state when a conversation starts or stops
     if (type === 'ttsStarted' || type === 'stopSpeaking') {
-        // 1. 重置你写好的打字机变量
+        // 1. Reset the typewriter variables
         isOmniMode = false;
         isAudioStreaming = false;
         fullTargetText = "";
@@ -4054,10 +4054,10 @@ function handleVrmCoreLogic(message) {
         omniNextStartTime = 0;
         omniTotalAudioDuration = 0;
         omniPlaybackStartTime = 0;
-        stopTypewriterLoop(); // 调用你的停止函数
-        clearSubtitle();     // 调用你的清理函数
+        stopTypewriterLoop(); // Stop the typewriter loop
+        clearSubtitle();     // Clear subtitles
 
-        // 2. 重置标准 TTS 队列
+        // 2. Reset the standard TTS queue
         vrmAudioQueue = [];
         vrmReceiveBuffer.clear();
         nextExpectedIndex = 0;
@@ -4065,13 +4065,13 @@ function handleVrmCoreLogic(message) {
         haltCurrentAudio();
     }
     
-    // 兼容静音块指令
+    // Support silent-chunk commands
     if (type === 'startSpeaking' && data.voice === 'silence') {
         addToVrmSortBuffer({ ...data, isSilence: true });
     }
 }
 
-// --- 标准 TTS 排序函数 (完整版) ---
+// --- Standard TTS reordering ---
 function addToVrmSortBuffer(task) {
     vrmReceiveBuffer.set(task.chunkIndex, task);
     while (vrmReceiveBuffer.has(nextExpectedIndex)) {
@@ -4083,19 +4083,19 @@ function addToVrmSortBuffer(task) {
     if (!isVrmPlaying && vrmAudioQueue.length > 0) processVrmQueue();
 }
 
-// --- 标准 TTS 播放队列 (完整版) ---
+// --- Standard TTS playback queue ---
 async function processVrmQueue() {
     if (vrmAudioQueue.length === 0) { isVrmPlaying = false; return; }
     isVrmPlaying = true;
     const task = vrmAudioQueue.shift();
 
-    // 复用你的字幕渲染
+    // Reuse subtitle rendering
     if (task.text) renderSubtitleUI(task.text);
 
     if (task.isSilence) {
         await new Promise(r => setTimeout(r, 600));
     } else {
-        await startLipSyncForChunk(task); // 调用你那个 F1/F2 算法函数
+        await startLipSyncForChunk(task); // Invoke the formant-based F1/F2 lip-sync function
     }
 
     if (task.isBinary && task.audioDataUrl) URL.revokeObjectURL(task.audioDataUrl);
@@ -4123,21 +4123,21 @@ const VMCToVRMBlend = {
   LookLeft:   'lookLeft',
   LookRight:  'lookRight'
 };
-let vmcReceiveEnabled = false;   // 是否正在 VMC 接收模式
-let vmcSyncExpression = false;   // 是否同步表情（面板开关）
-let vmcBoneBuffer = new Map();   // 缓存最新骨骼数据
-let vmcBlendBuffer = new Map();  // 缓存最新表情数据
+let vmcReceiveEnabled = false;   // Whether VMC reception is active
+let vmcSyncExpression = false;   // Whether to synchronize expressions (panel toggle)
+let vmcBoneBuffer = new Map();   // Buffer the latest bone data
+let vmcBlendBuffer = new Map();  // Buffer the latest expression data
 
-/* ========== VMC 接收：骨骼 + 表情 一次性完整版 ========== */
+/* ========== VMC reception: bones and expressions ========== */
 if (window.vmcAPI) {
   window.vmcAPI.onVMCOscRaw((oscMsg) => {
-    if (!vmcReceiveEnabled) return;          // 总开关
+    if (!vmcReceiveEnabled) return;          // Master enable switch
 
     const { address, args } = oscMsg;
 
-    /* -------- 1. 骨骼 /VMC/Ext/Bone/Pos -------- */
+    /* -------- 1. Bones /VMC/Ext/Bone/Pos -------- */
     if (address === '/VMC/Ext/Bone/Pos') {
-      // 兼容两种常见 osc 库格式：{type,value} 或直接原始值
+      // Support two common OSC library formats: {type,value} or raw values
       const boneName = args[0].value ?? args[0];
       const x   = args[1].value ?? args[1];
       const y   = args[2].value ?? args[2];
@@ -4154,7 +4154,7 @@ if (window.vmcAPI) {
       return;
     }
 
-    /* -------- 2. 表情 /VMC/Ext/Blend/Val -------- */
+    /* -------- 2. Expressions /VMC/Ext/Blend/Val -------- */
     if (address === '/VMC/Ext/Blend/Val') {
       const blendName = args[0].value ?? args[0];
       const weight  = args[1].value ?? args[1];
@@ -4162,11 +4162,11 @@ if (window.vmcAPI) {
       return;
     }
 
-    /* -------- 3. 表情 Apply -------- */
+    /* -------- 3. Apply expressions -------- */
     if (address === '/VMC/Ext/Blend/Apply') {
       if (!currentVrm?.expressionManager || !vmcSyncExpression) return;
       for (const [vmcName, w] of vmcBlendBuffer) {
-        const vrmName = VMCToVRMBlend[vmcName];   // 官方表情映射表
+        const vrmName = VMCToVRMBlend[vmcName];   // Official expression mapping
         if (vrmName) currentVrm.expressionManager.setValue(vrmName, w);
       }
     }
@@ -4175,7 +4175,7 @@ if (window.vmcAPI) {
 
 
 
-// 发送消息到主界面
+// Send a message to the main interface
 function sendToMain(type, data) {
     if (ttsWebSocket && wsConnected) {
         ttsWebSocket.send(JSON.stringify({
@@ -4186,43 +4186,43 @@ function sendToMain(type, data) {
     }
 }
 
-let fullTargetText = "";          // 记录当前对话收到的所有文本
-let currentVisibleCount = 0;      // 当前已显示的字符数
-let displayStartIndex = 0; // 新增：锁定当前显示的起始位置
-const MAX_WINDOW_SIZE = 60;  // 一屏最多显示约40个字（视UI宽度而定）
-const OVERLAP_SIZE = 30;     // 翻页时保留的字数（即“半页”重叠）
-const SAFE_PUNC_LIST = /[，。！？；：、“”（）《》,.!?;:()]/; // 定义安全分割的标点符号
+let fullTargetText = "";          // All text received for the current conversation
+let currentVisibleCount = 0;      // Number of characters currently visible
+let displayStartIndex = 0; // Track the current display start position
+const MAX_WINDOW_SIZE = 60;  // Maximum subtitle window size; actual visible text depends on UI width
+const OVERLAP_SIZE = 30;     // Number of characters retained when advancing a page (half-page overlap)
+const SAFE_PUNC_LIST = /[，。！？；：、“”（）《》,.!?;:()]/; // Punctuation allowed for safe subtitle splitting
 
-let typewriterTimer = null;       // 打字机计时器
+let typewriterTimer = null;       // Typewriter timer
 let isAudioStreaming = false;
-let isOmniMode = false;           // 是否处于 Omni 流模式
-let omniNextStartTime = 0;        // 预估的音频流结束时间点
-let omniTotalAudioDuration = 0;   // 记录当前句子已接收到的音频总时长
-let omniPlaybackStartTime = 0;    // 记录这句音频开始播放的绝对时间
+let isOmniMode = false;           // Whether Omni streaming mode is active
+let omniNextStartTime = 0;        // Estimated end time of the audio stream
+let omniTotalAudioDuration = 0;   // Total audio duration received for the current sentence
+let omniPlaybackStartTime = 0;    // Absolute playback start time for this sentence
 /**
- * 强制停止所有音频播放并重置音频上下文
- * 解决“上一句话还没说完，下一句话就开始了”产生的重叠问题
+ * Force all audio playback to stop and reset the audio context
+ * Prevent overlap when a new sentence begins before the previous one ends
  */
 async function haltCurrentAudio() {
-    // 1. 停止音频上下文（最关键的一步）
+    // 1. Stop the audio context (the key step)
     if (currentAudioContext) {
         try {
-            // suspend() 会立即停止音频输出
+            // suspend() immediately stops audio output
             await currentAudioContext.suspend();
-            // close() 释放硬件资源，强迫下次创建新的 Context，避免时间戳错乱
+            // close() releases hardware resources so the next playback creates a fresh context and avoids timestamp inconsistencies
             await currentAudioContext.close();
         } catch (e) {
             console.warn("AudioContext cleanup warning:", e);
         }
-        currentAudioContext = null; // 置空，以便下次 processOmniStreaming 重新创建
+        currentAudioContext = null; // Clear the context so processOmniStreaming can recreate it
     }
 
-    // 2. 重置音频流时间戳
+    // 2. Reset audio stream timestamps
     omniNextStartTime = 0;
     
-    // 3. 停止所有动画与分析器连接
+    // 3. Stop all animations and analyzer connections
     stopAllChunkAnimations();
-    chunkAnimations.clear(); // 清空 Map，防止残留状态
+    chunkAnimations.clear(); // Clear the map to prevent stale state
 }
 
 function handleTTSMessage(message) {
@@ -4257,10 +4257,10 @@ function handleTTSMessage(message) {
                 }
 
                 isOmniMode = true;
-                isAudioStreaming = true; // 标记正在接收数据流
+                isAudioStreaming = true; // Mark that stream data is being received
                 if (data.text) fullTargetText = data.text;
                 
-                // 纯文本模式下的表情与动作触发
+                // Trigger expressions and motions in text-only mode
                 if (data.expressions && data.expressions.length > 0) {
                     const ALLOW_EXPS = ['surprised','happy','angry','sad','neutral','relaxed','blink','blinkLeft','blinkRight'];
                     if (idleAnimationManager) {
@@ -4305,7 +4305,7 @@ function handleTTSMessage(message) {
             break;
 
         case 'stopSpeaking':
-            // 强行打断：直接清除状态，不留痕迹
+            // Force an interruption and clear state immediately
             isOmniMode = false;
             isAudioStreaming = false;
             stopTypewriterLoop();
@@ -4314,7 +4314,7 @@ function handleTTSMessage(message) {
             break;
 
         case 'allChunksCompleted':
-            // 仅标记 AI 数据输入结束。打字机自会负责完整打印完毕。
+            // Mark only the end of AI input; the typewriter finishes displaying the remaining text
             isAudioStreaming = false; 
             break;
             
@@ -4327,13 +4327,13 @@ function handleTTSMessage(message) {
 }
 
 // ==========================================
-// 3. 动态打字机逻辑
+// 3. Dynamic typewriter logic
 // ==========================================
 /**
- * 完整改进版打字机循环
- * 支持：动态语速、半页重叠翻页、标点符号安全分割、视觉反馈
+ * Complete improved typewriter loop
+ * Supports variable speed, half-page overlap, punctuation-safe splitting and visual feedback
  */
-// 提取出的字幕渲染与滚动复用辅助函数
+// Shared helper for subtitle rendering and scrolling
 function updateSubtitleAndRoll() {
     const currentDisplayLength = currentVisibleCount - displayStartIndex;
     if (currentDisplayLength > MAX_WINDOW_SIZE) {
@@ -4362,19 +4362,19 @@ function updateSubtitleAndRoll() {
     renderSubtitleUI(prefix + displayText);
 }
 
-// 兼容“无音频纯文本驱动”的自适应打字机循环
+// Adaptive typewriter loop for text-only output without audio
 function startTypewriterLoop() {
-    if (typewriterTimer) return; // 防止重复启动
+    if (typewriterTimer) return; // Prevent duplicate starts
 
-    // 检测当前是否处于纯文本模式（无音频输出或未启动音频节点）
+    // Detect text-only mode (no audio output or no active audio node)
     const isTextOnlyMode = !currentAudioContext || !chunkAnimations.has('omni_live_stream');
 
     if (isTextOnlyMode) {
         let lastUpdateTime = performance.now();
-        const CHARS_PER_SECOND = 8; // 降低语速：调整为每秒 8 个中文字符，阅读体验更自然舒适
+        const CHARS_PER_SECOND = 8; // Display eight characters per second for a more comfortable reading pace
 
         function typeTextOnly() {
-            // 如果外部调用了强行打断（如 stopSpeaking），则立即退出
+            // Exit immediately if an external interruption such as stopSpeaking occurs
             if (!isOmniMode) {
                 typewriterTimer = null;
                 return;
@@ -4385,19 +4385,19 @@ function startTypewriterLoop() {
             const interval = 1000 / CHARS_PER_SECOND;
             
             if (elapsed >= interval) {
-                // 平滑、逐字递增地打字，绝不跳字或闪烁
+                // Advance smoothly one character at a time without skipping or flickering
                 if (currentVisibleCount < fullTargetText.length) {
                     currentVisibleCount++;
                     updateSubtitleAndRoll();
                 }
-                // 扣除余数，确保打字间隔时间高精度均匀
+                // Retain the fractional remainder for precise and uniform typing intervals
                 lastUpdateTime = now - (elapsed % interval);
             }
 
-            // 只有当所有文字均已完整打出，且 AI 流已完全停止时，才安全关闭打字机并收尾
+            // Stop safely only once all text is displayed and the AI stream has ended
             if (currentVisibleCount >= fullTargetText.length && (!isAudioStreaming || isTextOnlyMode)) {
                 typewriterTimer = null;
-                isOmniMode = false; // 打印彻底结束，释放状态
+                isOmniMode = false; // Release state after all text is displayed
                 finalizeSpeech(false);
             } else {
                 typewriterTimer = requestAnimationFrame(typeTextOnly);
@@ -4407,7 +4407,7 @@ function startTypewriterLoop() {
         return;
     }
 
-    // 标准音频同步打字逻辑 (原版逻辑)
+    // Standard audio-synchronized typewriter logic
     function syncTextToAudio() {
         if (!isOmniMode || !currentAudioContext) {
             typewriterTimer = null;
@@ -4460,7 +4460,7 @@ function stopTypewriterLoop() {
 }
 
 // ==========================================
-// 4. 音频流处理 (Omni 模式)
+// 4. Audio stream handling (Omni mode)
 // ==========================================
 async function processOmniStreaming(data) {
     const chunkId = 'omni_live_stream';
@@ -4519,7 +4519,7 @@ async function processOmniStreaming(data) {
 }
 
 // ==========================================
-// 5. 字幕渲染与清理
+// 5. Subtitle rendering and cleanup
 // ==========================================
 function renderSubtitleUI(text) {
     if (!isSubtitleEnabled) return;
@@ -4530,7 +4530,7 @@ function renderSubtitleUI(text) {
 }
 
 function updateSubtitle(text, chunkIndex) {
-    // 兼容传统 TTS 的字幕显示
+    // Support subtitle display for conventional TTS
     if (!isSubtitleEnabled || !text.trim()) return;
     renderSubtitleUI(text);
     currentSubtitleChunkIndex = chunkIndex;
@@ -4544,7 +4544,7 @@ function clearSubtitle() {
 }
 
 function finalizeSpeech(immediate = false) {
-    // 停止动画驱动
+    // Stop animation updates
     stopAllChunkAnimations();
     if (chunkAnimations.has('omni_live_stream')) {
         stopChunkAnimation('omni_live_stream');
@@ -4557,10 +4557,10 @@ function finalizeSpeech(immediate = false) {
         currentVisibleCount = 0;
         displayStartIndex = 0;
     } else {
-        // --- 优化点：文字全部打完后，多留 2.5 秒的“静止阅读时间” ---
+        // Allow an additional 2.5 seconds for reading after all text is displayed
         if (subtitleTimeout) clearTimeout(subtitleTimeout);
         subtitleTimeout = setTimeout(() => {
-            // 确保这期间没有开启新的对话
+            // Ensure no new conversation has started during this interval
             if (!isOmniMode && !typewriterTimer) {
                 clearSubtitle();
                 fullTargetText = "";
@@ -4572,23 +4572,23 @@ function finalizeSpeech(immediate = false) {
 }
 
 
-// 在页面加载完成后初始化 WebSocket
+// Initialize WebSocket after the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // 延迟初始化，确保其他组件已经准备好
+    // Delay initialization until other components are ready
     setTimeout(() => {
         initTTSWebSocket();
     }, 2000);
 });
 
 if (isElectron) {
-  // 禁用 Chromium 的自动播放限制
+  // Handle Chromium autoplay restrictions
   const disableAutoplayPolicy = () => {
     if (window.chrome && chrome.webview) {
       chrome.webview.setAutoplayPolicy('no-user-gesture-required');
     }
   };
   
-  // 在用户交互后执行
+  // Execute after user interaction
   document.addEventListener('click', () => {
     disableAutoplayPolicy();
     if (currentAudioContext) {
@@ -4597,12 +4597,12 @@ if (isElectron) {
   });
 }
 
-// 在全局变量区域添加模型切换相关变量
+// Global state for model switching
 let currentModelIndex = 0;
 let allModels = [];
 let modelsInitialized = false;
 
-// 获取所有可用模型的函数（只执行一次）
+// Get all available models (run once)
 async function getAllModels() {
     if (modelsInitialized) {
         return allModels;
@@ -4613,7 +4613,7 @@ async function getAllModels() {
     const userModels = vrmConfig.userModels || [];
     allModels = [...defaultModels, ...userModels];
     
-    // 找到当前选中模型的索引
+    // Find the index of the currently selected model
     const selectedModelId = vrmConfig.selectedModelId;
     currentModelIndex = Math.max(0, allModels.findIndex(model => model.id === selectedModelId));
     
@@ -4623,7 +4623,7 @@ async function getAllModels() {
     return allModels;
 }
 
-// 切换到指定索引的模型（纯前端切换）
+// Switch to the specified model index entirely on the frontend
 async function switchToModel(index,isRefresh = false) {
     if (!modelsInitialized) {
         await getAllModels();
@@ -4634,10 +4634,10 @@ async function switchToModel(index,isRefresh = false) {
         return;
     }
     
-    // 确保索引在有效范围内（循环切换）
+    // Wrap the index within the valid range
     const newIndex = ((index % allModels.length) + allModels.length) % allModels.length;
     
-    // 如果是同一个模型，不需要切换
+    // Skip switching if the model is already selected
     if (newIndex === currentModelIndex && !isRefresh) {
         console.log('Same model selected, no need to switch');
         return;
@@ -4645,13 +4645,13 @@ async function switchToModel(index,isRefresh = false) {
     
     currentModelIndex = newIndex;
     const selectedModel = allModels[currentModelIndex];
-    // 替换userModel.path中的protocol和host
+    // Replace protocol and host in userModel.path
     let userModelURL = new URL(selectedModel.path);
     userModelURL.protocol = window.location.protocol;
     userModelURL.host = window.location.host;
     selectedModel.path = userModelURL.href;
     console.log(`Switching to model: ${selectedModel.name} (${selectedModel.id}) - Index: ${currentModelIndex}`);
-    // 切换模型前确保画布和交互恢复为可见状态
+    // Restore canvas and interaction visibility before switching models
     isModelHiddenByHover = false;
     resumeModelAnimationsAfterHide();
     if (renderer?.domElement) {
@@ -4663,53 +4663,53 @@ async function switchToModel(index,isRefresh = false) {
     }
     
     try {
-        // 显示加载提示（可选）
+        // Optionally show a loading indicator
         showModelSwitchingIndicator(selectedModel.name);
-        // 🔥 添加：停止当前的闲置动画
+        // Stop the current idle animation
         if (idleAnimationManager) {
             idleAnimationManager.stopAllAnimations();
         }
         
-        // 🔥 添加：重置闲置动画管理器
+        // Reset the idle animation manager
         idleAnimationManager = null;
 
-        // 移除当前VRM模型
+        // Remove the current VRM model
         if (currentVrm) {
             if (typeof transformControl !== 'undefined') {
                 transformControl.detach();
             }
-            // scene.remove(currentVrm.scene); <-- 删除这行
-            currentVrmWrapper.remove(currentVrm.scene); // 从 Wrapper 移除
+            // scene.remove(currentVrm.scene); <-- Remove this old line
+            currentVrmWrapper.remove(currentVrm.scene); // Remove the model from the wrapper
             currentVrm = undefined;
         }
         
-        // 加载新模型
+        // Load the new model
         const modelPath = selectedModel.path;
         
         loader.load(
             modelPath,
             (gltf) => {
                 const vrm = gltf.userData.vrm;
-                currentMixer = new THREE.AnimationMixer(vrm.scene); // 创建动画混合器
+                currentMixer = new THREE.AnimationMixer(vrm.scene); // Create the animation mixer
                 isVRM1 = vrm.meta.metaVersion === '1';
-                VRMUtils.rotateVRM0(vrm); // 旋转 VRM 使其面向正前方
-                // 优化性能
+                VRMUtils.rotateVRM0(vrm); // Rotate the VRM to face forward
+                // Optimize performance
                 // VRMUtils.removeUnnecessaryVertices(gltf.scene);
-                // 添加材质修复
+                // Add material fixes
                 // gltf.scene.traverse((obj) => {
                 // if (obj.isMesh && obj.material) {
-                //     // 解决透明材质黑边问题
+                //     // Correct black edges on transparent materials
                 //     if (obj.material.transparent) {
                 //         obj.material.alphaTest = 0.01;
                 //         obj.material.depthWrite = true;
                 //         obj.material.needsUpdate = true;
                 //     }
                     
-                //     // 确保正确混合模式
+                //     // Ensure the correct blending mode
                 //     obj.material.blending = THREE.NormalBlending;
                 //     obj.material.premultipliedAlpha = false;
                     
-                //     // 设置渲染顺序
+                //     // Set rendering order
                 //     obj.renderOrder = obj.material.transparent ? 1 : 0;
                 // }
                 // });
@@ -4717,12 +4717,12 @@ async function switchToModel(index,isRefresh = false) {
                 // VRMUtils.combineSkeletons(gltf.scene);
                 // VRMUtils.combineMorphs(vrm);
                 
-                // 启用 Spring Bone 物理模拟
+                // Enable SpringBone physics simulation
                 if (vrm.springBoneManager) {
                     console.log('Spring Bone Manager found:', vrm.springBoneManager);
                 }
                 
-                // 禁用视锥体剔除
+                // Disable frustum culling
                 vrm.scene.traverse((obj) => {
                     obj.frustumCulled = false;
                 });
@@ -4730,21 +4730,21 @@ async function switchToModel(index,isRefresh = false) {
                 vrm.lookAt.target = camera;
 
                 if (vrm.lookAt.applier) {
-                    vrm.lookAt.applier.yawLimit = 60.0;   // 左右转头最大 60 度
-                    vrm.lookAt.applier.pitchLimit = 30.0; // 上下抬头最大 30 度
+                    vrm.lookAt.applier.yawLimit = 60.0;   // Maximum horizontal head rotation: 60 degrees
+                    vrm.lookAt.applier.pitchLimit = 30.0; // Maximum vertical head rotation: 30 degrees
                 }
 
                 currentVrm = vrm;
                 console.log('New VRM loaded:', vrm);
                 currentVrmWrapper.add(vrm.scene);
-                // 让模型投射阴影
+                // Allow the model to cast shadows
                 vrm.scene.traverse((obj) => {
                     if (obj.isMesh) {
                         obj.castShadow = true;
-                        obj.receiveShadow = true;   // 如需让模型本身也接收阴影可保留
+                        obj.receiveShadow = true;   // Keep this if the model should also receive shadows
                     }
                 });
-                // 设置自然姿势
+                // Set a natural pose
                 setNaturalPose(vrm);
 
                 if (vrm.expressionManager) {
@@ -4761,18 +4761,18 @@ async function switchToModel(index,isRefresh = false) {
                 blinkAction.setLoop(THREE.LoopRepeat);
                 blinkAction.play();
                 
-                // 🔥 关键修复：重新创建闲置动画管理器并重新设置动画队列
+                // Recreate the idle animation manager and reset the animation queue
                 idleAnimationManager = new IdleAnimationManager(vrm, currentMixer);
                 
-                // 🔥 重要：重新设置VRMA动画队列（如果之前已经加载过）
+                // Restore the VRMA animation queue if it was loaded previously
                 if (useVRMAIdleAnimations && idleAnimations.length > 0) {
                     idleAnimationManager.setAnimationQueue(idleAnimations);
                 }
                 
-                // 🔥 重新启动闲置动画循环
+                // Restart the idle animation loop
                 startIdleAnimationLoop();
 
-                // 隐藏加载提示
+                // Hide the loading indicator
                 hideModelSwitchingIndicator();
                 
                 if (typeof transformControl !== 'undefined' && transformControl.object) {
@@ -4783,17 +4783,17 @@ async function switchToModel(index,isRefresh = false) {
             },
             (progress) => {
                 console.log('Loading model...', 100.0 * (progress.loaded / progress.total), '%');
-                // 可以在这里更新加载进度
+                // Loading progress can be updated here
                 updateModelLoadingProgress(progress.loaded / progress.total);
             },
             (error) => {
                 console.error('Error loading model:', error);
                 hideModelSwitchingIndicator();
                 
-                // 如果加载失败，尝试回到之前的模型
+                // If loading fails, try returning to the previous model
                 if (allModels.length > 1) {
                     console.log('Attempting to load fallback model...');
-                    // 尝试加载第一个模型作为备用
+                    // Try loading the first model as fallback
                     if (currentModelIndex !== 0) {
                         switchToModel(0);
                     }
@@ -4807,9 +4807,9 @@ async function switchToModel(index,isRefresh = false) {
     }
 }
 
-// 显示模型切换指示器（可选功能）
+// Show the optional model switching indicator
 function showModelSwitchingIndicator(modelName) {
-    // 创建或显示加载提示
+    // Create or show the loading indicator
     let indicator = document.getElementById('model-switching-indicator');
     if (!indicator) {
         indicator = document.createElement('div');
@@ -4843,7 +4843,7 @@ function showModelSwitchingIndicator(modelName) {
     indicator.style.opacity = '1';
 }
 
-// 更新加载进度
+// Update loading progress
 function updateModelLoadingProgress(progress) {
     const progressElement = document.getElementById('loading-progress');
     if (progressElement) {
@@ -4851,7 +4851,7 @@ function updateModelLoadingProgress(progress) {
     }
 }
 
-// 隐藏模型切换指示器
+// Hide the model switching indicator
 function hideModelSwitchingIndicator() {
     const indicator = document.getElementById('model-switching-indicator');
     if (indicator) {
@@ -4862,7 +4862,7 @@ function hideModelSwitchingIndicator() {
     }
 }
 
-// 获取当前模型信息
+// Get current model information
 function getCurrentModelInfo() {
     if (allModels.length > 0 && currentModelIndex >= 0 && currentModelIndex < allModels.length) {
         return allModels[currentModelIndex];
@@ -4870,14 +4870,14 @@ function getCurrentModelInfo() {
     return null;
 }
 
-// 获取下一个模型信息（用于预览）
+// Get next model information for preview
 function getNextModelInfo() {
     if (allModels.length === 0) return null;
     const nextIndex = ((currentModelIndex + 1) % allModels.length + allModels.length) % allModels.length;
     return allModels[nextIndex];
 }
 
-// 获取上一个模型信息（用于预览）
+// Get previous model information for preview
 function getPrevModelInfo() {
     if (allModels.length === 0) return null;
     const prevIndex = ((currentModelIndex - 1) % allModels.length + allModels.length) % allModels.length;
