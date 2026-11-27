@@ -470,3 +470,7 @@ Every code, UI, translation, configuration, file, provider, dependency, build an
 ## 2026-11-26 — Main stylesheet English comment pass 4
 
 - Parent ebfd8e03d7fa6b2092197a06f5a435bea16a0d8a. Translate 260 comment lines in static/css/styles.css covering browser, notifications, IM/group chat, attachments and tool approval cards. Preserve non-comment CSS byte-for-byte and line count; 900 flagged lines remain. No runtime behavior or dependency changes. CI and Windows visual validation pending. Revert for rollback.
+
+## 2026-11-26 — Main stylesheet English comment pass 5
+
+- Parent 01f6b23bb87351f68039653e3983d93587fbff87. Translate 250 comment lines covering MCP lists, loading overlays, task center, input and message controls, side panels, dropdowns and PTT. Non-comment CSS byte-identical; line count unchanged; 650 flagged lines remain. No implementation, dependency or permission change. CI and Windows visual validation pending; revert for rollback.
