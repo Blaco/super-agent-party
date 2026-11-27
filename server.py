@@ -3336,10 +3336,10 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                 msg['content'] = new_content
                     print("Removed older screenshots from conversation context.")
 
-                print(f"Desktop screenshot and compact UI tree injected: {desktop_url}")
+                logger.info("Desktop context attached")
 
             except Exception as e:
-                print(f"Failed to capture desktop or extract UI tree: {e}")
+                logger.warning("Desktop context capture failed (%s)", type(e).__name__)
 
         # =========================================================================
         # Stage one: compress context only above the threshold, deciding which messages to retain
@@ -3620,7 +3620,6 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
         
         source_prompt = ""
         if request.fileLinks:
-            print("fileLinks",request.fileLinks)
             # Retrieve file content asynchronously
             files_content = await get_files_content(request.fileLinks)
             fileLinks_message = f"\n\nRelevant file content: {files_content}"
@@ -3634,7 +3633,6 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
         if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "" and not request.is_sub_agent:
             # User name instruction (fixed)
             if settings["memorySettings"]["userName"]:
-                print("Adding user name:\n\n" + settings["memorySettings"]["userName"] + "\n\nEnd of user name.\n\n")
                 content_append(request.messages, 'system', "The default user speaking with you is: \n\n" + settings["memorySettings"]["userName"] + "\n\nUnless a message explicitly identifies another sender, treat it as coming from this user.\n\n")
 
             # Fixed persona: character description, personality, dialogue examples, custom and shared system prompts
@@ -3642,21 +3640,18 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 if settings["memorySettings"]["userName"]:
                     cur_memory["description"] = cur_memory["description"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
-                print("Adding character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
                 content_append(request.messages, 'system', "Character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
 
             if cur_memory["personality"]:
                 if settings["memorySettings"]["userName"]:
                     cur_memory["personality"] = cur_memory["personality"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["personality"] = cur_memory["personality"].replace("{{char}}", cur_memory["name"])
-                print("Adding personality:\n\n" + cur_memory["personality"] + "\n\nEnd of personality.\n\n")
                 content_append(request.messages, 'system', "Personality:\n\n" + cur_memory["personality"] + "\n\nEnd of personality.\n\n")
 
             if cur_memory['mesExample']:
                 if settings["memorySettings"]["userName"]:
                     cur_memory['mesExample'] = cur_memory['mesExample'].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory['mesExample'] = cur_memory['mesExample'].replace("{{char}}", cur_memory["name"])
-                print("Adding example dialogue:\n\n" + cur_memory['mesExample'] + "\n\nEnd of example dialogue.\n\n")
                 content_append(request.messages, 'system', "Example dialogue:\n\n" + cur_memory['mesExample'] + "\n\nEnd of example dialogue.\n\n")
 
             if cur_memory["systemPrompt"]:
@@ -3726,15 +3721,14 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                 relevant_memories = await asyncio.to_thread(
                     m0.search,
                     query=user_prompt,
-                    user_id=settings["memorySettings"]["selectedMemory"],
-                    limit=memoryLimit
+                    filters={"user_id": settings["memorySettings"]["selectedMemory"]},
+                    top_k=memoryLimit
                 )
                 relevant_memories = json.dumps(relevant_memories, ensure_ascii=False)
             except Exception as e:
-                print("m0.search error:", e)
+                logger.warning("Memory query failed (%s)", type(e).__name__)
                 relevant_memories = ""
             if relevant_memories:
-                print("Adding relevant memories to user message:\n\n" + relevant_memories + "\n\nEnd of relevant memories.\n\n")
                 dynamic_user_context += f"\n\n[Relevant memories]\n{relevant_memories}"
 
         # Append dynamic content to the last user message
@@ -3782,7 +3776,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         if request.messages[0]['role'] == 'system':
                             request.messages[1]['content'] = "System instructions:\n" +request.messages[0]['content'] + "\nEnd of system instructions\n\nUser:" + request.messages[1]['content']
             except Exception as e:
-                print("Dify error:",e)
+                logger.warning("Dify request failed (%s)", type(e).__name__)
         model = settings['model']
         extra_params = settings['extra_params']
         # Remove extra_params entries whose name is empty or whitespace-only
@@ -4147,7 +4141,6 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                         print(f"[SubAgent Safety] Blocked {blocked_count} dangerous tools: {original_tool_count} -> {len(tools)} tools")
             
 
-                print(tools)
                 request.messages = sanitize_tool_calls(request.messages)
                 if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
                     deepsearch_messages = copy.deepcopy(request.messages)
@@ -4490,7 +4483,6 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                     assistant_reasoning_content = ""  # Reset reasoning
                 # Tools and deep search
                 if tool_calls:
-                    print("tool_calls",tool_calls)
                     pass
                 elif settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
                     search_prompt = get_drs_stage_system_message(DRS_STAGE,user_prompt,full_content)
@@ -5215,7 +5207,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                                             msg['content'] = ""
 
                         except Exception as e:
-                            print(f"Failed to capture desktop or retrieve UI tree: {e}")
+                            logger.warning("Desktop context capture failed (%s)", type(e).__name__)
                             
                         images = await images_in_messages(request.messages, fastapi_base_url)
                         request.messages = await message_without_images(request.messages)
@@ -5592,7 +5584,7 @@ async def generate_stream_response(client, reasoner_client, request: ChatRequest
                             loop = asyncio.get_running_loop()
                             task = asyncio.create_task(add())
                             task.add_done_callback(
-                                lambda t: print(f"Task exception: {t.exception()}") if t.exception() else None
+                                lambda t: logger.warning("Background task failed (%s)", type(t.exception()).__name__) if t.exception() else None
                             )
                         except RuntimeError:
                             # No running event loop
@@ -5924,7 +5916,6 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
         if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "" and not request.is_sub_agent:
             # User name instruction (fixed)
             if settings["memorySettings"]["userName"]:
-                print("Adding user name:\n\n" + settings["memorySettings"]["userName"] + "\n\nEnd of user name.\n\n")
                 content_append(request.messages, 'system', "The default user speaking with you is: \n\n" + settings["memorySettings"]["userName"] + "\n\nUnless a message explicitly identifies another sender, treat it as coming from this user.\n\n")
 
             # Fixed persona: character description, personality, dialogue examples, custom and shared system prompts
@@ -5932,21 +5923,18 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 if settings["memorySettings"]["userName"]:
                     cur_memory["description"] = cur_memory["description"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
-                print("Adding character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
                 content_append(request.messages, 'system', "Character description:\n\n" + cur_memory["description"] + "\n\nEnd of character description.\n\n")
 
             if cur_memory["personality"]:
                 if settings["memorySettings"]["userName"]:
                     cur_memory["personality"] = cur_memory["personality"].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory["personality"] = cur_memory["personality"].replace("{{char}}", cur_memory["name"])
-                print("Adding personality:\n\n" + cur_memory["personality"] + "\n\nEnd of personality.\n\n")
                 content_append(request.messages, 'system', "Personality:\n\n" + cur_memory["personality"] + "\n\nEnd of personality.\n\n")
 
             if cur_memory['mesExample']:
                 if settings["memorySettings"]["userName"]:
                     cur_memory['mesExample'] = cur_memory['mesExample'].replace("{{user}}", settings["memorySettings"]["userName"])
                 cur_memory['mesExample'] = cur_memory['mesExample'].replace("{{char}}", cur_memory["name"])
-                print("Adding example dialogue:\n\n" + cur_memory['mesExample'] + "\n\nEnd of example dialogue.\n\n")
                 content_append(request.messages, 'system', "Example dialogue:\n\n" + cur_memory['mesExample'] + "\n\nEnd of example dialogue.\n\n")
 
             if cur_memory["systemPrompt"]:
@@ -5994,15 +5982,14 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 relevant_memories = await asyncio.to_thread(
                     m0.search,
                     query=user_prompt,
-                    user_id=settings["memorySettings"]["selectedMemory"],
-                    limit=memoryLimit
+                    filters={"user_id": settings["memorySettings"]["selectedMemory"]},
+                    top_k=memoryLimit
                 )
                 relevant_memories = json.dumps(relevant_memories, ensure_ascii=False)
             except Exception as e:
-                print("m0.search error:", e)
+                logger.warning("Memory query failed (%s)", type(e).__name__)
                 relevant_memories = ""
             if relevant_memories:
-                print("Adding relevant memories to user message:\n\n" + relevant_memories + "\n\nEnd of relevant memories.\n\n")
                 dynamic_user_context += f"\n\n[Relevant memories]\n{relevant_memories}"
 
         # Append dynamic content to the last user message
@@ -6059,7 +6046,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         if request.messages[0]['role'] == 'system':
                             request.messages[1]['content'] = "System instructions:\n" +request.messages[0]['content'] + "\nEnd of system instructions\n\nUser:" + request.messages[1]['content']
             except Exception as e:
-                print("Dify error:",e)
+                logger.warning("Dify request failed (%s)", type(e).__name__)
         if settings['webSearch']['enabled'] or enable_web_search:
             if settings['webSearch']['when'] == 'before_thinking' or settings['webSearch']['when'] == 'both':
                 if settings['webSearch']['engine'] == 'duckduckgo':
@@ -6733,7 +6720,7 @@ async def fetch_provider_models(request: ProviderModelRequest):
     try:
         global global_http_client
         vendor = getattr(request, 'vendor', None)
-        print(f"Fetching models from provider: {vendor} at URL: {request.url}")
+        logger.info("Fetching model inventory")
         # 1. Handle Claude
         if vendor == 'customAnthropic':
             client = AsyncClaudeAsOpenAI(
@@ -10902,7 +10889,7 @@ async def read_memory(memory_id: str) -> List[Dict[str, Any]]:
         config = await _get_m0_config_for_memory(memory_id)
         from mem0 import Memory
         m0 = Memory.from_config(config)
-        results = await asyncio.to_thread(m0.get_all, user_id=memory_id, limit=10000)
+        results = await asyncio.to_thread(m0.get_all, filters={"user_id": memory_id}, top_k=10000)
         # mem0 v1.1+ returns {"results": [...]} format
         items = results.get("results", []) if isinstance(results, dict) else (results or [])
         flat = []
@@ -10918,8 +10905,7 @@ async def read_memory(memory_id: str) -> List[Dict[str, Any]]:
     except HTTPException:
         raise
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.warning("Memory inventory failed (%s)", type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e))
 
 
