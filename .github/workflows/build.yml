@@ -36,16 +36,33 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Verify English source and retired artwork
+        shell: pwsh
+        env:
+          PYTHONUTF8: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m unittest discover -s tests -p 'test_english_surface_inventory.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'English inventory regression tests failed.' }
+          python scripts/audit_english_surface.py --root . --tracked-only --fail-on-first-party-han
+          if ($LASTEXITCODE -ne 0) { throw 'First-party English source gate failed.' }
+
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: false
 
-      - name: Resolve Python dependencies
+      - name: Verify and install locked Python dependencies
         shell: pwsh
         run: |
-          uv sync --python 3.12
-          uv run python --version
+          $ErrorActionPreference = 'Stop'
+          uv lock --check --python 3.12
+          if ($LASTEXITCODE -ne 0) { throw 'Python dependency lock is stale.' }
+          python scripts/check_python_lock.py
+          if ($LASTEXITCODE -ne 0) { throw 'Python dependency source policy failed.' }
+          uv sync --locked --python 3.12
+          if ($LASTEXITCODE -ne 0) { throw 'Locked Python dependency installation failed.' }
+          uv run --locked python --version
 
       - name: Install Electron dependencies
         shell: pwsh
@@ -81,7 +98,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          uv run python -m py_compile server.py py/live_router.py py/web_search.py py/sub_agent.py
+          uv run --locked python -m py_compile server.py py/live_router.py py/web_search.py py/sub_agent.py
           if ($LASTEXITCODE -ne 0) {
             throw 'Python syntax validation failed.'
           }
@@ -89,7 +106,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw 'Electron main-process syntax validation failed.'
           }
-          uv run python -m unittest discover -s tests -p 'test_english_search_tools.py' -v
+          uv run --locked python -m unittest discover -s tests -p 'test_english_search_tools.py' -v
           if ($LASTEXITCODE -ne 0) {
             throw 'English search model-tool schema test failed.'
           }
@@ -97,7 +114,7 @@ jobs:
       - name: Package Python server
         shell: pwsh
         run: |
-          uv run pyinstaller --noconfirm --clean server.spec
+          uv run --locked pyinstaller --noconfirm --clean server.spec
           if (-not (Test-Path 'dist/server/server.exe')) {
             throw 'PyInstaller did not create dist/server/server.exe'
           }
@@ -127,7 +144,7 @@ jobs:
             "Source commit: $sha"
             "Build UTC: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
             "OS: $([System.Environment]::OSVersion.VersionString)"
-            "Python: $(uv run python --version)"
+            "Python: $(uv run --locked python --version)"
             "Node: $(node --version)"
             "Electron: $electronVersion"
             'Package type: extracted Electron directory with bundled PyInstaller backend'

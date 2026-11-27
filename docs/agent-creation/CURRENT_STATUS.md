@@ -208,3 +208,7 @@ Legal source attribution and unmodified user-authored multilingual content are d
 ## Source localization acceptance checkpoint
 
 - Source audit 45928289260 passed with zero Han findings in project source or bundled skills, and the residual runtime cleanup passed audit 45928480135. Retired promotional documentation images and the unused bilingual marketing cover pair are removed; original material remains recoverable from Git history. The English cover, functional avatar/model assets and original attribution remain. The tracked source audit now enforces a first-party Han text/path gate and checks that deleted artwork is not referenced. Third-party library text, legal notices, test fixtures and history are not rewritten. Binary images above the connector retrieval limit and actual Windows rendering still require manual verification.
+
+## Localization-phase Windows packaging checkpoint
+
+- The development packaging workflow now checks the English source gate, obsolete artwork references and Python lock before creating a Windows x64 snapshot. A package build is requested by this commit; its outcome and actual GUI/voice/model/agent integration are not yet established. No public release is requested.
